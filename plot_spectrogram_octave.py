@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
+# octave bands list
 octave_bands = [
     '12.4', '15.62', '19.69', '24.8', '31.25', '39.37', '49.61', '62.5', '78.75', '99.21',
     '125.0', '157.49', '198.43', '250.0', '314.98', '396.85', '500.0', '629.96', '793.7', 

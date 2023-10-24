@@ -1,2 +1,2 @@
 # AAC
-AAC code work for noise modeling.
+AAC code for noise modeling.

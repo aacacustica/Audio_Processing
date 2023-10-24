@@ -1,1 +1,1 @@
-# AAC code for noise modeling
+# AAC Noise Modeling

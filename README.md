@@ -2,6 +2,7 @@
 Description
 
 This repository contains tools and scripts for audio analysis, specifically focusing on sound visualization and level measurements. The project aims to extract and visualize various metrics from audio files, ensuring accurate representation and calibration.
+
 Table of Contents
 
     Features

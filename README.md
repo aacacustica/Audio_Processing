@@ -21,4 +21,5 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 ## License
 
-For more information, please refer to [The Unlicense](https://unlicense.org).
+
+All content is licensed under the terms of Thw Unlicense. For more information, please refer to [The Unlicense](https://unlicense.org).

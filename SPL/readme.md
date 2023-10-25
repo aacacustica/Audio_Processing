@@ -1,11 +1,16 @@
 # Sound Pressure Levels
+
 <br>
+<br>
+
 ## Table of Contents
 
 - [Leq Level](#leq-level)
 - [1/3 Octave](#13-octave)
 - [1/3 Octave FFT](#13-octave-fft)
 
+<br>
+<br>
 
 ## [Leq Level](#leq-level)
 
@@ -36,6 +41,8 @@ The program logs information, warnings, and errors to a file named leq_levels.lo
 The default calibration constant, in the absence of a specific device calibration, is -10.16.
 The program expects audio files to be in .wav format.
 
+<br>
+<br>
 
 ## [1/3 Octave](#13-octave)
 
@@ -67,6 +74,8 @@ The program logs information, warnings, and errors to a file octave_analysis.log
 The default calibration constant, in the absence of a specific device calibration, is -10.16.
 The program expects audio files to be in .wav format.
 
+<br>
+<br>
 
 ## [1/3 Octave FFT](#13-octave-fft)
 

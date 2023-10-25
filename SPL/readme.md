@@ -28,3 +28,6 @@ python <script_name>.py -p <path_to_audio_files> [-c <calibration_constants_file
 The program logs information, warnings, and errors to a file named leq_levels.log.
 The default calibration constant, in the absence of a specific device calibration, is -10.16.
 The program expects audio files to be in .wav format.
+
+
+## [1/3 Octave Analysis](#octave_analysis)

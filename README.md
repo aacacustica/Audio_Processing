@@ -16,7 +16,6 @@ Features
     SPL/leq_level: Tools and scripts related to Sound Pressure Level measurements and analysis.
     sound_visualization: Scripts and utilities to visualize various aspects of sound, such as spectrograms.
 
-
 Usage
 
 Explain how to use the main features of your project.

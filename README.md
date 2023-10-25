@@ -20,7 +20,7 @@ Usage
 
 Explain how to use the main features of your project.
 
-python <specific_script>.py [options]
+    python <specific_script>.py [options]
 
 Contributing
 

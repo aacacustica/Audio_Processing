@@ -3,7 +3,7 @@
 ## Table of Contents
 
 - [Leq Level](#leq-level)
-- [1/3 Octave](#13octave)
+- [1/3 Octave](#13-octave)
 - [1/3 Octave FFT](#13-octave-fft)
 
 
@@ -37,7 +37,7 @@ The default calibration constant, in the absence of a specific device calibratio
 The program expects audio files to be in .wav format.
 
 
-## [1/3 Octave](#octave)
+## [1/3 Octave](#13-octave)
 
 
 This script is designed to process audio files and analyze their 1/3 octave bands.
@@ -68,7 +68,7 @@ The default calibration constant, in the absence of a specific device calibratio
 The program expects audio files to be in .wav format.
 
 
-## [1/3 Octave FFT](#octave_fft)
+## [1/3 Octave FFT](#13-octave-fft)
 
 This script is designed to process audio files and analyze their 1/3 octave bands using Fast Fourier Transform (FFT).
 

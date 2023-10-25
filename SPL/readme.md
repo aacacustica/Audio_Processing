@@ -3,8 +3,8 @@
 ## Table of Contents
 
 - [Leq Level](#leq-level)
-- [1/3 Octave](#octave)
-- [1/3 Octave FFT](#octave_fft)
+- [1/3 Octave](#13octave)
+- [1/3 Octave FFT](#13-octave-fft)
 
 
 ## [Leq Level](#leq-level)

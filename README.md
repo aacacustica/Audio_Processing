@@ -1,25 +1,24 @@
 # AAC Noise Modeling
 <br>
 
-## Description
-
-This repository contains tools and scripts for audio analysis, specifically focusing on sound visualization and level measurements. The project aims to extract and visualize various metrics from audio files, ensuring accurate representation and calibration.
-
-<br>
-
 ## Table of Contents
 
+- [Description](#description)
 - [Features](#features)
 - [Contributing](#contributing)
 - [License](#license)
 
 <br>
 
+## Description
+
+This repository contains tools and scripts for audio analysis, specifically focusing on sound visualization and level measurements. The project aims to extract and visualize various metrics from audio files, ensuring accurate representation and calibration.
+
+
 ## Features
 
 - **SPL**: Tools and scripts related to Sound Pressure Level measurements analysis and visualization.
 
-<br>
 
 ## Contributing
 

@@ -129,7 +129,7 @@ Run the Dash app:
 python app_spl_aac.py
 ```
 
-The app will start, and you can view it by navigating to http://127.0.0.1:8051/ in your web browser.
+The app will start, and you can view it by navigating to 'http://127.0.0.1:8051/' in your web browser.
 
 ### Data Format
 

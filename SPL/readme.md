@@ -7,7 +7,7 @@
 - [Leq Level](#leq-level)
 - [1/3 Octave](#13-octave)
 - [1/3 Octave FFT](#13-octave-fft)
-- [SPL Dash Visualization](#dash-spl)
+- [SPL Dash Visualization](#spl-dash-visualization)
 
 <br>
 <br>
@@ -119,7 +119,7 @@ This Dash app provides a visualization interface for Sound Pressure Levels (SPL)
     Metric Checklist: Users can select which metrics they want to visualize (LA, LC, LZ, LAmax, LAmin, or all).
     1/3 Octave Band Dropdown: If the data contains 1/3 Octave Band columns, users can visualize specific bands.
 
-### :bulb: Installation and Setup
+### Installation and Setup
 
 ```bash
 pip install dash pandas plotly

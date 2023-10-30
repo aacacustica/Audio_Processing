@@ -7,6 +7,7 @@
 - [Leq Level](#leq-level)
 - [1/3 Octave](#13-octave)
 - [1/3 Octave FFT](#13-octave-fft)
+- [SPL Dash Visualization](#dash-spl)
 
 <br>
 <br>
@@ -104,3 +105,43 @@ python <script_name>.py -p <path_to_audio_files> [-c <calibration_constants_file
 The program logs information, warnings, and errors to a file octave_fft_analysis.log.
 The default calibration constant, in the absence of a specific device calibration, is -10.16.
 The program expects audio files to be in .wav format.
+
+<br>
+<br>
+
+## [SPL Dash Visualization](#dash-spl)
+
+This Dash app provides a visualization interface for Sound Pressure Levels (SPL) data. The app is designed to read a CSV file and display various metrics related to SPL. It offers interactive features like date range selection, metric checkboxes, and, if available, 1/3 Octave Band selection.
+Features
+
+    Date Range Slider: Allows users to filter the data based on specific time frames.
+    Metric Checklist: Users can select which metrics they want to visualize (LA, LC, LZ, LAmax, LAmin, or all).
+    1/3 Octave Band Dropdown: If the data contains 1/3 Octave Band columns, users can visualize specific bands.
+
+Installation and Setup
+
+    Ensure you have Python and Pip installed.
+    Clone this repository to your local machine.
+    Navigate to the directory and install the required packages:
+
+```bash
+pip install dash pandas plotly
+```
+    Run the Dash app:
+
+```bash
+python app_spl_aac.py
+```
+
+The app will start, and you can view it by navigating to http://127.0.0.1:8051/ in your web browser.
+Data Format
+
+The app expects a CSV file with the following columns at a minimum:
+
+    date: Timestamps for the data.
+    SPL metrics like LA, LC, LZ, LAmax, and LAmin.
+
+If the data contains 1/3 Octave Band columns, they will also be recognized and can be visualized.
+Screenshots
+
+[Here, you might want to include some screenshots of your app for visual appeal and clarity.]

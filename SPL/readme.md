@@ -118,23 +118,20 @@ Features
     Metric Checklist: Users can select which metrics they want to visualize (LA, LC, LZ, LAmax, LAmin, or all).
     1/3 Octave Band Dropdown: If the data contains 1/3 Octave Band columns, users can visualize specific bands.
 
-Installation and Setup
-
-    Ensure you have Python and Pip installed.
-    Clone this repository to your local machine.
-    Navigate to the directory and install the required packages:
+### Installation and Setup
 
 ```bash
 pip install dash pandas plotly
 ```
-    Run the Dash app:
+Run the Dash app:
 
 ```bash
 python app_spl_aac.py
 ```
 
 The app will start, and you can view it by navigating to http://127.0.0.1:8051/ in your web browser.
-Data Format
+
+### Data Format
 
 The app expects a CSV file with the following columns at a minimum:
 

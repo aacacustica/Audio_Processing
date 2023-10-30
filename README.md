@@ -12,8 +12,7 @@ This repository contains tools and scripts for audio analysis, specifically focu
 
 ## Features
 
-- **SPL/leq_level**: Tools and scripts related to Sound Pressure Level measurements and analysis.
-- **sound_visualization**: Scripts and utilities to visualize various aspects of sound, such as spectrograms.
+- **SPL**: Tools and scripts related to Sound Pressure Level measurements analysis and visualization.
 
 ## Contributing
 

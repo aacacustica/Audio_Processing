@@ -1,7 +1,6 @@
 # Sound Pressure Levels
 
 <br>
-<br>
 
 ## Table of Contents
 

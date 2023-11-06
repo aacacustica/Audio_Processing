@@ -89,7 +89,7 @@ def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str, output
 def arg_parser():
     parser = argparse.ArgumentParser(description='Plotting AudioMoth data')
     parser.add_argument('-f', '--csv-file', type=str, required=True, help='CSV file with AudioMoth data')
-    parser.add_argument('-a', '--agg_period', type=int, required=False, default=3600, help='Aggregation period in seconds')
+    parser.add_argument('-a', '--agg_period', type=int, required=False, default=900, help='Aggregation period in seconds')
     parser.add_argument('-o', '--output-dir', type=str, required=False, default='.', help='Output directory')
     parser.add_argument('-p', '--percentiles', type=float, nargs='+', required=False, default=[90, 10], help='Percentiles to plot (L90 and L10 as default)')
     return parser.parse_args()

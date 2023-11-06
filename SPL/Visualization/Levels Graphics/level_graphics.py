@@ -1,3 +1,4 @@
+import logging
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -6,19 +7,32 @@ import numpy as np
 import argparse
 import os
 
-def plt_name(plotname: str):
+def setup_logging(output_dir):
+    log_file = os.path.join(output_dir, 'level_graphics.log')
+    logging.basicConfig(filename=log_file,
+                        filemode='a', 
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                        level=logging.INFO)
+
+def plt_name(plotname: str, logger):
+    logger.debug(f"Original plot name: {plotname}")
     if "_spl" or "_spl_oct_" in plotname:
         plotname = plotname.split("_spl")[0]
+    logger.debug(f"Processed plot name: {plotname}")
     return plotname
 
-def leq(levels):
+def leq(levels, logger):
     levels = np.array(levels.dropna(), dtype=float)
     if len(levels) == 0:
+        logger.warning("Empty levels array received, returning NaN")
         return np.nan
-    return 10 * np.log10(np.mean(np.power(10, levels / 10)))
+    result = 10 * np.log10(np.mean(np.power(10, levels / 10)))
+    logger.debug(f"Computed leq: {result}")
+    return result
 
-def plot_heatmap(df, values_column: str, agg_func: callable, output_dir: str, plotname: str):
-    plotname = plt_name(plotname)
+def plot_heatmap(df, values_column: str, agg_func: callable, output_dir: str, plotname: str, logger):
+    logger.info(f"Starting heatmap plot for {plotname}")
+    plotname = plt_name(plotname, logger)
 
     df['day'] = df['date'].dt.date
     df['hour'] = df['date'].dt.hour
@@ -32,22 +46,31 @@ def plot_heatmap(df, values_column: str, agg_func: callable, output_dir: str, pl
     plt.ylabel('Day')
     plt.tight_layout()
     
-    plt.savefig(os.path.join(output_dir, f'{plotname}_heatmap.png'), dpi=150)
+    filepath = os.path.join(output_dir, f'{plotname}_heatmap.png')
+    plt.savefig(filepath, dpi=150)
+    logger.info(f"Heatmap for {plotname} saved to {filepath}")
+
     leq_day_hour.to_csv(os.path.join(output_dir, f'{plotname}_heatmap_table_day_hour.csv'))
     
     plt.close()
 
-def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str, output_dir: str, percentiles: list):
-    plotname = plt_name(plotname)
+def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str, output_dir: str, percentiles: list, logger):
+    logger.info(f"Starting timeplot for {plotname}")
+    plotname = plt_name(plotname, logger)
 
     for col in columns_dict.values():
         df[col] = pd.to_numeric(df[col], errors='coerce')
     df.dropna(subset=[columns_dict['LAEQ_COLUMN']], inplace=True)
     df.set_index('date', inplace=True)
 
-    leq_agg = df.resample(f'{agg_period}s').agg({columns_dict['LAEQ_COLUMN']: leq})
+    # Modify this line to include the logger in the call to leq
+    leq_with_logger = lambda x: leq(x, logger)
+    
+    # Now use leq_with_logger in the .agg() method
+    leq_agg = df.resample(f'{agg_period}s').agg({columns_dict['LAEQ_COLUMN']: leq_with_logger})
     lmax_agg = df.resample(f'{agg_period}s').agg({columns_dict['LAMAX_COLUMN']: 'max'})
     lmin_agg = df.resample(f'{agg_period}s').agg({columns_dict['LAMIN_COLUMN']: 'min'})
+
 
     fig, ax = plt.subplots(figsize=(20, 10))
     ax.set_facecolor("white")
@@ -77,7 +100,10 @@ def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str, output
     plt.legend(bbox_to_anchor=(1.01, 1), loc='upper left')
 
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, f'{plotname}_{agg_period}s_timeplot.png'), dpi=150)
+    filepath = os.path.join(output_dir, f'{plotname}_{agg_period}s_timeplot.png')
+    plt.savefig(filepath, dpi=150)
+    logger.info(f"Timeplot for {plotname} saved to {filepath}")
+
     plt.close()
 
 def arg_parser():
@@ -99,20 +125,40 @@ def main():
     output_dir = os.path.join(input_dir, 'Level_Graphics')
     os.makedirs(output_dir, exist_ok=True)
 
-    df = pd.read_csv(csv_file)
-    df['date'] = pd.to_datetime(df['date'])
+    setup_logging(output_dir)
+    logger = logging.getLogger(__name__)
+    logger.info(f"Script started with CSV file: {csv_file} and output directory: {output_dir}")
 
-    columns_dict = {
-        'LAEQ_COLUMN': 'LA',
-        'LAMAX_COLUMN': 'LAmax',
-        'LAMIN_COLUMN': 'LAmin'
-    }
+    try:
+        input_dir = os.path.dirname(csv_file)
+        output_dir = os.path.join(input_dir, 'Level_Graphics')
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            logger.info(f"Created output directory: {output_dir}")
+        else:
+            logger.info(f"Output directory already exists: {output_dir}")
 
-    df[columns_dict['LAEQ_COLUMN']] = df[columns_dict['LAEQ_COLUMN']].apply(lambda x: float(str(x).replace(',', '.')))
+        logger.info(f"Reading CSV file: {csv_file}")
+        df = pd.read_csv(csv_file)
+        df['date'] = pd.to_datetime(df['date'])
 
-    plotname = csv_file.split('/')[-1]
-    plot_heatmap(df, 'LA', leq, output_dir, plotname=plotname)
-    make_timeplot(df, columns_dict, agg_period, plotname, output_dir, percentiles)
+        columns_dict = {
+            'LAEQ_COLUMN': 'LA',
+            'LAMAX_COLUMN': 'LAmax',
+            'LAMIN_COLUMN': 'LAmin'
+        }
+
+        df[columns_dict['LAEQ_COLUMN']] = df[columns_dict['LAEQ_COLUMN']].apply(lambda x: float(str(x).replace(',', '.')))
+
+        plotname = csv_file.split('/')[-1].split('.')[0]
+        plot_heatmap(df, 'LA', lambda x: leq(x, logger), output_dir, plotname, logger)
+        make_timeplot(df, columns_dict, agg_period, plotname, output_dir, percentiles, logger)
+
+        logger.info("Script completed successfully")
+
+    except Exception as e:
+        logger.exception(f"Error occurred: {e}")
 
 if __name__ == "__main__":
     main()
+

@@ -10,16 +10,14 @@ def plt_name(plotname: str):
     if "_spl" or "_spl_oct_" in plotname:
         plotname = plotname.split("_spl")[0]
     return plotname
- 
+
 def leq(levels):
     levels = np.array(levels.dropna(), dtype=float)
     if len(levels) == 0:
         return np.nan
     return 10 * np.log10(np.mean(np.power(10, levels / 10)))
 
-
-
-def plot_heatmap(df, values_column: str, agg_func: callable, plotname: str, output_dir: str):
+def plot_heatmap(df, values_column: str, agg_func: callable, output_dir: str, plotname: str):
     plotname = plt_name(plotname)
 
     df['day'] = df['date'].dt.date
@@ -38,8 +36,6 @@ def plot_heatmap(df, values_column: str, agg_func: callable, plotname: str, outp
     leq_day_hour.to_csv(os.path.join(output_dir, f'{plotname}_heatmap_table_day_hour.csv'))
     
     plt.close()
-
-
 
 def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str, output_dir: str, percentiles: list):
     plotname = plt_name(plotname)
@@ -84,8 +80,6 @@ def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str, output
     plt.savefig(os.path.join(output_dir, f'{plotname}_{agg_period}s_timeplot.png'), dpi=150)
     plt.close()
 
-
-
 def arg_parser():
     parser = argparse.ArgumentParser(description='Plotting AudioMoth data')
     parser.add_argument('-f', '--csv-file', type=str, required=True, help='CSV file with AudioMoth data')
@@ -101,6 +95,10 @@ def main():
     output_dir = args.output_dir
     percentiles = args.percentiles
 
+    input_dir = os.path.dirname(csv_file)
+    output_dir = os.path.join(input_dir, 'Level_Graphics')
+    os.makedirs(output_dir, exist_ok=True)
+
     df = pd.read_csv(csv_file)
     df['date'] = pd.to_datetime(df['date'])
 
@@ -112,8 +110,8 @@ def main():
 
     df[columns_dict['LAEQ_COLUMN']] = df[columns_dict['LAEQ_COLUMN']].apply(lambda x: float(str(x).replace(',', '.')))
 
-    plotname = csv_file.split('.')[0]  
-    plot_heatmap(df, 'LA', leq, plotname, output_dir)
+    plotname = csv_file.split('/')[-1]
+    plot_heatmap(df, 'LA', leq, output_dir, plotname=plotname)
     make_timeplot(df, columns_dict, agg_period, plotname, output_dir, percentiles)
 
 if __name__ == "__main__":

@@ -2,6 +2,17 @@
 
 This tool is designed to visualize sound level data collected using the AudioMoth device. It generates heatmaps and time plots for given sound level data, providing a visual representation of the sound levels over time.
 
+## Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Usage](#usage)
+  - [Arguments](#arguments)
+  - [Output](#output)
+  - [Example](#example)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Features
 
 - **Heatmap Generation:** Creates a heatmap based on daily and hourly aggregated sound levels.

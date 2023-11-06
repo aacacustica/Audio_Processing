@@ -4,6 +4,7 @@ import matplotlib.dates as mdates
 import seaborn as sns
 import numpy as np
 import argparse
+import os
 
 def plt_name(plotname: str):
     if "_spl" or "_spl_oct_" in plotname:
@@ -16,7 +17,9 @@ def leq(levels):
         return np.nan
     return 10 * np.log10(np.mean(np.power(10, levels / 10)))
 
-def plot_heatmap(df, values_column: str, agg_func: callable, plotname: str):
+
+
+def plot_heatmap(df, values_column: str, agg_func: callable, plotname: str, output_dir: str):
     plotname = plt_name(plotname)
 
     df['day'] = df['date'].dt.date
@@ -26,19 +29,19 @@ def plot_heatmap(df, values_column: str, agg_func: callable, plotname: str):
 
     plt.title(f"{plotname.replace('_', ' ')}")
     
-    sns.heatmap(leq_day_hour, cmap='YlOrRd', annot=True, fmt='.1f')  # colormap to 'Reds'
+    sns.heatmap(leq_day_hour, cmap=sns.cubehelix_palette(), annot=True, fmt='.1f')  
     plt.xlabel('Hour')
     plt.ylabel('Day')
     plt.tight_layout()
     
-    plt.savefig(f'{plotname}_heatmap.png', dpi=150)
-    leq_day_hour.to_excel(f'{plotname}_heatmap_table_day_hour.xlsx')
+    plt.savefig(os.path.join(output_dir, f'{plotname}_heatmap.png'), dpi=150)
+    leq_day_hour.to_csv(os.path.join(output_dir, f'{plotname}_heatmap_table_day_hour.csv'))
     
     plt.close()
 
 
 
-def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str):
+def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str, output_dir: str):
     plotname = plt_name(plotname)
 
     for col in columns_dict.values():
@@ -67,9 +70,10 @@ def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str):
     ax.plot(x, lmin_agg.values, linewidth=0.8, color='#92D050')
     ax.plot(x, L90, linewidth=0.8, color='#525252')
     ax.plot(x, L10, linewidth=0.8, color='#8497B0')
-    ax.plot(x, L5, linewidth=0.8, color='#FF0000')
-    ax.plot(x, L1, linewidth=0.8, color='#FF0000')
-    ax.plot(x, L50, linewidth=0.8, color='#000000')
+    
+    ax.plot(x, L5, linewidth=0.8, color='#FFA500')
+    ax.plot(x, L1, linewidth=0.8, color='#00FFFF')
+    ax.plot(x, L50, linewidth=0.8, color='#FF69B4')
 
     hours = mdates.HourLocator(interval=2)
     h_fmt = mdates.DateFormatter('%H:%M')
@@ -85,13 +89,14 @@ def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str):
     plt.legend(['Leq', 'Lmax', 'Lmin', 'L90', 'L10', 'L5', 'L1', 'L50'], bbox_to_anchor=(1, 1), loc='upper left')
     
     plt.tight_layout()
-    plt.savefig(f'{plotname}_{agg_period}s_timeplot.png', dpi=150)
+    plt.savefig(os.path.join(output_dir, f'{plotname}_{agg_period}s_timeplot.png'), dpi=150)
     plt.close()
 
 def arg_parser():
     parser = argparse.ArgumentParser(description='Plotting AudioMoth data')
     parser.add_argument('-f', '--csv-file', type=str, required=True, help='CSV file with AudioMoth data')
     parser.add_argument('-a', '--agg_period', type=int, required=False, default=3600, help='Aggregation period in seconds')
+    parser.add_argument('-o', '--output', type=str, required=False, default='.', help='Output directory')
     return parser.parse_args()
 
 
@@ -100,6 +105,7 @@ def main():
     args = arg_parser()
     csv_file = args.csv_file
     agg_period = args.agg_period
+    output_dir = args.output
 
     df = pd.read_csv(csv_file)
     df['date'] = pd.to_datetime(df['date'])
@@ -114,10 +120,10 @@ def main():
 
     # heatmap
     plotname = csv_file.split('.')[0]  
-    plot_heatmap(df, 'LA', leq, plotname)
+    plot_heatmap(df, 'LA', leq, plotname, output_dir)
 
     # timeplot
-    make_timeplot(df, columns_dict, agg_period, plotname)
+    make_timeplot(df, columns_dict, agg_period, plotname, output_dir)
 
 
 

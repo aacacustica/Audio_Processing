@@ -2,6 +2,8 @@
 
 ![aac_cover](https://github.com/santiagocampojurado/AAC/assets/89314673/6313860e-af09-4f5d-b8fd-d29b48f9f0e6)
 
+This repository contains tools and scripts for audio analysis, specifically focusing on sound visualization and level measurements. The project aims to extract and visualize various metrics from audio files, ensuring accurate representation and calibration.
+
 ## Table of Contents
 
 - [Description](#description)
@@ -12,10 +14,6 @@
   - [Workflow](#workflow)
 - [Contributing](#contributing)
 - [License](#license)
-
-## Description
-
-This repository contains tools and scripts for audio analysis, specifically focusing on sound visualization and level measurements. The project aims to extract and visualize various metrics from audio files, ensuring accurate representation and calibration.
 
 ## Modules
 

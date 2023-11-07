@@ -2,6 +2,11 @@
 
 ![aac_cover](https://github.com/santiagocampojurado/AAC/assets/89314673/6313860e-af09-4f5d-b8fd-d29b48f9f0e6)
 
+# About AAC
+
+AAC (Acoustic Analysis Consultants) is an engineering firm specializing in noise and light pollution. With a commitment to independence and delivering tailored solutions, AAC is adept at addressing complex situations and managing large-scale projects. Our expertise is built on a foundation of technical knowledge and a dedicated approach to each case, ensuring that we not only meet but exceed the specific needs of our clients.
+
+
 ## Table of Contents
 
 - [Description](#description)

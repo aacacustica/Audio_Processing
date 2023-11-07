@@ -6,7 +6,6 @@ This repository contains tools and scripts for audio analysis, specifically focu
 
 ## Table of Contents
 
-- [Description](#description)
 - [Modules](#modules)
   - [AI Model](#ai-model)
   - [SPL](#spl)

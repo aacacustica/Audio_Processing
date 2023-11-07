@@ -4,7 +4,7 @@ from scipy.signal import lfilter
 import numpy as np
 from pyfilterbank.splweighting import a_weighting_coeffs_design
 from pyfilterbank.splweighting import c_weighting_coeffs_design
-from utils.utils import *
+from utils import *
 import argparse
 import os
 import re
@@ -97,19 +97,25 @@ def write_csv_all_levels(audio_files:list ,fs_filterbanks:float , w_size: int, C
             continue            
 
     # check date column is in ascending order
-    if not df_all['date'].is_monotonic:
+    if not df_all['date'].is_monotonic_increasing:
         # If not, sort it by the 'date' column
         df_all = df_all.sort_values('date')
-    
-    results_folder = results_folder.rstrip('\\').rstrip('"')   
+   
+    file_ext = "_spl_oct.csv"
+    results_folder = results_folder.rstrip('\\').rstrip('"')  
+ 
     if "192.168.205.117" in results_folder:
-        folder_name = results_folder.replace(" ", "_").split("\\")[6] + "_spl_oct.csv"
+        folder_name = results_folder.replace(" ", "_").split("\\")[6] + file_ext
         print(f"\nFolder name: {folder_name}")
+    else:
+        folder_name = results_folder.split("\\")[-1] + file_ext
+        print(folder_name)
+ 
     file_name_csv = os.path.join(results_folder, folder_name)
     print(f"\nFile name csv: {file_name_csv}")
-    
+   
     df_all.to_csv(file_name_csv)
-
+ 
     logger.info(f'{len(audio_files)} Archivos procesados con éxito')
     logger.info(f'Archivo {file_name_csv} creado con éxito')
 

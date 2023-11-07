@@ -74,7 +74,7 @@ Within Leq Levels, we employ three types of visualizations:
 - **Spectrograms**: Visualize the sound frequency and its variance over time.
 - **Heat Map Levels**: Generate heat maps to represent decibel levels across time intervals.
 
-### 2) AI Model
+### 2) AI Noise Model
 
 The AI Model activity employs the YAMNet model for sound event detection:
 

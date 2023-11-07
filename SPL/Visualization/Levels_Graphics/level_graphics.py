@@ -50,7 +50,7 @@ def plot_heatmap(df, values_column: str, agg_func: callable, output_dir: str, pl
     plt.savefig(filepath, dpi=150)
     logger.info(f"Heatmap for {plotname} saved to {filepath}")
 
-    leq_day_hour.to_csv(os.path.join(output_dir, f'{plotname}_heatmap_table_day_hour.csv'))
+    leq_day_hour.to_csv(os.path.join(output_dir, f'{plotname}_heatmap.csv'))
     
     plt.close()
 

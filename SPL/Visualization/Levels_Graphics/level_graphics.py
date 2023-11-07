@@ -63,28 +63,33 @@ def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str, output
     df.dropna(subset=[columns_dict['LAEQ_COLUMN']], inplace=True)
     df.set_index('date', inplace=True)
 
-    # Modify this line to include the logger in the call to leq
     leq_with_logger = lambda x: leq(x, logger)
     
-    # Now use leq_with_logger in the .agg() method
     leq_agg = df.resample(f'{agg_period}s').agg({columns_dict['LAEQ_COLUMN']: leq_with_logger})
     lmax_agg = df.resample(f'{agg_period}s').agg({columns_dict['LAMAX_COLUMN']: 'max'})
     lmin_agg = df.resample(f'{agg_period}s').agg({columns_dict['LAMIN_COLUMN']: 'min'})
 
+    combined_df = pd.DataFrame(index=leq_agg.index)
+    combined_df['Leq'] = leq_agg.values.flatten()
+    combined_df['Lmax'] = lmax_agg.values.flatten()
+    combined_df['Lmin'] = lmin_agg.values.flatten()
+
+    for perc in percentiles:
+        percentile_value = 1 - (perc / 100.0)
+        percentile_data = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(percentile_value)
+        combined_df[f'L{int(perc)}'] = percentile_data.values
 
     fig, ax = plt.subplots(figsize=(20, 10))
     ax.set_facecolor("white")
     plt.title(f"{plotname.replace('_', ' ')} | {agg_period}s")
 
-    x = leq_agg.index
-    ax.plot(x, leq_agg.values, linewidth=3, color='red', label='Leq')
-    ax.plot(x, lmax_agg.values, linewidth=0.8, color='#FF99FF', label='Lmax')
-    ax.plot(x, lmin_agg.values, linewidth=0.8, color='#92D050', label='Lmin')
+    x = combined_df.index
+    ax.plot(x, combined_df['Leq'], linewidth=3, color='red', label='Leq')
+    ax.plot(x, combined_df['Lmax'], linewidth=0.8, color='#FF99FF', label='Lmax')
+    ax.plot(x, combined_df['Lmin'], linewidth=0.8, color='#92D050', label='Lmin')
 
     for perc in percentiles:
-        percentile_value = 1 - (perc / 100.0)
-        percentile_data = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(percentile_value)
-        ax.plot(x, percentile_data, linewidth=0.8, label=f'L{int(perc)}')
+        ax.plot(x, combined_df[f'L{int(perc)}'], linewidth=0.8, label=f'L{int(perc)}')
 
     hours = mdates.HourLocator(interval=2)
     h_fmt = mdates.DateFormatter('%H:%M')
@@ -100,9 +105,13 @@ def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str, output
     plt.legend(bbox_to_anchor=(1.01, 1), loc='upper left')
 
     plt.tight_layout()
-    filepath = os.path.join(output_dir, f'{plotname}_{agg_period}s_timeplot.png')
-    plt.savefig(filepath, dpi=150)
-    logger.info(f"Timeplot for {plotname} saved to {filepath}")
+    fig_filepath = os.path.join(output_dir, f'{plotname}_{agg_period}s_timeplot.png')
+    plt.savefig(fig_filepath, dpi=150)
+    logger.info(f"Timeplot for {plotname} saved to {fig_filepath}")
+
+    csv_filepath = os.path.join(output_dir, f'{plotname}_{agg_period}s_timeplot.csv')
+    combined_df.to_csv(csv_filepath, index_label='Time')
+    logger.info(f"CSV file for {plotname} saved to {csv_filepath}")
 
     plt.close()
 

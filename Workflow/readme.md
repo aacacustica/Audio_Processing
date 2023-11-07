@@ -51,3 +51,45 @@ The GitHub repository's purpose is to enhance control and access to our programs
 
 The replication of the SharePoint structure on the Local Server will facilitate the management and location of final results. This methodology will also optimize space management. Additionally, I will implement a documentation system to record the version of the program used in each audio process. This information will be included in the results, allowing for precise reprocessing in the future if necessary.
 
+
+## Processing Detail Explanation
+
+![AAC_workflow](https://github.com/santiagocampojurado/AAC/assets/89314673/c05da2e0-2d72-4625-be99-605ccc089954)
+
+## Main Audio Processing Activities
+
+Our audio analysis framework is structured around three primary activities, each encompassing unique processes and visualization techniques:
+
+### 1) Leq Levels
+
+Leq Levels is an area where we explore three distinct approaches to audio analysis:
+
+- **Leq levels**: The basic measurement of sound pressure level over a period.
+- **1/3 Octave**: A more detailed frequency analysis within the one-third octave bands.
+- **1/3 Octave with FFT**: Incorporates Fast Fourier Transform for a comprehensive frequency domain analysis.
+
+Within Leq Levels, we employ three types of visualizations:
+
+- **Dash Plots**: Utilize Dash to create interactive plots of desired levels and frequencies.
+- **Spectrograms**: Visualize the sound frequency and its variance over time.
+- **Heat Map Levels**: Generate heat maps to represent decibel levels across time intervals.
+
+### 2) AI Model
+
+The AI Model activity employs the YAMNet model for sound event detection:
+
+- **Prediction Phase**: We process the audio to predict sound events, which can range from 1 to 10 different predictions, depending on the audio's length. The window size for analysis is adjustable based on the audio duration.
+- **Peak Analysis**: By setting a threshold informed by SPL analysis, we extract 5-second clips from portions of the audio that exceed this limit.
+
+The AI Model offers various visualization tools:
+
+- **Heat Map Prediction**: Visualize the predictions' distribution over time.
+- **Dash Board Brown Level**: This dashboard allows us to delve into the categories of sounds, identifying predominant ones and examining sub-categories for detailed insights.
+- **Temporal Analysis**: We use this tool to analyze patterns across different timescales, such as days, hours, months, and years, providing a granular view of the data.
+
+### 3) Sonometer
+
+The Sonometer analysis parallels the Leq Levels in terms of process but is more detailed. The specifics of this activity will be elaborated upon in the future, as my familiarity with the Sonometer's technicalities grows.
+
+
+

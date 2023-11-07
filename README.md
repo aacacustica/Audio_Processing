@@ -4,7 +4,7 @@
 
 ## Table of Contents
 
-- [Description][#description]
+- [Description](#description)
 - [Modules](#modules)
   - [AI Model](#ai-model)
   - [SPL](#spl)

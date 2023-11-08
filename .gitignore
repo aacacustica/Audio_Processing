@@ -35,11 +35,10 @@ build/
 
 git_commands.txt
 01_leq_levels
-.git_commands.txt.swp
 
 SPL/Visualization/Levels_Graphics/*.csv
 SPL/Visualization/Levels_Graphics/*xlsx
 SPL/Visualization/Levels_Graphics/*.png
 
 SPL/Visualization/Levels_Graphics/venv_level_graphics
-SPL/Visualization/Levels_Graphics/*.txt
+*.txt

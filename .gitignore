@@ -40,5 +40,6 @@ git_commands.txt
 SPL/Visualization/Levels_Graphics/*.csv
 SPL/Visualization/Levels_Graphics/*xlsx
 SPL/Visualization/Levels_Graphics/*.png
-SPL/Visualization/Levels_Graphics/plot_lg
+
 SPL/Visualization/Levels_Graphics/venv_level_graphics
+SPL/Visualization/Levels_Graphics/*.txt

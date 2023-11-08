@@ -30,6 +30,9 @@ node_modules/
 dist/
 build/
 
+# Image files
+*.jpg
+*.drawio
 
 # things to ignore:
 
@@ -42,5 +45,3 @@ SPL/Visualization/Levels_Graphics/*.png
 
 SPL/Visualization/Levels_Graphics/venv_level_graphics
 
-/Workflow/*.jpg
-/Workflow/*.drawio

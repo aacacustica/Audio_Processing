@@ -30,9 +30,11 @@ node_modules/
 dist/
 build/
 
+
+# things to ignore:
+
 git_commands.txt
 01_leq_levels
-#.gitignore
 .git_commands.txt.swp
 
 SPL/Visualization/Levels_Graphics/*.csv
@@ -40,6 +42,3 @@ SPL/Visualization/Levels_Graphics/*xlsx
 SPL/Visualization/Levels_Graphics/*.png
 SPL/Visualization/Levels_Graphics/plot_lg
 
-SPL/Leq_Levels/venv_leq_level/
-SPL/Visualization/Levels_Graphics/venv_level_graphics/lib/
-Workflow/AAC_Servers.drawio

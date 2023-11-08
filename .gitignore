@@ -42,3 +42,5 @@ SPL/Visualization/Levels_Graphics/*.png
 
 SPL/Visualization/Levels_Graphics/venv_level_graphics
 
+/Workflow/*.jpg
+/Workflow/*.drawio

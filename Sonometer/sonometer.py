@@ -1,5 +1,6 @@
-# ver 0
+# ver 1
 # Nov.23
+# se elimina la representación INDHEATMAP, que pasa a utils_general y se desahabilita el cálculo de los indicadores de Valencia
 
 from ntpath import join
 import numpy as np
@@ -7,7 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 plt.style.use("bmh")
-from utils_general import *
+from utils_sonometer import *
 from tqdm import tqdm
 import time
 from matplotlib.colors import ListedColormap
@@ -24,7 +25,7 @@ PERIODO_AGREGACION = 900 # SEGUNDOS
 PERCENTILES = False
 PLOT_TIME = True
 PLOT_HEATMAP = True
-PLOT_INDHETAMAP = True
+PLOT_INDHEATMAP = True
 PLOT_DAY_EVOLUTION = False
 PLOT_PERIOD_EVOLUTION = False
 
@@ -38,9 +39,9 @@ clase_registro = os.path.basename(CARPETA_MEDIDAS)
 folders = [folder for folder in os.listdir(CARPETA_MEDIDAS) if os.path.isdir(os.path.join(CARPETA_MEDIDAS,folder))]
 files = []
 df_indicadores = pd.DataFrame()
-df_indicadores_valencia = pd.DataFrame()
+# df_indicadores_valencia = pd.DataFrame()
 n_registro = []
-n_registro_valencia = []
+# n_registro_valencia = []
 df_common_format = pd.DataFrame()
 
 for folder in folders:
@@ -149,12 +150,15 @@ for folder in folders:
             plot_day_evolution(df,laeq_column=slm_dict["LAEQ_COLUMN"],plotname=folder)
 
         
-        
         # add indicators column
         df['indicador_str'] = df.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
         print(f'\n Indicador HOUR table (df["indicador_str"]):\n {df["indicador_str"]}')
+        
         if PLOT_PERIOD_EVOLUTION:
             plot_period_evolution(df, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
+
+        if PLOT_INDHEATMAP:
+            plot_indheatmap(df, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN"])
 
         
         ############### INDICADORES NORMALES ###############
@@ -169,38 +173,20 @@ for folder in folders:
 
         ################ INDICADORES VALENCIA ###############
         ############################################################
-        indicadores_valencia = get_day_levels_valencia(df, laeq_column=slm_dict['LAEQ_COLUMN'])
-        print('\n==========')
-        print(f'Indicadores valencia:\n {indicadores_valencia}')
+        # indicadores_valencia = get_day_levels_valencia(df, laeq_column=slm_dict['LAEQ_COLUMN'])
+        # print('\n==========')
+        # print(f'Indicadores valencia:\n {indicadores_valencia}')
         
-        df_indicadores_valencia = pd.concat([df_indicadores_valencia, indicadores_valencia])
-        print(f'\nDataFram Indicadores Valencia:\n {df_indicadores_valencia}')
+        # df_indicadores_valencia = pd.concat([df_indicadores_valencia, indicadores_valencia])
+        # print(f'\nDataFram Indicadores Valencia:\n {df_indicadores_valencia}')
         
         # df_indicadores_valencia.loc[df_indicadores_valencia['reg'].isnull(), 'reg'] = folder
 
-        if PLOT_INDHETAMAP:
-            # Custom palette
-            # Define the color stops and colors for the Noisemap color scheme
-            noisemap_colors = ['#6AE046',   # green
-                            '#EF8632',  # orange
-                            '#D63B33',   # red
-                            '#651F1C', ] # brown
-
-            # Create the colormap using the ListedColormap function
-            noisemap_cmap = ListedColormap(noisemap_colors)
-            indicadores_table = pd.pivot_table(data=df,index="day",columns="indicador_str",values=slm_dict['LAEQ_COLUMN'],aggfunc=leq).round(1)
-            
-            sns.heatmap(indicadores_table, annot=True,fmt=".1f",linewidth=0.5, cmap=noisemap_cmap,vmin=50,vmax=70)
-            
-            indicadores_table.to_excel(f"{folder}_indicadores.xlsx")
-            
-            plt.savefig(f"{folder}_indicadores.png")
-            plt.close()
-        
+                
         # WHY JUST TAKE 3???? ['R42', 'R42', 'R42', 'R43', 'R43', 'R43', 'R44', 'R44', 'R44', 'R45', 'R45', 'R45', 'R46', 'R46', 'R46', 'R47', 'R47', 'R47', 'R48', 'R48', 'R48', 'R49', 'R49', 'R49', 'R50', 'R50', 'R50', 'R51', 'R51', 'R51']
         n_registro.append([folder for i in range(3)])
         
-        n_registro_valencia.append([folder for i in range(2)])
+        # n_registro_valencia.append([folder for i in range(2)])
         
         # formato comun
         map_dict = {slm_dict['LAEQ_COLUMN']  : "LAeq",

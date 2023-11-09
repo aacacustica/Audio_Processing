@@ -12,6 +12,7 @@ import argparse
 import params
 import yamnet as yamnet_model
 import tensorflow as tf
+
 tf.get_logger().setLevel(logging.ERROR)
 
 def audios_long(audio_files):
@@ -61,8 +62,8 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
     datetimes = []
     files = []
 
-    # for file in tqdm(audio_files[:n_predictions]):
-    for file in tqdm(audio_files):
+    for file in tqdm(audio_files[:n_predictions]):
+    # for file in tqdm(audio_files):
         print(f"\n\nProcessing audio file  -->  {file}")
         wav_data, sr = sf.read(os.path.join(audio_path, file), dtype=np.int16)
         waveform = wav_data / 32768.0  # 2**15
@@ -155,16 +156,31 @@ if __name__ == "__main__":
     else:
         audio_path = args.path
     
-    # variables 
-    if not args.abrev:
-        abrev = os.path.basename(audio_path) 
-        print(f"\nAbreviación para identificar las predicciones generadas: {abrev}")
+    if args.result_folder:  # Change from results_path to result_folder
+        results_dir = args.result_folder
     else:
+        parent_dir = os.path.dirname(audio_path)
+        results_folder = "Results"  
+        results_dir = os.path.join(parent_dir, results_folder)
+        if not os.path.isdir(results_dir):
+            os.mkdir(results_dir)
+            print(f"Carpeta de resultados 'Results' creada en {os.path.abspath(results_dir)}")
+    
+    # variables
+    if args.abrev:
         abrev = args.abrev
-
+    else:
+        # if the folder contains wavs files: the abrev is the name of that folder
+        if os.path.basename(audio_path).endswith('.wav') or os.path.basename(audio_path).endswith('.WAV'):
+            abrev = os.path.basename(audio_path).split('.')[0]
+            print(f"\nAbreviación para identificar las predicciones generadas: {abrev}")
+        # if else, the abrev is the name of the parent folder
+        else:
+            abrev = os.path.basename(os.path.dirname(audio_path))
+            print(f"\nAbreviación para identificar las predicciones generadas: {abrev}")
+            
     # set window size in minutes
     analysis_window_time = args.window # ventana de analisis en minutos
-    extract_audio = False # bandera para extraer clips de audio
 
     # get audio files
     audio_files = []
@@ -174,9 +190,7 @@ if __name__ == "__main__":
         else:
             print(f"Archivo {file} no es un archivo de audio")
     print(f"\n{len(audio_files)} archivos de audio encontrados")
-    # audio_files = [file for file in os.listdir(audio_path) if (file.endswith('.WAV') or file.endswith('.wav'))]
-    # audios_long(audio_files)
-    # exit()
+
     # get sample rate of the collection
     sample_rates = []
     valid_audio_files = []
@@ -198,17 +212,6 @@ if __name__ == "__main__":
         fs_model = np.median(sample_rates)
         print('\nLos audios tienen una frecuencia de muestreo diferente, El modelo evaluara la frecuencia predominante {}'.format(fs_model))
 
-    if args.result_folder:
-        results_folder = args.result_folder
-    else:
-        for subdir in audio_path.split('\\'):
-            if re.search(r'\d', subdir) != None:
-                results_folder = subdir
-
-    if not(os.path.isdir(results_folder)):
-        os.mkdir(results_folder)
-        print(f"\nCarpeta de resultados {results_folder} creada")
-
     # allow growth 
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
 
@@ -227,7 +230,8 @@ if __name__ == "__main__":
     print(f"{len(valid_audio_files)} procesados")
 
     # csv File
-    predictions_file = f'Urban_Model_{abrev}_{n_predictions}.csv'
-    data_df.to_csv(os.path.join(results_folder,predictions_file), index=False)
+    predictions_file = f'Urban_Model_{abrev}_{n_predictions}predict.csv'
+    data_df.to_csv(os.path.join(results_dir, predictions_file), index=False)
+
     print(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(results_folder,predictions_file))}")
 

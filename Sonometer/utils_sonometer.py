@@ -1,7 +1,11 @@
-# ver 0
+# ver 1
 # Nov.23
 # se corrige el error para el tratamiento del SV307
+# se incluye la representación de los percentiles L50, L5 y L1
+# se modifica la escala de colores de los heatmaps
+# se modifica la escala de la gráfica timeplot
 
+from calendar import weekday
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -160,7 +164,21 @@ def evaluation_period_str_valencia(hour_column):
     else:
         period = 'Ln_valencia'
     return period
-    
+
+def add_night_column(hour_column,df,day_col):
+    ''' Label based on hour columnn and weekday'''
+
+    night_list=['Lunes-Martes','Martes-Miércoles','Miércoles-Jueves','Jueves-Viernes','Viernes-Sábado','Sábado-Domingo','Domingo-Lunes']
+    night = ''
+ 
+    if hour_column >= 23:
+        night=night_list(df[day_col])
+
+    elif hour_column < 7:
+        night=night_list(df[day_col]-1)
+
+    return night
+
 def add_datetime_columns(df,date_col):
     """Add datetime Columns to Dataframe"""
     
@@ -204,6 +222,12 @@ def get_day_levels_valencia(df,laeq_column):
     return indicadores
 
 #-----------------------------------------------------------------------------------------
+
+# color scale
+
+cmap_dict = sns.color_palette(palette=["#C8FFC8", "#00C800", "#007800", "#FFFF00", "#FFC878", "#FF9600", "#FF0000", "#780000", "#FF00FF", "#8C3CFF", "#000078"],n_colors=11)
+    
+
 def plot_day_evolution(df, laeq_column:str, plotname:str):
     """ Lineplots for each day """
 
@@ -246,7 +270,7 @@ def plot_period_evolution(df, laeq_column:str, plotname:str):
                           )
         if ind == "Ln":
             plt.xlim(0, 6)
-        
+
         plt.title(ind)
         plt.ylabel('dB(A)')
         plt.xlabel('Hora')
@@ -262,16 +286,17 @@ def plot_heatmap(df,values_column: str, agg_func: str, plotname:str):
         agg_func (str): Aggregation function, Leq
         plotname (str): Prefix to name the plot
     """
-    
+       
     # pivot table and then heatmap
+    if len(,columns=['hour']) < 
     leq_day_hour = pd.pivot_table(df, values=values_column, index=['day'],columns=['hour'], aggfunc=agg_func).round(1)
     plt.figure(figsize=(20,5))
-    sns.heatmap(leq_day_hour, cmap=sns.cubehelix_palette(), annot=True,fmt='.1f')
+    sns.heatmap(leq_day_hour, vmin=30, vmax= 85, cmap=cmap_dict, annot=True)
     # fix for mpl bug that cuts off top/bottom of seaborn viz
-    b, t = plt.ylim() # discover the values for bottom and top
-    b += 0.5 # Add 0.5 to the bottom
-    t -= 0.5 # Subtract 0.5 from the top
-    plt.ylim(b, t) # update the ylim(bottom, top) values
+    # b, t = plt.ylim() # discover the values for bottom and top
+    # b += 0.5 # Add 0.5 to the bottom
+    # t -= 0.5 # Subtract 0.5 from the top
+    # plt.ylim(b, t) # update the ylim(bottom, top) values
     plt.xlabel('Hora')
     plt.ylabel('Día')
     plt.tight_layout()
@@ -290,8 +315,10 @@ def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str, percen
     #oca = df.resample(f'{agg_period}s').agg({'oca': 'min'})
 
     L90 = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(0.1)
-    L10 = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(0.9)
     L50 = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(0.5)
+    L10 = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(0.9)
+    L5 = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(0.95)
+    L1 = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(0.99)
 
 
     hours = mdates.HourLocator(interval = 2)
@@ -300,15 +327,18 @@ def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str, percen
 
     x = leq_agg.index
     ax.plot(x, leq_agg.values,linewidth=3, color='red')
-    ax.plot(x, lmax.values,linewidth=0.8, color='#FF99FF')
-    ax.plot(x, lmin.values,linewidth=0.8, color='#92D050')
+    ax.plot(x, lmax.values,linewidth=1, color='#FF99FF')
+    ax.plot(x, lmin.values,linewidth=1, color='#92D050')
     # OCA
     # #ax.plot(x, oca.values, color='#00B0F0')
 
     if percentiles:
-        ax.plot(x,L90,linewidth=0.8, color='#525252')
-        ax.plot(x,L10,linewidth=0.8, color='#8497B0')
-
+        ax.plot(x,L90,linewidth=0.5, color='#9E9E9E')
+        ax.plot(x,L50,linewidth=0.5, color='#FFABAB')
+        ax.plot(x,L10,linewidth=0.5, color='#B2E2F2')
+        ax.plot(x,L5,linewidth=0.5, color='#6EB5FF')
+        ax.plot(x,L1,linewidth=0.5, color='#B28DFF')
+    
     
     ax.xaxis.set_major_locator(hours)
     h_fmt = mdates.DateFormatter('%H:%M')
@@ -318,11 +348,22 @@ def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str, percen
     plt.ylabel('dB(A)')
     plt.xlabel('Hora')
     plt.xticks(rotation=45)
-    plt.ylim([30,115])
+    plt.ylim([30,105])
     #plt.grid()
-    plt.legend(['LAeq','Lmax','Lmin','L90','L10'],bbox_to_anchor=(1.1, 1.05))
+    plt.legend(['LAeq','Lmax','Lmin','L90','L50','L10','L5','L1'],bbox_to_anchor=(1.1, 1.05))
      
 
     plt.tight_layout()
     plt.savefig(f'{plotname}_{agg_period}s_timeplot.png',dpi=150)
+    plt.close()
+
+def plot_indheatmap(df, plotname:str, ind_column:str):
+    
+    indicadores_table = pd.pivot_table(data=df,index="day",columns="indicador_str",values=ind_column,aggfunc=leq).round(1)
+    print(indicadores_table)
+    sns.heatmap(indicadores_table, annot=True,fmt=".1f",linewidth=0.5, cmap=cmap_dict,vmin=30,vmax=85)
+    
+    indicadores_table.to_excel(f"{plotname}_indicadores.xlsx")
+    
+    plt.savefig(f"{plotname}_indicadores.png")
     plt.close()

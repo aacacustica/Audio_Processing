@@ -73,8 +73,6 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
         count = 0
         if len(waveform) > w_size:
             for fstart in range(0, len(waveform) - w_size + 1, w_size):
-                # print(range(0, len(waveform) - w_size + 1, w_size))
-                # exit()
                 scores, _ = yamnet.predict(np.reshape(waveform[fstart:fstart+w_size], [1, -1]), steps=1)
                 prediction = np.mean(scores, axis=0)
 
@@ -134,9 +132,7 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
     
     return df_sorted
 
-
-if __name__ == "__main__":
-    # set up parser 
+def argument_parser():
     parser = argparse.ArgumentParser(description='Inferencia Yamnet de todos los archivos de audio en un directorio')
     parser.add_argument('-p','--path', type=str, help='Directorio para ser procesado')
     parser.add_argument('-a', '--abrev', type=str, help='Abreviación para identificar las predicciones generadas')
@@ -144,6 +140,10 @@ if __name__ == "__main__":
     parser.add_argument('-n','--n-predictions', type=int, default=1, help='Number of predictions to be generated')
     parser.add_argument('-r', '--result-folder', type=str, default=None, help='Location where the results should be saved')
     args = parser.parse_args()
+    return args
+
+if __name__ == "__main__":
+    args = argument_parser()
 
     if not args.n_predictions:
         n_predictions = 5

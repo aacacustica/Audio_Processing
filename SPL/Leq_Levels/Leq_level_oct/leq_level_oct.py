@@ -131,8 +131,7 @@ if __name__ == '__main__':
     file_hander.setFormatter(formatter)
     logger.addHandler(file_hander)
 
-    parser = argparse.ArgumentParser(
-        description='Calculo de niveles los archivos de audio en un directorio')
+    parser = argparse.ArgumentParser(description='Calculo de niveles los archivos de audio en un directorio')
     parser.add_argument('-p','--path', type=str, help='Directorio para ser procesado')
     parser.add_argument('-a', '--abrev', type=str, help='Abreviación para identificar las predicciones generadas')
     parser.add_argument('-r','--results-path', type=str, help='Directorio para guardar los resultados')
@@ -147,9 +146,8 @@ if __name__ == '__main__':
     if args.results_path:
         results_dir = args.results_path
     else:
-        # If results path is not provided, create a "Results" folder in the parent directory of the input directory
         parent_dir = os.path.dirname(audio_path)
-        results_folder = "Results"  # Name for the results folder
+        results_folder = "Results"  
         results_dir = os.path.join(parent_dir, results_folder)
         if not os.path.isdir(results_dir):
             os.mkdir(results_dir)

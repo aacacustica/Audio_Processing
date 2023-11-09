@@ -127,7 +127,6 @@ def leq_level_oct_fft(audio_files:list, fs_filterbanks:float , w_size:int , C:fl
 ######################
 
 if __name__ == '__main__':
-    # set up logger
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     file_hander = logging.FileHandler('spl_level_logs.txt')
@@ -135,7 +134,6 @@ if __name__ == '__main__':
     file_hander.setFormatter(formatter)
     logger.addHandler(file_hander)
 
-    # Argument parser
     parser = argparse.ArgumentParser(
         description='Calculo de niveles los archivos de audio en un directorio')
     parser.add_argument('-p','--path', type=str, help='Directorio para ser procesado')
@@ -152,9 +150,8 @@ if __name__ == '__main__':
     if args.results_path:
         results_dir = args.results_path
     else:
-        # If results path is not provided, create a "Results" folder in the parent directory of the input directory
         parent_dir = os.path.dirname(audio_path)
-        results_folder = "Results"  # Name for the results folder
+        results_folder = "Results"
         results_dir = os.path.join(parent_dir, results_folder)
         if not os.path.isdir(results_dir):
             os.mkdir(results_dir)

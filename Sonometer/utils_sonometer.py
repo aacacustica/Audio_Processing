@@ -288,7 +288,7 @@ def plot_heatmap(df,values_column: str, agg_func: str, plotname:str):
     """
        
     # pivot table and then heatmap
-    if len(,columns=['hour']) < 
+    # if len(,columns=['hour']) < 
     leq_day_hour = pd.pivot_table(df, values=values_column, index=['day'],columns=['hour'], aggfunc=agg_func).round(1)
     plt.figure(figsize=(20,5))
     sns.heatmap(leq_day_hour, vmin=30, vmax= 85, cmap=cmap_dict, annot=True)

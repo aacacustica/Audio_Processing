@@ -15,8 +15,10 @@ from matplotlib.colors import ListedColormap
 
 
 # parametros
-CARPETA_MEDIDAS = r'C:\AAC varios\Procesos 4.0\CODIGOS\REGISTROS' # formato oblgatorio para la carpeta de medidas -> REGISTROS_CONTINUOS_{nombre_expediente}
-CARPETA_MEDIDAS = os.path.normpath(CARPETA_MEDIDAS)
+# CARPETA_MEDIDAS = r'C:\AAC varios\Procesos 4.0\CODIGOS\REGISTROS' # formato oblgatorio para la carpeta de medidas -> REGISTROS_CONTINUOS_{nombre_expediente}
+# CARPETA_MEDIDAS = os.path.normpath(CARPETA_MEDIDAS)
+
+CARPETA_MEDIDAS = "/run/user/1000/gvfs/smb-share:server=192.168.205.117,share=aac_server/OCIO/MER_OCIO_BILBAO_2023"
 
 LIMITE_DIA = 65
 LIMITE_NOCHE = 55
@@ -217,8 +219,8 @@ for folder in folders:
 flatten_list = [element for sublist in n_registro for element in sublist]
 print(f'\nflatten_list {flatten_list}')
 
-flatten_list_VALENCIA = [element for sublist in n_registro_valencia for element in sublist]
-print(f"Flatten list valencia: {flatten_list_VALENCIA}")
+# flatten_list_VALENCIA = [element for sublist in n_registro_valencia for element in sublist]
+# print(f"Flatten list valencia: {flatten_list_VALENCIA}")
 
 ################ SAVE INDICADORES NORMALES ################
 df_indicadores["reg"] = flatten_list
@@ -230,8 +232,8 @@ df_indicadores.to_csv(f'indicadores_{clase_registro}.csv')
 
 
 ################ SAVE INDICADORES VALENCIA ################
-df_indicadores_valencia["reg"] = flatten_list_VALENCIA
-print(f'\nDataFrame with flatten list: {df_indicadores_valencia["reg"]}')
+# df_indicadores_valencia["reg"] = flatten_list_VALENCIA
+# print(f'\nDataFrame with flatten list: {df_indicadores_valencia["reg"]}')
 
-df_indicadores_valencia.to_csv('indicadores_valencia.csv')
+# df_indicadores_valencia.to_csv('indicadores_valencia.csv')
 # print(f'\nflatten_list {df_indicadores_valencia.to_csv('indicadores_valencia.csv')}')

@@ -147,6 +147,19 @@ if __name__ == '__main__':
         audio_path = 'C:/Users/CALC_COLOMBIA/Desktop/AUDIOS_ID/petronor_03_mar/audiomoth_petronor'
     else:
         audio_path = args.path
+
+    #results directory
+    if args.results_path:
+        results_dir = args.results_path
+    else:
+        # If results path is not provided, create a "Results" folder in the parent directory of the input directory
+        parent_dir = os.path.dirname(audio_path)
+        results_folder = "Results"  # Name for the results folder
+        results_dir = os.path.join(parent_dir, results_folder)
+        if not os.path.isdir(results_dir):
+            os.mkdir(results_dir)
+            print(f"Carpeta de resultados 'Results' creada en {os.path.abspath(results_dir)}")
+   
     #  Variables 
     if not args.abrev:
         abrev = os.path.basename(audio_path) # Nombre para ser usado en carpeta de resultados
@@ -178,16 +191,6 @@ if __name__ == '__main__':
     else:
         fs_filterbanks = np.median(sample_rates)
         logger.info('los audios tienen una frecuencia de muestreo diferente, El modelo evaluara la frecuencia predominante {}'.format(fs_filterbanks))
-
-    #results directory
-    if args.results_path:
-        results_dir = args.results_path
-    else:
-        results_folder = os.path.basename(audio_path)
-        results_dir = os.path.join(os.getcwd(), results_folder)
-        if not os.path.isdir(results_dir):
-            os.mkdir(results_dir)
-            print(f"Carpeta de resultados {results_folder} creada en {os.path.abspath(results_dir)}")
 
     # Get calibration constant
     metadata = audio_metadata.load(os.path.join(audio_path, valid_audio_files[0]))

@@ -17,7 +17,7 @@ import datetime
 ######################
 ## Function Section ##
 ######################
-def write_csv_all_levels(audio_files:list ,fs_filterbanks:float , w_size: int, C:float, results_folder:str):
+def leq_levels_oct(audio_files:list ,fs_filterbanks:float , w_size: int, C:float, results_folder:str):
     """ Write a CSV with noise levels and 1/3 octave spectrum of a list of audio files
 
     Args:
@@ -124,15 +124,13 @@ def write_csv_all_levels(audio_files:list ,fs_filterbanks:float , w_size: int, C
 ######################
 
 if __name__ == '__main__':
-    # set up logger
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
-    file_hander = logging.FileHandler('spl_level_logs.logt')
+    file_hander = logging.FileHandler('spl_level_logs.log')
     formatter =logging.Formatter('%(asctime)s:%(levelname)s:%(name)s:%(message)s')
     file_hander.setFormatter(formatter)
     logger.addHandler(file_hander)
 
-    # Argument parser
     parser = argparse.ArgumentParser(
         description='Calculo de niveles los archivos de audio en un directorio')
     parser.add_argument('-p','--path', type=str, help='Directorio para ser procesado')
@@ -141,10 +139,22 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if not args.path:
-        audio_path = 'C:/Users/CALC_COLOMBIA/Desktop/AUDIOS_ID/petronor_03_mar/audiomoth_petronor'
+        audio_path = "\\192.168.205.117\AAC_Server\OCIO\MER_OCIO_BILBAO_2023\BASURTO\AUDIOMOTH"
     else:
         audio_path = args.path
-    #  Variables 
+    
+    #results directory
+    if args.results_path:
+        results_dir = args.results_path
+    else:
+        # If results path is not provided, create a "Results" folder in the parent directory of the input directory
+        parent_dir = os.path.dirname(audio_path)
+        results_folder = "Results"  # Name for the results folder
+        results_dir = os.path.join(parent_dir, results_folder)
+        if not os.path.isdir(results_dir):
+            os.mkdir(results_dir)
+            print(f"Carpeta de resultados 'Results' creada en {os.path.abspath(results_dir)}")
+    
     if not args.abrev:
         abrev = os.path.basename(audio_path) # Nombre para ser usado en carpeta de resultados
     else:
@@ -176,16 +186,6 @@ if __name__ == '__main__':
         fs_filterbanks = np.median(sample_rates)
         logger.info('los audios tienen una frecuencia de muestreo diferente, El modelo evaluara la frecuencia predominante {}'.format(fs_filterbanks))
 
-    #results directory
-    if args.results_path:
-        results_dir = args.results_path
-    else:
-        results_folder = os.path.basename(audio_path)
-        results_dir = os.path.join(os.getcwd(), results_folder)
-        if not os.path.isdir(results_dir):
-            os.mkdir(results_dir)
-            print(f"Carpeta de resultados {results_folder} creada en {os.path.abspath(results_dir)}")
-
     # Get calibration constant
     metadata = audio_metadata.load(os.path.join(audio_path, valid_audio_files[0]))
     calibration_dict = {
@@ -212,16 +212,10 @@ if __name__ == '__main__':
     else:
         C = -10.16
         logger.info(f"Calibration constant set to {C} for songmeter")
-        
-    ### Otras constantes de calibracion
-    #C = -14.29 # audiomoth 1khz tone low gain
-    #C = 7.3 # RPI S3 puerto tenerife y puerto Bilbao
-    #C = -10.16  # Songmeter  
-    #C = 14.67 # Tascam
 
     w_size = int(fs_filterbanks) 
 
-    write_csv_all_levels(audio_files=valid_audio_files,
+    leq_levels_oct(audio_files=valid_audio_files,
                              fs_filterbanks=fs_filterbanks,
                              w_size=w_size,
                              C=C,

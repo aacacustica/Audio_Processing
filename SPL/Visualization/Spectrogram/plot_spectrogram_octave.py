@@ -34,14 +34,17 @@ def octave_band(file: str, start_time=None, end_time=None):
 def plot_spectrogram_octave(df_filtered, file_name: str, interval_hours: int):
     frequencies = df_filtered.columns.astype(float)
     values = df_filtered.values.T
-
-    # Identifying valid frequency bands
     valid_frequencies = frequencies[~np.all(np.isnan(values) | np.isinf(values), axis=1)]
 
-    # Adjust plot to include only valid frequency bands
+    # Creating a list of frequency labels from the valid octave bands
+    freq_labels = [f"{freq} Hz" for freq in valid_frequencies]
+
     plt.figure(figsize=(23, 10))
-    plt.pcolormesh(df_filtered.index, valid_frequencies, values[frequencies.searchsorted(valid_frequencies)], shading='auto', cmap='inferno')
+    plt.pcolormesh(df_filtered.index, range(len(valid_frequencies)), values[frequencies.searchsorted(valid_frequencies)], shading='auto', cmap='inferno')
     plt.colorbar(label='Magnitude (dB)')
+
+    # Set y-axis to use valid octave band frequencies as labels
+    plt.yticks(range(len(valid_frequencies)), freq_labels)
     plt.ylabel('Frequency (Hz)')
     plt.xlabel('Time')
 
@@ -55,6 +58,7 @@ def plot_spectrogram_octave(df_filtered, file_name: str, interval_hours: int):
     plt.title(f'Spectrogram {file_name}')
     plt.tight_layout()
     plt.show()
+
 
 def argument_parser():
     parser = argparse.ArgumentParser(description='Plot Spectrogram from CSV File')

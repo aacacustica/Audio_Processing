@@ -43,8 +43,8 @@ def leq_levels_oct(audio_files:list ,fs_filterbanks:float , w_size: int, C:float
     df_all = pd.DataFrame()
     
     n_audio_files = 1
-    for audio_file in tqdm(audio_files[:n_audio_files]):      
-    # for audio_file in tqdm(audio_files):
+    # for audio_file in tqdm(audio_files[:n_audio_files]):      
+    for audio_file in tqdm(audio_files):
         try:        
             db = []
             x, _ = sf.read(os.path.join(audio_path,audio_file))

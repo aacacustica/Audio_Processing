@@ -1,5 +1,6 @@
-# ver 0
+# ver 1
 # Nov.23
+# se elimina la representación INDHEATMAP, que pasa a utils_general y se desahabilita el cálculo de los indicadores de Valencia
 
 
 from ntpath import join
@@ -161,7 +162,6 @@ for folder in folders:
 
         if PLOT_INDHEATMAP:
             plot_indheatmap(df, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN"])
-
 
         ############### INDICADORES NORMALES ###############
         ############################################################

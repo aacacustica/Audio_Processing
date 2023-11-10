@@ -1,7 +1,9 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from datetime import datetime, timedelta
+import matplotlib.dates as mdates
+import argparse
+import os
 
 # octave bands list
 octave_bands = [
@@ -11,51 +13,68 @@ octave_bands = [
     '6349.6', '8000.0', '10079.37', '12699.21', '16000.0', '20158.74'
 ]
 
-# desired time interval to analyze
-time_intervals = [
-    ("2022-04-05 10:00:00", "2022-04-05 11:00:00"),
-    ("2022-04-05 18:00:00", "2022-04-05 19:00:00"),
-    ("2022-04-06 04:00:00", "2022-04-06 05:00:00"),
-    ("2022-04-07 08:00:00", "2022-04-07 09:00:00")
-]
+def get_name(file: str):
+    return os.path.basename(file).split('.')[0]
 
-def octave_band(file, start_time, end_time):
+def octave_band(file: str, start_time=None, end_time=None):
     df = pd.read_csv(file, sep=',')
+    df['date'] = pd.to_datetime(df['date'])
     df.set_index('date', inplace=True)
-    df_filtered = df.loc[start_time:end_time]
+
+    if start_time and end_time:
+        df_filtered = df.loc[start_time:end_time]
+    else:
+        df_filtered = df
+
     df_filtered = df_filtered[octave_bands]
     df_filtered = df_filtered[df_filtered != -float('inf')]
     df_filtered = df_filtered.drop(columns=['20158.74'])
     return df_filtered
 
-def plot_spectrogram_octave(df_filtered, start_time, end_time):
-    times = df_filtered.index
+def plot_spectrogram_octave(df_filtered, file_name: str, interval_hours: int):
     frequencies = df_filtered.columns.astype(float)
     values = df_filtered.values.T
-    
-    start_dt = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
-    end_dt = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
-    ticks_intervals = [start_dt + timedelta(minutes=i) for i in range(0, int((end_dt - start_dt).total_seconds() / 60) + 1, 10)]
-    
-    ticks_intervals_str = [time.strftime("%Y-%m-%d %H:%M:%S") for time in ticks_intervals]
-    tick_labels = [time.strftime("%H:%M:%S") for time in ticks_intervals]
+    valid_frequencies = frequencies[~np.all(np.isnan(values) | np.isinf(values), axis=1)]
+
+    # Creating a list of frequency labels from the valid octave bands
+    freq_labels = [f"{freq} Hz" for freq in valid_frequencies]
 
     plt.figure(figsize=(23, 10))
-    plt.pcolormesh(times, frequencies, values, shading='auto', cmap='inferno')
+    plt.pcolormesh(df_filtered.index, range(len(valid_frequencies)), values[frequencies.searchsorted(valid_frequencies)], shading='auto', cmap='inferno')
     plt.colorbar(label='Magnitude (dB)')
-    plt.yscale('log')
+
+    # Set y-axis to use valid octave band frequencies as labels
+    plt.yticks(range(len(valid_frequencies)), freq_labels)
     plt.ylabel('Frequency (Hz)')
     plt.xlabel('Time')
-    plt.title(f'Spectrogram from {start_time} to {end_time}')
-    plt.xticks(ticks_intervals_str, tick_labels)
+
+    # Set x-axis to specified hour intervals
+    plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=interval_hours))
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
+
+    # Rotate date labels for clarity
+    plt.xticks(rotation=90)
+
+    plt.title(f'Spectrogram {file_name}')
     plt.tight_layout()
     plt.show()
 
-def main():
-    file_path = "C:/Users/GIS2/Documents/tratamiento_audios/tratamiento_audio/tenerife-20220404/tenerife-20220404_sploct.csv"
-    for start_time, end_time in time_intervals:
-        df = octave_band(file_path, start_time, end_time)
-        plot_spectrogram_octave(df, start_time, end_time)
 
-if '__main__' == "__main__":
+def argument_parser():
+    parser = argparse.ArgumentParser(description='Plot Spectrogram from CSV File')
+    parser.add_argument('-p', '--path', required=True, type=str, help='Path to the CSV file')
+    parser.add_argument('-i', '--interval', required=False, type=int, default=5, help='Interval in hours for x-axis ticks')
+    args = parser.parse_args()
+    return args
+
+def main():
+    args = argument_parser()
+    file_path = args.path
+    interval_hours = args.interval
+    file_name = get_name(file_path)
+    
+    df = octave_band(file_path)
+    plot_spectrogram_octave(df, file_name, interval_hours)
+
+if __name__ == "__main__":
     main()

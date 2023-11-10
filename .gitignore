@@ -11,6 +11,7 @@ db.sqlite3-journal
 # Virtual environment
 venv/
 ENV/
+*venv*
 
 # OS generated files
 .DS_Store

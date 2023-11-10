@@ -34,15 +34,11 @@ build/
 # Image files
 *.jpg
 *.drawio
+*.csv
+*xlsx
+*.png
 
 # things to ignore:
 
 git_commands.txt
 01_leq_levels
-
-SPL/Visualization/Levels_Graphics/*.csv
-SPL/Visualization/Levels_Graphics/*xlsx
-SPL/Visualization/Levels_Graphics/*.png
-
-SPL/Visualization/Levels_Graphics/venv_level_graphics
-

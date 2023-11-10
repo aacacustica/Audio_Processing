@@ -16,7 +16,8 @@ from matplotlib.colors import ListedColormap
 
 
 # parametros
-CARPETA_MEDIDAS = r'C:\Users\AAC-ASM\Desktop\bilbao' # formato oblgatorio para la carpeta de medidas -> REGISTROS_CONTINUOS_{nombre_expediente}
+# CARPETA_MEDIDAS = r'C:\Users\AAC-ASM\Desktop\bilbao' # formato oblgatorio para la carpeta de medidas -> REGISTROS_CONTINUOS_{nombre_expediente}
+CARPETA_MEDIDAS = "/run/user/1000/gvfs/smb-share:server=192.168.205.117,share=aac_server/OCIO/MER_OCIO_BILBAO_2023"
 CARPETA_MEDIDAS = os.path.normpath(CARPETA_MEDIDAS)
 
 LIMITE_DIA = 65
@@ -47,7 +48,7 @@ n_registro = []
 df_common_format = pd.DataFrame()
 
 for folder in folders:
-    print(f'\n\n ************** Folder working with: {folder}\n **************')
+    print(f'\n\n ************** Folder working with: {folder} **************')
     
     reg_folder = os.path.join(CARPETA_MEDIDAS, folder)
     file = [os.path.join(reg_folder,f) for f in os.listdir(reg_folder) if f.endswith(('.csv','.xlsx','.CSV'))]

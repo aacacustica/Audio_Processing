@@ -135,10 +135,10 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
 
 def argument_parser():
     parser = argparse.ArgumentParser(description='Inferencia Yamnet de todos los archivos de audio en un directorio')
-    parser.add_argument('-p','--path', type=str, help='Directorio para ser procesado')
+    parser.add_argument('-p', '--path', required=True, type=str, help='Directorio para ser procesado')
     parser.add_argument('-a', '--abrev', type=str, help='Abreviación para identificar las predicciones generadas')
-    parser.add_argument('-w','--window', type=float, default=1, help='tamaño ventana de analisis en minutos')
-    parser.add_argument('-n','--n-predictions', type=int, default=1, help='Number of predictions to be generated')
+    parser.add_argument('-w', '--window', type=float, default=14.99, help='tamaño ventana de analisis en minutos')
+    parser.add_argument('-n', '--n-predictions', type=int, default=1, help='Number of predictions to be generated')
     parser.add_argument('-r', '--result-folder', type=str, default=None, help='Location where the results should be saved')
     args = parser.parse_args()
     return args
@@ -146,27 +146,10 @@ def argument_parser():
 if __name__ == "__main__":
     args = argument_parser()
 
-    if not args.n_predictions:
-        n_predictions = 5
-    else:
-        n_predictions = args.n_predictions
+    # set path to audio files
+    audio_path = args.path
 
-    if not args.path:
-        audio_path = 'E:/AUDIOS_ID/NOISEPORT_audios_portbilbao/oficinas_portlab-20221028/reduced_audios/20221025'
-    else:
-        audio_path = args.path
-    
-    if args.result_folder:  # Change from results_path to result_folder
-        results_dir = args.result_folder
-    else:
-        parent_dir = os.path.dirname(audio_path)
-        results_folder = "Results"  
-        results_dir = os.path.join(parent_dir, results_folder)
-        if not os.path.isdir(results_dir):
-            os.mkdir(results_dir)
-            print(f"Carpeta de resultados 'Results' creada en {os.path.abspath(results_dir)}")
-    
-    # variables
+    # set abreviation
     if args.abrev:
         abrev = args.abrev
     else:
@@ -178,10 +161,25 @@ if __name__ == "__main__":
         else:
             abrev = os.path.basename(os.path.dirname(audio_path))
             print(f"\nAbreviación para identificar las predicciones generadas: {abrev}")
-            
-    # set window size in minutes
+    
+    # set analysis window size in minutes
     analysis_window_time = args.window # ventana de analisis en minutos
+    
+    # set number of predictions
+    n_predictions = args.n_predictions
+    
+    # set results folder
+    if args.result_folder:
+        results_dir = args.result_folder
+    else:
+        parent_dir = os.path.dirname(audio_path)
+        results_folder = "Results"  
+        results_dir = os.path.join(parent_dir, results_folder)
+        if not os.path.isdir(results_dir):
+            os.mkdir(results_dir)
+            print(f"Carpeta de resultados 'Results' creada en {os.path.abspath(results_dir)}")
 
+    
     # get audio files
     audio_files = []
     for file in os.listdir(audio_path):
@@ -230,7 +228,7 @@ if __name__ == "__main__":
     print(f"{len(valid_audio_files)} procesados")
 
     # csv File
-    predictions_file = f'Urban_Model_{abrev}_{n_predictions}predict.csv'
+    predictions_file = f'Urban_Model_{abrev}_{n_predictions}_pred.csv'
     data_df.to_csv(os.path.join(results_dir, predictions_file), index=False)
 
     print(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(results_folder,predictions_file))}")

@@ -8,7 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 plt.style.use("bmh")
-from utils_general import *
+from utils_sonometer import *
 from tqdm import tqdm
 import time
 from matplotlib.colors import ListedColormap
@@ -125,6 +125,7 @@ for folder in folders:
         print("Fecha inicio:", start_date, "|| Fecha fin:", end_date, "|| Duration:", (duration))
 
         
+    
         # drop the beginning and ending of the measurement(15min)
         try:
             df = df.loc[start_date + pd.Timedelta(900, unit='seconds'):end_date - pd.Timedelta(900, unit='seconds')]

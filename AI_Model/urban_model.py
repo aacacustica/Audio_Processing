@@ -18,8 +18,8 @@ tf.get_logger().setLevel(logging.ERROR)
 
 logging.basicConfig(level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s', 
-                    filename='urban_model.log', 
-                    filemode='w')
+                    filename='urban_model.log',
+                    )
 
 def audios_long(audio_files):
     """Print how long the audio files are."""
@@ -67,14 +67,17 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
     probs_original = [] 
     datetimes = []
     files = []
+    audio_to_process = 10
 
-    for file in tqdm(audio_files[:n_predictions]):
+    for file in tqdm(audio_files[:audio_to_process]):
     # for file in tqdm(audio_files):
         logging.info(f"Processing audio file  -->  {file}")
         wav_data, sr = sf.read(os.path.join(audio_path, file), dtype=np.int16)
         waveform = wav_data / 32768.0  # 2**15
-        w_size = int(w_time * 60 * sr)
+        # w_size = int(w_time * 60 * sr)
         # w_size = w_time * 60 * sr
+        w_size = int(round(14.99 * 60 * sr))
+        
         print_audio_time(w_size, sr, wav_data)      
 
         count = 0
@@ -141,8 +144,8 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
 
 def argument_parser():
     parser = argparse.ArgumentParser(description='Inferencia Yamnet de todos los archivos de audio en un directorio')
-    parser.add_argument('-p', '--path', required=True, type=str, help='Directorio para ser procesado')
-    parser.add_argument('-a', '--abrev', type=str, help='Abreviación para identificar las predicciones generadas')
+    parser.add_argument('-p', '--path', required=True, type=str, help='Path to the audio files')
+    parser.add_argument('-a', '--abrev', type=str, help='Name to identify the predictions file')
     parser.add_argument('-w', '--window', type=float, default=14.99, help='tamaño ventana de analisis en minutos')
     parser.add_argument('-n', '--n-predictions', type=int, default=1, help='Number of predictions to be generated')
     parser.add_argument('-r', '--result-folder', type=str, default=None, help='Location where the results should be saved')

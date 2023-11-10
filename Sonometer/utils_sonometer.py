@@ -165,17 +165,17 @@ def evaluation_period_str_valencia(hour_column):
         period = 'Ln_valencia'
     return period
 
-def add_night_column(hour_column,df,day_col):
+def add_night_column(hour_column, day_col):
     ''' Label based on hour columnn and weekday'''
 
-    night_list=['Lunes-Martes','Martes-Miércoles','Miércoles-Jueves','Jueves-Viernes','Viernes-Sábado','Sábado-Domingo','Domingo-Lunes']
+    night_list=["Lunes-Martes","Martes-Miércoles","Miércoles-Jueves","Jueves-Viernes","Viernes-Sábado","Sábado-Domingo","Domingo-Lunes"]
     night = ''
  
     if hour_column >= 23:
-        night=night_list(df[day_col])
+        night=night_list[day_col]
 
     elif hour_column < 7:
-        night=night_list(df[day_col]-1)
+        night=night_list[day_col-1]
 
     return night
 
@@ -183,6 +183,7 @@ def add_datetime_columns(df,date_col):
     """Add datetime Columns to Dataframe"""
     
     #df['day_hour'] = df.apply(lambda x: str(x[date_col].day) + '-' + str(x[date_col].hour),axis=1)
+    df['date'] = df[date_col].dt.date
     df['day'] = df[date_col].dt.day
     df['hour'] = df[date_col].dt.hour
     df['weekday'] = df[date_col].dt.weekday
@@ -277,6 +278,25 @@ def plot_period_evolution(df, laeq_column:str, plotname:str):
         fig.savefig(f"{plotname}_{ind}period_evolution.png",dpi=150)
         plt.close()
 
+def plot_night_evolution(df, laeq_column:str, plotname:str):
+
+    df_temp = df[df["indicador_str"] == 'Ln']
+    print(df_temp)
+
+    fig = sns.relplot(data=df_temp,
+                        x="hour",
+                        y=laeq_column,
+                        kind="line",
+                        style="night_str",
+                        estimator=leq,
+                        )
+
+    plt.title('Evolución noche')
+    plt.ylabel('dB(A)')
+    plt.xlabel('Hora')
+    fig.savefig(f"{plotname}_night_evolution.png",dpi=150)
+    plt.close()
+
 def plot_heatmap(df,values_column: str, agg_func: str, plotname:str):
     """Plot heatmap of pivot table with hour evolution of each day,
 
@@ -288,8 +308,7 @@ def plot_heatmap(df,values_column: str, agg_func: str, plotname:str):
     """
        
     # pivot table and then heatmap
-    if len(,columns=['hour']) < 
-    leq_day_hour = pd.pivot_table(df, values=values_column, index=['day'],columns=['hour'], aggfunc=agg_func).round(1)
+    leq_day_hour = pd.pivot_table(df, values=values_column, index=['date'],columns=['hour'], aggfunc=agg_func).round(1)
     plt.figure(figsize=(20,5))
     sns.heatmap(leq_day_hour, vmin=30, vmax= 85, cmap=cmap_dict, annot=True)
     # fix for mpl bug that cuts off top/bottom of seaborn viz
@@ -359,11 +378,13 @@ def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str, percen
 
 def plot_indheatmap(df, plotname:str, ind_column:str):
     
-    indicadores_table = pd.pivot_table(data=df,index="day",columns="indicador_str",values=ind_column,aggfunc=leq).round(1)
+    indicadores_table = pd.pivot_table(data=df,index="date",columns="indicador_str",values=ind_column,aggfunc=leq).round(1)
     print(indicadores_table)
     sns.heatmap(indicadores_table, annot=True,fmt=".1f",linewidth=0.5, cmap=cmap_dict,vmin=30,vmax=85)
     
     indicadores_table.to_excel(f"{plotname}_indicadores.xlsx")
     
+    plt.ylabel('Día')
+    plt.xlabel('Indicador')
     plt.savefig(f"{plotname}_indicadores.png")
     plt.close()

@@ -1,6 +1,6 @@
-# ver 1
+# ver 0
 # Nov.23
-# se elimina la representación INDHEATMAP, que pasa a utils_general y se desahabilita el cálculo de los indicadores de Valencia
+
 
 from ntpath import join
 import numpy as np
@@ -8,14 +8,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 plt.style.use("bmh")
-from utils_sonometer import *
+from utils_general import *
 from tqdm import tqdm
 import time
 from matplotlib.colors import ListedColormap
 
 
 # parametros
-CARPETA_MEDIDAS = r'C:\AAC varios\Procesos 4.0\CODIGOS\REGISTROS' # formato oblgatorio para la carpeta de medidas -> REGISTROS_CONTINUOS_{nombre_expediente}
+CARPETA_MEDIDAS = r'C:\Users\AAC-ASM\Desktop\bilbao' # formato oblgatorio para la carpeta de medidas -> REGISTROS_CONTINUOS_{nombre_expediente}
 CARPETA_MEDIDAS = os.path.normpath(CARPETA_MEDIDAS)
 
 LIMITE_DIA = 65
@@ -27,7 +27,8 @@ PLOT_TIME = True
 PLOT_HEATMAP = True
 PLOT_INDHEATMAP = True
 PLOT_DAY_EVOLUTION = False
-PLOT_PERIOD_EVOLUTION = False
+PLOT_PERIOD_EVOLUTION = True
+PLOT_NIGHT_EVOLUTION = True
 
 if  PERIODO_AGREGACION > 299:
     PERCENTILES = True
@@ -153,14 +154,14 @@ for folder in folders:
         # add indicators column
         df['indicador_str'] = df.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
         print(f'\n Indicador HOUR table (df["indicador_str"]):\n {df["indicador_str"]}')
-        
+                
         if PLOT_PERIOD_EVOLUTION:
             plot_period_evolution(df, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
 
         if PLOT_INDHEATMAP:
             plot_indheatmap(df, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN"])
 
-        
+
         ############### INDICADORES NORMALES ###############
         ############################################################
         indicadores = get_day_levels(df, laeq_column=slm_dict['LAEQ_COLUMN'])
@@ -181,8 +182,16 @@ for folder in folders:
         # print(f'\nDataFram Indicadores Valencia:\n {df_indicadores_valencia}')
         
         # df_indicadores_valencia.loc[df_indicadores_valencia['reg'].isnull(), 'reg'] = folder
+        
+        
+        # add nights column
 
-                
+        df['night_str'] = df.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
+        print(f'\n Indicador HOUR table (df["night_str"]):\n {df["night_str"]}')
+
+        if PLOT_NIGHT_EVOLUTION:
+            plot_night_evolution(df,laeq_column=slm_dict["LAEQ_COLUMN"],plotname=folder)
+        
         # WHY JUST TAKE 3???? ['R42', 'R42', 'R42', 'R43', 'R43', 'R43', 'R44', 'R44', 'R44', 'R45', 'R45', 'R45', 'R46', 'R46', 'R46', 'R47', 'R47', 'R47', 'R48', 'R48', 'R48', 'R49', 'R49', 'R49', 'R50', 'R50', 'R50', 'R51', 'R51', 'R51']
         n_registro.append([folder for i in range(3)])
         
@@ -217,8 +226,8 @@ for folder in folders:
 flatten_list = [element for sublist in n_registro for element in sublist]
 print(f'\nflatten_list {flatten_list}')
 
-flatten_list_VALENCIA = [element for sublist in n_registro_valencia for element in sublist]
-print(f"Flatten list valencia: {flatten_list_VALENCIA}")
+# flatten_list_VALENCIA = [element for sublist in n_registro_valencia for element in sublist]
+# print(f"Flatten list valencia: {flatten_list_VALENCIA}")
 
 ################ SAVE INDICADORES NORMALES ################
 df_indicadores["reg"] = flatten_list
@@ -230,8 +239,8 @@ df_indicadores.to_csv(f'indicadores_{clase_registro}.csv')
 
 
 ################ SAVE INDICADORES VALENCIA ################
-df_indicadores_valencia["reg"] = flatten_list_VALENCIA
-print(f'\nDataFrame with flatten list: {df_indicadores_valencia["reg"]}')
+# df_indicadores_valencia["reg"] = flatten_list_VALENCIA
+# print(f'\nDataFrame with flatten list: {df_indicadores_valencia["reg"]}')
 
-df_indicadores_valencia.to_csv('indicadores_valencia.csv')
+# df_indicadores_valencia.to_csv('indicadores_valencia.csv')
 # print(f'\nflatten_list {df_indicadores_valencia.to_csv('indicadores_valencia.csv')}')

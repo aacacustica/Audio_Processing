@@ -15,8 +15,8 @@ import time
 from matplotlib.colors import ListedColormap
 
 
-# parametros
-CARPETA_MEDIDAS = r'C:\Users\AAC-ASM\Desktop\bilbao' # formato oblgatorio para la carpeta de medidas -> REGISTROS_CONTINUOS_{nombre_expediente}
+# CARPETA_MEDIDAS = r'C:\Users\AAC-ASM\Desktop\bilbao' # formato oblgatorio para la carpeta de medidas -> REGISTROS_CONTINUOS_{nombre_expediente}
+CARPETA_MEDIDAS = r'\\192.168.205.117\AAC_Server\OCIO\MER_OCIO_BILBAO_2023\bilbao_mr' # formato oblgatorio para la carpeta de medidas -> REGISTROS_CONTINUOS_{nombre_expediente}
 CARPETA_MEDIDAS = os.path.normpath(CARPETA_MEDIDAS)
 
 LIMITE_DIA = 65
@@ -47,7 +47,7 @@ n_registro = []
 df_common_format = pd.DataFrame()
 
 for folder in folders:
-    print(f'\n\n ************** Folder working with: {folder}\n **************')
+    print(f'\n\n ************** Folder working with: {folder} **************')
     
     reg_folder = os.path.join(CARPETA_MEDIDAS, folder)
     file = [os.path.join(reg_folder,f) for f in os.listdir(reg_folder) if f.endswith(('.csv','.xlsx','.CSV'))]
@@ -162,6 +162,7 @@ for folder in folders:
 
         if PLOT_INDHEATMAP:
             plot_indheatmap(df, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN"])
+
 
         ############### INDICADORES NORMALES ###############
         ############################################################

@@ -89,9 +89,7 @@ def get_data_cesva(measurement_folder: str):
                 cesva_files.append(os.path.join(root, name))
 
     df_all = pd.DataFrame()
-    # merge files
     for file_path in cesva_files:
-        # read file
         try:
             df = pd.read_csv(file_path,sep=';',header=11,decimal=',', usecols=cols_to_use)
             df.dropna(subset=['Elapsed t'],inplace=True) 
@@ -102,7 +100,6 @@ def get_data_cesva(measurement_folder: str):
             df.dropna(subset=['Elapsed t'],inplace=True)   
         except Exception as e: 
             pass
-        
         #df = df[['Date hour','Elapsed t','LA1s','LAFmax1s','LAFmin1s']]
         df_all = pd.concat([df_all,df])
     df = df_all.copy()
@@ -110,7 +107,7 @@ def get_data_cesva(measurement_folder: str):
     for col in df.columns:
         if col not in  ["Date hour", "Elapsed t"]:
             df[col] = pd.to_numeric(df[col])
-    #parse datetime
+    
     df['datetime'] = df.apply(lambda x: datetime.strptime(x['Date hour'], '%d/%m/%Y %H:%M:%S'),axis=1)
     df['datetime'] = pd.to_datetime(df['datetime'])
     return df

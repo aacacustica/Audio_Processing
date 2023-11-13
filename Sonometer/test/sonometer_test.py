@@ -7,7 +7,6 @@ from config import *
 from logging_config import setup_logging
 
 def load_data(file_path):
-    logger.info(f"Loading data from {file_path}...")
     slm_type_function_mapping = {
         "814": (get_data_814, larson814_dict),
         "824": (get_data_824, larson824_dict),
@@ -17,43 +16,37 @@ def load_data(file_path):
         "cesva": (get_data_cesva, cesva_dict),
         "audio-post": (get_data_audio, audiopost_dict)
     }
-    
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
         try:
             df = func(file_path)
-            logger.info(f"SLM type: {slm_type}")
             return df, slm_type, slm_dict
         except Exception as e:
             logger.error(f"Failed to load data for SLM type {slm_type}: {e}")
             continue
-
     raise ValueError("SLM type not found or file could not be loaded")
 
 # process a single folder
 def process_folder(folder_path):
-    # if a folder named "CESVA" exists inside the folder_path
-    cesva_path = os.path.join(folder_path, "CESVA")
+    cesva_path = os.path.join(folder_path, 'CESVA')
     if os.path.isdir(cesva_path):
-        logger.info(f"CESVA folder found, processing: {cesva_path}")
-        # list all the subfolders inside the CESVA folder
-        subfolders = [os.path.join(cesva_path, folder) for folder in os.listdir(cesva_path) if os.path.isdir(os.path.join(cesva_path, folder))]
-        logger.info(f"Subfolders in CESVA: {subfolders}")
-        # process each subfolder to find files
+        subfolders = [f for f in os.listdir(cesva_path) if os.path.isdir(os.path.join(cesva_path, f))]
         for subfolder in subfolders:
-            files = [os.path.join(subfolder, f) for f in os.listdir(subfolder) if f.endswith(('.csv', '.xlsx', '.CSV'))]
+            subfolder_path = os.path.join(cesva_path, subfolder)
+            files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV'))]
             logger.info(f"Files found in {subfolder}: {files}")
             if files:
-                return load_data(files[0])
-        logger.warning(f"No measurement files found in CESVA subfolders of {folder_path}")
+                return load_data(files[0])  
+            else:
+                logger.warning(f"No measurement files found in {subfolder_path}")
     else:
-        # process the folder directly if no CESVA subfolder
         files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith(('.csv', '.xlsx', '.CSV'))]
-        logger.info(f"Files found in {folder_path}: {files}")
-        if files:
-            return load_data(files[0])
-        logger.warning(f"No measurement files found in {folder_path}")
+        logger.info(f"Files found: {files}")
+        if not files:
+            logger.warning(f"No measurement files found in {folder_path}")
+            return None, None, None
+        return load_data(files[0]) 
 
-    return None, None, None
+    return None, None, None 
 
 # process all folders
 def process_all_folders(folders):

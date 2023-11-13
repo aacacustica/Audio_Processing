@@ -8,7 +8,14 @@ import os
 cmap_dict = sns.color_palette(palette=["#C8FFC8", "#00C800", "#007800", "#FFFF00", "#FFC878", "#FF9600", "#FF0000", "#780000", "#FF00FF", "#8C3CFF", "#000078"],n_colors=11)
     
 def plot_day_evolution(df, output_dir: str, logger, laeq_column:str, plotname:str):
-    """ Lineplots for each day """
+    """ Lineplots for each day
+    Args:
+        df (_type_): DataFrame
+        output_dir (str): Output directory
+        logger (_type_): Logger
+        laeq_column (str): Name of the column to use, tipycally LAeq
+        plotname (str): Prefix to name the plot
+    """
     fig = sns.relplot(data=df,
                       x="hour",
                       y=laeq_column,
@@ -35,7 +42,14 @@ def plot_day_evolution(df, output_dir: str, logger, laeq_column:str, plotname:st
     logger.info(f"Day evolution plot saved to {output_dir}/{plotname}/{plotname}_day_evolution.png")
 
 def plot_period_evolution(df,  output_dir: str, logger, laeq_column:str, plotname:str):
-    """ Lineplots per each period """
+    """ Lineplots per each period
+    Args:
+        df (_type_): DataFrame
+        output_dir (str): Output directory
+        logger (_type_): Logger
+        laeq_column (str): Name of the column to use, tipycally LAeq
+        plotname (str): Prefix to name the plot
+    """
     for ind in df["indicador_str"].unique():
         df_temp = df[df["indicador_str"] == ind]
 
@@ -58,7 +72,14 @@ def plot_period_evolution(df,  output_dir: str, logger, laeq_column:str, plotnam
     logger.info(f"Period evolution plot saved to {output_dir}/{plotname}/{plotname}_{ind}period_evolution.png")
 
 def plot_night_evolution(df, output_dir: str, logger, laeq_column:str, plotname:str):
-    """ Lineplots per each night"""
+    """ Lineplots per each night
+    Args:
+        df (_type_): DataFrame
+        output_dir (str): Output directory
+        logger (_type_): Logger
+        laeq_column (str): Name of the column to use, tipycally LAeq
+        plotname (str): Prefix to name the plot
+    """
     df_temp = df[df["indicador_str"] == 'Ln']
 
     fig = sns.relplot(data=df_temp,
@@ -81,6 +102,8 @@ def plot_heatmap(df, output_dir: str, logger, values_column: str, agg_func: str,
     """Plot heatmap of pivot table with hour evolution of each day,
     Args:
         df (_type_): DataFrame
+        output_dir (str): Output directory
+        logger (_type_): Logger
         values_column (str): Name of the column to use, tipycally LAeq
         agg_func (str): Aggregation function, Leq
         plotname (str): Prefix to name the plot
@@ -105,7 +128,16 @@ def plot_heatmap(df, output_dir: str, logger, values_column: str, agg_func: str,
     logger.info(f"Heatmap plot saved to {output_dir}/{plotname}/{plotname}_heatmap.png")
     
 def make_timeplot(df, output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: bool):
-    """ Plot Indicator time evolution in the measurument period """
+    """ Plot Indicator time evolution in the measurument period 
+    Args:
+        df (_type_): DataFrame
+        output_dir (str): Output directory
+        logger (_type_): Logger
+        columns_dict (dict): Dictionary with the columns names
+        agg_period (int): Aggregation period in seconds
+        plotname (str): Prefix to name the plot
+        percentiles (bool): If True, plot percentiles
+    """
     leq_agg = df.resample(f'{agg_period}s').agg({columns_dict['LAEQ_COLUMN']: [leq]})
     lmax = df.resample(f'{agg_period}s').agg({columns_dict['LAMAX_COLUMN']: 'max'})
     lmin = df.resample(f'{agg_period}s').agg({columns_dict['LAMIN_COLUMN']: 'min'})
@@ -157,7 +189,14 @@ def make_timeplot(df, output_dir: str, logger, columns_dict: dict, agg_period: i
     logger.info(f"Timeplot saved to {output_dir}/{plotname}/{plotname}_{agg_period}s_timeplot.png")
 
 def plot_indheatmap(df, output_dir: str, logger, plotname:str, ind_column:str):
-    """Plot heatmap of pivot table with hour evolution of each day"""
+    """Plot heatmap of pivot table with hour evolution of each day
+    Args:
+        df (_type_): DataFrame
+        output_dir (str): Output directory
+        logger (_type_): Logger
+        plotname (str): Prefix to name the plot
+        ind_column (str): Name of the column to use, tipycally LAeq
+    """
     indicadores_table = pd.pivot_table(data=df,index="date",columns="indicador_str",values=ind_column,aggfunc=leq).round(1)
     sns.heatmap(indicadores_table, annot=True,fmt=".1f",linewidth=0.5, cmap=cmap_dict,vmin=30,vmax=85)
     

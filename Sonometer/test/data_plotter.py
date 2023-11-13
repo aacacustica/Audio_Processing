@@ -6,10 +6,8 @@ from utils_plotter import *
 
 cmap_dict = sns.color_palette(palette=["#C8FFC8", "#00C800", "#007800", "#FFFF00", "#FFC878", "#FF9600", "#FF0000", "#780000", "#FF00FF", "#8C3CFF", "#000078"],n_colors=11)
     
-def plot_day_evolution(df, laeq_column:str, plotname:str):
+def plot_day_evolution(df, output_dir: str, logger, laeq_column:str, plotname:str):
     """ Lineplots for each day """
-
-
     fig = sns.relplot(data=df,
                       x="hour",
                       y=laeq_column,
@@ -33,9 +31,8 @@ def plot_day_evolution(df, laeq_column:str, plotname:str):
     fig.savefig(f"{plotname}_day_evolution.png",dpi=150)
     plt.close()
 
-def plot_period_evolution(df, laeq_column:str, plotname:str):
+def plot_period_evolution(df,  output_dir: str, logger, laeq_column:str, plotname:str):
     """ Lineplots per each period """
-
     for ind in df["indicador_str"].unique():
         df_temp = df[df["indicador_str"] == ind]
 
@@ -55,8 +52,8 @@ def plot_period_evolution(df, laeq_column:str, plotname:str):
         fig.savefig(f"{plotname}_{ind}period_evolution.png",dpi=150)
         plt.close()
 
-def plot_night_evolution(df, laeq_column:str, plotname:str):
-
+def plot_night_evolution(df, output_dir: str, logger, laeq_column:str, plotname:str):
+    """ Lineplots per each night"""
     df_temp = df[df["indicador_str"] == 'Ln']
 
     fig = sns.relplot(data=df_temp,
@@ -73,7 +70,7 @@ def plot_night_evolution(df, laeq_column:str, plotname:str):
     fig.savefig(f"{plotname}_night_evolution.png",dpi=150)
     plt.close()
 
-def plot_heatmap(df,values_column: str, agg_func: str, plotname:str):
+def plot_heatmap(df, output_dir: str, logger, values_column: str, agg_func: str, plotname:str):
     """Plot heatmap of pivot table with hour evolution of each day,
 
     Args:
@@ -98,7 +95,7 @@ def plot_heatmap(df,values_column: str, agg_func: str, plotname:str):
     leq_day_hour.to_excel(f'{plotname}_hetmap_tabla_dia_hora.xlsx')
     plt.close()
     
-def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str, percentiles: bool):
+def make_timeplot(df, output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: bool):
     """ Plot Indicator time evolution in the measurument period """
     leq_agg = df.resample(f'{agg_period}s').agg({columns_dict['LAEQ_COLUMN']: [leq]})
     lmax = df.resample(f'{agg_period}s').agg({columns_dict['LAMAX_COLUMN']: 'max'})
@@ -148,8 +145,8 @@ def make_timeplot(df, columns_dict: dict, agg_period: int, plotname: str, percen
     plt.savefig(f'{plotname}_{agg_period}s_timeplot.png',dpi=150)
     plt.close()
 
-def plot_indheatmap(df, plotname:str, ind_column:str):
-    
+def plot_indheatmap(df, output_dir: str, logger, plotname:str, ind_column:str):
+    """Plot heatmap of pivot table with hour evolution of each day"""
     indicadores_table = pd.pivot_table(data=df,index="date",columns="indicador_str",values=ind_column,aggfunc=leq).round(1)
     sns.heatmap(indicadores_table, annot=True,fmt=".1f",linewidth=0.5, cmap=cmap_dict,vmin=30,vmax=85)
     

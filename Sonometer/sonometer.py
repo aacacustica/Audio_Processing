@@ -15,9 +15,8 @@ import time
 from matplotlib.colors import ListedColormap
 
 
-# parametros
 # CARPETA_MEDIDAS = r'C:\Users\AAC-ASM\Desktop\bilbao' # formato oblgatorio para la carpeta de medidas -> REGISTROS_CONTINUOS_{nombre_expediente}
-CARPETA_MEDIDAS = "/run/user/1000/gvfs/smb-share:server=192.168.205.117,share=aac_server/OCIO/MER_OCIO_BILBAO_2023"
+CARPETA_MEDIDAS = r'\\192.168.205.117\AAC_Server\OCIO\MER_OCIO_BILBAO_2023\bilbao_mr' # formato oblgatorio para la carpeta de medidas -> REGISTROS_CONTINUOS_{nombre_expediente}
 CARPETA_MEDIDAS = os.path.normpath(CARPETA_MEDIDAS)
 
 LIMITE_DIA = 65
@@ -34,8 +33,6 @@ PLOT_NIGHT_EVOLUTION = True
 
 if  PERIODO_AGREGACION > 299:
     PERCENTILES = True
-
-print(f'Current directory {os.getcwd()}\n')
 
 # list mesaurement files
 clase_registro = os.path.basename(CARPETA_MEDIDAS)
@@ -136,14 +133,7 @@ for folder in folders:
 
         #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
         #print(df)
-        
-        print("\n=================================")
-        print("=================================\n")
-        print("AFTER TRY AND EXCEPTS")
-        print("\n=================================")
-        print("=================================\n")
-        
-        
+
         if PLOT_TIME:
             make_timeplot(df, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
         
@@ -163,6 +153,7 @@ for folder in folders:
 
         if PLOT_INDHEATMAP:
             plot_indheatmap(df, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN"])
+
 
         ############### INDICADORES NORMALES ###############
         ############################################################

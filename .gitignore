@@ -33,6 +33,9 @@ build/
 
 # Image files
 *.jpg
+*.png
+*.csv
+*.xlsx
 *.drawio
 *.csv
 *xlsx

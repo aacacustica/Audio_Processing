@@ -48,7 +48,6 @@ def get_data_814(filename: str):
     df['datetime'] = pd.to_datetime(df['Date'] + ' '+ df['Time'])
     return df
 
-
 def get_data_lx_ES(filename: str):
     df = pd.read_excel(filename,sheet_name='Historia del tiempo', decimal=',')
     df['datetime'] = pd.to_datetime(df['Fecha'])
@@ -64,7 +63,6 @@ def get_data_824(filename: str):
     # print(df)
     return df
 
-
 def get_data_SV307(filename: str):
     df = pd.read_csv(filename,header=14,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
     if 'LAeq (Ch1, P1) [dB]' not in df.columns:
@@ -72,19 +70,15 @@ def get_data_SV307(filename: str):
     df['datetime'] = pd.to_datetime(df['Time'],format="%d/%m/%Y %H:%M:%S")
     return df
     
-
 def get_data_lx_EN(filename: str):
     df = pd.read_excel(filename,sheet_name=4)
     df['datetime'] = pd.to_datetime(df['Date'])
     return df
 
-
-
 def get_data_audio(filename: str):
     df = pd.read_csv(filename)
     df['datetime'] = pd.to_datetime(df['date'])
     return df 
-
 
 def get_data_cesva(measurement_folder: str):
     cesva_files = []
@@ -97,7 +91,6 @@ def get_data_cesva(measurement_folder: str):
     df_all = pd.DataFrame()
     # merge files
     for file_path in cesva_files:
-        
         # read file
         try:
             df = pd.read_csv(file_path,sep=';',header=11,decimal=',', usecols=cols_to_use)
@@ -109,27 +102,18 @@ def get_data_cesva(measurement_folder: str):
             df.dropna(subset=['Elapsed t'],inplace=True)   
         except Exception as e: 
             pass
-            
-
-            
         
         #df = df[['Date hour','Elapsed t','LA1s','LAFmax1s','LAFmin1s']]
         df_all = pd.concat([df_all,df])
-
-    print(df.columns)
     df = df_all.copy()
     del df_all
-
     for col in df.columns:
         if col not in  ["Date hour", "Elapsed t"]:
             df[col] = pd.to_numeric(df[col])
     #parse datetime
     df['datetime'] = df.apply(lambda x: datetime.strptime(x['Date hour'], '%d/%m/%Y %H:%M:%S'),axis=1)
     df['datetime'] = pd.to_datetime(df['datetime'])
-    
     return df
-
-
 
 #----------------------------------------------------------------------------------
 def evaluation_period_str(hour_column):

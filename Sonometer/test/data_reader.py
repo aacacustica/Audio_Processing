@@ -32,7 +32,7 @@ common_columns = ["datetime", "LAeq", "LAmax", "LAmin","ubicacion","slm_type"]
 
 day_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
-######################## Funciones Lectura #####################################
+######################## READER FUNCTIONS #####################################
 def get_data_814(filename: str):
     try:
         df = pd.read_csv(filename, header=16, encoding='latin1')

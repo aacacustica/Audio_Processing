@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+import argparse
 plt.style.use("bmh")
 from data_plotter import *
 from data_reader import *
@@ -8,7 +9,7 @@ from utils_plotter import *
 from config import *
 from logging_config import setup_logging
 
-def load_data(file_path):
+def load_data(file_path, logger):
     slm_type_function_mapping = {
         "814": (get_data_814, larson814_dict),
         "824": (get_data_824, larson824_dict),
@@ -27,7 +28,7 @@ def load_data(file_path):
             continue
     raise ValueError("SLM type not found or file could not be loaded")
 
-def process_folder(folder_path):
+def process_folder(folder_path, logger):
     cesva_path = os.path.join(folder_path, 'CESVA')
     if os.path.isdir(cesva_path):
         subfolders = [f for f in os.listdir(cesva_path) if os.path.isdir(os.path.join(cesva_path, f))]
@@ -36,7 +37,7 @@ def process_folder(folder_path):
             files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV'))]
             logger.info(f"Files found in {subfolder}: {files}")
             if files:
-                return load_data(files[0])  
+                return load_data(files[0], logger)  
             else:
                 logger.warning(f"No measurement files found in {subfolder_path}")
     else:
@@ -45,11 +46,11 @@ def process_folder(folder_path):
         if not files:
             logger.warning(f"No measurement files found in {folder_path}")
             return None, None, None
-        return load_data(files[0]) 
+        return load_data(files[0], logger) 
 
     return None, None, None 
 
-def process_all_folders(folders):
+def process_all_folders(folders, logger):
     df_indicadores = pd.DataFrame()
     n_registro = []
     df_common_format = pd.DataFrame()
@@ -59,7 +60,7 @@ def process_all_folders(folders):
         reg_folder = os.path.join(CARPETA_MEDIDAS, folder)
             
         try:
-            df, slm_type, slm_dict = process_folder(reg_folder)
+            df, slm_type, slm_dict = process_folder(reg_folder, logger)
             logger.info(f"SLM type: {slm_type}")
             if df is None:
                 continue
@@ -129,15 +130,39 @@ def process_all_folders(folders):
             logger.error(f"An error occurred while processing folder {folder}: {e}")
     return df_indicadores, n_registro, df_common_format
 
+def arg_parser():
+    parser = argparse.ArgumentParser(description='Plotting AudioMoth data')
+    parser.add_argument('-f', '--path_sonometers', type=str, required=True, help='Path to sonometers folder')
+    parser.add_argument('-a', '--agg_period', type=int, required=False, default=900, help='Aggregation period in seconds')
+    parser.add_argument('-o', '--output-dir', type=str, required=False, help='Output directory')
+    parser.add_argument('-p', '--percentiles', type=float, nargs='+', required=False, default=[90, 10], help='Percentiles to plot (L90 and L10 as default)')
+    return parser.parse_args()
 
-if __name__ == "__main__":
+def main():
     logger = setup_logging()
-    logger.info("Starting sonometer test script...")
-
+    args = arg_parser()
+    
+    if args.path_sonometers:
+        CARPETA_MEDIDAS = args.path_sonometers
+    else:
+        CARPETA_MEDIDAS = CARPETA_MEDIDAS
+    
+    if args.agg_period:
+        PERIODO_AGREGACION = args.agg_period
+    else:
+        PERIODO_AGREGACION = PERIODO_AGREGACION
+        
+    if args.output_dir:
+        # check if output directory exists
+        if not os.path.exists(args.output_dir):
+            os.makedirs(args.output_dir)
+    else:
+        args.output_dir = CARPETA_MEDIDAS + "/Results/"
+        
     clase_registro = os.path.basename(CARPETA_MEDIDAS)
     folders = [folder for folder in os.listdir(CARPETA_MEDIDAS) if os.path.isdir(os.path.join(CARPETA_MEDIDAS, folder))]
 
-    df_indicadores, n_registro, df_common_format = process_all_folders(folders)
+    df_indicadores, n_registro, df_common_format = process_all_folders(folders, logger)
 
     flatten_list = [element for sublist in n_registro for element in sublist]    
     # flatten_list_VALENCIA = [element for sublist in n_registro_valencia for element in sublist]
@@ -152,3 +177,6 @@ if __name__ == "__main__":
     # df_indicadores_valencia.to_csv('indicadores_valencia.csv')
 
     logger.info("Finished sonometer test script")
+
+if __name__ == "__main__":
+    main()

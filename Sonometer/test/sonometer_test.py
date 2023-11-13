@@ -2,7 +2,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 plt.style.use("bmh")
-from utils_sonometer_test import *
+from data_plotter import *
+from data_reader import *
+from utils_plotter import *
 from config import *
 from logging_config import setup_logging
 
@@ -25,12 +27,10 @@ def load_data(file_path):
             continue
     raise ValueError("SLM type not found or file could not be loaded")
 
-# process a single folder
 def process_folder(folder_path):
     cesva_path = os.path.join(folder_path, 'CESVA')
     if os.path.isdir(cesva_path):
         subfolders = [f for f in os.listdir(cesva_path) if os.path.isdir(os.path.join(cesva_path, f))]
-        print(f"Subfolders found: {subfolders}")
         for subfolder in subfolders:
             subfolder_path = os.path.join(cesva_path, subfolder)
             files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV'))]
@@ -49,7 +49,6 @@ def process_folder(folder_path):
 
     return None, None, None 
 
-# process all folders
 def process_all_folders(folders):
     df_indicadores = pd.DataFrame()
     n_registro = []
@@ -96,7 +95,6 @@ def process_all_folders(folders):
             if PLOT_INDHEATMAP:
                 plot_indheatmap(df, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN"])
 
-
             ############### INDICADORES NORMALES ###############
             indicadores = get_day_levels(df, laeq_column=slm_dict['LAEQ_COLUMN'])
             df_indicadores = pd.concat([df_indicadores, indicadores])
@@ -114,8 +112,6 @@ def process_all_folders(folders):
             
             n_registro.append([folder for i in range(3)])
             
-            # n_registro_valencia.append([folder for i in range(2)])
-            
             # formato comun
             map_dict = {slm_dict['LAEQ_COLUMN']  : "LAeq",
                         slm_dict['LAMAX_COLUMN'] : "LAmax",
@@ -123,51 +119,36 @@ def process_all_folders(folders):
             
             df_temp = df.copy()
             df_temp = df_temp.reset_index()
-            
             df_temp = df_temp.rename(columns=map_dict)
-            
             df_temp["ubicacion"] = folder # nombre de las carpetas obligatorio referencia a ubicación de la medida
             df_temp["slm_type"] = slm_type
-            
             df_temp = df_temp[common_columns]
             df_common_format = pd.concat([df_common_format,df_temp])
                 
         except Exception as e:
             logger.error(f"An error occurred while processing folder {folder}: {e}")
-
     return df_indicadores, n_registro, df_common_format
 
-# Main execution block
+
 if __name__ == "__main__":
     logger = setup_logging()
     logger.info("Starting sonometer test script...")
 
-    # CARPETA_MEDIDAS = 
     clase_registro = os.path.basename(CARPETA_MEDIDAS)
     folders = [folder for folder in os.listdir(CARPETA_MEDIDAS) if os.path.isdir(os.path.join(CARPETA_MEDIDAS, folder))]
 
     df_indicadores, n_registro, df_common_format = process_all_folders(folders)
 
-    flatten_list = [element for sublist in n_registro for element in sublist]
-    logger.info(f'\nflatten_list {flatten_list}')
-    
+    flatten_list = [element for sublist in n_registro for element in sublist]    
     # flatten_list_VALENCIA = [element for sublist in n_registro_valencia for element in sublist]
-    # logger.info(f"Flatten list valencia: {flatten_list_VALENCIA}")
-    
 
     ################ SAVE INDICADORES NORMALES ################
     df_indicadores["reg"] = flatten_list
-    print(f'\nDataFrame with flatten list: {df_indicadores["reg"]}')
-
     df_indicadores.to_csv(f'indicadores_{clase_registro}.csv')
-    # print(f'\nflatten_list {df_indicadores.to_csv(f'indicadores_{clase_registro}.csv')}')
     #df_common_format.to_csv(f'df_{clase_registro}.csv',index=False)
-
+    
     ################ SAVE INDICADORES VALENCIA ################
     # df_indicadores_valencia["reg"] = flatten_list_VALENCIA
-    # print(f'\nDataFrame with flatten list: {df_indicadores_valencia["reg"]}')
-
     # df_indicadores_valencia.to_csv('indicadores_valencia.csv')
-    # print(f'\nflatten_list {df_indicadores_valencia.to_csv('indicadores_valencia.csv')}')
 
     logger.info("Finished sonometer test script")

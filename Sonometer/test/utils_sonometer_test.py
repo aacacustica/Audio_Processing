@@ -1,10 +1,3 @@
-# ver 1
-# Nov.23
-# se corrige el error para el tratamiento del SV307
-# se incluye la representación de los percentiles L50, L5 y L1
-# se modifica la escala de colores de los heatmaps
-# se modifica la escala de la gráfica timeplot
-
 from calendar import weekday
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -13,7 +6,6 @@ import seaborn as sns
 import numpy as np
 from datetime import datetime
 import os
-
 
 ######################## SLM COLUMN MAPS #####################################
 

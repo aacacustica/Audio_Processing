@@ -1,8 +1,3 @@
-# ver 1
-# Nov.23
-# se elimina la representación INDHEATMAP, que pasa a utils_general y se desahabilita el cálculo de los indicadores de Valencia
-
-
 from ntpath import join
 import numpy as np
 import pandas as pd
@@ -14,25 +9,8 @@ from tqdm import tqdm
 import time
 from matplotlib.colors import ListedColormap
 
+from config import *
 
-# CARPETA_MEDIDAS = r'C:\Users\AAC-ASM\Desktop\bilbao' # formato oblgatorio para la carpeta de medidas -> REGISTROS_CONTINUOS_{nombre_expediente}
-CARPETA_MEDIDAS = r'\\192.168.205.117\AAC_Server\OCIO\MER_OCIO_BILBAO_2023\bilbao_mr' # formato oblgatorio para la carpeta de medidas -> REGISTROS_CONTINUOS_{nombre_expediente}
-CARPETA_MEDIDAS = os.path.normpath(CARPETA_MEDIDAS)
-
-LIMITE_DIA = 65
-LIMITE_NOCHE = 55
-LIMITE_TARDE = 55
-PERIODO_AGREGACION = 900 # SEGUNDOS
-PERCENTILES = False
-PLOT_TIME = True
-PLOT_HEATMAP = True
-PLOT_INDHEATMAP = True
-PLOT_DAY_EVOLUTION = False
-PLOT_PERIOD_EVOLUTION = True
-PLOT_NIGHT_EVOLUTION = True
-
-if  PERIODO_AGREGACION > 299:
-    PERCENTILES = True
 
 # list mesaurement files
 clase_registro = os.path.basename(CARPETA_MEDIDAS)

@@ -8,7 +8,6 @@ from datetime import datetime
 import os
 
 ######################## SLM COLUMN MAPS #####################################
-
 larsonlx_dict = {'LAEQ_COLUMN': 'LAeq',
 'LAMAX_COLUMN': 'LAFmax',
 'LAMIN_COLUMN': 'LAFmin'}
@@ -37,19 +36,20 @@ audiopost_dict = {'LAEQ_COLUMN': 'LA',
 common_columns = ["datetime", "LAeq", "LAmax", "LAmin","ubicacion","slm_type"]
 
 day_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-#//////////////////////////////////////////////////////////////////////////////#
-######################## Funciones Lectura #####################################
 
-#------------------------------------------------------------------------------------
+######################## Funciones Lectura #####################################
 def get_data_814(filename: str):
-    df = pd.read_csv(filename,header=16)
+    try:
+        df = pd.read_csv(filename, header=16, encoding='latin1')
+    except UnicodeDecodeError:
+        df = pd.read_csv(filename, header=16)
     if "Leq" not in df.columns:
-        df = pd.read_csv(filename,header=19,sep=';')
-    df['datetime'] = pd.to_datetime(df['Date'] + ' '+ df['Time'])
+        df = pd.read_csv(filename, header=19, sep=';', encoding='latin1')
+    df['datetime'] = pd.to_datetime(df['Date'] + ' ' + df['Time'])
     return df
 
 def get_data_lx_ES(filename: str):
-    df = pd.read_excel(filename,sheet_name='Historia del tiempo', decimal=',')
+    df = pd.read_excel(filename, sheet_name='Historia del tiempo')
     df['datetime'] = pd.to_datetime(df['Fecha'])
     return df
 

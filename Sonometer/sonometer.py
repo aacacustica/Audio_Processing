@@ -34,8 +34,6 @@ PLOT_NIGHT_EVOLUTION = True
 if  PERIODO_AGREGACION > 299:
     PERCENTILES = True
 
-print(f'Current directory {os.getcwd()}\n')
-
 # list mesaurement files
 clase_registro = os.path.basename(CARPETA_MEDIDAS)
 folders = [folder for folder in os.listdir(CARPETA_MEDIDAS) if os.path.isdir(os.path.join(CARPETA_MEDIDAS,folder))]
@@ -135,14 +133,7 @@ for folder in folders:
 
         #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
         #print(df)
-        
-        print("\n=================================")
-        print("=================================\n")
-        print("AFTER TRY AND EXCEPTS")
-        print("\n=================================")
-        print("=================================\n")
-        
-        
+
         if PLOT_TIME:
             make_timeplot(df, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
         

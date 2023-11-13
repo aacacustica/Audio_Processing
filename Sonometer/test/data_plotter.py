@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import seaborn as sns
 from utils_plotter import *
+import os
 
 cmap_dict = sns.color_palette(palette=["#C8FFC8", "#00C800", "#007800", "#FFFF00", "#FFC878", "#FF9600", "#FF0000", "#780000", "#FF00FF", "#8C3CFF", "#000078"],n_colors=11)
     
@@ -28,7 +29,9 @@ def plot_day_evolution(df, output_dir: str, logger, laeq_column:str, plotname:st
     
     plt.ylabel('dB(A)')
     plt.xlabel('Hora')
-    fig.savefig(f"{plotname}_day_evolution.png",dpi=150)
+    os.makedirs(f'{output_dir}/{plotname}', exist_ok=True)
+    fig.savefig(f"{output_dir}/{plotname}/{plotname}_day_evolution.png",dpi=150)
+    # fig.savefig(f"{plotname}_day_evolution.png",dpi=150)
     plt.close()
 
 def plot_period_evolution(df,  output_dir: str, logger, laeq_column:str, plotname:str):
@@ -49,7 +52,8 @@ def plot_period_evolution(df,  output_dir: str, logger, laeq_column:str, plotnam
         plt.title(ind)
         plt.ylabel('dB(A)')
         plt.xlabel('Hora')
-        fig.savefig(f"{plotname}_{ind}period_evolution.png",dpi=150)
+        os.makedirs(f'{output_dir}/{plotname}', exist_ok=True)
+        fig.savefig(f"{output_dir}/{plotname}/{plotname}_{ind}period_evolution.png",dpi=150)
         plt.close()
 
 def plot_night_evolution(df, output_dir: str, logger, laeq_column:str, plotname:str):
@@ -67,7 +71,8 @@ def plot_night_evolution(df, output_dir: str, logger, laeq_column:str, plotname:
     plt.title('Evolución noche')
     plt.ylabel('dB(A)')
     plt.xlabel('Hora')
-    fig.savefig(f"{plotname}_night_evolution.png",dpi=150)
+    os.makedirs(f'{output_dir}/{plotname}', exist_ok=True)
+    fig.savefig(f"{output_dir}/{plotname}/{plotname}_night_evolution.png",dpi=150)
     plt.close()
 
 def plot_heatmap(df, output_dir: str, logger, values_column: str, agg_func: str, plotname:str):
@@ -90,9 +95,10 @@ def plot_heatmap(df, output_dir: str, logger, values_column: str, agg_func: str,
     plt.xlabel('Hora')
     plt.ylabel('Día')
     plt.tight_layout()
-    plt.savefig(f'{plotname}_heatmap.png',dpi=150)
+    os.makedirs(f'{output_dir}/{plotname}', exist_ok=True)
+    plt.savefig(f'{output_dir}/{plotname}/{plotname}_heatmap.png',dpi=150)
     #leq_day_hour.to_csv(f"{file[:-4]}_heatmap_mes_tabla_{month}_{year}.csv")
-    leq_day_hour.to_excel(f'{plotname}_hetmap_tabla_dia_hora.xlsx')
+    leq_day_hour.to_excel(f'{output_dir}/{plotname}/{plotname}_hetmap_tabla_dia_hora.xlsx')
     plt.close()
     
 def make_timeplot(df, output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: bool):
@@ -137,12 +143,12 @@ def make_timeplot(df, output_dir: str, logger, columns_dict: dict, agg_period: i
     plt.xlabel('Hora')
     plt.xticks(rotation=45)
     plt.ylim([30,105])
-    #plt.grid()
-    plt.legend(['LAeq','Lmax','Lmin','L90','L50','L10','L5','L1'],bbox_to_anchor=(1.1, 1.05))
+    plt.legend(['LAeq','Lmax','Lmin','L1','L5','L10', 'L90','L50'], bbox_to_anchor=(1.1, 1.05))
      
 
     plt.tight_layout()
-    plt.savefig(f'{plotname}_{agg_period}s_timeplot.png',dpi=150)
+    os.makedirs(f'{output_dir}/{plotname}', exist_ok=True)
+    plt.savefig(f'{output_dir}/{plotname}/{plotname}_{agg_period}s_timeplot.png',dpi=150)
     plt.close()
 
 def plot_indheatmap(df, output_dir: str, logger, plotname:str, ind_column:str):
@@ -150,9 +156,10 @@ def plot_indheatmap(df, output_dir: str, logger, plotname:str, ind_column:str):
     indicadores_table = pd.pivot_table(data=df,index="date",columns="indicador_str",values=ind_column,aggfunc=leq).round(1)
     sns.heatmap(indicadores_table, annot=True,fmt=".1f",linewidth=0.5, cmap=cmap_dict,vmin=30,vmax=85)
     
-    indicadores_table.to_excel(f"{plotname}_indicadores.xlsx")
+    indicadores_table.to_excel(f"{output_dir}/{plotname}/{plotname}_indicadores.xlsx")
     
     plt.ylabel('Día')
     plt.xlabel('Indicador')
-    plt.savefig(f"{plotname}_indicadores.png")
+    os.makedirs(f'{output_dir}/{plotname}', exist_ok=True)
+    plt.savefig(f"{output_dir}/{plotname}/{plotname}_indicadores.png")
     plt.close()

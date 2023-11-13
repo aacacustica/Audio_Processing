@@ -58,7 +58,7 @@ def process_all_folders(folders, output_dir, logger):
     for folder in folders:
         logger.info(f"\n\nProcessing folder: {folder}")
         reg_folder = os.path.join(CARPETA_MEDIDAS, folder)
-            
+
         try:
             df, slm_type, slm_dict = process_folder(reg_folder, logger)
             logger.info(f"SLM type: {slm_type}")
@@ -158,7 +158,7 @@ def main():
     else:
         os.makedirs(CARPETA_MEDIDAS + "/Results/Sonometer_plots", exist_ok=True)
         output_dir = CARPETA_MEDIDAS + "/Results/Sonometer_plots"
-            
+    
     if args.percentiles:
         PERCENTILES = args.percentiles
         

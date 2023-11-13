@@ -81,10 +81,16 @@ def get_data_audio(filename: str):
     return df 
 
 def get_data_cesva(measurement_folder: str):
-    # get up to the CESVA folder
-    measurement_folder = os.path.dirname(measurement_folder).split('CESVA')[0] + 'CESVA'
-    print(measurement_folder)
-    # exit()
+    if os.path.isfile(measurement_folder):
+        cesva_index = measurement_folder.find('CESVA')
+        if cesva_index != -1:
+            measurement_folder = measurement_folder[:cesva_index] + 'CESVA'
+        else:
+            raise ValueError("CESVA folder not found in the file path.")
+
+    elif 'CESVA' not in measurement_folder:
+        raise ValueError("The directory does not contain 'CESVA'.")
+    
     cesva_files = []
     cols_to_use = ['Date hour','Elapsed t','LA1s','LAFmax1s','LAFmin1s']
     for root, dirs, files in os.walk(measurement_folder, topdown=False):

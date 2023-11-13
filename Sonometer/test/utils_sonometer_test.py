@@ -81,6 +81,10 @@ def get_data_audio(filename: str):
     return df 
 
 def get_data_cesva(measurement_folder: str):
+    # get up to the CESVA folder
+    measurement_folder = os.path.dirname(measurement_folder).split('CESVA')[0] + 'CESVA'
+    print(measurement_folder)
+    # exit()
     cesva_files = []
     cols_to_use = ['Date hour','Elapsed t','LA1s','LAFmax1s','LAFmin1s']
     for root, dirs, files in os.walk(measurement_folder, topdown=False):

@@ -30,6 +30,7 @@ def process_folder(folder_path):
     cesva_path = os.path.join(folder_path, 'CESVA')
     if os.path.isdir(cesva_path):
         subfolders = [f for f in os.listdir(cesva_path) if os.path.isdir(os.path.join(cesva_path, f))]
+        print(f"Subfolders found: {subfolders}")
         for subfolder in subfolders:
             subfolder_path = os.path.join(cesva_path, subfolder)
             files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV'))]

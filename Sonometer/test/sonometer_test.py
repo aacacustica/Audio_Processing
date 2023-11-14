@@ -172,7 +172,8 @@ def main():
 
     ################ SAVE INDICADORES NORMALES ################
     df_indicadores["reg"] = flatten_list
-    df_indicadores.to_csv(f'indicadores_{clase_registro}.csv')
+    df_indicadores.to_csv(f'{output_dir}/indicadores_{clase_registro}.csv')
+    logger.info(f"Saved indicators to {output_dir}/indicadores_{clase_registro}.csv")
     #df_common_format.to_csv(f'df_{clase_registro}.csv',index=False)
     
     ################ SAVE INDICADORES VALENCIA ################

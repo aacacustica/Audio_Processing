@@ -34,7 +34,7 @@ def process_folder(folder_path, logger):
         subfolders = [f for f in os.listdir(cesva_path) if os.path.isdir(os.path.join(cesva_path, f))]
         for subfolder in subfolders:
             subfolder_path = os.path.join(cesva_path, subfolder)
-            files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV'))]
+            files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV', 'XLSX'))]
             logger.info(f"Files found in {subfolder}: {files}")
             if files:
                 return load_data(files[0], logger)  
@@ -64,7 +64,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
         try:
             df, slm_type, slm_dict = process_folder(reg_folder, logger)
-            logger.info(f"SLM type: {slm_type}")
+            logger.info(f"SLM type: {slm_type} - SLM dict: {slm_dict}")
             if df is None:
                 continue
 

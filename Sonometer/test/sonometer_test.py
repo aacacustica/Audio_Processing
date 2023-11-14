@@ -171,8 +171,6 @@ def main():
     
     if args.percentiles:
         PERCENTILES = args.percentiles
-    else:
-        PERCENTILES = config.PERCENTILES
         
     clase_registro = os.path.basename(input_folder)
     folders = [folder for folder in os.listdir(input_folder) if os.path.isdir(os.path.join(input_folder, folder))]

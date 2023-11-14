@@ -123,29 +123,32 @@ def plot_heatmap(df, folder_output_dir: str, logger, values_column: str, agg_fun
         agg_func (str): Aggregation function, Leq
         plotname (str): Prefix to name the plot
     """
-    leq_day_hour = pd.pivot_table(df, values=values_column, index=['date'],columns=['hour'], aggfunc=agg_func).round(1)
-    plt.figure(figsize=(20,5))
-    sns.heatmap(leq_day_hour, vmin=30, vmax= 85, cmap=cmap_dict, annot=True)
-    # fix for mpl bug that cuts off top/bottom of seaborn viz
-    # b, t = plt.ylim() # discover the values for bottom and top
-    # b += 0.5 # Add 0.5 to the bottom
-    # t -= 0.5 # Subtract 0.5 from the top
-    # plt.ylim(b, t) # update the ylim(bottom, top) values
-    plt.xlabel('Hora')
-    plt.ylabel('Día')
-    plt.title(f'{plotname} Nivel equivalente')
-    plt.tight_layout()
-    
-    os.makedirs(f'{folder_output_dir}', exist_ok=True)
-    plt.savefig(f'{folder_output_dir}/{plotname}_heatmap.png',dpi=150)
-    #leq_day_hour.to_csv(f"{file[:-4]}_heatmap_mes_tabla_{month}_{year}.csv")
-    leq_day_hour.to_excel(f'{folder_output_dir}/{plotname}_heatmap_tabla_dia_hora.xlsx')
-    
-    plt.close()
-    
-    logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}_heatmap.png")
-    logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_tabla_dia_hora.xlsx")
-    
+    try:
+        leq_day_hour = pd.pivot_table(df, values=values_column, index=['date'],columns=['hour'], aggfunc=agg_func).round(1)
+        plt.figure(figsize=(20,5))
+        sns.heatmap(leq_day_hour, vmin=30, vmax= 85, cmap=cmap_dict, annot=True)
+        # fix for mpl bug that cuts off top/bottom of seaborn viz
+        # b, t = plt.ylim() # discover the values for bottom and top
+        # b += 0.5 # Add 0.5 to the bottom
+        # t -= 0.5 # Subtract 0.5 from the top
+        # plt.ylim(b, t) # update the ylim(bottom, top) values
+        plt.xlabel('Hora')
+        plt.ylabel('Día')
+        plt.title(f'{plotname} Nivel equivalente')
+        plt.tight_layout()
+        
+        os.makedirs(f'{folder_output_dir}', exist_ok=True)
+        plt.savefig(f'{folder_output_dir}/{plotname}_heatmap.png',dpi=150)
+        #leq_day_hour.to_csv(f"{file[:-4]}_heatmap_mes_tabla_{month}_{year}.csv")
+        leq_day_hour.to_excel(f'{folder_output_dir}/{plotname}_heatmap_tabla_dia_hora.xlsx')
+        
+        plt.close()
+        
+        logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}_heatmap.png")
+        logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_tabla_dia_hora.xlsx")
+    except Exception as e:
+        logger.error(f"Error in plot_heatmap: {e}")
+        
 def make_timeplot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: list):
     """
     Plot Indicator time evolution in the measurement period.
@@ -221,18 +224,40 @@ def plot_indheatmap(df, folder_output_dir: str, logger, plotname:str, ind_column
         plotname (str): Prefix to name the plot
         ind_column (str): Name of the column to use, tipycally LAeq
     """
-    indicadores_table = pd.pivot_table(data=df,index="date",columns="indicador_str",values=ind_column,aggfunc=leq).round(1)
-    sns.heatmap(indicadores_table, annot=True,fmt=".1f",linewidth=0.5, cmap=cmap_dict,vmin=30,vmax=85)
+    try:
+        # Ld>21600
+        # Le>7200
+        # Ln>14400
+
+        # print(df.columns)
+        
+        #     Index(['Registro #', 'Tipo de registro', 'Fecha', 'Hora', 'LAeq', 'LAFmax',
+        #    'LAFmin', 'OVLD', 'Marcador', 'Comments', 'date', 'day', 'hour',
+        #    'weekday', 'day_name', 'indicador_str'],
+        #     dtype='object')
     
-    plt.ylabel('Día')
-    plt.xlabel('Indicador')
-    plt.title(f'{plotname} Indicadores')
+        print(df.head())
+        
+        # get the first and last date for each indicador
+        indicadores = df.groupby('indicador_str').agg({'date':['min','max']})
+        print(indicadores)
+        exit()
+        
+        indicadores_table = pd.pivot_table(data=df,index="date",columns="indicador_str",values=ind_column,aggfunc=leq).round(1)
+        sns.heatmap(indicadores_table, annot=True,fmt=".1f",linewidth=0.5, cmap=cmap_dict,vmin=30,vmax=85)
+        
+        plt.ylabel('Día')
+        plt.xlabel('Indicador')
+        plt.title(f'{plotname} Indicadores')
+        
+        os.makedirs(f'{folder_output_dir}', exist_ok=True)
+        plt.savefig(f"{folder_output_dir}/{plotname}_indicadores.png")
+        indicadores_table.to_excel(f"{folder_output_dir}/{plotname}_indicadores.xlsx")
+        
+        plt.close()
+        
+        logger.info(f"Indicadores data saved to {folder_output_dir}/{plotname}_indicadores.xlsx")
+        logger.info(f"Indicadores plot saved to {folder_output_dir}/{plotname}_indicadores.png")
     
-    os.makedirs(f'{folder_output_dir}', exist_ok=True)
-    plt.savefig(f"{folder_output_dir}/{plotname}_indicadores.png")
-    indicadores_table.to_excel(f"{folder_output_dir}/{plotname}_indicadores.xlsx")
-    
-    plt.close()
-    
-    logger.info(f"Indicadores data saved to {folder_output_dir}/{plotname}_indicadores.xlsx")
-    logger.info(f"Indicadores plot saved to {folder_output_dir}/{plotname}_indicadores.png")
+    except Exception as e:
+        logger.error(f"Error in plot_indheatmap: {e}")

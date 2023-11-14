@@ -24,7 +24,7 @@ def load_data(file_path, logger):
             df = func(file_path)
             return df, slm_type, slm_dict
         except Exception as e:
-            logger.error(f"Failed to load data for SLM type {slm_type}: {e}")
+            logger.warning(f"Failed to load data for SLM type {slm_type}: {e}")
             continue
     raise ValueError("SLM type not found or file could not be loaded")
 
@@ -50,7 +50,7 @@ def process_folder(folder_path, logger):
 
     return None, None, None 
 
-def process_all_folders(folders, output_dir, logger):
+def process_all_folders(folders, PERIODO_AGREGACION, PERCENTILES, logger):
     df_indicadores = pd.DataFrame()
     n_registro = []
     df_common_format = pd.DataFrame()
@@ -58,6 +58,9 @@ def process_all_folders(folders, output_dir, logger):
     for folder in folders:
         logger.info(f"\n\nProcessing folder: {folder}")
         reg_folder = os.path.join(CARPETA_MEDIDAS, folder)
+
+        folder_output_dir = os.path.join(reg_folder, "Results", "Sonometer_plots")
+        os.makedirs(folder_output_dir, exist_ok=True)
 
         try:
             df, slm_type, slm_dict = process_folder(reg_folder, logger)
@@ -82,19 +85,19 @@ def process_all_folders(folders, output_dir, logger):
             #print(df)
 
             if PLOT_TIME:
-                make_timeplot(df, output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
+                make_timeplot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
             if PLOT_HEATMAP:
-                plot_heatmap(df, output_dir, logger, values_column=slm_dict['LAEQ_COLUMN'], agg_func=leq,plotname=folder)
+                plot_heatmap(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN'], agg_func=leq,plotname=folder)
             if PLOT_DAY_EVOLUTION:
-                plot_day_evolution(df, output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
+                plot_day_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
 
             # add indicators column
             df['indicador_str'] = df.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
                     
             if PLOT_PERIOD_EVOLUTION:
-                plot_period_evolution(df, output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
+                plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
             if PLOT_INDHEATMAP:
-                plot_indheatmap(df, output_dir, logger, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN"])
+                plot_indheatmap(df, folder_output_dir, logger, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN"])
 
             ############### INDICADORES NORMALES ###############
             indicadores = get_day_levels(df, laeq_column=slm_dict['LAEQ_COLUMN'])
@@ -109,7 +112,7 @@ def process_all_folders(folders, output_dir, logger):
             df['night_str'] = df.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
 
             if PLOT_NIGHT_EVOLUTION:
-                plot_night_evolution(df, output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"],plotname=folder)
+                plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"],plotname=folder)
             
             n_registro.append([folder for i in range(3)])
             
@@ -145,27 +148,23 @@ def main():
     if args.path_sonometers:
         CARPETA_MEDIDAS = args.path_sonometers
     else:
-        CARPETA_MEDIDAS = CARPETA_MEDIDAS
-    
+        logger.error("Path to sonometers folder not provided")
+        raise ValueError("Path to sonometers folder not provided")
+
     if args.agg_period:
         PERIODO_AGREGACION = args.agg_period
     else:
-        PERIODO_AGREGACION = PERIODO_AGREGACION
-        
-    if args.output_dir:
-        os.makedirs(args.output_dir, exist_ok=True)
-        output_dir = args.output_dir
-    else:
-        os.makedirs(CARPETA_MEDIDAS + "/Results/Sonometer_plots", exist_ok=True)
-        output_dir = CARPETA_MEDIDAS + "/Results/Sonometer_plots"
+        PERIODO_AGREGACION = 900
     
     if args.percentiles:
         PERCENTILES = args.percentiles
+    else:
+        PERCENTILES = [90, 10]
         
     clase_registro = os.path.basename(CARPETA_MEDIDAS)
     folders = [folder for folder in os.listdir(CARPETA_MEDIDAS) if os.path.isdir(os.path.join(CARPETA_MEDIDAS, folder))]
 
-    df_indicadores, n_registro, df_common_format = process_all_folders(folders, output_dir, logger)
+    df_indicadores, n_registro, df_common_format = process_all_folders(folders, PERIODO_AGREGACION, PERCENTILES, logger)
 
     flatten_list = [element for sublist in n_registro for element in sublist]    
     # flatten_list_VALENCIA = [element for sublist in n_registro_valencia for element in sublist]

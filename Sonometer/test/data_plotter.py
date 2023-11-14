@@ -7,11 +7,11 @@ import os
 
 cmap_dict = sns.color_palette(palette=["#C8FFC8", "#00C800", "#007800", "#FFFF00", "#FFC878", "#FF9600", "#FF0000", "#780000", "#FF00FF", "#8C3CFF", "#000078"],n_colors=11)
     
-def plot_day_evolution(df, output_dir: str, logger, laeq_column:str, plotname:str):
+def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
     """ Lineplots for each day
     Args:
         df (_type_): DataFrame
-        output_dir (str): Output directory
+        folder_output_dir (str): Output directory
         logger (_type_): Logger
         laeq_column (str): Name of the column to use, tipycally LAeq
         plotname (str): Prefix to name the plot
@@ -36,18 +36,18 @@ def plot_day_evolution(df, output_dir: str, logger, laeq_column:str, plotname:st
     plt.ylabel('dB(A)')
     plt.xlabel('Hora')
     plt.title(f'Evolución día {plotname}')
-    os.makedirs(f'{output_dir}/{plotname}', exist_ok=True)
-    fig.savefig(f"{output_dir}/{plotname}/{plotname}_day_evolution.png",dpi=150)
-    df.to_excel(f"{output_dir}/{plotname}/{plotname}_day_evolution.xlsx")
+    os.makedirs(f'{folder_output_dir}/{plotname}', exist_ok=True)
+    fig.savefig(f"{folder_output_dir}/{plotname}/{plotname}_day_evolution.png",dpi=150)
+    df.to_excel(f"{folder_output_dir}/{plotname}/{plotname}_day_evolution.xlsx")
     plt.close()
-    logger.info(f"Day evolution plot saved to {output_dir}/{plotname}/{plotname}_day_evolution.png")
-    logger.info(f"Day evolution data saved to {output_dir}/{plotname}/{plotname}_day_evolution.xlsx")
+    logger.info(f"Day evolution plot saved to {folder_output_dir}/{plotname}/{plotname}_day_evolution.png")
+    logger.info(f"Day evolution data saved to {folder_output_dir}/{plotname}/{plotname}_day_evolution.xlsx")
 
-def plot_period_evolution(df,  output_dir: str, logger, laeq_column:str, plotname:str):
+def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, plotname:str):
     """ Lineplots per each period
     Args:
         df (_type_): DataFrame
-        output_dir (str): Output directory
+        folder_output_dir (str): Output directory
         logger (_type_): Logger
         laeq_column (str): Name of the column to use, tipycally LAeq
         plotname (str): Prefix to name the plot
@@ -68,18 +68,18 @@ def plot_period_evolution(df,  output_dir: str, logger, laeq_column:str, plotnam
         plt.title(f"Evolución {ind}")
         plt.ylabel('dB(A)')
         plt.xlabel('Hora')
-        os.makedirs(f'{output_dir}/{plotname}', exist_ok=True)
-        fig.savefig(f"{output_dir}/{plotname}/{plotname}_{ind}_evolution.png",dpi=150)
+        os.makedirs(f'{folder_output_dir}/{plotname}', exist_ok=True)
+        fig.savefig(f"{folder_output_dir}/{plotname}/{plotname}_{ind}_evolution.png",dpi=150)
         plt.close()
-        df_temp.to_excel(f"{output_dir}/{plotname}/{plotname}_{ind}_evolution.xlsx")
-    logger.info(f"Period evolution plot saved to {output_dir}/{plotname}/{plotname}_{ind}_evolution.png")
-    logger.info(f"Period evolution data saved to {output_dir}/{plotname}/{plotname}_{ind}_evolution.xlsx")
+        df_temp.to_excel(f"{folder_output_dir}/{plotname}/{plotname}_{ind}_evolution.xlsx")
+    logger.info(f"Period evolution plot saved to {folder_output_dir}/{plotname}/{plotname}_{ind}_evolution.png")
+    logger.info(f"Period evolution data saved to {folder_output_dir}/{plotname}/{plotname}_{ind}_evolution.xlsx")
 
-def plot_night_evolution(df, output_dir: str, logger, laeq_column:str, plotname:str):
+def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
     """ Lineplots per each night
     Args:
         df (_type_): DataFrame
-        output_dir (str): Output directory
+        folder_output_dir (str): Output directory
         logger (_type_): Logger
         laeq_column (str): Name of the column to use, tipycally LAeq
         plotname (str): Prefix to name the plot
@@ -97,18 +97,18 @@ def plot_night_evolution(df, output_dir: str, logger, laeq_column:str, plotname:
     plt.title(f'Evolución noche {plotname}')
     plt.ylabel('dB(A)')
     plt.xlabel('Hora')
-    os.makedirs(f'{output_dir}/{plotname}', exist_ok=True)
-    fig.savefig(f"{output_dir}/{plotname}/{plotname}_night_evolution.png",dpi=150)
+    os.makedirs(f'{folder_output_dir}/{plotname}', exist_ok=True)
+    fig.savefig(f"{folder_output_dir}/{plotname}/{plotname}_night_evolution.png",dpi=150)
     plt.close()
-    df_temp.to_excel(f"{output_dir}/{plotname}/{plotname}_night_evolution.xlsx")
-    logger.info(f"Night evolution plot saved to {output_dir}/{plotname}/{plotname}_night_evolution.png")
-    logger.info(f"Night evolution data saved to {output_dir}/{plotname}/{plotname}_night_evolution.xlsx")
+    df_temp.to_excel(f"{folder_output_dir}/{plotname}/{plotname}_night_evolution.xlsx")
+    logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}/{plotname}_night_evolution.png")
+    logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}/{plotname}_night_evolution.xlsx")
 
-def plot_heatmap(df, output_dir: str, logger, values_column: str, agg_func: str, plotname:str):
+def plot_heatmap(df, folder_output_dir: str, logger, values_column: str, agg_func: str, plotname:str):
     """Plot heatmap of pivot table with hour evolution of each day,
     Args:
         df (_type_): DataFrame
-        output_dir (str): Output directory
+        folder_output_dir (str): Output directory
         logger (_type_): Logger
         values_column (str): Name of the column to use, tipycally LAeq
         agg_func (str): Aggregation function, Leq
@@ -126,19 +126,19 @@ def plot_heatmap(df, output_dir: str, logger, values_column: str, agg_func: str,
     plt.ylabel('Día')
     plt.title(f'{plotname} Nivel equivalente')
     plt.tight_layout()
-    os.makedirs(f'{output_dir}/{plotname}', exist_ok=True)
-    plt.savefig(f'{output_dir}/{plotname}/{plotname}_heatmap.png',dpi=150)
+    os.makedirs(f'{folder_output_dir}/{plotname}', exist_ok=True)
+    plt.savefig(f'{folder_output_dir}/{plotname}/{plotname}_heatmap.png',dpi=150)
     #leq_day_hour.to_csv(f"{file[:-4]}_heatmap_mes_tabla_{month}_{year}.csv")
-    leq_day_hour.to_excel(f'{output_dir}/{plotname}/{plotname}_hetmap_tabla_dia_hora.xlsx')
+    leq_day_hour.to_excel(f'{folder_output_dir}/{plotname}/{plotname}_hetmap_tabla_dia_hora.xlsx')
     plt.close()
-    logger.info(f"Heatmap plot saved to {output_dir}/{plotname}/{plotname}_heatmap.png")
-    logger.info(f"Heatmap data saved to {output_dir}/{plotname}/{plotname}_hetmap_tabla_dia_hora.xlsx")
+    logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}/{plotname}_heatmap.png")
+    logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}/{plotname}_hetmap_tabla_dia_hora.xlsx")
     
-def make_timeplot(df, output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: bool):
+def make_timeplot(df, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: bool):
     """ Plot Indicator time evolution in the measurument period 
     Args:
         df (_type_): DataFrame
-        output_dir (str): Output directory
+        folder_output_dir (str): Output directory
         logger (_type_): Logger
         columns_dict (dict): Dictionary with the columns names
         agg_period (int): Aggregation period in seconds
@@ -190,18 +190,18 @@ def make_timeplot(df, output_dir: str, logger, columns_dict: dict, agg_period: i
      
 
     plt.tight_layout()
-    os.makedirs(f'{output_dir}/{plotname}', exist_ok=True)
-    plt.savefig(f'{output_dir}/{plotname}/{plotname}_{agg_period}s_timeplot.png',dpi=150)
+    os.makedirs(f'{folder_output_dir}/{plotname}', exist_ok=True)
+    plt.savefig(f'{folder_output_dir}/{plotname}/{plotname}_{agg_period}s_timeplot.png',dpi=150)
     plt.close()
-    leq_agg.to_excel(f'{output_dir}/{plotname}/{plotname}_{agg_period}s_timeplot.xlsx')
-    logger.info(f"Timeplot saved to {output_dir}/{plotname}/{plotname}_{agg_period}s_timeplot.png")
-    logger.info(f"Timeplot data saved to {output_dir}/{plotname}/{plotname}_{agg_period}s_timeplot.xlsx")
+    leq_agg.to_excel(f'{folder_output_dir}/{plotname}/{plotname}_{agg_period}s_timeplot.xlsx')
+    logger.info(f"Timeplot saved to {folder_output_dir}/{plotname}/{plotname}_{agg_period}s_timeplot.png")
+    logger.info(f"Timeplot data saved to {folder_output_dir}/{plotname}/{plotname}_{agg_period}s_timeplot.xlsx")
 
-def plot_indheatmap(df, output_dir: str, logger, plotname:str, ind_column:str):
+def plot_indheatmap(df, folder_output_dir: str, logger, plotname:str, ind_column:str):
     """Plot heatmap of pivot table with hour evolution of each day
     Args:
         df (_type_): DataFrame
-        output_dir (str): Output directory
+        folder_output_dir (str): Output directory
         logger (_type_): Logger
         plotname (str): Prefix to name the plot
         ind_column (str): Name of the column to use, tipycally LAeq
@@ -212,9 +212,9 @@ def plot_indheatmap(df, output_dir: str, logger, plotname:str, ind_column:str):
     plt.ylabel('Día')
     plt.xlabel('Indicador')
     plt.title(f'{plotname} Indicadores')
-    os.makedirs(f'{output_dir}/{plotname}', exist_ok=True)
-    plt.savefig(f"{output_dir}/{plotname}/{plotname}_indicadores.png")
+    os.makedirs(f'{folder_output_dir}/{plotname}', exist_ok=True)
+    plt.savefig(f"{folder_output_dir}/{plotname}/{plotname}_indicadores.png")
     plt.close()
-    indicadores_table.to_excel(f"{output_dir}/{plotname}/{plotname}_indicadores.xlsx")
-    logger.info(f"Indicadores data saved to {output_dir}/{plotname}/{plotname}_indicadores.xlsx")
-    logger.info(f"Indicadores plot saved to {output_dir}/{plotname}/{plotname}_indicadores.png")
+    indicadores_table.to_excel(f"{folder_output_dir}/{plotname}/{plotname}_indicadores.xlsx")
+    logger.info(f"Indicadores data saved to {folder_output_dir}/{plotname}/{plotname}_indicadores.xlsx")
+    logger.info(f"Indicadores plot saved to {folder_output_dir}/{plotname}/{plotname}_indicadores.png")

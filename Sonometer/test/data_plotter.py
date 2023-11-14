@@ -188,7 +188,7 @@ def make_timeplot(df, folder_output_dir: str, logger, columns_dict: dict, agg_pe
         ax.plot(x,L1,linewidth=0.5, color='#B28DFF')
     
     hours = mdates.HourLocator(interval=2)
-    h_fmt = mdates.DateFormatter('%H:%M')
+    h_fmt = mdates.DateFormatter('%d-%m-%y %H-%M')
     ax.xaxis.set_major_locator(hours)
     ax.xaxis.set_major_formatter(h_fmt)
     

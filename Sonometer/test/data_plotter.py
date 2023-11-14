@@ -146,71 +146,71 @@ def plot_heatmap(df, folder_output_dir: str, logger, values_column: str, agg_fun
     logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}_heatmap.png")
     logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_tabla_dia_hora.xlsx")
     
-def make_timeplot(df, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: bool):
-    """ Plot Indicator time evolution in the measurument period 
-    Args:
-        df (_type_): DataFrame
-        folder_output_dir (str): Output directory
-        logger (_type_): Logger
-        columns_dict (dict): Dictionary with the columns names
-        agg_period (int): Aggregation period in seconds
-        plotname (str): Prefix to name the plot
-        percentiles (bool): If True, plot percentiles
+def make_timeplot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: list):
     """
-    leq_agg = df.resample(f'{agg_period}s').agg({columns_dict['LAEQ_COLUMN']: [leq]})
-    lmax = df.resample(f'{agg_period}s').agg({columns_dict['LAMAX_COLUMN']: 'max'})
-    lmin = df.resample(f'{agg_period}s').agg({columns_dict['LAMIN_COLUMN']: 'min'})
-    #oca = df.resample(f'{agg_period}s').agg({'oca': 'min'})
+    Plot Indicator time evolution in the measurement period.
 
-    L90 = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(0.1)
-    L50 = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(0.5)
-    L10 = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(0.9)
-    L5 = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(0.95)
-    L1 = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(0.99)
+    Args:
+        df (pd.DataFrame): DataFrame containing the data.
+        folder_output_dir (str): Output directory.
+        logger: Logger for logging messages.
+        columns_dict (dict): Dictionary with the column names.
+        agg_period (int): Aggregation period in seconds.
+        plotname (str): Prefix to name the plot.
+        percentiles (list): List of percentiles to plot.
+    """
+    try:
+        agg_funcs = {
+            columns_dict['LAEQ_COLUMN']: 'mean',
+            columns_dict['LAMAX_COLUMN']: 'max',
+            columns_dict['LAMIN_COLUMN']: 'min'
+        }
+        agg_data = df.resample(f'{agg_period}s').agg(agg_funcs)
 
+        percentiles_dict = {
+            f'L{percentile}': df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(percentile/100)
+            for percentile in percentiles
+        }
 
-    hours = mdates.HourLocator(interval = 2)
-    fig, ax = plt.subplots(figsize=(20,10))
-    ax.set_facecolor("white")
+        plt.style.use('seaborn-whitegrid')
+        fig, ax = plt.subplots(figsize=(20, 10))
+        ax.set_facecolor("white")
 
-    x = leq_agg.index
-    ax.plot(x, leq_agg.values,linewidth=3, color='red')
-    ax.plot(x, lmax.values,linewidth=1, color='#FF99FF')
-    ax.plot(x, lmin.values,linewidth=1, color='#92D050')
-    # OCA
-    # #ax.plot(x, oca.values, color='#00B0F0')
+        x = agg_data.index
+        ax.plot(x, agg_data[columns_dict['LAEQ_COLUMN']], linewidth=3, color='red', label='LAeq')
+        ax.plot(x, agg_data[columns_dict['LAMAX_COLUMN']], linewidth=1, color='#FF99FF', label='Lmax')
+        ax.plot(x, agg_data[columns_dict['LAMIN_COLUMN']], linewidth=1, color='#92D050', label='Lmin')
 
-    if percentiles:
-        ax.plot(x,L90,linewidth=0.5, color='#9E9E9E')
-        ax.plot(x,L50,linewidth=0.5, color='#FFABAB')
-        ax.plot(x,L10,linewidth=0.5, color='#B2E2F2')
-        ax.plot(x,L5,linewidth=0.5, color='#6EB5FF')
-        ax.plot(x,L1,linewidth=0.5, color='#B28DFF')
-    
-    hours = mdates.HourLocator(interval=2)
-    h_fmt = mdates.DateFormatter('%d-%m-%y %H-%M')
-    ax.xaxis.set_major_locator(hours)
-    ax.xaxis.set_major_formatter(h_fmt)
-    
-    plt.xlim(df.index.min(), df.index.max())
-    
-    #plt.title(f'{plotname} Nivel equivalente {agg_period}s')
-    plt.ylabel('dB(A)')
-    plt.xlabel('Hora')
-    plt.title(f'{plotname} Nivel equivalente {agg_period}s')
-    plt.xticks(rotation=90)
-    plt.ylim([30,105])
-    plt.legend(['LAeq','Lmax','Lmin','L1','L5','L10','L90','L50'], bbox_to_anchor=(1.1, 1.05))
-    plt.tight_layout()
-    
-    os.makedirs(f'{folder_output_dir}', exist_ok=True)
-    plt.savefig(f'{folder_output_dir}/{plotname}_{agg_period}s_timeplot.png',dpi=150)
-    leq_agg.to_excel(f'{folder_output_dir}/{plotname}_{agg_period}s_timeplot.xlsx')
-    
-    plt.close()
-    
-    logger.info(f"Timeplot saved to {folder_output_dir}/{plotname}_{agg_period}s_timeplot.png")
-    logger.info(f"Timeplot data saved to {folder_output_dir}/{plotname}_{agg_period}s_timeplot.xlsx")
+        for percentile_value in percentiles:
+            values = percentiles_dict[f'L{percentile_value}']
+            ax.plot(x, values, linewidth=0.5, label=f'L{int(percentile_value)}')
+
+        hours = mdates.HourLocator(interval=3)
+        h_fmt = mdates.DateFormatter('%d-%m-%y %H:%M')
+        
+        ax.xaxis.set_major_locator(hours)
+        ax.xaxis.set_major_formatter(h_fmt)
+        
+        plt.xlim(df.index.min(), df.index.max())
+        plt.ylim([30, 105])
+        plt.ylabel('dB(A)')
+        plt.xlabel('Hora')
+        
+        plt.title(f'{plotname} Nivel equivalente {agg_period}s')
+        
+        plt.xticks(rotation=90)
+        plt.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0.1, fancybox=True, framealpha=1, edgecolor='black')
+
+        os.makedirs(folder_output_dir, exist_ok=True)
+        plt.savefig(f'{folder_output_dir}/{plotname}_{agg_period}s_timeplot.png', dpi=150)
+        agg_data.to_excel(f'{folder_output_dir}/{plotname}_{agg_period}s_timeplot.xlsx')
+
+        plt.close()
+
+        logger.info(f"Timeplot saved to {folder_output_dir}/{plotname}_{agg_period}s_timeplot.png")
+        logger.info(f"Timeplot data saved to {folder_output_dir}/{plotname}_{agg_period}s_timeplot.xlsx")
+    except Exception as e:
+        logger.error(f"Error in make_timeplot: {e}")
 
 def plot_indheatmap(df, folder_output_dir: str, logger, plotname:str, ind_column:str):
     """Plot heatmap of pivot table with hour evolution of each day

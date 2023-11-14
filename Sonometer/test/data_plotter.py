@@ -187,18 +187,20 @@ def make_timeplot(df, folder_output_dir: str, logger, columns_dict: dict, agg_pe
         ax.plot(x,L5,linewidth=0.5, color='#6EB5FF')
         ax.plot(x,L1,linewidth=0.5, color='#B28DFF')
     
-    
-    ax.xaxis.set_major_locator(hours)
+    hours = mdates.HourLocator(interval=2)
     h_fmt = mdates.DateFormatter('%H:%M')
+    ax.xaxis.set_major_locator(hours)
     ax.xaxis.set_major_formatter(h_fmt)
+    
+    plt.xlim(df.index.min(), df.index.max())
     
     #plt.title(f'{plotname} Nivel equivalente {agg_period}s')
     plt.ylabel('dB(A)')
     plt.xlabel('Hora')
     plt.title(f'{plotname} Nivel equivalente {agg_period}s')
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=90)
     plt.ylim([30,105])
-    plt.legend(['LAeq','Lmax','Lmin','L1','L5','L10', 'L90','L50'], bbox_to_anchor=(1.1, 1.05))
+    plt.legend(['LAeq','Lmax','Lmin','L1','L5','L10','L90','L50'], bbox_to_anchor=(1.1, 1.05))
     plt.tight_layout()
     
     os.makedirs(f'{folder_output_dir}', exist_ok=True)

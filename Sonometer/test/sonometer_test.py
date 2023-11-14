@@ -6,6 +6,7 @@ plt.style.use("bmh")
 from data_plotter import *
 from data_reader import *
 from utils_plotter import *
+import config
 from config import *
 from logging_config import setup_logging
 
@@ -18,7 +19,7 @@ def load_data(file_path, logger):
         "SV307": (get_data_SV307, SV307_dict),
         "cesva": (get_data_cesva, cesva_dict),
         "audio-post": (get_data_audio, audiopost_dict)
-    }
+    } # SLM stands for Sound Level Meter
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
         try:
             df = func(file_path)
@@ -166,12 +167,12 @@ def main():
     if args.agg_period:
         PERIODO_AGREGACION = args.agg_period
     else:
-        PERIODO_AGREGACION = 900
+        PERIODO_AGREGACION = config.PERIODO_AGREGACION
     
     if args.percentiles:
         PERCENTILES = args.percentiles
     else:
-        PERCENTILES = [90, 10]
+        PERCENTILES = config.PERCENTILES
         
     clase_registro = os.path.basename(input_folder)
     folders = [folder for folder in os.listdir(input_folder) if os.path.isdir(os.path.join(input_folder, folder))]

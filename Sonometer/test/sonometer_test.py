@@ -50,14 +50,14 @@ def process_folder(folder_path, logger):
 
     return None, None, None 
 
-def process_all_folders(folders, PERIODO_AGREGACION, PERCENTILES, logger):
+def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, logger):
     df_indicadores = pd.DataFrame()
     n_registro = []
     df_common_format = pd.DataFrame()
 
     for folder in folders:
         logger.info(f"\n\nProcessing folder: {folder}")
-        reg_folder = os.path.join(CARPETA_MEDIDAS, folder)
+        reg_folder = os.path.join(input_folder, folder)
 
         folder_output_dir = os.path.join(reg_folder, "Results", "Sonometer_plots")
         os.makedirs(folder_output_dir, exist_ok=True)
@@ -133,6 +133,18 @@ def process_all_folders(folders, PERIODO_AGREGACION, PERCENTILES, logger):
             logger.error(f"An error occurred while processing folder {folder}: {e}")
     return df_indicadores, n_registro, df_common_format
 
+def save_indicadores(df_indicadores, n_registro, input_folder, clase_registro, logger, df_indicadores_valencia=None, n_registro_valencia=None):
+    flatten_list = [element for sublist in n_registro for element in sublist]
+    df_indicadores["reg"] = flatten_list
+    df_indicadores.to_csv(f'{input_folder}/indicadores_{clase_registro}.csv')
+    logger.info(f"Saved normal indicators to {input_folder}/indicadores_{clase_registro}.csv")
+
+    if df_indicadores_valencia is not None and n_registro_valencia is not None:
+        flatten_list_valencia = [element for sublist in n_registro_valencia for element in sublist]
+        df_indicadores_valencia["reg"] = flatten_list_valencia
+        df_indicadores_valencia.to_csv(f'{input_folder}/indicadores_valencia_{clase_registro}.csv')
+        logger.info(f"Saved Valencia indicators to {input_folder}/indicadores_valencia_{clase_registro}.csv")
+
 def arg_parser():
     parser = argparse.ArgumentParser(description='Plotting AudioMoth data')
     parser.add_argument('-f', '--path_sonometers', type=str, required=False, help='Path to sonometers folder')
@@ -146,7 +158,7 @@ def main():
     args = arg_parser()
     
     if args.path_sonometers:
-        CARPETA_MEDIDAS = args.path_sonometers
+        input_folder = args.path_sonometers
     else:
         logger.error("Path to sonometers folder not provided")
         raise ValueError("Path to sonometers folder not provided")
@@ -161,23 +173,12 @@ def main():
     else:
         PERCENTILES = [90, 10]
         
-    clase_registro = os.path.basename(CARPETA_MEDIDAS)
-    folders = [folder for folder in os.listdir(CARPETA_MEDIDAS) if os.path.isdir(os.path.join(CARPETA_MEDIDAS, folder))]
+    clase_registro = os.path.basename(input_folder)
+    folders = [folder for folder in os.listdir(input_folder) if os.path.isdir(os.path.join(input_folder, folder))]
 
-    df_indicadores, n_registro, df_common_format = process_all_folders(folders, PERIODO_AGREGACION, PERCENTILES, logger)
-
-    flatten_list = [element for sublist in n_registro for element in sublist]    
-    # flatten_list_VALENCIA = [element for sublist in n_registro_valencia for element in sublist]
-
-    ################ SAVE INDICADORES NORMALES ################
-    df_indicadores["reg"] = flatten_list
-    df_indicadores.to_csv(f'{CARPETA_MEDIDAS}/indicadores_{clase_registro}.csv')
-    logger.info(f"Saved indicators to {CARPETA_MEDIDAS}/indicadores_{clase_registro}.csv")
-    #df_common_format.to_csv(f'df_{clase_registro}.csv',index=False)
-    
-    ################ SAVE INDICADORES VALENCIA ################
-    # df_indicadores_valencia["reg"] = flatten_list_VALENCIA
-    # df_indicadores_valencia.to_csv('indicadores_valencia.csv')
+    df_indicadores, n_registro, df_common_format = process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, logger)
+    save_indicadores(df_indicadores, n_registro, input_folder, clase_registro, logger)
+    # save_indicadores(df_indicadores, n_registro, input_folder, clase_registro, logger, df_indicadores_valencia, n_registro_valencia)
 
     logger.info("Finished sonometer test script")
 

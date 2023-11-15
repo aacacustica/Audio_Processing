@@ -9,7 +9,7 @@ LE_SECONDS = 7200
 # Plotting Flags
 PLOT_TIME = False # Done
 PLOT_HEATMAP = False # Done
-PLOT_INDHEATMAP = True # processing 
-PLOT_DAY_EVOLUTION = False
+PLOT_INDHEATMAP = True # Done 
+PLOT_DAY_EVOLUTION = True # Processing
 PLOT_PERIOD_EVOLUTION = False
 PLOT_NIGHT_EVOLUTION = False # problems with the hours

@@ -9,14 +9,17 @@ from config import *
 cmap_dict = sns.color_palette(palette=["#C8FFC8", "#00C800", "#007800", "#FFFF00", "#FFC878", "#FF9600", "#FF0000", "#780000", "#FF00FF", "#8C3CFF", "#000078"],n_colors=11)
     
 def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
-    """ Lineplots for each day
+    """ Line plots for each day
     Args:
         df (_type_): DataFrame
         folder_output_dir (str): Output directory
         logger (_type_): Logger
-        laeq_column (str): Name of the column to use, tipycally LAeq
+        laeq_column (str): Name of the column to use, typically LAeq
         plotname (str): Prefix to name the plot
     """
+    sns.set_style("whitegrid")
+    sns.set_palette("tab10")
+
     fig = sns.relplot(data=df,
                       x="hour",
                       y=laeq_column,
@@ -25,25 +28,27 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
                       estimator=leq,
                       aspect=1.3,
                       )
-    
-    (fig.map(plt.axvline, x=7, color=".7", dashes=(2, 1), zorder=0))
-    (fig.map(plt.axvline, x=19, color=".7", dashes=(2, 1), zorder=0))
-    (fig.map(plt.axvline, x=23, color=".7", dashes=(2, 1), zorder=0))
 
-    (fig.map(plt.text, s="Ln", x=0.1, y= 0.9,transform=plt.gca().transAxes, c="Black"))
-    (fig.map(plt.text, s="Ld", x=0.35, y= 0.9,transform=plt.gca().transAxes, c="Black"))
-    (fig.map(plt.text, s="Le", x=0.82, y= 0.9,transform=plt.gca().transAxes, c="Black"))
+    plt.axvline(x=7, color=".7", dashes=(2, 1), zorder=0)
+    plt.axvline(x=19, color=".7", dashes=(2, 1), zorder=0)
+    plt.axvline(x=23, color=".7", dashes=(2, 1), zorder=0)
 
-    plt.ylabel('dB(A)')
-    plt.xlabel('Hora')
-    plt.title(f'Evolución día {plotname}')
-   
-    os.makedirs(f'{folder_output_dir}', exist_ok=True)
-    fig.savefig(f"{folder_output_dir}/{plotname}_day_evolution.png",dpi=150)
+    plt.text(s="Ln", x=0.1, y=0.9, transform=plt.gca().transAxes, c="Black")
+    plt.text(s="Ld", x=0.35, y=0.9, transform=plt.gca().transAxes, c="Black")
+    plt.text(s="Le", x=0.82, y=0.9, transform=plt.gca().transAxes, c="Black")
+
+    plt.ylabel('dB(A)', fontsize=12)
+    plt.xlabel('Hora', fontsize=12)
+    plt.title(f"Evolución día {plotname} Date {df['date'][0]} - {df['date'][-1]}", fontsize=14)
+    plt.xticks(fontsize=10)
+    plt.yticks(fontsize=10)
+
+    os.makedirs(folder_output_dir, exist_ok=True)
+    fig.savefig(f"{folder_output_dir}/{plotname}_day_evolution.png", dpi=300)
     df.to_excel(f"{folder_output_dir}/{plotname}_day_evolution.xlsx")
-   
+
     plt.close()
-   
+
     logger.info(f"Day evolution plot saved to {folder_output_dir}/{plotname}_day_evolution.png")
     logger.info(f"Day evolution data saved to {folder_output_dir}/{plotname}_day_evolution.xlsx")
 
@@ -248,9 +253,15 @@ def plot_indheatmap(df, folder_output_dir: str, logger, plotname:str, ind_column
             logger.info(f"Last day {last_dat} removed, less than {LE_SECONDS} seconds")
         
         indicadores_table = pd.pivot_table(data=df,index="date",columns="indicador_str",values=ind_column,aggfunc=leq).round(1)
+
+        desired_order = ["Ln", "Ld", "Le"]
+        indicadores_table = indicadores_table.reindex(columns=desired_order)
+
         plt.figure(figsize=(10, 8))
+        
         ax = sns.heatmap(indicadores_table, annot=True, fmt=".1f", linewidth=0.5, cmap=cmap_dict, vmin=30, vmax=85)
         ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
+        
         plt.ylabel('Día')
         plt.xlabel('Indicador')
         plt.title(f'{plotname} Indicadores')

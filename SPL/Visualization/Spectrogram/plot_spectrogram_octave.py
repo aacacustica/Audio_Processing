@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import argparse
 import os
+plt.style.use("bmh")
 
 octave_bands = [
     '12.4', '15.62', '19.69', '24.8', '31.25', '39.37', '49.61', '62.5', '78.75', '99.21',
@@ -59,9 +60,6 @@ def plot_spectrogram_octave(path: str, df_filtered, file_name: str, interval_min
 
     plt.title(f'Spectrogram {file_name}')
     plt.tight_layout()
-    plt.show()
-
-    # Save the plot
     os.makedirs(f'{path}/Spectrogram', exist_ok=True)
     plt.savefig(f'{path}/Spectrogram/{file_name}_spectrogram_oct.png')
 
@@ -76,15 +74,15 @@ def argument_parser():
 
 def main():
     args = argument_parser()
-    path = args.path
+    csv_file = args.path
     interval_minutes = args.interval
     start_time = args.start
     end_time = args.end
 
-    file_name = get_name(path)
-    path = get_path(path)
+    file_name = get_name(csv_file)
+    path = get_path(csv_file)
     
-    df = octave_band(path, start_time, end_time)
+    df = octave_band(csv_file, start_time, end_time)
     plot_spectrogram_octave(path, df, file_name, interval_minutes)
 
 if __name__ == "__main__":

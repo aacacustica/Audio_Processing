@@ -4,6 +4,7 @@ import matplotlib.dates as mdates
 import seaborn as sns
 from utils_plotter import *
 import os
+from datetime import datetime
 
 cmap_dict = sns.color_palette(palette=["#C8FFC8", "#00C800", "#007800", "#FFFF00", "#FFC878", "#FF9600", "#FF0000", "#780000", "#FF00FF", "#8C3CFF", "#000078"],n_colors=11)
     
@@ -215,6 +216,12 @@ def make_timeplot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict
     except Exception as e:
         logger.error(f"Error in make_timeplot: {e}")
 
+
+
+def calculate_duration(start_time, end_time):
+    duration = end_time - start_time
+    return duration.total_seconds()
+
 def plot_indheatmap(df, folder_output_dir: str, logger, plotname:str, ind_column:str):
     """Plot heatmap of pivot table with hour evolution of each day
     Args:
@@ -225,22 +232,31 @@ def plot_indheatmap(df, folder_output_dir: str, logger, plotname:str, ind_column
         ind_column (str): Name of the column to use, tipycally LAeq
     """
     try:
-        # Ld>21600
-        # Le>7200
-        # Ln>14400
-
-        # get the first and last date for each indicador for eah day [Ld, Le, Ln]
-        df_indicadores = (df.groupby(['date','indicador_str'])['hour'].agg(['first','last']))
-        df_indicadores.to_excel(f"{plotname}_indicadores_filtrados.xlsx")
+        df_indicadores = (df.groupby(['date','indicador_str'])['Fecha'].agg(['first','last']))
+        df_indicadores['duration'] = df_indicadores.apply(lambda row: calculate_duration(row['first'], row['last']), axis=1)
         
-        print(df_indicadores)
-        print(df_indicadores.columns)
-
-        exit()
+        first_ld = df_indicadores[df_indicadores.index.get_level_values('indicador_str') == 'Ld'].iloc[0]
+        first_ld_duration = calculate_duration(first_ld['first'], first_ld['last'])
+        logger.info(f"First day {first_ld.name[0]} duration: {first_ld_duration}")
+        
+        last_le = df_indicadores[df_indicadores.index.get_level_values('indicador_str') == 'Le'].iloc[-1]
+        last_le_duration = calculate_duration(last_le['first'], last_le['last'])
+        logger.info(f"Last day {last_le.name[0]} duration: {last_le_duration}")
+               
+        first_day = first_ld.name[0]
+        last_dat = last_le.name[0]
+        
+        if first_ld_duration <= 21600:
+            df = df[df['date'] != first_day]
+            logger.info(f"First day {first_day} removed, less than 21600 seconds")
+        if last_le_duration <= 7200:
+            df = df[df['date'] != last_dat]
+            logger.info(f"Last day {last_dat} removed, less than 7200 seconds")
         
         indicadores_table = pd.pivot_table(data=df,index="date",columns="indicador_str",values=ind_column,aggfunc=leq).round(1)
-        sns.heatmap(indicadores_table, annot=True,fmt=".1f",linewidth=0.5, cmap=cmap_dict,vmin=30,vmax=85)
-        
+        plt.figure(figsize=(10, 8))
+        ax = sns.heatmap(indicadores_table, annot=True, fmt=".1f", linewidth=0.5, cmap=cmap_dict, vmin=30, vmax=85)
+        ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
         plt.ylabel('Día')
         plt.xlabel('Indicador')
         plt.title(f'{plotname} Indicadores')

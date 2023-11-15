@@ -65,7 +65,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
         try:
             df, slm_type, slm_dict = process_folder(reg_folder, logger)
-            logger.info(f"SLM type: {slm_type} - SLM dict: {slm_dict}")
             if df is None:
                 continue
 

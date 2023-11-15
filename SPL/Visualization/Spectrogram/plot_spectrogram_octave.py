@@ -14,7 +14,7 @@ octave_bands = [
 ]
 
 def get_name(file: str):
-    return os.path.basename(file).split('.')[0]
+    return os.path.basename(file).split('.')[0].split('_')[0]
 
 def get_path(file: str):
     return os.path.dirname(file)
@@ -34,7 +34,7 @@ def octave_band(file: str, start_time=None, end_time=None):
     df_filtered = df_filtered.drop(columns=['20158.74'])
     return df_filtered
 
-def plot_spectrogram_octave(path: str, df_filtered, file_name: str, interval_minutes: int):
+def plot_spectrogram_octave(path: str, df_filtered, file_name: str, interval_minutes: int, start_time=None, end_time=None):
     frequencies = df_filtered.columns.astype(float)
     values = df_filtered.values.T
     valid_frequencies = frequencies[~np.all(np.isnan(values) | np.isinf(values), axis=1)]
@@ -60,8 +60,12 @@ def plot_spectrogram_octave(path: str, df_filtered, file_name: str, interval_min
 
     plt.title(f'Spectrogram {file_name}')
     plt.tight_layout()
+    
     os.makedirs(f'{path}/Spectrogram', exist_ok=True)
-    plt.savefig(f'{path}/Spectrogram/{file_name}_spectrogram_oct.png')
+    if start_time and end_time:
+        plt.savefig(f'{path}/Spectrogram/{file_name}_spect_oct_detail.png')
+    else:
+        plt.savefig(f'{path}/Spectrogram/{file_name}_spect_oct.png')
 
 def argument_parser():
     parser = argparse.ArgumentParser(description='Plot Spectrogram from CSV File')
@@ -83,7 +87,7 @@ def main():
     path = get_path(csv_file)
     
     df = octave_band(csv_file, start_time, end_time)
-    plot_spectrogram_octave(path, df, file_name, interval_minutes)
+    plot_spectrogram_octave(path, df, file_name, interval_minutes, start_time, end_time)
 
 if __name__ == "__main__":
     main()

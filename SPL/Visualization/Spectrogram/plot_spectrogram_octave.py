@@ -5,7 +5,6 @@ import matplotlib.dates as mdates
 import argparse
 import os
 
-# octave bands list
 octave_bands = [
     '12.4', '15.62', '19.69', '24.8', '31.25', '39.37', '49.61', '62.5', '78.75', '99.21',
     '125.0', '157.49', '198.43', '250.0', '314.98', '396.85', '500.0', '629.96', '793.7', 
@@ -15,6 +14,9 @@ octave_bands = [
 
 def get_name(file: str):
     return os.path.basename(file).split('.')[0]
+
+def get_path(file: str):
+    return os.path.dirname(file)
 
 def octave_band(file: str, start_time=None, end_time=None):
     df = pd.read_csv(file, sep=',')
@@ -31,7 +33,7 @@ def octave_band(file: str, start_time=None, end_time=None):
     df_filtered = df_filtered.drop(columns=['20158.74'])
     return df_filtered
 
-def plot_spectrogram_octave(df_filtered, file_name: str, interval_hours: int):
+def plot_spectrogram_octave(path: str, df_filtered, file_name: str, interval_minutes: int):
     frequencies = df_filtered.columns.astype(float)
     values = df_filtered.values.T
     valid_frequencies = frequencies[~np.all(np.isnan(values) | np.isinf(values), axis=1)]
@@ -49,7 +51,7 @@ def plot_spectrogram_octave(df_filtered, file_name: str, interval_hours: int):
     plt.xlabel('Time')
 
     # Set x-axis to specified hour intervals
-    plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=interval_hours))
+    plt.gca().xaxis.set_major_locator(mdates.MinuteLocator(interval=interval_minutes))
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
 
     # Rotate date labels for clarity
@@ -59,22 +61,31 @@ def plot_spectrogram_octave(df_filtered, file_name: str, interval_hours: int):
     plt.tight_layout()
     plt.show()
 
+    # Save the plot
+    os.makedirs(f'{path}/Spectrogram', exist_ok=True)
+    plt.savefig(f'{path}/Spectrogram/{file_name}_spectrogram_oct.png')
 
 def argument_parser():
     parser = argparse.ArgumentParser(description='Plot Spectrogram from CSV File')
     parser.add_argument('-p', '--path', required=True, type=str, help='Path to the CSV file')
-    parser.add_argument('-i', '--interval', required=False, type=int, default=5, help='Interval in hours for x-axis ticks')
+    parser.add_argument('-i', '--interval', required=False, type=int, default=300, help='Interval in minutes for x-axis ticks')
+    parser.add_argument('-s', '--start', required=False, type=str, help='Start time for the spectrogram')
+    parser.add_argument('-e', '--end', required=False, type=str, help='End time for the spectrogram')
     args = parser.parse_args()
     return args
 
 def main():
     args = argument_parser()
-    file_path = args.path
-    interval_hours = args.interval
-    file_name = get_name(file_path)
+    path = args.path
+    interval_minutes = args.interval
+    start_time = args.start
+    end_time = args.end
+
+    file_name = get_name(path)
+    path = get_path(path)
     
-    df = octave_band(file_path)
-    plot_spectrogram_octave(df, file_name, interval_hours)
+    df = octave_band(path, start_time, end_time)
+    plot_spectrogram_octave(path, df, file_name, interval_minutes)
 
 if __name__ == "__main__":
     main()

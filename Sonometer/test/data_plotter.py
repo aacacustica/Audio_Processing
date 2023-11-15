@@ -229,18 +229,13 @@ def plot_indheatmap(df, folder_output_dir: str, logger, plotname:str, ind_column
         # Le>7200
         # Ln>14400
 
-        # print(df.columns)
+        # get the first and last date for each indicador for eah day [Ld, Le, Ln]
+        df_indicadores = (df.groupby(['date','indicador_str'])['hour'].agg(['first','last']))
+        df_indicadores.to_excel(f"{plotname}_indicadores_filtrados.xlsx")
         
-        #     Index(['Registro #', 'Tipo de registro', 'Fecha', 'Hora', 'LAeq', 'LAFmax',
-        #    'LAFmin', 'OVLD', 'Marcador', 'Comments', 'date', 'day', 'hour',
-        #    'weekday', 'day_name', 'indicador_str'],
-        #     dtype='object')
-    
-        print(df.head())
-        
-        # get the first and last date for each indicador
-        indicadores = df.groupby('indicador_str').agg({'date':['min','max']})
-        print(indicadores)
+        print(df_indicadores)
+        print(df_indicadores.columns)
+
         exit()
         
         indicadores_table = pd.pivot_table(data=df,index="date",columns="indicador_str",values=ind_column,aggfunc=leq).round(1)

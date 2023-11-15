@@ -57,7 +57,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
     df_common_format = pd.DataFrame()
 
     for folder in folders:
-        logger.info(f"\n\nProcessing folder: {folder}")
+        logger.info(f"Processing folder: {folder}")
         reg_folder = os.path.join(input_folder, folder)
 
         folder_output_dir = os.path.join(reg_folder, "Results", "Sonometer_plots")

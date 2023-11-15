@@ -3,6 +3,9 @@ LIMITE_DIA = 65
 LIMITE_NOCHE = 55
 LIMITE_TARDE = 55
 
+LD_SECONDS = 21600
+LE_SECONDS = 7200
+
 # Plotting Flags
 PLOT_TIME = False # Done
 PLOT_HEATMAP = False # Done

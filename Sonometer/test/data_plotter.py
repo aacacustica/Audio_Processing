@@ -4,7 +4,7 @@ import matplotlib.dates as mdates
 import seaborn as sns
 from utils_plotter import *
 import os
-from datetime import datetime
+from config import *
 
 cmap_dict = sns.color_palette(palette=["#C8FFC8", "#00C800", "#007800", "#FFFF00", "#FFC878", "#FF9600", "#FF0000", "#780000", "#FF00FF", "#8C3CFF", "#000078"],n_colors=11)
     
@@ -216,12 +216,6 @@ def make_timeplot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict
     except Exception as e:
         logger.error(f"Error in make_timeplot: {e}")
 
-
-
-def calculate_duration(start_time, end_time):
-    duration = end_time - start_time
-    return duration.total_seconds()
-
 def plot_indheatmap(df, folder_output_dir: str, logger, plotname:str, ind_column:str):
     """Plot heatmap of pivot table with hour evolution of each day
     Args:
@@ -246,12 +240,12 @@ def plot_indheatmap(df, folder_output_dir: str, logger, plotname:str, ind_column
         first_day = first_ld.name[0]
         last_dat = last_le.name[0]
         
-        if first_ld_duration <= 21600:
+        if first_ld_duration <= LD_SECONDS:
             df = df[df['date'] != first_day]
-            logger.info(f"First day {first_day} removed, less than 21600 seconds")
-        if last_le_duration <= 7200:
+            logger.info(f"First day {first_day} removed, less than {LD_SECONDS} seconds")
+        if last_le_duration <= LE_SECONDS:
             df = df[df['date'] != last_dat]
-            logger.info(f"Last day {last_dat} removed, less than 7200 seconds")
+            logger.info(f"Last day {last_dat} removed, less than {LE_SECONDS} seconds")
         
         indicadores_table = pd.pivot_table(data=df,index="date",columns="indicador_str",values=ind_column,aggfunc=leq).round(1)
         plt.figure(figsize=(10, 8))

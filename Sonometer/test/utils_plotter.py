@@ -1,5 +1,9 @@
 import numpy as np
 
+def calculate_duration(start_time, end_time):
+    duration = end_time - start_time
+    return duration.total_seconds()
+
 def evaluation_period_str(hour_column):
     ''' Label period based on hour columnn'''
     period = ''

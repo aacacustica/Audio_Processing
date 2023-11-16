@@ -22,31 +22,25 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
         # print((df.columns).unique())
         # print(df['hour'].unique()) 
         # # [11 12 13 14 15 16 17 18 19 20 21 22 23  0  1  2  3  4  5  6  7  8  9 10]
+        
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
 
-        days_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        df['day_name'] = pd.Categorical(df['day_name'], categories=days_order, ordered=True)
-        df.sort_values('day_name', inplace=True)
-
+        # To show continuity from 23:00 to 0:00, we append the data of 0:00 as 24:00
         df_extended = df.copy()
         zero_hour_data = df[df['hour'] == 0].copy()
         zero_hour_data['hour'] = 24
         df_extended = pd.concat([df, zero_hour_data], ignore_index=True)
 
-        fig = sns.relplot(
-            data=df_extended, 
-            x="hour", 
-            y=laeq_column, 
-            kind="line", 
-            hue="day_name",
-            estimator=leq,
-            aspect=1.3, 
-            legend=None
-            )
-
-        handles, labels = plt.gca().get_legend_handles_labels()
-        plt.legend(handles, days_order, title=None, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        fig = sns.relplot(data=df_extended,
+                        x="hour",
+                        y=laeq_column,
+                        kind="line", 
+                        hue="day_name", # hue is the column to split the data
+                        estimator=leq,  # estimator is the function to apply to the data
+                        aspect=1.3, # aspect is the width/height ratio
+                        legend=None,
+                        )
 
         fig.set(xlim=(0, 24))  # limits from 0 to 24
 
@@ -62,10 +56,10 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
         plt.ylabel('dB(A)', fontsize=12)
         plt.xlabel('Hora', fontsize=12)
         plt.title(f"Evolución día {plotname} Date {df['date'][0]} - {df['date'][-1]}", fontsize=14)
-        # plt.legend(title=None)
         plt.xticks(range(0, 25), [str(hour % 24) for hour in range(0, 25)]) # xticks from 0 to 24
         plt.yticks(fontsize=10)
-        logger.info(f"Day evolution plot was created for {plotname} Date {df['date'][0]} - {df['date'][-1]}")
+
+        logger.info(f"Day evolution plot created for {plotname} Date {df['date'][0]} - {df['date'][-1]}")
         
         os.makedirs(folder_output_dir, exist_ok=True)
         fig.savefig(f"{folder_output_dir}/{plotname}_day_evolution.png", dpi=300)
@@ -75,7 +69,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
 
         logger.info(f"Day evolution plot saved to {folder_output_dir}/{plotname}_day_evolution.png")
         logger.info(f"Day evolution data saved to {folder_output_dir}/{plotname}_day_evolution.xlsx")
-    
+
     except Exception as e:
         logger.error(f"Error in plot_day_evolution: {e}")
 

@@ -17,7 +17,9 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
         laeq_column (str): Name of the column to use, typically LAeq
         plotname (str): Prefix to name the plot
     """
-    try:       
+    try:
+        print(df.head(10))
+        print(df.tail(10))
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
@@ -54,7 +56,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
         plt.ylabel('dB(A)', fontsize=12)
         plt.xlabel('Hora', fontsize=12)
         plt.title(f"Evolución día {plotname} Date {df['date'][0]} - {df['date'][-1]}", fontsize=14)
-        plt.xticks(range(0, 25), [str(hour % 24) for hour in range(0, 25)]) # xticks from 0 to 24
+        plt.xticks(range(0, 25), [str(hour % 24) for hour in range(0, 25)]) # xticks from 0 to 24 | modulo 24 to avoid 24:00, it will print 0 1 2 3 4 5 6 7 8 9 10 11 12 13 ... 23
         plt.yticks(fontsize=10)
 
         logger.info(f"Day evolution plot created for {plotname} Date {df['date'][0]} - {df['date'][-1]}")

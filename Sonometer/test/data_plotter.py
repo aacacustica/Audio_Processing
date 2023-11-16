@@ -27,7 +27,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
 
     # To show continuity from 23:00 to 0:00, we append the data of 0:00 as 24:00
     df_extended = df.copy()
-    zero_hour_data = df[df['hour'] == 0]
+    zero_hour_data = df[df['hour'] == 0].copy()
     zero_hour_data['hour'] = 24
     df_extended = pd.concat([df, zero_hour_data], ignore_index=True)
 
@@ -46,15 +46,16 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
     plt.axvline(x=19, color=".7", dashes=(2, 1), zorder=0)
     plt.axvline(x=23, color=".7", dashes=(2, 1), zorder=0)
     
-    plt.text(s="Ln", x=0.1, y=0.9, transform=plt.gca().transAxes, c="Black")
-    plt.text(s="Ld", x=0.35, y=0.9, transform=plt.gca().transAxes, c="Black")
-    plt.text(s="Le", x=0.82, y=0.9, transform=plt.gca().transAxes, c="Black")
-
+    plt.text(s="Ln", x=0.15, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
+    plt.text(s="Ld", x=0.48, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
+    plt.text(s="Le", x=0.87, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
+    plt.text(s="Ln", x=0.95, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
+    
     plt.ylabel('dB(A)', fontsize=12)
     plt.xlabel('Hora', fontsize=12)
     plt.title(f"Evolución día {plotname} Date {df['date'][0]} - {df['date'][-1]}", fontsize=14)
-    plt.legend(title=None)
-    plt.xticks(range(0, 25), [str(hour % 24) for hour in range(0, 25)], fontsize=10) # xticks from 0 to 24
+    # plt.legend(title=None)
+    plt.xticks(range(0, 25), [str(hour % 24) for hour in range(0, 25)]) # xticks from 0 to 24
     plt.yticks(fontsize=10)
 
     os.makedirs(folder_output_dir, exist_ok=True)

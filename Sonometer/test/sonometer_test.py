@@ -25,7 +25,8 @@ def load_data(file_path, logger):
             df = func(file_path)
             return df, slm_type, slm_dict
         except Exception as e:
-            logger.warning(f"Failed to load data for SLM type {slm_type}: {e}")
+            clean_message = str(e).replace('\n', ' ')  # Replace newlines with spaces
+            logger.warning(f"Failed to load data for SLM type {slm_type}: {clean_message}")
             continue
     raise ValueError("SLM type not found or file could not be loaded")
 

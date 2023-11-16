@@ -17,55 +17,67 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
         laeq_column (str): Name of the column to use, typically LAeq
         plotname (str): Prefix to name the plot
     """
-    # print(df.head())
-    # print((df.columns).unique())
-    # print(df['hour'].unique()) 
-    # # [11 12 13 14 15 16 17 18 19 20 21 22 23  0  1  2  3  4  5  6  7  8  9 10]
+    try:
+        # print(df.head())
+        # print((df.columns).unique())
+        # print(df['hour'].unique()) 
+        # # [11 12 13 14 15 16 17 18 19 20 21 22 23  0  1  2  3  4  5  6  7  8  9 10]
+        sns.set_style("whitegrid")
+        sns.set_palette("tab10")
+
+        days_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        df['day_name'] = pd.Categorical(df['day_name'], categories=days_order, ordered=True)
+        df.sort_values('day_name', inplace=True)
+
+        df_extended = df.copy()
+        zero_hour_data = df[df['hour'] == 0].copy()
+        zero_hour_data['hour'] = 24
+        df_extended = pd.concat([df, zero_hour_data], ignore_index=True)
+
+        fig = sns.relplot(
+            data=df_extended, 
+            x="hour", 
+            y=laeq_column, 
+            kind="line", 
+            hue="day_name",
+            estimator=leq,
+            aspect=1.3, 
+            legend=None
+            )
+
+        handles, labels = plt.gca().get_legend_handles_labels()
+        plt.legend(handles, days_order, title=None, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+
+        fig.set(xlim=(0, 24))  # limits from 0 to 24
+
+        plt.axvline(x=7, color=".7", dashes=(2, 1), zorder=0)
+        plt.axvline(x=19, color=".7", dashes=(2, 1), zorder=0)
+        plt.axvline(x=23, color=".7", dashes=(2, 1), zorder=0)
+        
+        plt.text(s="Ln", x=0.13, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
+        plt.text(s="Ld", x=0.50, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
+        plt.text(s="Le", x=0.87, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
+        plt.text(s="Ln", x=0.96, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
+        
+        plt.ylabel('dB(A)', fontsize=12)
+        plt.xlabel('Hora', fontsize=12)
+        plt.title(f"Evolución día {plotname} Date {df['date'][0]} - {df['date'][-1]}", fontsize=14)
+        # plt.legend(title=None)
+        plt.xticks(range(0, 25), [str(hour % 24) for hour in range(0, 25)]) # xticks from 0 to 24
+        plt.yticks(fontsize=10)
+        logger.info(f"Day evolution plot was created for {plotname} Date {df['date'][0]} - {df['date'][-1]}")
+        
+        os.makedirs(folder_output_dir, exist_ok=True)
+        fig.savefig(f"{folder_output_dir}/{plotname}_day_evolution.png", dpi=300)
+        df.to_excel(f"{folder_output_dir}/{plotname}_day_evolution.xlsx")
+
+        plt.close()
+
+        logger.info(f"Day evolution plot saved to {folder_output_dir}/{plotname}_day_evolution.png")
+        logger.info(f"Day evolution data saved to {folder_output_dir}/{plotname}_day_evolution.xlsx")
     
-    sns.set_style("whitegrid")
-    sns.set_palette("tab10")
-
-    # To show continuity from 23:00 to 0:00, we append the data of 0:00 as 24:00
-    df_extended = df.copy()
-    zero_hour_data = df[df['hour'] == 0].copy()
-    zero_hour_data['hour'] = 24
-    df_extended = pd.concat([df, zero_hour_data], ignore_index=True)
-
-    fig = sns.relplot(data=df_extended,
-                      x="hour",
-                      y=laeq_column,
-                      kind="line", 
-                      hue="day_name", # hue is the column to split the data
-                      estimator=leq,  # estimator is the function to apply to the data
-                      aspect=1.3, # aspect is the width/height ratio
-                      )
-
-    fig.set(xlim=(0, 24))  # limits from 0 to 24
-
-    plt.axvline(x=7, color=".7", dashes=(2, 1), zorder=0)
-    plt.axvline(x=19, color=".7", dashes=(2, 1), zorder=0)
-    plt.axvline(x=23, color=".7", dashes=(2, 1), zorder=0)
-    
-    plt.text(s="Ln", x=0.13, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
-    plt.text(s="Ld", x=0.50, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
-    plt.text(s="Le", x=0.87, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
-    plt.text(s="Ln", x=0.96, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
-    
-    plt.ylabel('dB(A)', fontsize=12)
-    plt.xlabel('Hora', fontsize=12)
-    plt.title(f"Evolución día {plotname} Date {df['date'][0]} - {df['date'][-1]}", fontsize=14)
-    # plt.legend(title=None)
-    plt.xticks(range(0, 25), [str(hour % 24) for hour in range(0, 25)]) # xticks from 0 to 24
-    plt.yticks(fontsize=10)
-
-    os.makedirs(folder_output_dir, exist_ok=True)
-    fig.savefig(f"{folder_output_dir}/{plotname}_day_evolution.png", dpi=300)
-    df.to_excel(f"{folder_output_dir}/{plotname}_day_evolution.xlsx")
-
-    plt.close()
-
-    logger.info(f"Day evolution plot saved to {folder_output_dir}/{plotname}_day_evolution.png")
-    logger.info(f"Day evolution data saved to {folder_output_dir}/{plotname}_day_evolution.xlsx")
+    except Exception as e:
+        logger.error(f"Error in plot_day_evolution: {e}")
 
 def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, plotname:str):
     """ Lineplots per each period

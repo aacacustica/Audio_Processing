@@ -20,6 +20,10 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
     try:       
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
+        
+        # days in order
+        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        df['day_name'] = pd.Categorical(df['day_name'], categories=weekdays, ordered=True)
 
         df_extended = df.copy()
         zero_hour_data = df[df['hour'] == 0].copy()
@@ -33,7 +37,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
                         hue="day_name", # hue is the column to split the data
                         estimator=leq,  # estimator is the function to apply to the data
                         aspect=1.3, # aspect is the width/height ratio
-                        legend=None,
+                        # legend=None,
                         )
 
         fig.set(xlim=(0, 24))  # limits from 0 to 24

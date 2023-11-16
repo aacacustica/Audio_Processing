@@ -49,7 +49,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
         plt.text(s="Ln", x=0.13, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
         plt.text(s="Ld", x=0.50, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
         plt.text(s="Le", x=0.87, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
-        plt.text(s="Ln", x=0.96, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
+        plt.text(s="Ln", x=0.965, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
         
         plt.ylabel('dB(A)', fontsize=12)
         plt.xlabel('Hora', fontsize=12)

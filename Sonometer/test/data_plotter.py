@@ -42,6 +42,14 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
 
     fig.set(xlim=(0, 24))  # limits from 0 to 24
 
+    plt.axvline(x=7, color=".7", dashes=(2, 1), zorder=0)
+    plt.axvline(x=19, color=".7", dashes=(2, 1), zorder=0)
+    plt.axvline(x=23, color=".7", dashes=(2, 1), zorder=0)
+    
+    plt.text(s="Ln", x=0.1, y=0.9, transform=plt.gca().transAxes, c="Black")
+    plt.text(s="Ld", x=0.35, y=0.9, transform=plt.gca().transAxes, c="Black")
+    plt.text(s="Le", x=0.82, y=0.9, transform=plt.gca().transAxes, c="Black")
+
     plt.ylabel('dB(A)', fontsize=12)
     plt.xlabel('Hora', fontsize=12)
     plt.title(f"Evolución día {plotname} Date {df['date'][0]} - {df['date'][-1]}", fontsize=14)

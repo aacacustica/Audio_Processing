@@ -22,7 +22,7 @@ def load_data(file_path, logger):
     } # SLM stands for Sound Level Meter
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
         try:
-            logger.info(f"Trying to load data for SLM type {slm_type}")
+            logger.info(f"Loading data for SLM type {slm_type}")
             df = func(file_path)
             return df, slm_type, slm_dict
         except Exception as e:

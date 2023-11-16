@@ -18,21 +18,13 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
         plotname (str): Prefix to name the plot
     """
     try:
-        print(df.head(10))
-        print(df.tail(10))
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
-        # days in order
         weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
         df['day_name'] = pd.Categorical(df['day_name'], categories=weekdays, ordered=True)
 
-        df_extended = df.copy()
-        zero_hour_data = df[df['hour'] == 0].copy()
-        zero_hour_data['hour'] = 24
-        df_extended = pd.concat([df, zero_hour_data], ignore_index=True)
-
-        fig = sns.relplot(data=df_extended,
+        fig = sns.relplot(data=df,
                         x="hour",
                         y=laeq_column,
                         kind="line", 
@@ -42,22 +34,25 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
                         # legend=None,
                         )
 
-        fig.set(xlim=(0, 24))  # limits from 0 to 24
-
+        fig.set(xlim=(0, 23), ylim=(30, 105))
+        plt.xticks(range(0, 24), [str(hour) for hour in range(0, 24)])
+        plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
+        
+        for ax in fig.axes.flat:
+            ax.spines['top'].set_visible(True)
+            ax.spines['right'].set_visible(True)
+        
         plt.axvline(x=7, color=".7", dashes=(2, 1), zorder=0)
         plt.axvline(x=19, color=".7", dashes=(2, 1), zorder=0)
         plt.axvline(x=23, color=".7", dashes=(2, 1), zorder=0)
         
         plt.text(s="Ln", x=0.13, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
-        plt.text(s="Ld", x=0.50, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
-        plt.text(s="Le", x=0.87, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
-        plt.text(s="Ln", x=0.965, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
+        plt.text(s="Ld", x=0.53, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
+        plt.text(s="Le", x=0.89, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
         
-        plt.ylabel('dB(A)', fontsize=12)
-        plt.xlabel('Hora', fontsize=12)
         plt.title(f"Evolución día {plotname} Date {df['date'][0]} - {df['date'][-1]}", fontsize=14)
-        plt.xticks(range(0, 25), [str(hour % 24) for hour in range(0, 25)]) # xticks from 0 to 24 | modulo 24 to avoid 24:00, it will print 0 1 2 3 4 5 6 7 8 9 10 11 12 13 ... 23
-        plt.yticks(fontsize=10)
+        plt.ylabel('dB(A)')
+        plt.xlabel('Hora')
 
         logger.info(f"Day evolution plot created for {plotname} Date {df['date'][0]} - {df['date'][-1]}")
         

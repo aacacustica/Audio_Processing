@@ -17,16 +17,10 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
         laeq_column (str): Name of the column to use, typically LAeq
         plotname (str): Prefix to name the plot
     """
-    try:
-        # print(df.head())
-        # print((df.columns).unique())
-        # print(df['hour'].unique()) 
-        # # [11 12 13 14 15 16 17 18 19 20 21 22 23  0  1  2  3  4  5  6  7  8  9 10]
-        
+    try:       
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
 
-        # To show continuity from 23:00 to 0:00, we append the data of 0:00 as 24:00
         df_extended = df.copy()
         zero_hour_data = df[df['hour'] == 0].copy()
         zero_hour_data['hour'] = 24

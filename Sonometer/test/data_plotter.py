@@ -27,7 +27,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
         fig = sns.relplot(data=df,
                         x="hour",
                         y=laeq_column,
-                        kind="line", 
+                        kind="line", # kind is the type of plot to draw
                         hue="day_name", # hue is the column to split the data
                         estimator=leq,  # estimator is the function to apply to the data
                         aspect=1.3, # aspect is the width/height ratio
@@ -250,24 +250,74 @@ def plot_indheatmap(df, folder_output_dir: str, logger, plotname:str, ind_column
         df_indicadores = (df.groupby(['date','indicador_str'])['Fecha'].agg(['first','last']))
         df_indicadores['duration'] = df_indicadores.apply(lambda row: calculate_duration(row['first'], row['last']), axis=1)
         
-        first_ld = df_indicadores[df_indicadores.index.get_level_values('indicador_str') == 'Ld'].iloc[0]
-        first_ld_duration = calculate_duration(first_ld['first'], first_ld['last'])
-        logger.info(f"First day {first_ld.name[0]} duration: {first_ld_duration}")
+        # indicadores to check if they are present in the first day
+        indicators_to_check = ['Ld', 'Le', 'Ln']
         
-        last_le = df_indicadores[df_indicadores.index.get_level_values('indicador_str') == 'Le'].iloc[-1]
-        last_le_duration = calculate_duration(last_le['first'], last_le['last'])
-        logger.info(f"Last day {last_le.name[0]} duration: {last_le_duration}")
-               
-        first_day = first_ld.name[0]
-        last_dat = last_le.name[0]
+        # select just the first day:
+        first_day = df['date'].min()
+        last_day = df['date'].max()
         
-        if first_ld_duration <= LD_SECONDS:
-            df = df[df['date'] != first_day]
-            logger.info(f"First day {first_day} removed, less than {LD_SECONDS} seconds")
-        if last_le_duration <= LE_SECONDS:
-            df = df[df['date'] != last_dat]
-            logger.info(f"Last day {last_dat} removed, less than {LE_SECONDS} seconds")
+        # select just the first and last day:
+        df_first_day = df[df['date'] == first_day]
+        df_last_day = df[df['date'] == last_day]
         
+        # check if the indicators are present in the first and last day
+        presence_first_day = {indicator: indicator in df_first_day['indicador_str'].unique() for indicator in indicators_to_check}
+        presence_last_day = {indicator: indicator in df_last_day['indicador_str'].unique() for indicator in indicators_to_check}
+        logger.info(f"Presence of indicators in first day {first_day}: {presence_first_day}")
+        logger.info(f"Presence of indicators in last day {last_day}: {presence_last_day}")
+        
+        # duration of the indicators in the first and last day
+        duration_first_day = df_indicadores.loc[(first_day, indicators_to_check), 'duration']
+        duration_last_day = df_indicadores.loc[(last_day, indicators_to_check), 'duration']
+        logger.info(f"Duration of indicators in first day {first_day}: {duration_first_day}")
+        logger.info(f"Duration of indicators in last day {last_day}: {duration_last_day}")
+        
+        # For the first day
+        ld_first_day = duration_first_day.loc[(first_day, 'Ld')]
+        le_first_day = duration_first_day.loc[(first_day, 'Le')]
+        ln_first_day = duration_first_day.loc[(first_day, 'Ln')]
+
+        # For the last day
+        ld_last_day = duration_last_day.loc[(last_day, 'Ld')]
+        le_last_day = duration_last_day.loc[(last_day, 'Le')]
+        ln_last_day = duration_last_day.loc[(last_day, 'Ln')]
+
+        # log information
+        logger.info(f"LD duration on the first day: {ld_first_day}")
+        logger.info(f"LE duration on the first day: {le_first_day}")
+        logger.info(f"LN duration on the first day: {ln_first_day}")
+
+        logger.info(f"LD duration on the last day: {ld_last_day}")
+        logger.info(f"LE duration on the last day: {le_last_day}")
+        logger.info(f"LN duration on the last day: {ln_last_day}")
+        
+        # FIRST DAY
+        if ld_first_day <= LD_SECONDS:
+            df = df[~((df['date'] == first_day) & (df['indicador_str'] == 'Ld'))]
+            logger.info(f"LD indicator from first day {first_day} removed, less than {LD_SECONDS} seconds")
+
+        if le_first_day <= LE_SECONDS:
+            df = df[~((df['date'] == first_day) & (df['indicador_str'] == 'Le'))]
+            logger.info(f"LE indicator from first day {first_day} removed, less than {LE_SECONDS} seconds")
+
+        if ln_first_day <= LN_SECONDS:
+            df = df[~((df['date'] == first_day) & (df['indicador_str'] == 'Ln'))]
+            logger.info(f"LN indicator from first day {first_day} removed, less than {LN_SECONDS} seconds")
+
+        # LAST DAY
+        if ld_last_day <= LD_SECONDS:
+            df = df[~((df['date'] == last_day) & (df['indicador_str'] == 'Ld'))]
+            logger.info(f"LD indicator from last day {last_day} removed, less than {LD_SECONDS} seconds")
+
+        if le_last_day <= LE_SECONDS:
+            df = df[~((df['date'] == last_day) & (df['indicador_str'] == 'Le'))]
+            logger.info(f"LE indicator from last day {last_day} removed, less than {LE_SECONDS} seconds")
+
+        if ln_last_day <= LN_SECONDS:
+            df = df[~((df['date'] == last_day) & (df['indicador_str'] == 'Ln'))]
+            logger.info(f"LN indicator from last day {last_day} removed, less than {LN_SECONDS} seconds")
+
         indicadores_table = pd.pivot_table(data=df,index="date",columns="indicador_str",values=ind_column,aggfunc=leq).round(1)
 
         desired_order = ["Ln", "Ld", "Le"]

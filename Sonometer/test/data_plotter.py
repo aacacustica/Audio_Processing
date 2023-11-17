@@ -143,7 +143,6 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
 
         df_temp = df[df["indicador_str"] == 'Ln']
 
-        # Adjusting the hour for continuity from 23:00 to 07:00
         df_temp['adjusted_hour'] = df_temp['hour'].apply(lambda x: x if x >= 23 else x + 24)
 
         fig = sns.relplot(data=df_temp,
@@ -155,12 +154,10 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
                           aspect=1.3,
                           )
 
-        # Custom x-axis ticks to show 23:00 - 06:00
         plt.xticks([23, 24, 25, 26, 27, 28, 29, 30],
                    ['23', '0', '1', '2', '3', '4', '5', '6'])
         plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
 
-        # Adjust the x-axis limits to remove extra whitespace
         plt.xlim(22.5, 30.5)
 
         for ax in fig.axes.flat:

@@ -230,6 +230,14 @@ def make_timeplot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict
         percentiles (list): List of percentiles to plot.
     """
     try:
+        percentiles_colours = {
+            '1': '#C8FFC8',
+            '5': '#00C800',
+            '10': '#007800',
+            '50': '#FFFF00',
+            '90': '#FFC878',
+        }
+        
         agg_funcs = {
             columns_dict['LAEQ_COLUMN']: 'mean',
             columns_dict['LAMAX_COLUMN']: 'max',
@@ -251,9 +259,10 @@ def make_timeplot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict
         ax.plot(x, agg_data[columns_dict['LAMAX_COLUMN']], linewidth=1, color='#FF99FF', label='Lmax')
         ax.plot(x, agg_data[columns_dict['LAMIN_COLUMN']], linewidth=1, color='#92D050', label='Lmin')
 
+        # test if colours are applied or not
         for percentile_value in percentiles:
             values = percentiles_dict[f'L{percentile_value}']
-            ax.plot(x, values, linewidth=0.5, label=f'L{int(percentile_value)}')
+            ax.plot(x, values, linewidth=0.5, label=f'L{int(percentile_value)}', color=percentiles_colours[str(percentile_value)])
 
         hours = mdates.HourLocator(interval=3)
         h_fmt = mdates.DateFormatter('%d-%m-%y %H:%M')

@@ -103,9 +103,11 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
             if ind == 'Ld':
                 fig.set(xlim=(7, 18), ylim=(30, 105))
                 plt.xticks(range(7, 19), [str(hour) for hour in range(7, 19)])
+                logger.info(f"Plotting Ld")
             elif ind == 'Le':
                 fig.set(xlim=(19, 22), ylim=(30, 105))
                 plt.xticks(range(19, 23), [str(hour) for hour in range(19, 23)])
+                logger.info(f"Plotting Le")
 
             plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
 
@@ -131,36 +133,55 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
         logger.error(f"Error in plot_period_evolution: {e}")
 
 def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
-    """ Lineplots per each night
-    Args:
-        df (_type_): DataFrame
-        folder_output_dir (str): Output directory
-        logger (_type_): Logger
-        laeq_column (str): Name of the column to use, tipycally LAeq
-        plotname (str): Prefix to name the plot
-    """
-    df_temp = df[df["indicador_str"] == 'Ln']
+    """ Lineplots for the night period (Ln) """
+    try:
+        sns.set_style("whitegrid")
+        sns.set_palette("tab10")
 
-    fig = sns.relplot(data=df_temp,
-                        x="hour",
-                        y=laeq_column,
-                        kind="line",
-                        style="night_str",
-                        estimator=leq,
-                        )
+        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        df['day_name'] = pd.Categorical(df['day_name'], categories=weekdays, ordered=True)
 
-    plt.title(f'Evolución noche {plotname}')
-    plt.ylabel('dB(A)')
-    plt.xlabel('Hora')
-    
-    os.makedirs(f'{folder_output_dir}', exist_ok=True)
-    fig.savefig(f"{folder_output_dir}/{plotname}_night_evolution.png",dpi=150)
-    df_temp.to_excel(f"{folder_output_dir}/{plotname}_night_evolution.xlsx")
-    
-    plt.close()
-    
-    logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_night_evolution.png")
-    logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_night_evolution.xlsx")
+        df_temp = df[df["indicador_str"] == 'Ln']
+
+        # Adjusting the hour for continuity from 23:00 to 07:00
+        df_temp['adjusted_hour'] = df_temp['hour'].apply(lambda x: x if x >= 23 else x + 24)
+
+        fig = sns.relplot(data=df_temp,
+                          x="adjusted_hour",
+                          y=laeq_column,
+                          kind="line",
+                          hue="day_name",
+                          estimator=leq,
+                          aspect=1.3,
+                          )
+
+        # Custom x-axis ticks to show 23:00 - 06:00
+        plt.xticks([23, 24, 25, 26, 27, 28, 29, 30],
+                   ['23', '0', '1', '2', '3', '4', '5', '6'])
+        plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
+
+        # Adjust the x-axis limits to remove extra whitespace
+        plt.xlim(22.5, 30.5)
+
+        for ax in fig.axes.flat:
+            ax.spines['top'].set_visible(True)
+            ax.spines['right'].set_visible(True)
+
+        plt.title(f'Evolución noche {plotname}')
+        plt.ylabel('dB(A)')
+        plt.xlabel('Hora')
+
+        os.makedirs(folder_output_dir, exist_ok=True)
+        fig.savefig(f"{folder_output_dir}/{plotname}_night_evolution.png", dpi=150)
+        df_temp.to_excel(f"{folder_output_dir}/{plotname}_night_evolution.xlsx")
+
+        plt.close()
+
+        logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_Ln_evolution.png")
+        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_Ln_evolution.xlsx")
+
+    except Exception as e:
+        logger.error(f"Error in plot_night_evolution: {e}")
 
 def plot_heatmap(df, folder_output_dir: str, logger, values_column: str, agg_func: str, plotname:str):
     """Plot heatmap of pivot table with hour evolution of each day,

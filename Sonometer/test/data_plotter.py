@@ -77,31 +77,58 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
         laeq_column (str): Name of the column to use, tipycally LAeq
         plotname (str): Prefix to name the plot
     """
-    for ind in df["indicador_str"].unique():
-        df_temp = df[df["indicador_str"] == ind]
+    try:
+        sns.set_style("whitegrid")
+        sns.set_palette("tab10")
+        
+        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        df['day_name'] = pd.Categorical(df['day_name'], categories=weekdays, ordered=True)
+        
+        for ind in df["indicador_str"].unique():
+            if ind == 'Ln':
+                continue
+            
+            df_temp = df[df["indicador_str"] == ind]
+            
+            fig = sns.relplot(data=df_temp,
+                        x="hour",
+                        y=laeq_column,
+                        kind="line", # kind is the type of plot to draw
+                        hue="day_name", # hue is the column to split the data
+                        estimator=leq,  # estimator is the function to apply to the data
+                        aspect=1.3, # aspect is the width/height ratio
+                        # legend=None,
+                        )
+            
+            if ind == 'Ld':
+                fig.set(xlim=(7, 18), ylim=(30, 105))
+                plt.xticks(range(7, 19), [str(hour) for hour in range(7, 19)])
+            elif ind == 'Le':
+                fig.set(xlim=(19, 22), ylim=(30, 105))
+                plt.xticks(range(19, 23), [str(hour) for hour in range(19, 23)])
 
-        fig = sns.relplot(data=df_temp,
-                          x="hour",
-                          y=laeq_column,
-                          kind="line",
-                          hue="day_name",
-                          estimator=leq,
-                          )
-        if ind == "Ln":
-            plt.xlim(0, 6)
+            plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
 
-        plt.title(f"Evolución {ind}")
-        plt.ylabel('dB(A)')
-        plt.xlabel('Hora')
-       
-        os.makedirs(f'{folder_output_dir}', exist_ok=True)
-        fig.savefig(f"{folder_output_dir}/{plotname}_{ind}_evolution.png",dpi=150)
-        df_temp.to_excel(f"{folder_output_dir}/{plotname}_{ind}_evolution.xlsx")
-       
-        plt.close()
+            
+            for ax in fig.axes.flat:
+                ax.spines['top'].set_visible(True)
+            
+            ax.spines['right'].set_visible(True)
+            plt.title(f"Evolución {ind}")
+            plt.ylabel('dB(A)')
+            plt.xlabel('Hora')
+        
+            os.makedirs(f'{folder_output_dir}', exist_ok=True)
+            fig.savefig(f"{folder_output_dir}/{plotname}_{ind}_evolution.png",dpi=150)
+            df_temp.to_excel(f"{folder_output_dir}/{plotname}_{ind}_evolution.xlsx")
+        
+            plt.close()
+        
+        logger.info(f"Period evolution plot saved to {folder_output_dir}/{plotname}_{ind}_evolution.png")
+        logger.info(f"Period evolution data saved to {folder_output_dir}/{plotname}_{ind}_evolution.xlsx")
     
-    logger.info(f"Period evolution plot saved to {folder_output_dir}/{plotname}_{ind}_evolution.png")
-    logger.info(f"Period evolution data saved to {folder_output_dir}/{plotname}_{ind}_evolution.xlsx")
+    except Exception as e:
+        logger.error(f"Error in plot_period_evolution: {e}")
 
 def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
     """ Lineplots per each night

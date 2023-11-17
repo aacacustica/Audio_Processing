@@ -12,5 +12,5 @@ PLOT_TIME = False # Done
 PLOT_HEATMAP = False # Done
 PLOT_INDHEATMAP = False # Done 
 PLOT_DAY_EVOLUTION = False # Done
-PLOT_PERIOD_EVOLUTION = True
-PLOT_NIGHT_EVOLUTION = False # problems with the hours
+PLOT_PERIOD_EVOLUTION = False # Done
+PLOT_NIGHT_EVOLUTION = True # problems with the hours

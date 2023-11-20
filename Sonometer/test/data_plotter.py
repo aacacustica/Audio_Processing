@@ -207,6 +207,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
         plotname (str): Prefix to name the plot
     """
     try:
+        print(df)
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
@@ -218,7 +219,12 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
 
         df_temp = df[df["indicador_str"] == 'Ln']
 
-        df_temp['datetime'] = pd.to_datetime(df_temp['Time'])
+        if "Time" in df_temp.columns:
+            df_temp['datetime'] = pd.to_datetime(df_temp['Time'])
+        elif "Fecha" in df_temp.columns:
+            df_temp['datetime'] = pd.to_datetime(df_temp['Fecha'], dayfirst=True)
+        # else:
+        #     df_temp['datetime'] = pd.to_datetime(df_temp['date'])
 
         df_temp.set_index('datetime', inplace=True)
         df_resampled = df_temp.groupby([pd.Grouper(freq='15T'), 'Día']).mean().reset_index()
@@ -255,8 +261,8 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
 
         plt.close()
 
-        logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_Ln_evolution_{name_extension}.png")
-        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_Ln_evolution_{name_extension}.xlsx")
+        logger.info(f"Night evolution 15 min plot saved to {folder_output_dir}/{plotname}_Ln_evolution_{name_extension}.png")
+        logger.info(f"Night evolution data 15 min saved to {folder_output_dir}/{plotname}_Ln_evolution_{name_extension}.xlsx")
 
     except Exception as e:
         logger.error(f"Error in plot_night_evolution: {e}")

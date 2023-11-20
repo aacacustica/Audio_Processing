@@ -180,7 +180,7 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
             ax.spines['top'].set_visible(True)
             ax.spines['right'].set_visible(True)
 
-        plt.title(f'Evolución noche {plotname}')
+        plt.title(f'Evolución Ln')
         plt.ylabel('dB(A)')
         plt.xlabel('Hora')
 
@@ -248,7 +248,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
             ax.spines['top'].set_visible(True)
             ax.spines['right'].set_visible(True)
 
-        plt.title(f'Evolución noche {plotname}')
+        plt.title(f'Evolución Ln')
         plt.ylabel('dB(A)')
         plt.xlabel('Hora')
 

@@ -234,6 +234,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
                           y=laeq_column,
                           kind="line",
                           hue="Día",
+                          estimator=leq,
                           aspect=1.3,
                           )
 

@@ -23,6 +23,7 @@ def load_data(file_path, logger):
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
         try:
             logger.info(f"Loading data for SLM type {slm_type}")
+            logger.info(f"Analizing {file_path}")
             df = func(file_path)
             return df, slm_type, slm_dict
         except Exception as e:
@@ -176,6 +177,9 @@ def main():
         PERCENTILES = args.percentiles
         
     clase_registro = os.path.basename(input_folder)
+    if clase_registro == '':
+        clase_registro = os.path.basename(os.path.dirname(input_folder))
+        
     folders = [folder for folder in os.listdir(input_folder) if os.path.isdir(os.path.join(input_folder, folder))]
 
     df_indicadores, n_registro, df_common_format = process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, logger)

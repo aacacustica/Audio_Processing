@@ -21,14 +21,17 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
-        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-        df['day_name'] = pd.Categorical(df['day_name'], categories=weekdays, ordered=True)
+        # translate the day name to spanish from english in day_name
+        df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
+        
+        weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+        df['Día'] = pd.Categorical(df['Día'], categories=weekdays, ordered=True)
 
         fig = sns.relplot(data=df,
                         x="hour",
                         y=laeq_column,
                         kind="line", # kind is the type of plot to draw
-                        hue="day_name", # hue is the column to split the data
+                        hue="Día", # hue is the column to split the data
                         estimator=leq,  # estimator is the function to apply to the data
                         aspect=1.3, # aspect is the width/height ratio
                         # legend=None,
@@ -81,8 +84,11 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
-        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-        df['day_name'] = pd.Categorical(df['day_name'], categories=weekdays, ordered=True)
+        # translate the day name to spanish from english in day_name
+        df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
+        
+        weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+        df['Día'] = pd.Categorical(df['Día'], categories=weekdays, ordered=True)
         
         for ind in df["indicador_str"].unique():
             if ind == 'Ln':
@@ -94,7 +100,7 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
                         x="hour",
                         y=laeq_column,
                         kind="line", # kind is the type of plot to draw
-                        hue="day_name", # hue is the column to split the data
+                        hue="Día", # hue is the column to split the data
                         estimator=leq,  # estimator is the function to apply to the data
                         aspect=1.3, # aspect is the width/height ratio
                         # legend=None,
@@ -133,14 +139,24 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
         logger.error(f"Error in plot_period_evolution: {e}")
 
 def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
-    """ Lineplots for the night period (Ln) """
+    """ Lineplots for the night period (Ln) 
+    Args:
+        df (_type_): DataFrame
+        folder_output_dir (str): Output directory
+        logger (_type_): Logger
+        laeq_column (str): Name of the column to use, tipycally LAeq
+        plotname (str): Prefix to name the plot
+    """
     try:
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
-
-        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-        df['day_name'] = pd.Categorical(df['day_name'], categories=weekdays, ordered=True)
-
+        
+        # translate the day name to spanish from english in day_name
+        df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes-Martes', 'Martes-Miércoles', 'Miércoles-Jueves', 'Jueves-Viernes', 'Viernes-Sábado', 'Sábado-Domingo', 'Domingo-Lunes'])
+        
+        weekdays = ['Lunes-Martes', 'Martes-Miércoles', 'Miércoles-Jueves', 'Jueves-Viernes', 'Viernes-Sábado', 'Sábado-Domingo', 'Domingo-Lunes']
+        df['Día'] = pd.Categorical(df['Día'], categories=weekdays, ordered=True)
+        
         df_temp = df[df["indicador_str"] == 'Ln']
 
         df_temp['adjusted_hour'] = df_temp['hour'].apply(lambda x: x if x >= 23 else x + 24)
@@ -149,7 +165,7 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
                           x="adjusted_hour",
                           y=laeq_column,
                           kind="line",
-                          hue="day_name",
+                          hue="Día",
                           estimator=leq,
                           aspect=1.3,
                           )
@@ -176,25 +192,36 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
 
         logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_Ln_evolution.png")
         logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_Ln_evolution.xlsx")
-
+    
     except Exception as e:
         logger.error(f"Error in plot_night_evolution: {e}")
 
 def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extension, laeq_column:str, plotname:str):
-    """ Lineplots for the night period (Ln) with 15-minute intervals """
+    """ Lineplots for the night period (Ln) with 15-minute intervals
+    Args:
+        df (_type_): DataFrame
+        folder_output_dir (str): Output directory
+        logger (_type_): Logger
+        name_extension (str): Name extension for the plot
+        laeq_column (str): Name of the column to use, tipycally LAeq
+        plotname (str): Prefix to name the plot
+    """
     try:
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
-        print(df)
-        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-        df['day_name'] = pd.Categorical(df['day_name'], categories=weekdays, ordered=True)
+        
+        # translate the day name to spanish from english in day_name
+        df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes-Martes', 'Martes-Miércoles', 'Miércoles-Jueves', 'Jueves-Viernes', 'Viernes-Sábado', 'Sábado-Domingo', 'Domingo-Lunes'])
+        
+        weekdays = ['Lunes-Martes', 'Martes-Miércoles', 'Miércoles-Jueves', 'Jueves-Viernes', 'Viernes-Sábado', 'Sábado-Domingo', 'Domingo-Lunes']
+        df['Día'] = pd.Categorical(df['Día'], categories=weekdays, ordered=True)
 
         df_temp = df[df["indicador_str"] == 'Ln']
 
         df_temp['datetime'] = pd.to_datetime(df_temp['Time'])
 
         df_temp.set_index('datetime', inplace=True)
-        df_resampled = df_temp.groupby([pd.Grouper(freq='15T'), 'day_name']).mean().reset_index()
+        df_resampled = df_temp.groupby([pd.Grouper(freq='15T'), 'Día']).mean().reset_index()
 
         df_resampled['adjusted_hour'] = df_resampled['datetime'].dt.hour + df_resampled['datetime'].dt.minute / 60
         df_resampled['adjusted_hour'] = df_resampled['adjusted_hour'].apply(lambda x: x if x >= 23 else x + 24)
@@ -203,7 +230,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
                           x="adjusted_hour",
                           y=laeq_column,
                           kind="line",
-                          hue="day_name",
+                          hue="Día",
                           aspect=1.3,
                           )
 
@@ -228,8 +255,8 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
 
         plt.close()
 
-        logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_Ln_evolution__{name_extension}.png")
-        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_Ln_evolution__{name_extension}.xlsx")
+        logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_Ln_evolution_{name_extension}.png")
+        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_Ln_evolution_{name_extension}.xlsx")
 
     except Exception as e:
         logger.error(f"Error in plot_night_evolution: {e}")
@@ -285,11 +312,11 @@ def make_timeplot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict
     """
     try:
         percentiles_colours = {
-            1: '#C8FFC8',
-            5: '#00C800',
-            10: '#007800',
-            50: '#FFFF00',
-            90: '#FFC878',
+            1: '#000000',  # BLACK
+            5: '#0000FF',  # BLUE
+            10: '#FFFF00', # YELLOW
+            50: '#8B4513', # BROWN
+            90: '#FFA500'  # ORANGE
         }
         agg_funcs = {
             columns_dict['LAEQ_COLUMN']: 'mean',

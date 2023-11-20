@@ -1,36 +1,38 @@
 from datetime import datetime
 import os
 import pandas as pd
+import numpy as np
 
 ######################## SLM COLUMN MAPS #####################################
 larsonlx_dict = {'LAEQ_COLUMN': 'LAeq',
-'LAMAX_COLUMN': 'LAFmax',
-'LAMIN_COLUMN': 'LAFmin'}
+                 'LAMAX_COLUMN': 'LAFmax',
+                 'LAMIN_COLUMN': 'LAFmin'}
 
 larson824_dict = {'LAEQ_COLUMN': 'Leq',
-'LAMAX_COLUMN': 'Max',
-'LAMIN_COLUMN': 'Min'}
+                  'LAMAX_COLUMN': 'Max',
+                  'LAMIN_COLUMN': 'Min'}
 
 larson814_dict = {'LAEQ_COLUMN': 'Leq',
-'LAMAX_COLUMN': 'Max',
-'LAMIN_COLUMN': 'Min'}
+                  'LAMAX_COLUMN': 'Max',
+                  'LAMIN_COLUMN': 'Min'}
 
 cesva_dict = {'LAEQ_COLUMN': 'LA1s',
-'LAMAX_COLUMN': 'LAFmax1s',
-'LAMIN_COLUMN': 'LAFmin1s'}
+              'LAMAX_COLUMN': 'LAFmax1s',
+              'LAMIN_COLUMN': 'LAFmin1s'}
 
 SV307_dict = {'LAEQ_COLUMN': 'LAeq (Ch1, P1) [dB]',
-'LAMAX_COLUMN': 'LAFmax (Ch1, P1) [dB]',
-'LAMIN_COLUMN': 'LAFmin (Ch1, P1) [dB]' 
-} 
+              'LAMAX_COLUMN': 'LAFmax (Ch1, P1) [dB]',
+              'LAMIN_COLUMN': 'LAFmin (Ch1, P1) [dB]'} 
 
 audiopost_dict = {'LAEQ_COLUMN': 'LA',
-'LAMAX_COLUMN': 'LAmax',
-'LAMIN_COLUMN': 'LAmin'}
+                  'LAMAX_COLUMN': 'LAmax',
+                  'LAMIN_COLUMN': 'LAmin'}
 
-common_columns = ["datetime", "LAeq", "LAmax", "LAmin","ubicacion","slm_type"]
+audio_moth = {'LAEQ_COLUMN': 'LA',
+              'LAMAX_COLUMN': 'LAmax',
+              'LAMIN_COLUMN': 'LAmin'}
 
-day_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+common_columns = ["datetime", "LAeq", "LAmax", "LAmin", "ubicacion", "slm_type"]
 
 ######################## READER FUNCTIONS #####################################
 def get_data_814(filename: str):

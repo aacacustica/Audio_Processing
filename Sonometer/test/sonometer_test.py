@@ -18,12 +18,12 @@ def load_data(file_path, logger):
         "lx_EN": (get_data_lx_EN, larsonlx_dict),
         "SV307": (get_data_SV307, SV307_dict),
         "cesva": (get_data_cesva, cesva_dict),
-        "audio-post": (get_data_audio, audiopost_dict)
+        "audio-Moth": (get_data_audio, audiopost_dict)
     } # SLM stands for Sound Level Meter
+    logger.info(f"Analizing {file_path}")
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
         try:
             logger.info(f"Loading data for SLM type {slm_type}")
-            logger.info(f"Analizing {file_path}")
             df = func(file_path)
             return df, slm_type, slm_dict
         except Exception as e:

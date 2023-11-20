@@ -1,6 +1,7 @@
 import numpy as np
 
 def calculate_duration(start_time, end_time):
+    """Calculate duration in seconds"""
     duration = end_time - start_time
     return duration.total_seconds()
 
@@ -28,13 +29,10 @@ def add_night_column(hour_column, day_col):
     ''' Label based on hour columnn and weekday'''
     night_list=["Lunes-Martes","Martes-Miércoles","Miércoles-Jueves","Jueves-Viernes","Viernes-Sábado","Sábado-Domingo","Domingo-Lunes"]
     night = ''
- 
     if hour_column >= 23:
         night=night_list[day_col]
-
     elif hour_column < 7:
         night=night_list[day_col-1]
-
     return night
 
 def add_datetime_columns(df,date_col):
@@ -48,9 +46,7 @@ def add_datetime_columns(df,date_col):
     
     #df['min_sec_str'] = df.apply(lambda x: datetime.datetime.strftime(x[date_col],'%M:%S'),axis=1)
     #df['min_sec_15_str'] = df.apply(lambda x: str(x[date_col].minute % 15) + '-'+str(x[date_col].second),axis=1)
-    
     return df
-
 
 def db_limit(hour_column,ld_limit,le_limit,ln_limit):
     """Create Columns on the Dataframe with Noise levels Limits on the measurement poiint"""

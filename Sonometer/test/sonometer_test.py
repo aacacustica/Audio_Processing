@@ -114,7 +114,9 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             df['night_str'] = df.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
 
             if PLOT_NIGHT_EVOLUTION:
-                plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"],plotname=folder)
+                plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
+            if PLOT_NIGHT_EVOLUTION_15_MIN:
+                plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
             
             n_registro.append([folder for i in range(3)])
             

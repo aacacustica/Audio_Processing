@@ -155,7 +155,7 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
                           )
 
         plt.xticks([23, 24, 25, 26, 27, 28, 29, 30],
-                   ['23', '0', '1', '2', '3', '4', '5', '6'])
+                   ['23:00', '00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00'])
         plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
 
         plt.xlim(22.5, 30.5)
@@ -176,6 +176,60 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
 
         logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_Ln_evolution.png")
         logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_Ln_evolution.xlsx")
+
+    except Exception as e:
+        logger.error(f"Error in plot_night_evolution: {e}")
+
+def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extension, laeq_column:str, plotname:str):
+    """ Lineplots for the night period (Ln) with 15-minute intervals """
+    try:
+        sns.set_style("whitegrid")
+        sns.set_palette("tab10")
+        print(df)
+        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        df['day_name'] = pd.Categorical(df['day_name'], categories=weekdays, ordered=True)
+
+        df_temp = df[df["indicador_str"] == 'Ln']
+
+        df_temp['datetime'] = pd.to_datetime(df_temp['Time'])
+
+        df_temp.set_index('datetime', inplace=True)
+        df_resampled = df_temp.groupby([pd.Grouper(freq='15T'), 'day_name']).mean().reset_index()
+
+        df_resampled['adjusted_hour'] = df_resampled['datetime'].dt.hour + df_resampled['datetime'].dt.minute / 60
+        df_resampled['adjusted_hour'] = df_resampled['adjusted_hour'].apply(lambda x: x if x >= 23 else x + 24)
+
+        fig = sns.relplot(data=df_resampled,
+                          x="adjusted_hour",
+                          y=laeq_column,
+                          kind="line",
+                          hue="day_name",
+                          aspect=1.3,
+                          )
+
+        plt.xticks([h + m/60 for h in range(23, 31) for m in range(0, 60, 15)] + [31],
+                   [f'{(h % 24):02d}:{m:02d}' for h in range(23, 31) for m in range(0, 60, 15)] + ['07:00'])
+        plt.xticks(rotation=90)
+
+        plt.xlim(22.75, 31)
+        plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
+
+        for ax in fig.axes.flat:
+            ax.spines['top'].set_visible(True)
+            ax.spines['right'].set_visible(True)
+
+        plt.title(f'Evolución noche {plotname}')
+        plt.ylabel('dB(A)')
+        plt.xlabel('Hora')
+
+        os.makedirs(folder_output_dir, exist_ok=True)
+        fig.savefig(f"{folder_output_dir}/{plotname}_night_evolution_{name_extension}.png", dpi=150)
+        df_resampled.to_excel(f"{folder_output_dir}/{plotname}_night_evolution_{name_extension}.xlsx")
+
+        plt.close()
+
+        logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_Ln_evolution__{name_extension}.png")
+        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_Ln_evolution__{name_extension}.xlsx")
 
     except Exception as e:
         logger.error(f"Error in plot_night_evolution: {e}")
@@ -202,11 +256,11 @@ def plot_heatmap(df, folder_output_dir: str, logger, values_column: str, agg_fun
         plt.xlabel('Hora')
         plt.ylabel('Día')
         plt.title(f'{plotname} Nivel equivalente')
+        plt.yticks(rotation=0)
         plt.tight_layout()
         
         os.makedirs(f'{folder_output_dir}', exist_ok=True)
         plt.savefig(f'{folder_output_dir}/{plotname}_heatmap.png',dpi=150)
-        #leq_day_hour.to_csv(f"{file[:-4]}_heatmap_mes_tabla_{month}_{year}.csv")
         leq_day_hour.to_excel(f'{folder_output_dir}/{plotname}_heatmap_tabla_dia_hora.xlsx')
         
         plt.close()
@@ -231,24 +285,18 @@ def make_timeplot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict
     """
     try:
         percentiles_colours = {
-            '1': '#C8FFC8',
-            '5': '#00C800',
-            '10': '#007800',
-            '50': '#FFFF00',
-            '90': '#FFC878',
+            1: '#C8FFC8',
+            5: '#00C800',
+            10: '#007800',
+            50: '#FFFF00',
+            90: '#FFC878',
         }
-        
         agg_funcs = {
             columns_dict['LAEQ_COLUMN']: 'mean',
             columns_dict['LAMAX_COLUMN']: 'max',
             columns_dict['LAMIN_COLUMN']: 'min'
         }
         agg_data = df.resample(f'{agg_period}s').agg(agg_funcs)
-
-        percentiles_dict = {
-            f'L{percentile}': df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(percentile/100)
-            for percentile in percentiles
-        }
 
         plt.style.use('seaborn-whitegrid')
         fig, ax = plt.subplots(figsize=(20, 10))
@@ -259,24 +307,23 @@ def make_timeplot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict
         ax.plot(x, agg_data[columns_dict['LAMAX_COLUMN']], linewidth=1, color='#FF99FF', label='Lmax')
         ax.plot(x, agg_data[columns_dict['LAMIN_COLUMN']], linewidth=1, color='#92D050', label='Lmin')
 
-        # test if colours are applied or not
-        for percentile_value in percentiles:
-            values = percentiles_dict[f'L{percentile_value}']
-            ax.plot(x, values, linewidth=0.5, label=f'L{int(percentile_value)}', color=percentiles_colours[str(percentile_value)])
+        for percentile in percentiles:
+            values = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile(percentile / 100)
+            ax.plot(x, values, linewidth=0.5, label=f'L{percentile}', color=percentiles_colours[percentile])
 
         hours = mdates.HourLocator(interval=3)
         h_fmt = mdates.DateFormatter('%d-%m-%y %H:%M')
-        
+
         ax.xaxis.set_major_locator(hours)
         ax.xaxis.set_major_formatter(h_fmt)
-        
+
         plt.xlim(df.index.min(), df.index.max())
         plt.ylim([30, 105])
         plt.ylabel('dB(A)')
         plt.xlabel('Hora')
-        
+
         plt.title(f'{plotname} Nivel equivalente {agg_period}s')
-        
+
         plt.xticks(rotation=90)
         plt.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0.1, fancybox=True, framealpha=1, edgecolor='black')
 
@@ -301,77 +348,47 @@ def plot_indheatmap(df, folder_output_dir: str, logger, plotname:str, ind_column
         ind_column (str): Name of the column to use, tipycally LAeq
     """
     try:
+        if "Fecha" not in df.columns and "Date hour" in df.columns:
+            # df["Fecha"] = df["Date hour"]
+            df["Fecha"] = pd.to_datetime(df['Date hour'], dayfirst=True)
+        
+        if "Fecha" not in df.columns and "Time" in df.columns:
+            df["Fecha"] = pd.to_datetime(df['Time'], dayfirst=True)
+
         df_indicadores = (df.groupby(['date','indicador_str'])['Fecha'].agg(['first','last']))
         df_indicadores['duration'] = df_indicadores.apply(lambda row: calculate_duration(row['first'], row['last']), axis=1)
         
-        # indicadores to check if they are present in the first day
+        # Indicators to check
         indicators_to_check = ['Ld', 'Le', 'Ln']
-        
-        # select just the first day:
+
+        # Select the first and last day
         first_day = df['date'].min()
         last_day = df['date'].max()
-        
-        # select just the first and last day:
-        df_first_day = df[df['date'] == first_day]
-        df_last_day = df[df['date'] == last_day]
-        
-        # check if the indicators are present in the first and last day
-        presence_first_day = {indicator: indicator in df_first_day['indicador_str'].unique() for indicator in indicators_to_check}
-        presence_last_day = {indicator: indicator in df_last_day['indicador_str'].unique() for indicator in indicators_to_check}
+
+        # Check the presence of indicators
+        presence_first_day = {indicator: indicator in df[df['date'] == first_day]['indicador_str'].unique() for indicator in indicators_to_check}
+        presence_last_day = {indicator: indicator in df[df['date'] == last_day]['indicador_str'].unique() for indicator in indicators_to_check}
         logger.info(f"Presence of indicators in first day {first_day}: {presence_first_day}")
         logger.info(f"Presence of indicators in last day {last_day}: {presence_last_day}")
+
+        # Check duration of indicators
+        duration_first_day = {indicator: df_indicadores.loc[(first_day, indicator), 'duration'] if presence_first_day[indicator] else 0 for indicator in indicators_to_check}
+        duration_last_day = {indicator: df_indicadores.loc[(last_day, indicator), 'duration'] if presence_last_day[indicator] else 0 for indicator in indicators_to_check}
         
-        # duration of the indicators in the first and last day
-        duration_first_day = df_indicadores.loc[(first_day, indicators_to_check), 'duration']
-        duration_last_day = df_indicadores.loc[(last_day, indicators_to_check), 'duration']
-        logger.info(f"Duration of indicators in first day {first_day}: {duration_first_day}")
-        logger.info(f"Duration of indicators in last day {last_day}: {duration_last_day}")
-        
-        # For the first day
-        ld_first_day = duration_first_day.loc[(first_day, 'Ld')]
-        le_first_day = duration_first_day.loc[(first_day, 'Le')]
-        ln_first_day = duration_first_day.loc[(first_day, 'Ln')]
+        # Log duration information
+        for indicator in indicators_to_check:
+            logger.info(f"Duration of {indicator} on the first day {first_day}: {duration_first_day[indicator]}")
+            logger.info(f"Duration of {indicator} on the last day {last_day}: {duration_last_day[indicator]}")
 
-        # For the last day
-        ld_last_day = duration_last_day.loc[(last_day, 'Ld')]
-        le_last_day = duration_last_day.loc[(last_day, 'Le')]
-        ln_last_day = duration_last_day.loc[(last_day, 'Ln')]
+        # Removal logic based on duration and presence
+        for indicator in indicators_to_check:
+            if presence_first_day[indicator] and duration_first_day[indicator] <= LE_SECONDS:
+                df = df[~((df['date'] == first_day) & (df['indicador_str'] == indicator))]
+                logger.info(f"{indicator} indicator from first day {first_day} removed, less than {LE_SECONDS} seconds")
 
-        # log information
-        logger.info(f"LD duration on the first day: {ld_first_day}")
-        logger.info(f"LE duration on the first day: {le_first_day}")
-        logger.info(f"LN duration on the first day: {ln_first_day}")
-
-        logger.info(f"LD duration on the last day: {ld_last_day}")
-        logger.info(f"LE duration on the last day: {le_last_day}")
-        logger.info(f"LN duration on the last day: {ln_last_day}")
-        
-        # FIRST DAY
-        if ld_first_day <= LD_SECONDS:
-            df = df[~((df['date'] == first_day) & (df['indicador_str'] == 'Ld'))]
-            logger.info(f"LD indicator from first day {first_day} removed, less than {LD_SECONDS} seconds")
-
-        if le_first_day <= LE_SECONDS:
-            df = df[~((df['date'] == first_day) & (df['indicador_str'] == 'Le'))]
-            logger.info(f"LE indicator from first day {first_day} removed, less than {LE_SECONDS} seconds")
-
-        if ln_first_day <= LN_SECONDS:
-            df = df[~((df['date'] == first_day) & (df['indicador_str'] == 'Ln'))]
-            logger.info(f"LN indicator from first day {first_day} removed, less than {LN_SECONDS} seconds")
-
-        # LAST DAY
-        if ld_last_day <= LD_SECONDS:
-            df = df[~((df['date'] == last_day) & (df['indicador_str'] == 'Ld'))]
-            logger.info(f"LD indicator from last day {last_day} removed, less than {LD_SECONDS} seconds")
-
-        if le_last_day <= LE_SECONDS:
-            df = df[~((df['date'] == last_day) & (df['indicador_str'] == 'Le'))]
-            logger.info(f"LE indicator from last day {last_day} removed, less than {LE_SECONDS} seconds")
-
-        if ln_last_day <= LN_SECONDS:
-            df = df[~((df['date'] == last_day) & (df['indicador_str'] == 'Ln'))]
-            logger.info(f"LN indicator from last day {last_day} removed, less than {LN_SECONDS} seconds")
-
+            if presence_last_day[indicator] and duration_last_day[indicator] <= LE_SECONDS:
+                df = df[~((df['date'] == last_day) & (df['indicador_str'] == indicator))]
+                logger.info(f"{indicator} indicator from last day {last_day} removed, less than {LE_SECONDS} seconds")
         indicadores_table = pd.pivot_table(data=df,index="date",columns="indicador_str",values=ind_column,aggfunc=leq).round(1)
 
         desired_order = ["Ln", "Ld", "Le"]

@@ -7,13 +7,10 @@ def calculate_duration(start_time, end_time):
 def evaluation_period_str(hour_column):
     ''' Label period based on hour columnn'''
     period = ''
-
     if hour_column >= 7 and hour_column < 19:
         period = 'Ld'
-
     elif hour_column >= 19 and hour_column < 23:
         period = 'Le'
-
     else:
         period = 'Ln'
     return period
@@ -21,17 +18,14 @@ def evaluation_period_str(hour_column):
 def evaluation_period_str_valencia(hour_column):
     ''' Label period based on hour columnn'''
     period = ''
-
     if hour_column >= 8 and hour_column < 22:
         period = 'Ld_valencia'
-
     else:
         period = 'Ln_valencia'
     return period
 
 def add_night_column(hour_column, day_col):
     ''' Label based on hour columnn and weekday'''
-
     night_list=["Lunes-Martes","Martes-Miércoles","Miércoles-Jueves","Jueves-Viernes","Viernes-Sábado","Sábado-Domingo","Domingo-Lunes"]
     night = ''
  
@@ -45,7 +39,6 @@ def add_night_column(hour_column, day_col):
 
 def add_datetime_columns(df,date_col):
     """Add datetime Columns to Dataframe"""
-    
     #df['day_hour'] = df.apply(lambda x: str(x[date_col].day) + '-' + str(x[date_col].hour),axis=1)
     df['date'] = df[date_col].dt.date
     df['day'] = df[date_col].dt.day
@@ -61,7 +54,6 @@ def add_datetime_columns(df,date_col):
 
 def db_limit(hour_column,ld_limit,le_limit,ln_limit):
     """Create Columns on the Dataframe with Noise levels Limits on the measurement poiint"""
-    
     limit = 0
     if hour_column >= 7 and hour_column < 19:
         limit = ld_limit

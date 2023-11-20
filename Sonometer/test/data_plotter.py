@@ -207,7 +207,6 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
         plotname (str): Prefix to name the plot
     """
     try:
-        print(df)
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
@@ -223,8 +222,6 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
             df_temp['datetime'] = pd.to_datetime(df_temp['Time'])
         elif "Fecha" in df_temp.columns:
             df_temp['datetime'] = pd.to_datetime(df_temp['Fecha'], dayfirst=True)
-        # else:
-        #     df_temp['datetime'] = pd.to_datetime(df_temp['date'])
 
         df_temp.set_index('datetime', inplace=True)
         df_resampled = df_temp.groupby([pd.Grouper(freq='15T'), 'Día']).mean().reset_index()

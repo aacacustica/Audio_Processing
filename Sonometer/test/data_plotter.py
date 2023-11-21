@@ -141,6 +141,9 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
 
 def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
     try:
+        print(df)
+        print(df.columns)
+        
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
 
@@ -188,64 +191,64 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
     
     except Exception as e:
         logger.error(f"Error in plot_night_evolution: {e}")
-
+        
 def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extension, laeq_column:str, plotname:str):
     try:
         print(df)
         print(df.columns)
+        
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
-        
-        df_temp = df[df["indicador_str"] == 'Ln']
 
-        if "Time" in df_temp.columns:
-            df_temp['datetime'] = pd.to_datetime(df_temp['Time'])
-        elif "Fecha" in df_temp.columns:
-            df_temp['datetime'] = pd.to_datetime(df_temp['Fecha'], dayfirst=True)
-        elif "Date hour" in df_temp.columns:
-            df_temp['datetime'] = pd.to_datetime(df_temp['Date hour'], dayfirst=True)
+        df['date'] = pd.to_datetime(df['date'])
+        df.sort_values(by=['date', 'hour'], inplace=True)
 
-        df_temp.set_index('datetime', inplace=True)
-        df_resampled = df_temp.groupby([pd.Grouper(freq='15T'), 'night_str']).mean().reset_index()
+        # resampling to take 15 min intervals
+        df_resampled = df.resample('15T', on='date').mean().dropna(subset=[laeq_column])
+        print(df_resampled.head(50))
+        exit()        
+        night_data = pd.DataFrame()
+        unique_dates = df['date'].dt.date.unique()
 
-        df_resampled['adjusted_hour'] = df_resampled['datetime'].dt.hour + df_resampled['datetime'].dt.minute / 60
-        df_resampled['adjusted_hour'] = df_resampled['adjusted_hour'].apply(lambda x: x if x >= 23 else x + 24)
+        for current_date in unique_dates:
+            next_date = current_date + pd.Timedelta(days=1)
+            data_23 = df[(df['date'].dt.date == current_date) & (df['hour'] == 23)]
+            data_00_06 = df[(df['date'].dt.date == next_date) & (df['hour'].isin(range(0, 7)))]
 
-        fig = sns.relplot(data=df_resampled,
-                          x="adjusted_hour",
-                          y=laeq_column,
-                          kind="line",
-                          hue="night_str",
-                          estimator=leq,
-                          aspect=1.3,
-                          )
+            if not data_23.empty and not data_00_06.empty:
+                combined_data = pd.concat([data_23, data_00_06])
+                night_data = pd.concat([night_data, combined_data])
 
-        plt.xticks([h + m/60 for h in range(23, 31) for m in range(0, 60, 15)] + [31],
-                   [f'{(h % 24):02d}:{m:02d}' for h in range(23, 31) for m in range(0, 60, 15)] + ['07:00'])
-        plt.xticks(rotation=90)
+        night_data['plot_hour'] = night_data['hour'].replace({23: -1}).astype(int)
+        night_data.sort_values(by=['date', 'plot_hour'], inplace=True)
 
-        plt.xlim(22.75, 31)
+        fig = sns.relplot(data=night_data, x="plot_hour", y=laeq_column, kind="line", hue="night_str",
+                          estimator=leq, aspect=1.3)
+        plt.xticks(range(-1, 7), ['23:00', '00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00'])
         plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
+
+        plt.xlim(-1.5, 6.5)
 
         for ax in fig.axes.flat:
             ax.spines['top'].set_visible(True)
             ax.spines['right'].set_visible(True)
 
-        plt.title(f'Evolución Ln')
+        plt.title('Evolución nocturna')
         plt.ylabel('dB(A)')
         plt.xlabel('Hora')
 
         os.makedirs(folder_output_dir, exist_ok=True)
         fig.savefig(f"{folder_output_dir}/{plotname}_night_evolution_{name_extension}.png", dpi=150)
-        df_resampled.to_excel(f"{folder_output_dir}/{plotname}_night_evolution_{name_extension}.xlsx")
+        # night_data.to_excel(f"{folder_output_dir}/{plotname}_night_evolution_{name_extension}.xlsx")
 
         plt.close()
 
-        logger.info(f"Night evolution 15 min plot saved to {folder_output_dir}/{plotname}_Ln_evolution_{name_extension}.png")
-        logger.info(f"Night evolution data 15 min saved to {folder_output_dir}/{plotname}_Ln_evolution_{name_extension}.xlsx")
-
+        logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_night_evolution_{name_extension}.png")
+        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_night_evolution_{name_extension}.xlsx")
+    
     except Exception as e:
         logger.error(f"Error in plot_night_evolution: {e}")
+
 
 def plot_heatmap(df, folder_output_dir: str, logger, values_column: str, agg_func: str, plotname:str):
     """Plot heatmap of pivot table with hour evolution of each day,

@@ -45,7 +45,7 @@ def process_directory(input_dir):
     # Go through all files in the input directory
     for filename in os.listdir(input_dir):
         # Check if the file is an audio file (you can add more formats if needed)
-        if filename.endswith(".wav") or filename.endswith(".flac"):
+        if filename.endswith(".wav") or filename.endswith(".WAV"):
             # Full path to the audio file
             audio_file = os.path.join(input_dir, filename)
             # Plot and save the spectrum

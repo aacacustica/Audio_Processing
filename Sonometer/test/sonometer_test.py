@@ -9,6 +9,7 @@ from utils_plotter import *
 import config
 from config import *
 from logging_config import setup_logging
+from tqdm import tqdm
 
 def load_data(file_path, logger):
     slm_type_function_mapping = {
@@ -18,7 +19,7 @@ def load_data(file_path, logger):
         "lx_EN": (get_data_lx_EN, larsonlx_dict),
         "SV307": (get_data_SV307, SV307_dict),
         "cesva": (get_data_cesva, cesva_dict),
-        "audio-Moth": (get_data_audio, audiopost_dict)
+        "audio-post": (get_data_audio, audiopost_dict)
     } # SLM stands for Sound Level Meter
     logger.info(f"Analizing {file_path}")
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
@@ -59,7 +60,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
     n_registro = []
     df_common_format = pd.DataFrame()
 
-    for folder in folders:
+    for folder in tqdm(folders, desc="Processing folders"):
         logger.info(f"Processing folder: {folder}")
         reg_folder = os.path.join(input_folder, folder)
 

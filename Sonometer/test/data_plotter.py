@@ -137,94 +137,76 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
     
     except Exception as e:
         logger.error(f"Error in plot_period_evolution: {e}")
+    import pandas as pd
 
 def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
-    """ Lineplots for the night period (Ln) 
-    Args:
-        df (_type_): DataFrame
-        folder_output_dir (str): Output directory
-        logger (_type_): Logger
-        laeq_column (str): Name of the column to use, tipycally LAeq
-        plotname (str): Prefix to name the plot
-    """
     try:
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
-        
-        # translate the day name to spanish from english in day_name
-        df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes-Martes', 'Martes-Miércoles', 'Miércoles-Jueves', 'Jueves-Viernes', 'Viernes-Sábado', 'Sábado-Domingo', 'Domingo-Lunes'])
-        
-        weekdays = ['Lunes-Martes', 'Martes-Miércoles', 'Miércoles-Jueves', 'Jueves-Viernes', 'Viernes-Sábado', 'Sábado-Domingo', 'Domingo-Lunes']
-        df['Día'] = pd.Categorical(df['Día'], categories=weekdays, ordered=True)
-        
-        df_temp = df[df["indicador_str"] == 'Ln']
 
-        df_temp['adjusted_hour'] = df_temp['hour'].apply(lambda x: x if x >= 23 else x + 24)
+        df['date'] = pd.to_datetime(df['date'])
+        df.sort_values(by=['date', 'hour'], inplace=True)
 
-        fig = sns.relplot(data=df_temp,
-                          x="adjusted_hour",
-                          y=laeq_column,
-                          kind="line",
-                          hue="Día",
-                          estimator=leq,
-                          aspect=1.3,
-                          )
+        night_data = pd.DataFrame()
+        unique_dates = df['date'].dt.date.unique()
 
-        plt.xticks([23, 24, 25, 26, 27, 28, 29, 30],
-                   ['23:00', '00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00'])
+        for current_date in unique_dates:
+            next_date = current_date + pd.Timedelta(days=1)
+            data_23 = df[(df['date'].dt.date == current_date) & (df['hour'] == 23)]
+            data_00_06 = df[(df['date'].dt.date == next_date) & (df['hour'].isin(range(0, 7)))]
+
+            if not data_23.empty and not data_00_06.empty:
+                combined_data = pd.concat([data_23, data_00_06])
+                night_data = pd.concat([night_data, combined_data])
+
+        night_data['plot_hour'] = night_data['hour'].replace({23: -1}).astype(int)
+        night_data.sort_values(by=['date', 'plot_hour'], inplace=True)
+
+        fig = sns.relplot(data=night_data, x="plot_hour", y=laeq_column, kind="line", hue="night_str",
+                          estimator=leq, aspect=1.3)
+        plt.xticks(range(-1, 7), ['23:00', '00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00'])
         plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
 
-        plt.xlim(22.5, 30.5)
+        plt.xlim(-1.5, 6.5)
 
         for ax in fig.axes.flat:
             ax.spines['top'].set_visible(True)
             ax.spines['right'].set_visible(True)
 
-        plt.title(f'Evolución Ln')
+        plt.title('Evolución nocturna')
         plt.ylabel('dB(A)')
         plt.xlabel('Hora')
 
         os.makedirs(folder_output_dir, exist_ok=True)
         fig.savefig(f"{folder_output_dir}/{plotname}_night_evolution.png", dpi=150)
-        df_temp.to_excel(f"{folder_output_dir}/{plotname}_night_evolution.xlsx")
+        night_data.to_excel(f"{folder_output_dir}/{plotname}_night_evolution.xlsx")
 
         plt.close()
 
-        logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_Ln_evolution.png")
-        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_Ln_evolution.xlsx")
+        logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_night_evolution.png")
+        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_night_evolution.xlsx")
     
     except Exception as e:
         logger.error(f"Error in plot_night_evolution: {e}")
 
 def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extension, laeq_column:str, plotname:str):
-    """ Lineplots for the night period (Ln) with 15-minute intervals
-    Args:
-        df (_type_): DataFrame
-        folder_output_dir (str): Output directory
-        logger (_type_): Logger
-        name_extension (str): Name extension for the plot
-        laeq_column (str): Name of the column to use, tipycally LAeq
-        plotname (str): Prefix to name the plot
-    """
     try:
+        print(df)
+        print(df.columns)
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
-        # translate the day name to spanish from english in day_name
-        df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes-Martes', 'Martes-Miércoles', 'Miércoles-Jueves', 'Jueves-Viernes', 'Viernes-Sábado', 'Sábado-Domingo', 'Domingo-Lunes'])
-        
-        weekdays = ['Lunes-Martes', 'Martes-Miércoles', 'Miércoles-Jueves', 'Jueves-Viernes', 'Viernes-Sábado', 'Sábado-Domingo', 'Domingo-Lunes']
-        df['Día'] = pd.Categorical(df['Día'], categories=weekdays, ordered=True)
-
         df_temp = df[df["indicador_str"] == 'Ln']
 
         if "Time" in df_temp.columns:
             df_temp['datetime'] = pd.to_datetime(df_temp['Time'])
         elif "Fecha" in df_temp.columns:
             df_temp['datetime'] = pd.to_datetime(df_temp['Fecha'], dayfirst=True)
+        elif "Date hour" in df_temp.columns:
+            df_temp['datetime'] = pd.to_datetime(df_temp['Date hour'], dayfirst=True)
 
         df_temp.set_index('datetime', inplace=True)
-        df_resampled = df_temp.groupby([pd.Grouper(freq='15T'), 'Día']).mean().reset_index()
+        df_resampled = df_temp.groupby([pd.Grouper(freq='15T'), 'night_str']).mean().reset_index()
 
         df_resampled['adjusted_hour'] = df_resampled['datetime'].dt.hour + df_resampled['datetime'].dt.minute / 60
         df_resampled['adjusted_hour'] = df_resampled['adjusted_hour'].apply(lambda x: x if x >= 23 else x + 24)
@@ -233,7 +215,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
                           x="adjusted_hour",
                           y=laeq_column,
                           kind="line",
-                          hue="Día",
+                          hue="night_str",
                           estimator=leq,
                           aspect=1.3,
                           )

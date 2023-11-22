@@ -67,32 +67,58 @@ def plot_spectrogram_octave(path: str, df_filtered, file_name: str, interval_min
     else:
         plt.savefig(f'{path}/Spectrogram/{file_name}_spect_oct.png')
 
-def plot_spectrogram_audio(file_path, path, file_name, n_fft=2048, hop_length=512, win_length=None):
+def plot_spectrogram_audio(file_path, path, file_name, bands_multifunction, start_db=None, end_db=None, n_fft=2048, hop_length=512, win_length=None):
+    # Load the audio file
     y, sr = librosa.load(file_path, sr=None)
-
-    # Calculate the Short-Time Fourier Transform (STFT)
+    # Compute the Short-Time Fourier Transform (STFT)
     D = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length, win_length=win_length))
     # Convert amplitude to decibels
     DB = librosa.amplitude_to_db(D, ref=np.max)
-    # Get the frequencies for each bin in the STFT
+
+    # Obtain the frequencies for the STFT
     freqs = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
 
-    # Filter out only the rows corresponding to the desired frequencies
+    # Filter the frequencies for plotting
     min_freq = min(bands_multifunction)
     max_freq = max(bands_multifunction)
-    freq_indices = np.where((freqs >= min_freq) & (freqs <= max_freq))[0]
-    DB_filtered = DB[freq_indices, :]
+    freq_indices_plot = np.where((freqs >= min_freq) & (freqs <= max_freq))[0]
+    DB_filtered_plot = DB[freq_indices_plot, :]
 
     # Plot the spectrogram
     plt.figure(figsize=(15, 6))
-    librosa.display.specshow(DB_filtered, sr=sr, hop_length=hop_length, x_axis='time', y_axis='log', fmin=min_freq, fmax=max_freq)
+    librosa.display.specshow(DB_filtered_plot, sr=sr, hop_length=hop_length, x_axis='time', y_axis='log', fmin=min_freq, fmax=max_freq, vmin=start_db, vmax=end_db)
     plt.colorbar(format='%+2.0f dB')
-    plt.title(f'Spectrogram {file_name}')
+    plt.title(f'Spectrogram {file_name} {"(Detail)" if start_db or end_db else ""}')
     
     # Save the plot
     os.makedirs(f'{path}/Spectrogram', exist_ok=True)
-    plt.savefig(f'{path}/Spectrogram/{file_name}_spectrogram.png')
+    plt.savefig(f'{path}/Spectrogram/{file_name}_spect{"_detail" if start_db or end_db else "rogram"}.png')
     plt.close()
+
+    # Find indices of the closest frequencies to the desired bands for the Excel file
+    freq_indices_excel = np.unique([np.argmin(np.abs(freqs - band)) for band in bands_multifunction])
+    DB_filtered_excel = DB[freq_indices_excel, :]
+
+    # Convert DB_filtered_excel to a DataFrame
+    df_excel = pd.DataFrame(DB_filtered_excel)
+
+    # Set column and row labels for time and frequency bins
+    times = librosa.frames_to_time(range(DB_filtered_excel.shape[1]), sr=sr, hop_length=hop_length)
+    df_excel.columns = times
+    df_excel.index = freqs[freq_indices_excel]
+
+    # Save to Excel
+    excel_filename = f'{path}/Spectrogram/{file_name}_spectrogram.xlsx'
+    df_excel.to_excel(excel_filename)
+    
+    
+
+def process_audio_file(file_path, start_db, end_db):
+    file_name = get_name(file_path)
+    path = get_path(file_path)
+    start_db = float(start_db) if start_db is not None else None
+    end_db = float(end_db) if end_db is not None else None
+    plot_spectrogram_audio(file_path, path, file_name, bands_multifunction, start_db, end_db)
 
 
 
@@ -103,13 +129,10 @@ def argument_parser():
     parser.add_argument('-s', '--start', required=False, type=str, help='Start time for the spectrogram')
     parser.add_argument('-e', '--end', required=False, type=str, help='End time for the spectrogram')
     parser.add_argument('-t', '--type', required=False, type=str, default="csv", choices=['csv', 'audio'], help='File type: csv or audio')
+    parser.add_argument('-sd', '--start-db', required=False, type=str, help='Start Db for the spectrogram')
+    parser.add_argument('-ed', '--end-db', required=False, type=str, help='End Db for the spectrogram')
     args = parser.parse_args()
     return args
-
-def process_audio_file(file_path):
-    file_name = get_name(file_path)
-    path = get_path(file_path)
-    plot_spectrogram_audio(file_path, path, file_name)
 
 def main():
     args = argument_parser()
@@ -117,14 +140,17 @@ def main():
     file_type = args.type
 
     if file_type == 'audio':
+        start_db = args.start_db
+        end_db = args.end_db
+        
         if os.path.isdir(file_path):
             for audio_file in os.listdir(file_path):
                 full_audio_path = os.path.join(file_path, audio_file)
                 if os.path.isfile(full_audio_path) and audio_file.lower().endswith(('.wav', '.mp3', '.flac', '.WAV', '.MP3', '.FLAC')):
-                    process_audio_file(full_audio_path)
+                    process_audio_file(full_audio_path, start_db, end_db)
         elif os.path.isfile(file_path):
             # Process a single audio file
-            process_audio_file(file_path)
+            process_audio_file(file_path, start_db, end_db)
         else:
             print("The provided path is neither a file nor a directory, or the file format is not supported.")
 

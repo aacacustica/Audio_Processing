@@ -52,7 +52,6 @@ def process_folder(folder_path, logger):
             logger.warning(f"No measurement files found in {folder_path}")
             return None, None, None
         return load_data(files[0], logger) 
-
     return None, None, None 
 
 def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, logger):
@@ -180,14 +179,19 @@ def main():
     clase_registro = os.path.basename(input_folder)
     if clase_registro == '':
         clase_registro = os.path.basename(os.path.dirname(input_folder))
+    
+    try:     
+        folders = [folder for folder in os.listdir(input_folder) if os.path.isdir(os.path.join(input_folder, folder))]
+        logger.info(f"Found folders: {folders}")
+        df_indicadores, n_registro, df_common_format = process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, logger)
+        logger.info(f"df_indicadores: {df_indicadores}")
+        save_indicadores(df_indicadores, n_registro, input_folder, clase_registro, logger)
+        # save_indicadores(df_indicadores, n_registro, input_folder, clase_registro, logger, df_indicadores_valencia, n_registro_valencia)
+        # logger.info(f"df_common_format: {df_common_format}")
+        logger.info("Finished sonometer test script")
+
+    except Exception as e:
+        logger.exception(f"Error occurred: {e}")
         
-    folders = [folder for folder in os.listdir(input_folder) if os.path.isdir(os.path.join(input_folder, folder))]
-
-    df_indicadores, n_registro, df_common_format = process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, logger)
-    save_indicadores(df_indicadores, n_registro, input_folder, clase_registro, logger)
-    # save_indicadores(df_indicadores, n_registro, input_folder, clase_registro, logger, df_indicadores_valencia, n_registro_valencia)
-
-    logger.info("Finished sonometer test script")
-
 if __name__ == "__main__":
     main()

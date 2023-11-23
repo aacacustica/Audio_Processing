@@ -2,6 +2,14 @@ import logging
 import os
 
 def setup_logging(log_file='sonometer.log', level=logging.DEBUG):
+    """Setup logging configuration
+    Arfs:
+        log_file: name of the log file
+        level: logging level
+        Returns:
+            logger: logging.Logger object
+    """
+    
     logger = logging.getLogger(__name__)
     logger.setLevel(level)
 

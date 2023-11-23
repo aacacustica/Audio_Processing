@@ -12,6 +12,16 @@ from logging_config import setup_logging
 from tqdm import tqdm
 
 def load_data(file_path, logger):
+    """Loading data from file_path and returning a dataframe with the data and the SLM type
+    Args:
+        file_path (str): Path to the file to load
+        logger (logging.Logger): Logger object
+        Returns:
+            df (pd.DataFrame): Dataframe with the data
+            slm_type (str): SLM type
+            slm_dict (dict): Dictionary with the columns names for the SLM type
+    """
+    
     slm_type_function_mapping = {
         "814": (get_data_814, larson814_dict),
         "824": (get_data_824, larson824_dict),
@@ -21,12 +31,18 @@ def load_data(file_path, logger):
         "cesva": (get_data_cesva, cesva_dict),
         "audio-post": (get_data_audio, audiopost_dict)
     } # SLM stands for Sound Level Meter
+    
     logger.info(f"Analizing {file_path}")
+    
+    # Try to load the data for each SLM type until one works | 
+    # for each slm_type, (func, slm_dict) in slm_type_function_mapping.items(): means that for each key and value in the dictionary, the key is slm_type and the value is a tuple with the function and the dictionary
+    # the function is the function to load the data and the dictionary is the dictionary with the column names for the SLM type
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
         try:
             logger.info(f"Loading data for SLM type {slm_type}")
             df = func(file_path)
             return df, slm_type, slm_dict
+        
         except Exception as e:
             clean_message = str(e).replace('\n', ' ')  # Replace newlines with spaces
             logger.warning(f"Failed to load data for SLM type {slm_type}: {clean_message}. Trying next SLM type")
@@ -34,13 +50,27 @@ def load_data(file_path, logger):
     raise ValueError("SLM type not found or file could not be loaded")
 
 def process_folder(folder_path, logger):
+    """Process a folder containing the measurement files
+    Args:
+        folder_path (str): Path to the folder containing the measurement files
+        logger (logging.Logger): Logger object
+    Returns:
+        df (pd.DataFrame): Dataframe with the data
+        slm_type (str): SLM type
+        slm_dict (dict): Dictionary with the columns names for the SLM type
+    """
+    # Check if the folder contains a CESVA folder
     cesva_path = os.path.join(folder_path, 'CESVA')
     if os.path.isdir(cesva_path):
+        # If it does, load the data from the CESVA folder
         subfolders = [f for f in os.listdir(cesva_path) if os.path.isdir(os.path.join(cesva_path, f))]
+        # Check if the CESVA folder contains subfolders
         for subfolder in subfolders:
+            # If it does, load the data from the first subfolder
             subfolder_path = os.path.join(cesva_path, subfolder)
+            # Check if the subfolder contains measurement files
             files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV', 'XLSX'))]
-            logger.info(f"Files found in {subfolder}: {files}")
+            # If it does, load the data from the first measurement file
             if files:
                 return load_data(files[0], logger)  
             else:
@@ -54,15 +84,32 @@ def process_folder(folder_path, logger):
         return load_data(files[0], logger) 
     return None, None, None 
 
+
 def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, logger):
+    """Process all the folders in the input folder
+    Args:
+        input_folder (str): Path to the input folder
+        folders (list): List of folders to process
+        PERIODO_AGREGACION (int): Aggregation period in seconds
+        PERCENTILES (list): Percentiles to plot
+        logger (logging.Logger): Logger object
+    Returns:
+            df_indicadores (pd.DataFrame): Dataframe with the indicators
+            n_registro (list): List with the number of measurements per folder
+            df_common_format (pd.DataFrame): Dataframe with the data in a common format
+    """
+    # Set the dataframes to use
     df_indicadores = pd.DataFrame()
     n_registro = []
     df_common_format = pd.DataFrame()
 
+    # Process each folder
     for folder in tqdm(folders, desc="Processing folders"):
         logger.info(f"Processing folder: {folder}")
+        # Get the path to the folder
         reg_folder = os.path.join(input_folder, folder)
 
+        # Create the output folder
         folder_output_dir = os.path.join(reg_folder, "Results", "Sonometer_plots")
         os.makedirs(folder_output_dir, exist_ok=True)
 
@@ -71,38 +118,53 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if df is None:
                 continue
 
-            # add datetime columns
+            # Add datetime columns, sort by datetime and set datetime as index
             df = add_datetime_columns(df, date_col='datetime') 
             df = df.sort_values('datetime')
             df.set_index('datetime', inplace=True)
             start_date = df.index[0]
             end_date = df.index[-1]
             
-            # drop the beginning and ending of the measurement(15min)
+            # drop the beginning and ending of the measurement (15min)
             try:
                 df = df.loc[start_date + pd.Timedelta(900, unit='seconds'):end_date - pd.Timedelta(900, unit='seconds')]
             except:
-                pass
+                continue
 
             #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
             #print(df)
 
+            # Plotting time plot
             if PLOT_TIME:
+                logger.info(f"Plotting time plot for folder {folder}")
                 make_timeplot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
+            
+            # Plotting heatmap
             if PLOT_HEATMAP:
+                logger.info(f"Plotting heatmap for folder {folder}")
                 plot_heatmap(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN'], agg_func=leq,plotname=folder)
+            
+            # Plotting day evolution
             if PLOT_DAY_EVOLUTION:
+                logger.info(f"Plotting day evolution for folder {folder}")
                 plot_day_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
 
             # add indicators column
             df['indicador_str'] = df.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
-                    
+            
+            # Plotting period evolution
             if PLOT_PERIOD_EVOLUTION:
+                logger.info(f"Plotting period evolution for folder {folder}")
                 plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
+            
+            # Plotting individual heatmap
             if PLOT_INDHEATMAP:
+                logger.info(f"Plotting individual heatmap for folder {folder}")
                 plot_indheatmap(df, folder_output_dir, logger, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN"])
 
+
             ############### INDICADORES NORMALES ###############
+            logger.info(f"Calculating indicators for folder {folder}")
             indicadores = get_day_levels(df, laeq_column=slm_dict['LAEQ_COLUMN'])
             df_indicadores = pd.concat([df_indicadores, indicadores])
 
@@ -112,43 +174,69 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             # df_indicadores_valencia.loc[df_indicadores_valencia['reg'].isnull(), 'reg'] = folder
             
             # add nights column
+            logger.info(f"Calculating nights for folder {folder}")
             df['night_str'] = df.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
 
+            # Plotting night evolution
             if PLOT_NIGHT_EVOLUTION:
+                logger.info(f"Plotting night evolution for folder {folder}")
                 plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
+            
+            # Plotting night evolution 15 min
             if PLOT_NIGHT_EVOLUTION_15_MIN:
+                logger.info(f"Plotting night evolution 15 min for folder {folder}")
                 plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
             
+            # Append the number of indicador (Ld, Le, Ln) to the list
             n_registro.append([folder for i in range(3)])
             
-            # formato comun
+            # Last processing: change column names to a common format
+            # formato comun 
             map_dict = {slm_dict['LAEQ_COLUMN']  : "LAeq",
                         slm_dict['LAMAX_COLUMN'] : "LAmax",
                         slm_dict['LAMIN_COLUMN'] :'LAmin'}
             
             df_temp = df.copy()
             df_temp = df_temp.reset_index()
-            df_temp = df_temp.rename(columns=map_dict)
+            df_temp = df_temp.rename(columns=map_dict) # cambiar nombre de columnas
             df_temp["ubicacion"] = folder # nombre de las carpetas obligatorio referencia a ubicación de la medida
             df_temp["slm_type"] = slm_type
-            df_temp = df_temp[common_columns]
-            df_common_format = pd.concat([df_common_format,df_temp])
+            df_temp = df_temp[common_columns] # ordenar columnas
+            df_common_format = pd.concat([df_common_format,df_temp]) # concatenar dataframes
                 
         except Exception as e:
             logger.error(f"An error occurred while processing folder {folder}: {e}")
+            
     return df_indicadores, n_registro, df_common_format
 
+
 def save_indicadores(df_indicadores, n_registro, input_folder, clase_registro, logger, df_indicadores_valencia=None, n_registro_valencia=None):
+    """Save the indicators to a csv file
+    Args:
+        df_indicadores (pd.DataFrame): Dataframe with the indicators
+        n_registro (list): List with the number of measurements per folder
+        input_folder (str): Path to the input folder
+        clase_registro (str): Name of the class of the measurement
+        logger (logging.Logger): Logger object
+        df_indicadores_valencia (pd.DataFrame): Dataframe with the Valencia indicators
+        n_registro_valencia (list): List with the number of measurements per folder for the Valencia indicators
+    """
+    # Flatten the list of lists with the number of measurements per folder because the number of measurements per folder is the same for all indicators
+    # flatten means to convert a list of lists into a single list
     flatten_list = [element for sublist in n_registro for element in sublist]
     df_indicadores["reg"] = flatten_list
+    # Save the indicators to a csv file
     df_indicadores.to_csv(f'{input_folder}/indicadores_{clase_registro}.csv')
     logger.info(f"Saved normal indicators to {input_folder}/indicadores_{clase_registro}.csv")
 
+    # Save the Valencia indicators to a csv file
     if df_indicadores_valencia is not None and n_registro_valencia is not None:
         flatten_list_valencia = [element for sublist in n_registro_valencia for element in sublist]
         df_indicadores_valencia["reg"] = flatten_list_valencia
         df_indicadores_valencia.to_csv(f'{input_folder}/indicadores_valencia_{clase_registro}.csv')
         logger.info(f"Saved Valencia indicators to {input_folder}/indicadores_valencia_{clase_registro}.csv")
+
+
 
 def arg_parser():
     parser = argparse.ArgumentParser(description='Plotting AudioMoth data')
@@ -158,40 +246,53 @@ def arg_parser():
     parser.add_argument('-p', '--percentiles', type=float, nargs='+', required=False, default=[90, 10], help='Percentiles to plot (L90 and L10 as default)')
     return parser.parse_args()
 
+
+
 def main():
     logger = setup_logging()
     args = arg_parser()
     
+    # Enter the path to the sonometers folder
     if args.path_sonometers:
         input_folder = args.path_sonometers
     else:
-        logger.error("Path to sonometers folder not provided")
         raise ValueError("Path to sonometers folder not provided")
 
+    # Enter the aggregation period in seconds, default is 900 seconds (15 minutes)
     if args.agg_period:
         PERIODO_AGREGACION = args.agg_period
     else:
         PERIODO_AGREGACION = config.PERIODO_AGREGACION
     
+    # Enter the percentiles to plot, default is [90, 10], they are L1, L5, L10, L50, L90
     if args.percentiles:
         PERCENTILES = args.percentiles
-        
+    
+    # Enter the output directory
     clase_registro = os.path.basename(input_folder)
+    # if class is not provided, use the name of the parent folder
     if clase_registro == '':
         clase_registro = os.path.basename(os.path.dirname(input_folder))
     
-    try:     
+    try:
+        # Get the folders in the input folder
         folders = [folder for folder in os.listdir(input_folder) if os.path.isdir(os.path.join(input_folder, folder))]
         logger.info(f"Found folders: {folders}")
+        
+        # Process all the folders
         df_indicadores, n_registro, df_common_format = process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, logger)
         logger.info(f"df_indicadores: {df_indicadores}")
+        
+        # Save the indicators to a csv file
         save_indicadores(df_indicadores, n_registro, input_folder, clase_registro, logger)
         # save_indicadores(df_indicadores, n_registro, input_folder, clase_registro, logger, df_indicadores_valencia, n_registro_valencia)
+        
         # logger.info(f"df_common_format: {df_common_format}")
         logger.info("Finished sonometer test script")
 
     except Exception as e:
         logger.exception(f"Error occurred: {e}")
+        
         
 if __name__ == "__main__":
     main()

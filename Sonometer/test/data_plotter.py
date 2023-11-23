@@ -140,6 +140,14 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
     import pandas as pd
 
 def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
+    """Plot night evolution of the measurement period.
+    Args:
+        df (_type_): DataFrame
+        folder_output_dir (str): Output directory
+        logger (_type_): Logger
+        laeq_column (str): Name of the column to use, tipycally LAeq
+        plotname (str): Prefix to name the plot    
+    """
     try:
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
@@ -194,6 +202,15 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
 
 
 def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extension, laeq_column:str, plotname:str):
+    """Plot night evolution of the measurement period.
+    Args:
+        df (_type_): DataFrame
+        folder_output_dir (str): Output directory
+        logger (_type_): Logger
+        name_extension (str): Extension to name the plot
+        laeq_column (str): Name of the column to use, tipycally LAeq
+        plotname (str): Prefix to name the plot    
+    """
     try:
         sns.set_style("whitegrid")
         sns.set_palette("tab10")

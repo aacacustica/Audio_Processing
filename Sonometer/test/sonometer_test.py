@@ -192,6 +192,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             
             df_common_format = pd.concat([df_common_format,df_temp]) # concatenar dataframes
             logger.info(f"Common format dataframe: \n{df_common_format}")
+            df_common_format.to_csv(os.path.join(input_folder, f"common_format{folder}.csv"), index=False)
             
             
         except Exception as e:

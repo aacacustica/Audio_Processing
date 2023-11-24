@@ -26,17 +26,6 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
         
         weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
         df['Día'] = pd.Categorical(df['Día'], categories=weekdays, ordered=True)
-
-        # assign a color for each day
-        c_map_weekday = {
-            'Lunes': '#87b8ea', # BLUE
-            'Martes': '#ffa500', # ORANGE
-            'Miércoles': '#a4ec00', # GREEN
-            'Jueves': '#f44336', # RED
-            'Viernes': '#6a329f', # PURPLE
-            'Sábado': '#a66f17', # BROWN
-            'Domingo': '#c90076', # PINK
-        }
         
         fig = sns.relplot(
             data=df,
@@ -46,7 +35,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
             hue="Día", # hue is the column to split the data
             estimator=leq,  # estimator is the function to apply to the data
             aspect=1.3, # aspect is the width/height ratio
-            palette=c_map_weekday,
+            palette=C_MAP_WEEKDAY,
         )
 
         fig.set(xlim=(-1, 24), ylim=(30, 105))
@@ -100,17 +89,6 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
         # translate the day name to spanish from english in day_name
         df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
         
-        # assign a color for each day
-        c_map_weekday = {
-            'Lunes': '#87b8ea', # BLUE
-            'Martes': '#ffa500', # ORANGE
-            'Miércoles': '#a4ec00', # GREEN
-            'Jueves': '#f44336', # RED
-            'Viernes': '#6a329f', # PURPLE
-            'Sábado': '#a66f17', # BROWN
-            'Domingo': '#c90076', # PINK
-        }
-        
         weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
         df['Día'] = pd.Categorical(df['Día'], categories=weekdays, ordered=True)
         
@@ -128,7 +106,7 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
                 hue="Día", # hue is the column to split the data
                 estimator=leq,  # estimator is the function to apply to the data
                 aspect=1.3, # aspect is the width/height ratio
-                palette=c_map_weekday,
+                palette=C_MAP_WEEKDAY,
             )
             
             if ind == 'Ld':
@@ -178,17 +156,6 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
         
         df['Día'] = df['night_str']
         
-        # assign a color for each day
-        c_map_weekday = {
-            'Lunes-Martes': '#87b8ea', # BLUE
-            'Martes-Miércoles': '#ffa500', # ORANGE
-            'Miércoles-Jueves': '#a4ec00', # GREEN
-            'Jueves-Viernes': '#f44336', # RED
-            'Viernes-Sábado': '#6a329f', # PURPLE
-            'Sábado-Domingo': '#a66f17', # BROWN
-            'Domingo-Lunes': '#c90076', # PINK
-        }
-        
         df['date'] = pd.to_datetime(df['date'])
         df.sort_values(by=['date', 'hour'], inplace=True)
 
@@ -204,11 +171,8 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
                 combined_data = pd.concat([data_23, data_00_06])
                 night_data = pd.concat([night_data, combined_data])
 
-        # print(night_data)
-        
         night_data['plot_hour'] = night_data['hour'].replace({23: -1}).astype(int)
         night_data.sort_values(by=['date', 'plot_hour'], inplace=True)
-        # print(night_data)
         
         # save to excel
         os.makedirs(folder_output_dir, exist_ok=True)
@@ -223,7 +187,7 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
             hue="Día",
             estimator=leq, 
             aspect=1.3,
-            palette=c_map_weekday
+            palette=C_MAP_WEEKDAY_NIGHT
         )
         
         plt.xticks(range(-1, 7), ['23:00', '00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00'])
@@ -263,16 +227,6 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
         
         # rename the day name to spanish from english in 'night_str'
         df['Día'] = df['night_str']
-        
-        c_map_weekday = {
-            'Lunes-Martes': '#87b8ea', # BLUE
-            'Martes-Miércoles': '#ffa500', # ORANGE
-            'Miércoles-Jueves': '#a4ec00', # GREEN
-            'Jueves-Viernes': '#f44336', # RED
-            'Viernes-Sábado': '#6a329f', # PURPLE
-            'Sábado-Domingo': '#a66f17', # BROWN
-            'Domingo-Lunes': '#c90076', # PINK
-        }
 
         df.index = pd.to_datetime(df.index)
 
@@ -316,7 +270,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
                 hue="Día",
                 estimator=leq, 
                 aspect=1.3,
-                palette=c_map_weekday
+                palette=C_MAP_WEEKDAY_NIGHT
             )
 
         # Setting x-axis labels
@@ -413,13 +367,6 @@ def make_timeplot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict
         percentiles (list): List of percentiles to plot.
     """
     try:
-        percentiles_colours = {
-            1: '#B28DFF',
-            5: '#6EB5FF',
-            10: '#B2E2F2',
-            50: '#FFABAB',
-            90: '#9E9E9E'
-        }
         agg_funcs = {
             columns_dict['LAEQ_COLUMN']: 'mean',
             columns_dict['LAMAX_COLUMN']: 'max',
@@ -443,7 +390,7 @@ def make_timeplot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict
                 values, 
                 linewidth=0.5, 
                 label=f'L{percentile}', 
-                color=percentiles_colours[percentile]
+                color=PERCENTIL_COLOUR[percentile]
             )
 
         hours = mdates.HourLocator(interval=3)

@@ -118,8 +118,8 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
                 plt.xticks(range(7, 19), [f"{hour:02d}:00" for hour in range(7, 19)])
                 logger.info(f"Plotted Ld")
             elif ind == 'Le':
-                fig.set(xlim=(18, 23), ylim=(30, 105))
-                plt.xticks(range(19, 23), [f"{hour:02d}:00" for hour in range(19, 23)])
+                fig.set(xlim=(18.5, 22.5), ylim=(30, 105))  # Adjust xlim to be tighter
+                plt.xticks([18.5, 19, 20, 21, 22, 22.5], ['', '19:00', '20:00', '21:00', '22:00', ''])  # Adjust xticks to match the new xlim
                 logger.info(f"Ploted Le")
 
             plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])

@@ -160,7 +160,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 
             
             # add nights column
-            logger.info(f"Calculating nights for folder {folder}")
+            logger.info(f"Adding nights_str column for folder {folder}")
             df['night_str'] = df.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
 
             # Plotting night evolution

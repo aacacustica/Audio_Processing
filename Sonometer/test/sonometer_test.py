@@ -158,7 +158,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"Plotting indicadores heatmap for folder {folder}")
                 plot_indicadores_heatmap(df, folder_output_dir, logger, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN"])
                 
-            
             # add nights column
             logger.info(f"Adding nights_str column for folder {folder}")
             df['night_str'] = df.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
@@ -166,12 +165,12 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             # Plotting night evolution
             if PLOT_NIGHT_EVOLUTION:
                 logger.info(f"Plotting night evolution for folder {folder}")
-                plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
+                plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder, indicador_noche="Ln")
             
             # Plotting night evolution 15 min
             if PLOT_NIGHT_EVOLUTION_15_MIN:
                 logger.info(f"Plotting night evolution 15 min for folder {folder}")
-                plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
+                plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder, indicador_noche="Ln")
             
             
             # Last processing: change column names to a common format

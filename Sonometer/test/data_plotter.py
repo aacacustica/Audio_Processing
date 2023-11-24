@@ -39,9 +39,13 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
         )
 
         fig.set(xlim=(-1, 24), ylim=(30, 105))
-        plt.xticks(range(0, 24), [str(hour) for hour in range(0, 24)])
+
+        # Change the x-axis labels to 24-hour format
+        hour_labels = [f"{hour:02d}:00" for hour in range(24)]
+        plt.xticks(range(24), hour_labels, rotation=90)
+
         plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
-        
+
         for ax in fig.axes.flat:
             ax.spines['top'].set_visible(True)
             ax.spines['right'].set_visible(True)
@@ -110,17 +114,16 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
             )
             
             if ind == 'Ld':
-                fig.set(xlim=(7, 18), ylim=(30, 105))
-                plt.xticks(range(7, 19), [str(hour) for hour in range(7, 19)])
-                logger.info(f"Plotting Ld")
+                fig.set(xlim=(6, 19), ylim=(30, 105))
+                plt.xticks(range(7, 19), [f"{hour:02d}:00" for hour in range(7, 19)])
+                logger.info(f"Plotted Ld")
             elif ind == 'Le':
-                fig.set(xlim=(19, 22), ylim=(30, 105))
-                plt.xticks(range(19, 23), [str(hour) for hour in range(19, 23)])
-                logger.info(f"Plotting Le")
+                fig.set(xlim=(18, 23), ylim=(30, 105))
+                plt.xticks(range(19, 23), [f"{hour:02d}:00" for hour in range(19, 23)])
+                logger.info(f"Ploted Le")
 
             plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
 
-            
             for ax in fig.axes.flat:
                 ax.spines['top'].set_visible(True)
             
@@ -141,7 +144,7 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
     except Exception as e:
         logger.error(f"Error in plot_period_evolution: {e}")
 
-def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
+def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str, indicador_noche:str):
     """Plot night evolution of the measurement period.
     Args:
         df (_type_): DataFrame
@@ -176,8 +179,8 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
         
         # save to excel
         os.makedirs(folder_output_dir, exist_ok=True)
-        night_data.to_excel(f"{folder_output_dir}/{plotname}_night_evolution.xlsx")
-        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_night_evolution.xlsx")
+        night_data.to_excel(f"{folder_output_dir}/{plotname}_{indicador_noche}_evolution.xlsx")
+        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution.xlsx")
 
         fig = sns.relplot(
             data=night_data, 
@@ -199,19 +202,19 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
             ax.spines['top'].set_visible(True)
             ax.spines['right'].set_visible(True)
 
-        plt.title('Evolución Ln')
+        plt.title(f'Evolución {indicador_noche}')
         plt.ylabel('dB(A)')
         plt.xlabel('Hora')
 
         os.makedirs(folder_output_dir, exist_ok=True)
-        fig.savefig(f"{folder_output_dir}/{plotname}_night_evolution.png", dpi=150)
-        logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_night_evolution.png")
+        fig.savefig(f"{folder_output_dir}/{plotname}_{indicador_noche}_evolution.png", dpi=150)
+        logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution.png")
     
     except Exception as e:
         logger.error(f"Error in plot_night_evolution: {e}")
 
 
-def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extension, laeq_column:str, plotname:str):
+def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extension, laeq_column:str, plotname:str, indicador_noche:str):
     """Plot night evolution of the measurement period.
     Args:
         df (_type_): DataFrame
@@ -247,19 +250,25 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
         unique_dates = pd.to_datetime(df_resampled.index.date).unique()
         night_data = pd.DataFrame()
 
-        # Get 
+        # Get the data for each night
         for current_date in unique_dates:
+            # Get the start time, which is the last 15-minute interval of the previous day
             start_time = pd.Timestamp(current_date - pd.Timedelta(days=1)).replace(hour=23, minute=0)
+            # Get the end time, which is the first 6 hours and 45 minutes of the current day
             end_time = pd.Timestamp(current_date).replace(hour=6, minute=45)
+            # slice the data, which is the last 15-minute interval of the previous day and the first 6 hours and 45 minutes of the current day
             data_slice = df_resampled[start_time:end_time]
+            
+            # if the slice is not empty and the minimum index hour is 23, then it is a night
             if not data_slice.empty and data_slice.index.min().hour == 23:
+                # so we add it to the night data
                 night_data = pd.concat([night_data, data_slice])
         
         # print(f"This is the night data: \n{night_data}")
         #save to excel
         os.makedirs(folder_output_dir, exist_ok=True)
-        night_data.to_excel(f"{folder_output_dir}/{plotname}_night_evolution_{name_extension}.xlsx")
-        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_night_evolution_{name_extension}.xlsx")
+        night_data.to_excel(f"{folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.xlsx")
+        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.xlsx")
         
         # Create the plot
         fig = sns.relplot(
@@ -288,14 +297,13 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
             ax.spines['top'].set_visible(True)
             ax.spines['right'].set_visible(True)
         
-        plt.title('Evolución Ln cada 15 minutos')
+        plt.title(f'Evolución {indicador_noche} cada 15 minutos')
         plt.ylabel('dB(A)')
         plt.xlabel('Hora')
 
         # Save the plot
-        fig.savefig(os.path.join(folder_output_dir, f'{plotname}_night_evolution_{name_extension}.png'))
-        logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_night_evolution_{name_extension}.png")
-    
+        fig.savefig(os.path.join(folder_output_dir, f'{plotname}_{indicador_noche}_evolution_{name_extension}.png'))
+        logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.png")
     except Exception as e:
         logger.error(f"Error in plot_night_evolution_15_min: {e}")
 
@@ -318,6 +326,8 @@ def plot_heatmap_evolution(df, folder_output_dir: str, logger, values_column: st
             aggfunc=agg_func
         ).round(1)
         
+        leq_day_hour.columns = [f"{hour:02d}:00" for hour in leq_day_hour.columns]
+        
         plt.figure(figsize=(20,5))
         
         sns.heatmap(
@@ -328,12 +338,6 @@ def plot_heatmap_evolution(df, folder_output_dir: str, logger, values_column: st
             annot=True
         )
         
-        # fix for mpl bug that cuts off top/bottom of seaborn viz
-        # b, t = plt.ylim() # discover the values for bottom and top
-        # b += 0.5 # Add 0.5 to the bottom
-        # t -= 0.5 # Subtract 0.5 from the top
-        # plt.ylim(b, t) # update the ylim(bottom, top) values
-        
         plt.xlabel('Hora')
         plt.ylabel('Día')
         plt.title(f'{plotname} Nivel equivalente')
@@ -342,14 +346,14 @@ def plot_heatmap_evolution(df, folder_output_dir: str, logger, values_column: st
         plt.tight_layout()
         
         os.makedirs(f'{folder_output_dir}', exist_ok=True)
-        plt.savefig(f'{folder_output_dir}/{plotname}_heatmap.png',dpi=150)
+        plt.savefig(f'{folder_output_dir}/{plotname}_heatmap_evolucion.png',dpi=150)
         
-        leq_day_hour.to_excel(f'{folder_output_dir}/{plotname}_heatmap_tabla_dia_hora.xlsx')
+        leq_day_hour.to_excel(f'{folder_output_dir}/{plotname}_heatmap_evolucion.xlsx')
         
         plt.close()
         
-        logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}_heatmap.png")
-        logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_tabla_dia_hora.xlsx")
+        logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}_heatmap_evolucion.png")
+        logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_evolucion.xlsx")
     except Exception as e:
         logger.error(f"Error in plot_heatmap: {e}")
         
@@ -410,13 +414,13 @@ def make_timeplot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict
         plt.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0.1, fancybox=True, framealpha=1, edgecolor='black')
 
         os.makedirs(folder_output_dir, exist_ok=True)
-        plt.savefig(f'{folder_output_dir}/{plotname}_{agg_period}s_timeplot.png', dpi=150)
-        agg_data.to_excel(f'{folder_output_dir}/{plotname}_{agg_period}s_timeplot.xlsx')
+        plt.savefig(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.png', dpi=150)
+        agg_data.to_excel(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.xlsx')
 
         plt.close()
 
-        logger.info(f"Timeplot saved to {folder_output_dir}/{plotname}_{agg_period}s_timeplot.png")
-        logger.info(f"Timeplot data saved to {folder_output_dir}/{plotname}_{agg_period}s_timeplot.xlsx")
+        logger.info(f"Timeplot saved to {folder_output_dir}/{plotname}_{agg_period}s_time_plot.png")
+        logger.info(f"Timeplot data saved to {folder_output_dir}/{plotname}_{agg_period}s_time_plot.xlsx")
     except Exception as e:
         logger.error(f"Error in make_timeplot: {e}")
 
@@ -510,12 +514,12 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         logger.info(f"Indicadores data saved to {folder_output_dir}/{plotname}_indicadores.xlsx")
         logger.info(f"Indicadores plot saved to {folder_output_dir}/{plotname}_indicadores.png")
         
-        # Indicador 
+        # Indicador power average
         general_power_averages = indicadores_table.apply(leq).round(1)
         general_power_averages_df = general_power_averages.to_frame().transpose()
         
         os.makedirs(f'{folder_output_dir}', exist_ok=True)
         general_power_averages_df.to_excel(f'{folder_output_dir}/{plotname}_indicadores_generales.xlsx')
-    
+        logger.info(f"Indicadores generales data saved to {folder_output_dir}/{plotname}_indicadores_generales.xlsx")
     except Exception as e:
         logger.error(f"Error in plot_indheatmap: {e}")

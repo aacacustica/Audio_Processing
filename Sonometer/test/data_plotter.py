@@ -162,7 +162,6 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
     
     except Exception as e:
         logger.error(f"Error in plot_period_evolution: {e}")
-    import pandas as pd
 
 def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
     """Plot night evolution of the measurement period.

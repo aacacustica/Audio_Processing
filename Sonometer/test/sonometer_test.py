@@ -173,7 +173,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"Plotting night evolution 15 min for folder {folder}")
                 plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
             
-            # Append the number of indicador (Ld, Le, Ln) to the list
             
             # Last processing: change column names to a common format
             # formato comun 
@@ -183,12 +182,18 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             
             df_temp = df.copy()
             df_temp = df_temp.reset_index()
+            
             df_temp = df_temp.rename(columns=map_dict) # cambiar nombre de columnas
+            
             df_temp["ubicacion"] = folder # nombre de las carpetas obligatorio referencia a ubicación de la medida
             df_temp["slm_type"] = slm_type
+            
             df_temp = df_temp[common_columns] # ordenar columnas
+            
             df_common_format = pd.concat([df_common_format,df_temp]) # concatenar dataframes
-            logger.info(f"Common format dataframe: {df_common_format}")
+            logger.info(f"Common format dataframe: \n{df_common_format}")
+            
+            
         except Exception as e:
             logger.error(f"An error occurred while processing folder {folder}: {e}")
             

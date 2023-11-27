@@ -33,7 +33,6 @@ def load_data(file_path, logger):
     } # SLM stands for Sound Level Meter
     
     logger.info(f"Analizing {file_path}")
-    
     # Try to load the data for each SLM type until one works |  for each slm_type, (func, slm_dict) in slm_type_function_mapping.items(): means that for each key and value in the dictionary, the key is slm_type and the value is a tuple with the function and the dictionary | the function is the function to load the data and the dictionary is the dictionary with the column names for the SLM type
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
         try:
@@ -96,9 +95,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             df_indicadores (pd.DataFrame): Dataframe with the indicators
             df_common_format (pd.DataFrame): Dataframe with the data in a common format
     """
-    # Set the dataframes to use
-    df_common_format = pd.DataFrame()
-
     # Process each folder
     for folder in tqdm(folders, desc="Processing folders"):
         logger.info(f"Processing folder: {folder}")
@@ -172,32 +168,9 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"Plotting night evolution 15 min for folder {folder}")
                 plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder, indicador_noche="Ln")
             
-            
-            # Last processing: change column names to a common format
-            # formato comun 
-            map_dict = {slm_dict['LAEQ_COLUMN']  : "LAeq",
-                        slm_dict['LAMAX_COLUMN'] : "LAmax",
-                        slm_dict['LAMIN_COLUMN'] :'LAmin'}
-            
-            df_temp = df.copy()
-            df_temp = df_temp.reset_index()
-            
-            df_temp = df_temp.rename(columns=map_dict) # cambiar nombre de columnas
-            
-            df_temp["ubicacion"] = folder # nombre de las carpetas obligatorio referencia a ubicación de la medida
-            df_temp["slm_type"] = slm_type
-            
-            df_temp = df_temp[common_columns] # ordenar columnas
-            
-            df_common_format = pd.concat([df_common_format,df_temp]) # concatenar dataframes
-            logger.info(f"Common format dataframe: \n{df_common_format}")
-            df_common_format.to_csv(os.path.join(input_folder, f"common_format{folder}.csv"), index=False)
-            
-            
         except Exception as e:
             logger.error(f"An error occurred while processing folder {folder}: {e}")
             
-    return df_common_format
 
 
 def arg_parser():
@@ -244,7 +217,6 @@ def main():
         # Process all the folders
         process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, logger)
         
-        # logger.info(f"df_common_format: {df_common_format}")
         logger.info("Finished sonometer test script")
 
     except Exception as e:

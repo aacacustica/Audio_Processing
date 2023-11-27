@@ -103,7 +103,8 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         os.makedirs(folder_output_dir, exist_ok=True)
 
         try:
-            df, slm_type, slm_dict = process_folder(reg_folder, logger)
+            # df, slm_type, slm_dict = process_folder(reg_folder, logger)
+            df, slm_dict = process_folder(reg_folder, logger)
             if df is None:
                 continue
 

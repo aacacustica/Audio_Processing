@@ -75,10 +75,8 @@ def get_data_lx_EN(filename: str):
 
 def get_data_audio(filename: str):
     """Getting data from AudioPost SLM
-
     Args:
         filename (str): path to the measurement file
-
     Returns:
         df: pandas DataFrame with the measurement data
     """

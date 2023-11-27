@@ -75,8 +75,11 @@ def process_folder(folder_path, logger):
         logger.info(f"Files found: {files}")
         if not files:
             logger.warning(f"No measurement files found in {folder_path}")
+            
             return None, None, None
+        
         return load_data(files[0], logger) 
+    
     return None, None, None 
 
 
@@ -94,7 +97,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
     """
     # Process each folder
     for folder in tqdm(folders, desc="Processing folders"):
-        logger.info(f"Processing folder: {folder}")
+        logger.info(f"Entering folder: {folder}")
     
         # Get the path to the folder
         reg_folder = os.path.join(input_folder, folder)
@@ -102,19 +105,22 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         # Create the output folder
         folder_output_dir = os.path.join(reg_folder, "Results", "Sonometer_plots")
         os.makedirs(folder_output_dir, exist_ok=True)
-    
+        logger.info(f"Created output folder: {folder_output_dir}")
+        
         try:
-            # df, slm_type, slm_dict = process_folder(reg_folder, logger)
-            df, slm_dict = process_folder(reg_folder, logger)
+            logger.info(f"Processing folder {folder}") 
+            df, slm_type, slm_dict = process_folder(reg_folder, logger)
             if df is None:
+                logger.info(f"df is None")
                 continue
-
+            
             # Add datetime columns, sort by datetime and set datetime as index
             df = add_datetime_columns(df, date_col='datetime') 
             df = df.sort_values('datetime')
             df.set_index('datetime', inplace=True)
             start_date = df.index[0]
             end_date = df.index[-1]
+            logger.info(f"df was sorted by datetime and datetime was set as index")
             
             # drop the beginning and ending of the measurement (15min)
             try:
@@ -125,6 +131,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
             #print(df)
 
+            logger.info(f"Entering the plotting section")
             # Plotting time plot
             if PLOT_MAKE_TIME_PLOT:
                 logger.info(f"Plotting time plot for folder {folder}")

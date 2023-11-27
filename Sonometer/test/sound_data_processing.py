@@ -1,14 +1,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-# import argparse
 plt.style.use("bmh")
 from sound_data_visualization import *
 from sound_data_reader import *
 from time_level_utils import *
-# import config
 from config import *
-# from logging_config import setup_logging
 from tqdm import tqdm
 
 def load_data(file_path, logger):

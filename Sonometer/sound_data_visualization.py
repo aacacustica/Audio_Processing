@@ -524,5 +524,6 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         os.makedirs(f'{folder_output_dir}', exist_ok=True)
         general_power_averages_df.to_excel(f'{folder_output_dir}/{plotname}_indicadores_generales.xlsx')
         logger.info(f"Indicadores generales data saved to {folder_output_dir}/{plotname}_indicadores_generales.xlsx")
+    
     except Exception as e:
         logger.error(f"Error in plot_indheatmap: {e}")

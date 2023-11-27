@@ -1,12 +1,19 @@
 import numpy as np
 
 def calculate_duration(start_time, end_time):
-    """Calculate duration in seconds"""
+    """Calculate duration in seconds
+    Args:
+        start_time: datetime with the start time
+        end_time: datetime with the end time
+    """
     duration = end_time - start_time
     return duration.total_seconds()
 
 def evaluation_period_str(hour_column):
-    ''' Label period based on hour columnn'''
+    """Label period based on hour columnn
+    Args:
+        hour_column: column name with the hour
+    """
     period = ''
     if hour_column >= 7 and hour_column < 19:
         period = 'Ld'
@@ -17,7 +24,10 @@ def evaluation_period_str(hour_column):
     return period
 
 def evaluation_period_str_valencia(hour_column):
-    ''' Label period based on hour columnn'''
+    """Label period based on hour columnn
+    Args:
+        hour_column: column name with the hour
+    """
     period = ''
     if hour_column >= 8 and hour_column < 22:
         period = 'Ld_valencia'
@@ -26,7 +36,11 @@ def evaluation_period_str_valencia(hour_column):
     return period
 
 def add_night_column(hour_column, day_col):
-    ''' Label based on hour columnn and weekday'''
+    """Add night column to Dataframe based on hour column and day column
+    Args:
+        hour_column: column name with the hour
+        day_col: column name with the day
+    """
     night_list=["Lunes-Martes","Martes-Miércoles","Miércoles-Jueves","Jueves-Viernes","Viernes-Sábado","Sábado-Domingo","Domingo-Lunes"]
     night = ''
     if hour_column >= 23:
@@ -36,7 +50,11 @@ def add_night_column(hour_column, day_col):
     return night
 
 def add_datetime_columns(df,date_col):
-    """Add datetime Columns to Dataframe"""
+    """Add datetime Columns to Dataframe
+    Args:
+        df: pandas DataFrame with the measurement data
+        date_col: column name with the datetime
+    """
     #df['day_hour'] = df.apply(lambda x: str(x[date_col].day) + '-' + str(x[date_col].hour),axis=1)
     df['date'] = df[date_col].dt.date
     df['day'] = df[date_col].dt.day
@@ -49,7 +67,13 @@ def add_datetime_columns(df,date_col):
     return df
 
 def db_limit(hour_column,ld_limit,le_limit,ln_limit):
-    """Create Columns on the Dataframe with Noise levels Limits on the measurement poiint"""
+    """Create Columns on the Dataframe with Noise levels Limits on the measurement poiint
+    Args:
+        df: pandas DataFrame with the measurement data
+        ld_limit: day limit
+        le_limit: evening limit
+        ln_limit: night limit
+    """
     limit = 0
     if hour_column >= 7 and hour_column < 19:
         limit = ld_limit
@@ -60,16 +84,33 @@ def db_limit(hour_column,ld_limit,le_limit,ln_limit):
     return limit
 
 def leq(levels):
+    """Get the Leq from a list of levels
+    Args:
+        levels: list of levels
+        
+    Returns:
+        leq: Leq
+    """
     levels = levels[~np.isnan(levels)]
     l = np.array(levels)
     return 10*np.log10(np.mean(np.power(10,l/10)))
 
 def get_day_levels(df,laeq_column):
+    """Get the Leq for each day period
+    Args:
+        df: pandas DataFrame with the measurement data
+        laeq_column: column name with the levels
+    """
     df['indicador_str'] = df.apply(lambda x: evaluation_period_str(x['hour']),axis=1)
     indicadores = df.groupby('indicador_str').agg({laeq_column:[leq]}).round(1)
     return indicadores
     
 def get_day_levels_valencia(df,laeq_column):
+    """Get the Leq for each day period
+    Args:
+        df: pandas DataFrame with the measurement data
+        laeq_column: column name with the levels
+    """
     df['indicador_valencia'] = df.apply(lambda x: evaluation_period_str_valencia(x['hour']),axis=1)
     indicadores = df.groupby('indicador_valencia').agg({laeq_column:[leq]}).round(1)
     return indicadores

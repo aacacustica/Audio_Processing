@@ -2,7 +2,6 @@ from datetime import datetime
 import os
 import pandas as pd
 
-######################## READER FUNCTIONS #####################################
 def get_data_814(filename: str):
     """Getting data from Larson Davis 814 SLM
     Args:

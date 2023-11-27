@@ -5,7 +5,7 @@ def setup_logging(log_file='sonometer.log', level=logging.DEBUG):
     Arfs:
         log_file: name of the log file
         level: logging level
-        Returns:
+    Returns:
             logger: logging.Logger object
     """
     logger = logging.getLogger(__name__)

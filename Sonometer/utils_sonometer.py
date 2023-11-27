@@ -36,7 +36,7 @@ cesva_dict = {'LAEQ_COLUMN': 'LA1s',
 SV307_dict = {'LAEQ_COLUMN': 'LAeq (Ch1, P1) [dB]',
 'LAMAX_COLUMN': 'LAFmax (Ch1, P1) [dB]',
 'LAMIN_COLUMN': 'LAFmin (Ch1, P1) [dB]' 
-} 
+}
 
 audiopost_dict = {'LAEQ_COLUMN': 'LA',
 'LAMAX_COLUMN': 'LAmax',

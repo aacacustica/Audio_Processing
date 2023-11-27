@@ -17,6 +17,49 @@ PLOT_PERIOD_EVOLUTION = True # Done
 PLOT_NIGHT_EVOLUTION = True # Done
 PLOT_NIGHT_EVOLUTION_15_MIN = True # Almost done
 
+
+######################## SLM COLUMN MAPS #####################################
+"""Sonometer column maps for different SLMs. The column maps are used to
+   standardize the column names of the different SLMs. The column maps are
+        LAEQ_COLUMN: LAeq column name
+        LAMAX_COLUMN: LAFmax column name
+        LAMIN_COLUMN: LAFmin column name
+   
+   The column maps are used in the following functions:
+        get_data_814
+        get_data_824
+        get_data_lx_ES
+        get_data_lx_EN
+        get_data_cesva
+        get_data_SV307
+        get_data_audio
+"""
+        
+larsonlx_dict = {'LAEQ_COLUMN': 'LAeq',
+                 'LAMAX_COLUMN': 'LAFmax',
+                 'LAMIN_COLUMN': 'LAFmin'}
+
+larson824_dict = {'LAEQ_COLUMN': 'Leq',
+                  'LAMAX_COLUMN': 'Max',
+                  'LAMIN_COLUMN': 'Min'}
+
+larson814_dict = {'LAEQ_COLUMN': 'Leq',
+                  'LAMAX_COLUMN': 'Max',
+                  'LAMIN_COLUMN': 'Min'}
+
+cesva_dict = {'LAEQ_COLUMN': 'LA1s',
+              'LAMAX_COLUMN': 'LAFmax1s',
+              'LAMIN_COLUMN': 'LAFmin1s'}
+
+SV307_dict = {'LAEQ_COLUMN': 'LAeq (Ch1, P1) [dB]',
+              'LAMAX_COLUMN': 'LAFmax (Ch1, P1) [dB]',
+              'LAMIN_COLUMN': 'LAFmin (Ch1, P1) [dB]'} 
+
+audiopost_dict = {'LAEQ_COLUMN': 'LA',
+                  'LAMAX_COLUMN': 'LAmax',
+                  'LAMIN_COLUMN': 'LAmin'}
+
+
 # Constants for plotting Colors
 C_MAP_WEEKDAY = {
             'Lunes': '#cc0000', # RED

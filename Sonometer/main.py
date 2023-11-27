@@ -9,7 +9,6 @@ from sound_data_processing import *
 def arg_parser():
     """Parse arguments from command line
     Any argument is optional but the path to the sonometers folder
-    
     """    
     parser = argparse.ArgumentParser(description='Plotting AudioMoth data')
     parser.add_argument('-f', '--path_sonometers', type=str, required=True, help='Path to sonometers folder')
@@ -24,6 +23,10 @@ def main():
     You need to provide the path to the sonometers folder. The aggregation period in seconds, the percentiles to plot and the output directory are optional.
     This script will create a folder with the same name as the sonometer folder in the output directory.
     Inside the folder, it will create a folder for each sonometer with the plots.
+    
+    You can run the help command to see the arguments:
+    
+    python main.py -h
     
     An example of how to run this script from the command line is:
     

@@ -45,3 +45,7 @@ build/
 
 git_commands.txt
 01_leq_levels
+
+# ignore folders called like "old" and "test" in any subfolder
+**/old/
+**/test/

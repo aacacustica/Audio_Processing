@@ -135,7 +135,7 @@ for folder in folders:
         #print(df)
 
         if PLOT_TIME:
-            make_time_plot(df, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
+            make_timeplot(df, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
         
         if PLOT_HEATMAP:
             plot_heatmap(df,values_column=slm_dict['LAEQ_COLUMN'], agg_func=leq,plotname=folder)

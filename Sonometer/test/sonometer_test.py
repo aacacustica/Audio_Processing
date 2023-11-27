@@ -127,9 +127,9 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             #print(df)
 
             # Plotting time plot
-            if PLOT_MAKE_TIMEPLOT:
+            if PLOT_MAKE_TIME_PLOT:
                 logger.info(f"Plotting time plot for folder {folder}")
-                make_timeplot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
+                make_time_plot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
             
             # Plotting heatmap
             if PLOT_HEATMAP_EVOLUTION:

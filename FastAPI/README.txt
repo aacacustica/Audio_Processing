@@ -1,39 +1,36 @@
-Santiago Campo	07/07/2023
+# FastAPI Project
 
-fast_api consiste en la creación y comunicación de una API y una Base de Datos para la estructuración y visualización de los datos obtenidos por el procesamiento de audios.
+This project consists of creating and communicating an API and a Database for structuring and visualizing data obtained from audio processing.
 
+## Project Structure
 
+There are two main folders:
 
-Existen dos carpetas:
+### 1. `fast_api/prueba`
 
-	[1] fast_api > prueba
-	
-	Aquí se han hecho las pruebas necesarias para el entendimiento del framework FASTAPI y la herramienta de Base de Datos de SQLAlchemy.
-	
-	structure.txt está la estrutura de la Base de Datos que hay de desarrollar en SQLAlchemy.
+This folder contains tests for understanding the FASTAPI framework and the SQLAlchemy database tool.
 
-	main.py - Aquí definismos la aplicación FastAPI, configuras el middleware e incluyes tus routers (endponits de la API). Los enrutadores suelen estar repartidos en diferentes archivos y se incluyen en la aplicación principal mediante app.include_router(). Este archivo es también donde gestionamos las sesiones de base de datos, manejando la apertura y cierre de sesiones para cada petición.
+- `structure.txt`: Describes the structure of the Database to be developed in SQLAlchemy.
+- `main.py`: Defines the FastAPI application, configures middleware, and includes routers (API endpoints). Routers are usually distributed in different files and included in the main application using `app.include_router()`. This file also manages database sessions, handling the opening and closing of sessions for each request.
+- `models.py`: Defines SQLAlchemy models. These are classes mapped to database tables. They inherit from the `Base` class defined in `database.py`, and each model attribute represents a table column. These models are used to create, retrieve, update, and delete records in the database.
+- `schemas.py`: Defines Pydantic models (schemas) for parsing and validating JSON data sent and received by the API. These schemas are used by FastAPI to automatically generate API documents and validate incoming request data.
+- `crud.py`: Stands for Create, Read, Update, Delete. This file contains functions for interacting with the database using models defined in `models.py`.
 
-	models.py - Aquí es donde definimos los modelos SQLAlchemy. Estas son clases que se asignan a las tablas de la base de datos. Heredan de la clase Base que definiste en database.py y cada atributo de un modelo representa una columna de la tabla. Estos modelos se utilizan para crear, recuperar, actualizar y eliminar registros en la base de datos.
+### 2. `fast_api/api_db`
 
-	schemas.py - Aquí es donde definimos los modelos Pydantic (esquemas). Estos modelos se utilizan para analizar y validar los datos JSON que la API envía y recibe. Utilizan anotaciones de tipo Python para definir el tipo esperado de cada campo en el modelo. FastAPI utiliza estos esquemas para generar automáticamente los documentos de la API y validar los datos de las solicitudes entrantes.
+This folder contains the developed API and Database. It includes the same files as the previous folder plus:
 
-	crud.py - Son las siglas de Create, Read, Update, Delete, que son las operaciones básicas que puedes realizar en una base de datos. Este archivo contiene las funciones para interactuar con la base de datos, usando los modelos que definimos en models.py.
+- `database.py`: Configures the SQLAlchemy database engine and sessionmaker. Contains all details to connect to the specific database. The engine and `SessionLocal` created here are used throughout the application to interact with the database.
+- An audio file: Used for testing communication. Once the tools are deployed, communication is verified by creating an endpoint that stores an audio file locally when it is uploaded via HTTP curl POST.
 
+## Deploying the Database
 
-	[2] fast_api > api_db
+To deploy the database, use this command:
 
-	Aquí se ha desarrollado finalmente nuestra API y la Base de Datos. Contiene los mismos archivos que la anterior más:
+```bash
+uvicorn main:app --reload
+```bash
 
-	database.py - Este archivo configura el motor de base de datos SQLAlchemy y sessionmaker. Contiene todos los detalles para conectarte a la base de datos específica. El motor y el SessionLocal creados aquí se utilizan en el resto de la aplicación para interactuar con la base de datos.
-
-	y un archivo de audio. El cual es objeto de una prueba de comunicación. Una vez desplegada las dos herramientas se comprobó que la comunicación existe creando un endponit que, al subir un archivo de audio por HTTP curl POST, o mejor, al recibir un archivo de audio, este es automaticamente almacenado en el disco local.
-
-	
-
-Para desplegar la base de datos se usa este comando:
-
-	uvicorn main:app --reload
 
 Uvicorn es un servidor ASGI ultrarrápido basado en uvloop y httptools. Forma parte del proyecto Starlette y es el servidor recomendado para FastAPI.
 

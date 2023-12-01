@@ -29,18 +29,14 @@ To deploy the database, use this command:
 
 ```bash
 uvicorn main:app --reload
-```bash
+```
 
+Uvicorn is an ultra-fast ASGI server based on uvloop and httptools. It's part of the Starlette project and is the recommended server for FastAPI.
 
-Uvicorn es un servidor ASGI ultrarrápido basado en uvloop y httptools. Forma parte del proyecto Starlette y es el servidor recomendado para FastAPI.
+ASGI stands for Asynchronous Server Gateway Interface. It's a standard interface between Python web servers with asynchronous capability, frameworks, and applications. This contrasts with WSGI (Web Server Gateway Interface), which is a standard interface for synchronous Python web applications.
 
-ASGI son las siglas de Asynchronous Server Gateway Interface. Es una interfaz estándar entre servidores web Python con capacidad asíncrona, frameworks y aplicaciones. Esto contrasta con WSGI (Web Server Gateway Interface), que es una interfaz estándar para aplicaciones web Python síncronas.
+Uvicorn and FastAPI enable asynchronous programming in your application, which can offer significant performance improvements in IO-bound and high concurrency Python applications.
 
-Uvicorn y FastAPI hacen posible el uso de programación asíncrona en su aplicación, lo que puede proporcionar mejoras significativas en el rendimiento de IO-bound y aplicaciones Python de alta concurrencia.
+In the uvicorn main:app --reload command, uvicorn is the server, main is the Python file (i.e., main.py), and app is the object created by FastAPI to run your application. The --reload flag makes the server restart after code changes, making it a great option during development.
 
-En el comando uvicorn main:app --reload, uvicorn es el servidor, main es el archivo Python (es decir, main.py), y app es el objeto creado por FastAPI para ejecutar su aplicación. La bandera --reload hace que el servidor se reinicie después de los cambios de código, por lo que es una gran opción durante el desarrollo.
-
-Así que, en resumen, Uvicorn es un servidor ASGI para aplicaciones asíncronas Python, y se utiliza aquí para servir a su aplicación FastAPI.
-
-	
-	
+In summary, Uvicorn is an ASGI server for asynchronous Python applications, used here to serve your FastAPI application.

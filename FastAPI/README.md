@@ -37,6 +37,6 @@ ASGI stands for Asynchronous Server Gateway Interface. It's a standard interface
 
 Uvicorn and FastAPI enable asynchronous programming in your application, which can offer significant performance improvements in IO-bound and high concurrency Python applications.
 
-In the uvicorn main:app --reload command, uvicorn is the server, main is the Python file (i.e., main.py), and app is the object created by FastAPI to run your application. The --reload flag makes the server restart after code changes, making it a great option during development.
+In the `uvicorn main:app --reload` command, `uvicorn` is the server, `main` is the Python file (i.e., `main.py`), and `app` is the object created by FastAPI to run your application. The `--reload` flag makes the server restart after code changes, making it a great option during development.
 
 In summary, Uvicorn is an ASGI server for asynchronous Python applications, used here to serve your FastAPI application.

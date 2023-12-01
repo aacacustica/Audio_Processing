@@ -125,6 +125,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             # drop the beginning and ending of the measurement (15min)
             try:
                 df = df.loc[start_date + pd.Timedelta(900, unit='seconds'):end_date - pd.Timedelta(900, unit='seconds')]
+                logger.info(f"df was trimmed, 15 min from the beggining and 15 min from the end")
             except:
                 continue
 

@@ -8,6 +8,7 @@ def get_comment_section(metadata: dict):
     comment = comment.split(" ")
     return comment
 
+
 def test_name_calibration(metadata: dict, logger, calibration_file='calibration_constants.ini'):
     """
     Look for the name of the calibration file in the metadata.
@@ -18,19 +19,23 @@ def test_name_calibration(metadata: dict, logger, calibration_file='calibration_
 
     """
     tag = metadata["TAG"]
-    filename = tag["artist"].split(" ")[1]
+    filename = metadata["filename"].split("/")[-1]
+    audiomoth_name = tag["artist"].split(" ")[1]
+
+    logger.info(f"Filename is {filename}")
+    logger.info(f"AudioMoth name is {audiomoth_name}")
 
     config = configparser.ConfigParser()
     config.read(calibration_file)
     calibration_dict = {k.upper() : v for k, v in config['CalibrationConstants'].items()}
-    file_calibration = calibration_dict.get(filename, None)
+    file_calibration = calibration_dict.get(audiomoth_name, None)
     
-    if filename in calibration_dict:
-        logger.debug(f"For {filename}, the calibration constants is {calibration_dict[filename]}")
+    if audiomoth_name in calibration_dict:
+        logger.debug(f"For {audiomoth_name}, the calibration constants is {calibration_dict[audiomoth_name]}")
     else:
-        logger.warning(f"For {filename}, there is no calibration constant")
+        logger.warning(f"For {audiomoth_name}, there is no calibration constant")
     
-    return filename, file_calibration
+    return filename, audiomoth_name, file_calibration
 
 
 def test_channels(metadata: dict, logger):

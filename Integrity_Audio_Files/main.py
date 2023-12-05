@@ -9,6 +9,7 @@ def main():
     
     try: 
         metadata = get_metadata(path, logger)
+        logger.info(f"Metadata: {metadata}")
 
     except Exception as e:
         logger.error("Error: ", e)

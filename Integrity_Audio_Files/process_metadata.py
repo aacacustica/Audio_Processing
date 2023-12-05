@@ -27,7 +27,9 @@ def get_metadata(path: str, logger):
                 try:
                     # metadata
                     metadata = mediainfo(full_path)
-                    metadata_dict[file] = metadata
+                    # metadata_dict[file] = metadata
+                    for k, v in metadata.items():
+                        print(f"{k}: {v}")
 
                     # testing integrity
                     # [1] calibration
@@ -50,9 +52,12 @@ def get_metadata(path: str, logger):
 
                     # [7] test recording duration
                     test_recording_duration(metadata, logger)
+
+                    # [8] test temperature
+                    test_temperature(metadata, logger)
                 
                 except Exception as e:
-                    print(f"Error processing {file}: {e}")
+                    print(f"Error processing file {file}: {e}")
     
         return metadata_dict
     

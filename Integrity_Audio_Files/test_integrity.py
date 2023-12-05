@@ -30,7 +30,6 @@ def test_name_calibration(metadata: dict, logger, calibration_file='calibration_
         logger.warning(f"For {filename}, there is no calibration constant")
 
 
-
 def test_time_zone(metadata: dict, logger):
     """Get the time zone from the metadata."""
     comment = get_comment_section(metadata)
@@ -52,6 +51,7 @@ def test_channels(metadata: dict, logger):
         logger.debug(F"Number of channels is properly set to {channels}")
     else:
         logger.debug(f"Number of channels set to {channels}, not to {CHANNELS}")
+
 
 def test_batery_status(metadata: dict, logger):
     """Get the battery status from the metadata."""
@@ -94,11 +94,25 @@ def test_recording_duration(metadata: dict, logger):
     else:
         logger.warning(f"Recording duration is not properly set to {RECORDING_DURATION}s, but to {duration}s")
 
+
+def test_temperature(metadata: dict, logger):
+    """Get the temperature from the metadata"""
+    comment = get_comment_section(metadata)
+    temperature = comment[-1].split("C")[0]
+    temperature = float(temperature)
+
+    if temperature > 0.0 and temperature < 50.0:
+        logger.debug(f"Temperature {temperature} within range")
+    else:
+        logger.warning(f"Temperature is  {temperature} within range")
+
 def test_sleep_duration(logger,metadata: dict):
     pass
 
+
 def get_first_timestamp(logger,metadata: dict):
     pass
+
 
 def get_last_timestamp(logger,metadata: dict):
     pass

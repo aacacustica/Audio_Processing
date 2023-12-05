@@ -4,7 +4,7 @@ from logging_config import setup_logging
 
 def main():
     logger = setup_logging()
-    
+
     path = "/home/santi/Documents/AAC/audios/20231019_173510.WAV"
     # path = "/home/santi/Documents/AAC/audios/"
     
@@ -13,21 +13,21 @@ def main():
     try: 
         metadata = get_metadata(path)
         for key, value in metadata.items():
-            print(f"{key}: {value}")
+            logger.debug(f"{key}: {value}")
         # print(metadata)
 
         # testing integrity
         # calibration
-        test_name_calibration(metadata)
+        test_name_calibration(logger, metadata)
 
         # test channels
-        test_channels(metadata)
+        test_channels(logger, metadata)
 
         # test sample rate
         test_sample_rate(metadata)
     
     except Exception as e:
-        print("Error: ", e)
+        logger.error("Error: ", e)
 
 
 if __name__ == "__main__":

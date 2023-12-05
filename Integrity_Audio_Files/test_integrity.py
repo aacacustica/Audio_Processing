@@ -1,7 +1,7 @@
 
 import configparser
 
-def test_name_calibration(metadata: dict, calibration_file='calibration_constants.ini'):
+def test_name_calibration(logger, metadata: dict, calibration_file='calibration_constants.ini'):
     """
     Look for the name of the calibration file in the metadata.
     If it exists, map its calibration constant
@@ -11,37 +11,32 @@ def test_name_calibration(metadata: dict, calibration_file='calibration_constant
 
     """
     tag = metadata["TAG"]
-    print("\nTAG METADATA:")
-    print(tag)
-    print()
 
     filename = tag["artist"].split(" ")[1]
-    print(f"\nThis is the artist tag of the file: {filename}")
 
     config = configparser.ConfigParser()
     config.read(calibration_file)
     calibration_dict = {k.upper() : v for k, v in config['CalibrationConstants'].items()}
-    print(f"\nName of AudioMoths: {calibration_dict}")
 
     if filename in calibration_dict:
-        print(f"\nFor {filename}, the calibration constants is {calibration_dict[filename]}")
+        logger.debug(f"For {filename}, the calibration constants is {calibration_dict[filename]}")
     else:
-        raise Exception(f"\n{filename} is not in the calibration constants file.")
+        logger.warning(f"For {filename}, there is no calibration constant")
 
 def test_time_zone():
     pass
 
-def test_channels(metadata: dict):
+def test_channels(logger,metadata: dict):
     channels = metadata["channels"]
-    print(channels)
+    logger.debu(channels)
     pass
 
 def test_batery_status():
     pass
 
-def test_sample_rate(metadata: dict):
+def test_sample_rate(logger, metadata: dict):
     sample_rate = metadata["sample_rate"]
-    print(sample_rate)
+    logger.debug(sample_rate)
     pass
 
 def test_gain():

@@ -1,7 +1,7 @@
 import logging
 
 def setup_logging(log_file='integrity_AudioMod.log', level=logging.DEBUG):
-    """Setup logging configuration
+    """Setup logging configuration. There are two handlers: one for the file and one for the console.
     Arfs:
         log_file: name of the log file
         level: logging level

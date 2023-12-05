@@ -11,7 +11,6 @@ def test_name_calibration(logger, metadata: dict, calibration_file='calibration_
 
     """
     tag = metadata["TAG"]
-
     filename = tag["artist"].split(" ")[1]
 
     config = configparser.ConfigParser()
@@ -23,7 +22,16 @@ def test_name_calibration(logger, metadata: dict, calibration_file='calibration_
     else:
         logger.warning(f"For {filename}, there is no calibration constant")
 
-def test_time_zone():
+
+
+def test_time_zone(logger, metadata: dict):
+    """Get the time zone from the metadata."""
+    tag = metadata["TAG"]
+    comment = tag["comment"]
+    comment = comment.split(" ")
+    print(comment)
+
+
     pass
 
 def test_channels(logger,metadata: dict):

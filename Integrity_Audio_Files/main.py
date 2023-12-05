@@ -25,6 +25,9 @@ def main():
 
         # test sample rate
         test_sample_rate(metadata)
+
+        # test time zone
+        test_time_zone(metadata)
     
     except Exception as e:
         logger.error("Error: ", e)

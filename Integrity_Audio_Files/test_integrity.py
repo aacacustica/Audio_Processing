@@ -29,14 +29,19 @@ def test_time_zone(logger, metadata: dict):
     tag = metadata["TAG"]
     comment = tag["comment"]
     comment = comment.split(" ")
-    print(comment)
+    print(comment[4])
+
+    if comment[4] == "(UTC +1)":
+        logger.debug("Time zone is properly set to UTC +1")
+    else:
+        logger.warning(f"Time zone is not properly set to UTC +1 -> [ {comment[4]} ]") 
 
 
     pass
 
 def test_channels(logger,metadata: dict):
     channels = metadata["channels"]
-    logger.debu(channels)
+    logger.debug(channels)
     pass
 
 def test_batery_status():

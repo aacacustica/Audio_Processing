@@ -24,10 +24,10 @@ def main():
         test_channels(logger, metadata)
 
         # test sample rate
-        test_sample_rate(metadata)
+        test_sample_rate(logger,metadata)
 
         # test time zone
-        test_time_zone(metadata)
+        test_time_zone(logger, metadata)
     
     except Exception as e:
         logger.error("Error: ", e)

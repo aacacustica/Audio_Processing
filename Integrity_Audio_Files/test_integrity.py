@@ -1,5 +1,12 @@
 
 import configparser
+from config import *
+
+def get_comment_section(metadata: dict):
+    tag = metadata["TAG"]
+    comment = tag["comment"]
+    comment = comment.split(" ")
+    return comment
 
 def test_name_calibration(logger, metadata: dict, calibration_file='calibration_constants.ini'):
     """
@@ -26,10 +33,7 @@ def test_name_calibration(logger, metadata: dict, calibration_file='calibration_
 
 def test_time_zone(logger, metadata: dict):
     """Get the time zone from the metadata."""
-    tag = metadata["TAG"]
-    comment = tag["comment"]
-    comment = comment.split(" ")
-    print(comment[4])
+    comment = get_comment_section(metadata)
 
     if comment[4] == "(UTC +1)":
         logger.debug("Time zone is properly set to UTC +1")
@@ -37,34 +41,56 @@ def test_time_zone(logger, metadata: dict):
         logger.warning(f"Time zone is not properly set to UTC +1 -> [ {comment[4]} ]") 
 
 
-    pass
-
 def test_channels(logger,metadata: dict):
+    """Get the number of channels from the metadata."""
     channels = metadata["channels"]
-    logger.debug(channels)
-    pass
+    
+    if channels == 1:
+        logger.debug("Number of channels is properly set to 1")
+    else:
+        logger.debug(f"Number of channels set to {channels}, not to 1")
 
-def test_batery_status():
-    pass
+def test_batery_status(logger,metadata: dict):
+    """Get the battery status from the metadata."""
+    comment = get_comment_section(metadata)
+    comment_float = float(comment[14][:-1])
+
+    if comment_float < 5.0 and comment_float > 0.0:
+        logger.debug(f"Battery status is okay: {comment_float}V")
+    else:
+        logger.warning(f"Battery status is not okay: {comment_float}V")
+
 
 def test_sample_rate(logger, metadata: dict):
+    """Get the sample rate from the metadata."""
     sample_rate = metadata["sample_rate"]
-    logger.debug(sample_rate)
+    
+    if sample_rate == SAMPLE_RATE:
+        logger.debug(f"Sample rate is properly set to {sample_rate}")
+    else:
+        logger.warning(f"Sample rate is not properly set to {SAMPLE_RATE}, but to {sample_rate}")
+
+
+def test_gain(logger,metadata: dict):
+    """Get the gain from the metadata."""
+    comment = get_comment_section(metadata)
+    gain = comment[9]
+    if gain == GAIN:
+        logger.debug(f"Gain is properly set to {gain}")
+    else:
+        logger.warning(f"Gain is not properly set to {GAIN}, but to {gain}")
+
+
+def test_recording_duration(logger,metadata: dict):
     pass
 
-def test_gain():
+def test_sleep_duration(logger,metadata: dict):
     pass
 
-def test_recording_duration():
+def get_first_timestamp(logger,metadata: dict):
     pass
 
-def test_sleep_duration():
-    pass
-
-def get_first_timestamp():
-    pass
-
-def get_last_timestamp():
+def get_last_timestamp(logger,metadata: dict):
     pass
 
 def get_duration():

@@ -7,17 +7,15 @@ def main():
 
     path = "/home/santi/Documents/AAC/audios/20231019_173510.WAV"
     # path = "/home/santi/Documents/AAC/audios/"
-    
     # path = input("Enter path for the file or folder: ")
     
     try: 
         metadata = get_metadata(path)
         for key, value in metadata.items():
             logger.debug(f"{key}: {value}")
-        # print(metadata)
 
         # testing integrity
-        # calibration
+        # [1] calibration
         test_name_calibration(logger, metadata)
 
         # test channels
@@ -28,6 +26,12 @@ def main():
 
         # test time zone
         test_time_zone(logger, metadata)
+
+        # test battery status
+        test_batery_status(logger, metadata)
+
+        # test gain
+        test_gain(logger,metadata)
     
     except Exception as e:
         logger.error("Error: ", e)

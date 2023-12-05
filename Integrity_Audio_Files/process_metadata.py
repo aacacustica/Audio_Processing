@@ -60,7 +60,29 @@ def get_metadata(path: str, logger):
         try:
             # metadata
             metadata = mediainfo(path)
-            return metadata
+
+            # testing integrity
+            # [1] calibration
+            test_name_calibration(metadata, logger)
+
+            # [2] test channels
+            test_channels(metadata, logger)
+
+            # [3] test sample rate
+            test_sample_rate(metadata, logger)
+
+            # [4] test time zone
+            test_time_zone(metadata, logger)
+
+            # [5] test battery status
+            test_batery_status(metadata, logger)
+
+            # [6] test gain
+            test_gain(metadata, logger)
+
+            # [7] test recording duration
+            test_recording_duration(metadata, logger)
+            
         
         except Exception as e:
             raise Exception(f"Error processing file: {e}")

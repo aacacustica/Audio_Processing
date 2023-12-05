@@ -34,21 +34,24 @@ def test_name_calibration(metadata: dict, logger, calibration_file='calibration_
 def test_time_zone(metadata: dict, logger):
     """Get the time zone from the metadata."""
     comment = get_comment_section(metadata)
+    time_zone_metadata = comment[4]
+    time_zone_madrid = "(UTC +1)"
 
-    if comment[4] == "(UTC +1)":
-        logger.debug("Time zone is properly set to UTC +1")
+    if comment[4] == time_zone_madrid:
+        logger.debug(f"Time zone is properly set to {time_zone_metadata}")
     else:
-        logger.warning(f"Time zone is not properly set to UTC +1 -> [ {comment[4]} ]") 
+        logger.warning(f"Time zone is set to {time_zone_metadata}, not to {time_zone_madrid}") 
 
 
 def test_channels(metadata: dict, logger):
     """Get the number of channels from the metadata."""
     channels = metadata["channels"]
+    channels = int(channels)
     
-    if channels == 1:
-        logger.debug("Number of channels is properly set to 1")
+    if channels == CHANNELS:
+        logger.debug(F"Number of channels is properly set to {channels}")
     else:
-        logger.debug(f"Number of channels set to {channels}, not to 1")
+        logger.debug(f"Number of channels set to {channels}, not to {CHANNELS}")
 
 def test_batery_status(metadata: dict, logger):
     """Get the battery status from the metadata."""

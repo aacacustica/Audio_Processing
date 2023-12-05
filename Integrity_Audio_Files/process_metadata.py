@@ -33,28 +33,31 @@ def get_metadata(path: str, logger):
 
                     # testing integrity
                     # [1] calibration
-                    test_name_calibration(metadata, logger)
+                    filename, file_calibration = test_name_calibration(metadata, logger)
 
                     # [2] test channels
-                    test_channels(metadata, logger)
+                    channels = test_channels(metadata, logger)
 
                     # [3] test sample rate
-                    test_sample_rate(metadata, logger)
+                    sample_rate = test_sample_rate(metadata, logger)
 
                     # [4] test time zone
-                    test_time_zone(metadata, logger)
+                    time_zone_metadata = test_time_zone(metadata, logger)
 
                     # [5] test battery status
-                    test_batery_status(metadata, logger)
+                    battery_voltage = test_batery_status(metadata, logger)
 
                     # [6] test gain
-                    test_gain(metadata, logger)
+                    gain = test_gain(metadata, logger)
 
                     # [7] test recording duration
-                    test_recording_duration(metadata, logger)
+                    duration = test_recording_duration(metadata, logger)
 
                     # [8] test temperature
-                    test_temperature(metadata, logger)
+                    temperature = test_temperature(metadata, logger)
+
+                    # [9] test timestamp
+                    timestamp = test_timestamp(metadata, logger)
                 
                 except Exception as e:
                     print(f"Error processing file {file}: {e}")

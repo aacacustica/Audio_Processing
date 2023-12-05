@@ -23,23 +23,14 @@ def test_name_calibration(metadata: dict, logger, calibration_file='calibration_
     config = configparser.ConfigParser()
     config.read(calibration_file)
     calibration_dict = {k.upper() : v for k, v in config['CalibrationConstants'].items()}
-
+    file_calibration = calibration_dict.get(filename, None)
+    
     if filename in calibration_dict:
         logger.debug(f"For {filename}, the calibration constants is {calibration_dict[filename]}")
     else:
         logger.warning(f"For {filename}, there is no calibration constant")
-
-
-def test_time_zone(metadata: dict, logger):
-    """Get the time zone from the metadata."""
-    comment = get_comment_section(metadata)
-    time_zone_metadata = comment[4]
-    time_zone_madrid = "(UTC +1)"
-
-    if comment[4] == time_zone_madrid:
-        logger.debug(f"Time zone is properly set to {time_zone_metadata}")
-    else:
-        logger.warning(f"Time zone is set to {time_zone_metadata}, not to {time_zone_madrid}") 
+    
+    return filename, file_calibration
 
 
 def test_channels(metadata: dict, logger):
@@ -52,16 +43,7 @@ def test_channels(metadata: dict, logger):
     else:
         logger.debug(f"Number of channels set to {channels}, not to {CHANNELS}")
 
-
-def test_batery_status(metadata: dict, logger):
-    """Get the battery status from the metadata."""
-    comment = get_comment_section(metadata)
-    comment_float = float(comment[14][:-1])
-
-    if comment_float < 5.0 and comment_float > 0.0:
-        logger.debug(f"Battery status is okay: {comment_float}V")
-    else:
-        logger.warning(f"Battery status is not ok {comment_float}V")
+    return channels
 
 
 def test_sample_rate(metadata: dict, logger):
@@ -73,6 +55,34 @@ def test_sample_rate(metadata: dict, logger):
     else:
         logger.warning(f"Sample rate is not set to {SAMPLE_RATE}, but to {sample_rate}")
 
+    return sample_rate
+
+
+def test_time_zone(metadata: dict, logger):
+    """Get the time zone from the metadata."""
+    comment = get_comment_section(metadata)
+    time_zone_metadata = comment[4]
+    time_zone_madrid = "(UTC +1)"
+
+    if comment[4] == time_zone_madrid:
+        logger.debug(f"Time zone is properly set to {time_zone_metadata}")
+    else:
+        logger.warning(f"Time zone is set to {time_zone_metadata}, not to {time_zone_madrid}") 
+    
+    return time_zone_metadata
+
+
+def test_batery_status(metadata: dict, logger):
+    """Get the battery status from the metadata."""
+    comment = get_comment_section(metadata)
+    battery_voltage = float(comment[14][:-1])
+
+    if battery_voltage < 5.0 and battery_voltage > 0.0:
+        logger.debug(f"Battery status is okay: {battery_voltage}V")
+    else:
+        logger.warning(f"Battery status is not ok {battery_voltage}V")
+
+    return battery_voltage
 
 def test_gain(metadata: dict, logger):
     """Get the gain from the metadata."""
@@ -83,6 +93,7 @@ def test_gain(metadata: dict, logger):
     else:
         logger.warning(f"Gain is not set to {GAIN}, but to {gain}")
 
+    return gain
 
 def test_recording_duration(metadata: dict, logger):
     duration = metadata["duration"]
@@ -94,6 +105,7 @@ def test_recording_duration(metadata: dict, logger):
     else:
         logger.warning(f"Recording duration is not properly set to {RECORDING_DURATION}s, but to {duration}s")
 
+    return duration
 
 def test_temperature(metadata: dict, logger):
     """Get the temperature from the metadata"""
@@ -106,13 +118,13 @@ def test_temperature(metadata: dict, logger):
     else:
         logger.warning(f"Temperature is  {temperature} within range")
 
-def test_sleep_duration(logger,metadata: dict):
-    pass
+    return temperature
 
+def test_timestamp(metadata: dict, logger):
+    """Get the timestamp from the metadata"""
+    comment = get_comment_section(metadata)
+    timestamp = comment[2:4]
+    
+    logger.debug(f"Timestamp is {timestamp}")
 
-def get_first_timestamp(logger,metadata: dict):
-    pass
-
-
-def get_last_timestamp(logger,metadata: dict):
-    pass
+    return timestamp

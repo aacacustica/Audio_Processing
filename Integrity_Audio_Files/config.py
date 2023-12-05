@@ -14,6 +14,6 @@ SLEEP_DURATION: int -- 5 seconds
 
 # CONSTANTS
 SAMPLE_RATE = 32000
-GAIN = "LOW"
+GAIN = "low"
 RECORDING_DURATION = 900 # seconds
 SLEEP_DURATION = 5 # seconds

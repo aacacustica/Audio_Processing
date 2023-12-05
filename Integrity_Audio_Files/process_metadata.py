@@ -2,15 +2,15 @@ from pydub.utils import mediainfo
 import os
 import tqdm
 # import argparse
+from test_integrity import *
 
-def get_metadata(path: str):
+def get_metadata(path: str, logger):
     """Returns a dictionary with the metadata of the file or files in the path.
     Args: 
         path (str): Path to the file or folder.
     Returns:
         metadata_dict (dict): Dictionary with the metadata of the file or files.
     """
-
     # if path exists
     if not os.path.exists(path):
         raise Exception("Path does not exist.")
@@ -28,6 +28,28 @@ def get_metadata(path: str):
                     # metadata
                     metadata = mediainfo(full_path)
                     metadata_dict[file] = metadata
+
+                    # testing integrity
+                    # [1] calibration
+                    test_name_calibration(metadata, logger)
+
+                    # [2] test channels
+                    test_channels(metadata, logger)
+
+                    # [3] test sample rate
+                    test_sample_rate(metadata, logger)
+
+                    # [4] test time zone
+                    test_time_zone(metadata, logger)
+
+                    # [5] test battery status
+                    test_batery_status(metadata, logger)
+
+                    # [6] test gain
+                    test_gain(metadata, logger)
+
+                    # [7] test recording duration
+                    test_recording_duration(metadata, logger)
                 
                 except Exception as e:
                     print(f"Error processing {file}: {e}")

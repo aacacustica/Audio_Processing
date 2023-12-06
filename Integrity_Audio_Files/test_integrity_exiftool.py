@@ -63,10 +63,9 @@ def test_timestamp(metadata: dict, logger):
     
     # get the original time zone in the UTC+x format
     original_time_zone = date.strftime("%z")
-    original_time_zone = "UTC " + original_time_zone
     # cast to string
     original_time_zone = str(original_time_zone)
-    logger.info(f"Original time zone: {original_time_zone}")
+    logger.info(f"Original UTC:\t {original_time_zone}")
 
     # timezone to UTC+1
     utc_plus_one = pytz.timezone('Etc/GMT-1')
@@ -82,7 +81,7 @@ def test_channels(metadata: dict, logger):
     channels = metadata["Num Channels"]
     channels = int(channels)
 
-    # logger.info(f"Number of channels:\t {channels}")
+    logger.info(f"Number of channels: {channels}")
 
     return channels
 
@@ -91,7 +90,7 @@ def test_sample_rate(metadata: dict, logger):
     """Get the sample rate from the metadata."""
     sample_rate = metadata["Sample Rate"]
 
-    # logger.info(f"Sample rate:\t {sample_rate}")
+    logger.info(f"Sample Rate:\t {sample_rate}")
 
     return sample_rate
 
@@ -103,7 +102,7 @@ def test_batery_status(metadata: dict, logger):
     comment = get_comment_section(metadata)
     battery_voltage = float(comment[14][:-1])
 
-    # logger.info(f"Battery voltage:\t {battery_voltage}V")
+    logger.info(f"Battery voltage:\t {battery_voltage}V")
 
     return battery_voltage
 
@@ -113,7 +112,7 @@ def test_gain(metadata: dict, logger):
     comment = get_comment_section(metadata)
     gain = comment[9]
 
-    # logger.info(f"Gain:\t {gain}")
+    logger.info(f"Gain:\t\t {gain}")
 
     return gain
 
@@ -125,7 +124,7 @@ def test_recording_duration(metadata: dict, logger):
     h, m, s = metadata["Duration"].split(":")
     duration = int(h) * 3600 + int(m) * 60 + int(s)
     
-    # logger.info(f"Duration in seconds:\t {duration}s")
+    logger.info(f"Duration:\t\t {duration}s")
 
     return duration
 
@@ -138,6 +137,6 @@ def test_temperature(metadata: dict, logger):
     temperature = comment[-1].split("C")[0]
     temperature = float(temperature)
 
-    # logger.info(f"Temperature:\t {temperature}C")
+    logger.info(f"Temperature:\t {temperature}C")
 
     return temperature

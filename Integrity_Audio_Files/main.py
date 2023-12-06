@@ -11,7 +11,8 @@ def main():
     # path = "/home/santi/Documents/AAC/audios/AudioMoths/20231019_220640.WAV"
     # folder
     path = "/home/santi/Documents/AAC/audios/AudioMoths"
-    
+    location = location_name(path, logger)
+
     try:
         # GETTING METADATA
         logger.info("Starting process...")
@@ -19,7 +20,7 @@ def main():
         # logger.info(metadata)
 
         # save to json file
-        with open(os.path.join(json_dir, "metadata.json"), "w") as f:
+        with open(os.path.join(json_dir, f"metadata_{location}.json"), "w") as f:
             json.dump(metadata, f, indent=4)
             logger.info("Metadata saved in metadata.json")
         

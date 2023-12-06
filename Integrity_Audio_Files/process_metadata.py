@@ -2,8 +2,10 @@ from pydub.utils import mediainfo
 import os
 import tqdm
 # import argparse
-from test_integrity import *
+# from test_integrity import *
+from test_integrity_exiftool import *
 import subprocess
+
 
 def get_metadata(path: str, logger):
     """Returns a dictionary with the metadata of the file or files in the path."""
@@ -29,11 +31,31 @@ def get_metadata(path: str, logger):
                         if ': ' in line:
                             key, value = line.split(': ', 1)
                             parsed_metadata[key.strip()] = value.strip()
+                            logger.info(f"{key}: {value}")
 
-                    print(parsed_metadata)
+                    # TESTING INTEGRITY
+                    # [1] filename, audiomoth_name and calibration
+                    filename, audiomoth_name, file_calibration = test_name_calibration(parsed_metadata, logger)
+                    # [2] test file size
+                    file_size = test_file_size(parsed_metadata, logger)
+                    # [3] date
+                    date = test_timestamp(parsed_metadata, logger)
+                    # [4] channels
+                    channels = test_channels(parsed_metadata, logger)
+                    # [5] sample rate
+                    sample_rate = test_sample_rate(parsed_metadata, logger)
+                    # [6] baterry status
+                    battery_voltage = test_batery_status(parsed_metadata, logger)
+                    # [7] gain
+                    gain = test_gain(parsed_metadata, logger)
+                    # [8] duration
+                    duration = test_recording_duration(parsed_metadata, logger)
+                    # [9] temperature
+                    temperature = test_temperature(parsed_metadata, logger)
                 
                 except Exception as e:
                     print(f"Error processing file {file}: {e}")
+
                 #     # getting metadata
                 #     metadata = mediainfo(full_path)
                 #     # for k, v in metadata.items():

@@ -22,8 +22,8 @@ def test_name_calibration(metadata: dict, logger, calibration_file='calibration_
     file_name = metadata["File Name"]
     audiomoth_name = metadata["Artist"].split(" ")[1]
 
-    logger.info(f"File_name:\t\t {file_name}")
-    logger.info(f"AudioMoth name:\t {audiomoth_name}")
+    # logger.info(f"File_name:\t\t {file_name}")
+    # logger.info(f"AudioMoth name:\t {audiomoth_name}")
 
     config = configparser.ConfigParser()
     config.read(calibration_file)
@@ -32,7 +32,7 @@ def test_name_calibration(metadata: dict, logger, calibration_file='calibration_
 
     calibration = calibration_dict.get(audiomoth_name, None)
     
-    logger.info(f"Calibration:\t {calibration}")
+    # logger.info(f"Calibration:\t {calibration}")
     
     return file_name, audiomoth_name, calibration
 
@@ -42,7 +42,7 @@ def test_file_size(metadata: dict, logger,):
     file_size = metadata["File Size"].split(" ")[0]
     file_size = float(file_size)
     
-    logger.info(f"File size:\t\t {file_size} MB")
+    # logger.info(f"File size:\t\t {file_size} MB")
 
     return file_size
 
@@ -65,13 +65,13 @@ def test_timestamp(metadata: dict, logger):
     original_time_zone = date.strftime("%z")
     # cast to string
     original_time_zone = str(original_time_zone)
-    logger.info(f"Original UTC:\t {original_time_zone}")
+    # logger.info(f"Original UTC:\t {original_time_zone}")
 
     # timezone to UTC+1
     utc_plus_one = pytz.timezone('Etc/GMT-1')
     date = date.astimezone(utc_plus_one)
     date = date.strftime("%Y-%m-%d %H:%M:%S")
-    logger.info(f"Date (UTC+1):\t {date}")
+    # logger.info(f"Date (UTC+1):\t {date}")
 
     return date, original_time_zone
 
@@ -81,7 +81,7 @@ def test_channels(metadata: dict, logger):
     channels = metadata["Num Channels"]
     channels = int(channels)
 
-    logger.info(f"Number of channels: {channels}")
+    # logger.info(f"Number of channels: {channels}")
 
     return channels
 
@@ -90,7 +90,7 @@ def test_sample_rate(metadata: dict, logger):
     """Get the sample rate from the metadata."""
     sample_rate = metadata["Sample Rate"]
 
-    logger.info(f"Sample Rate:\t {sample_rate}")
+    # logger.info(f"Sample Rate:\t {sample_rate}")
 
     return sample_rate
 
@@ -102,7 +102,7 @@ def test_batery_status(metadata: dict, logger):
     comment = get_comment_section(metadata)
     battery_voltage = float(comment[14][:-1])
 
-    logger.info(f"Battery voltage:\t {battery_voltage}V")
+    # logger.info(f"Battery voltage:\t {battery_voltage}V")
 
     return battery_voltage
 
@@ -112,7 +112,7 @@ def test_gain(metadata: dict, logger):
     comment = get_comment_section(metadata)
     gain = comment[9]
 
-    logger.info(f"Gain:\t\t {gain}")
+    # logger.info(f"Gain:\t\t {gain}")
 
     return gain
 
@@ -124,7 +124,7 @@ def test_recording_duration(metadata: dict, logger):
     h, m, s = metadata["Duration"].split(":")
     duration = int(h) * 3600 + int(m) * 60 + int(s)
     
-    logger.info(f"Duration:\t\t {duration}s")
+    # logger.info(f"Duration:\t\t {duration}s")
 
     return duration
 
@@ -137,6 +137,6 @@ def test_temperature(metadata: dict, logger):
     temperature = comment[-1].split("C")[0]
     temperature = float(temperature)
 
-    logger.info(f"Temperature:\t {temperature}C")
+    # logger.info(f"Temperature:\t {temperature}C")
 
     return temperature

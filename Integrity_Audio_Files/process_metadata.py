@@ -3,7 +3,7 @@ import os
 import tqdm
 # import argparse
 # from test_integrity import *
-from test_integrity_exiftool import *
+from get_metadata_exiftool import *
 import subprocess
 
 

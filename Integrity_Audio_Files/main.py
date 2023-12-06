@@ -5,8 +5,8 @@ import json
 def main():
     logger = setup_logging()
 
-    path = "/home/santi/Documents/AAC/audios/AudioMoths/20231019_220640.WAV"
-    # path = "/home/santi/Documents/AAC/audios/AudioMoths"
+    # path = "/home/santi/Documents/AAC/audios/AudioMoths/20231019_220640.WAV"
+    path = "/home/santi/Documents/AAC/audios/AudioMoths"
     
     try:
         metadata = get_metadata(path, logger)

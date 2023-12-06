@@ -35,11 +35,11 @@ def get_metadata(path: str, logger):
 
                     # TESTING INTEGRITY
                     # [1] filename, audiomoth_name and calibration
-                    filename, audiomoth_name, file_calibration = test_name_calibration(parsed_metadata, logger)
+                    file_name, audiomoth_name, calibration = test_name_calibration(parsed_metadata, logger)
                     # [2] test file size
                     file_size = test_file_size(parsed_metadata, logger)
                     # [3] date
-                    date = test_timestamp(parsed_metadata, logger)
+                    date, original_time_zone = test_timestamp(parsed_metadata, logger)
                     # [4] channels
                     channels = test_channels(parsed_metadata, logger)
                     # [5] sample rate
@@ -54,21 +54,22 @@ def get_metadata(path: str, logger):
                     temperature = test_temperature(parsed_metadata, logger)
 
                     # save the metadata in a dictionary
-                    # integrity = {
-                    #     "filename": filename,
-                    #     "audiomoth_name": audiomoth_name,
-                    #     "file_calibration": file_calibration,
-                    #     "channels": channels,
-                    #     "sample_rate": sample_rate,
-                    #     "time_zone_metadata": time_zone_metadata,
-                    #     "battery_voltage": battery_voltage,
-                    #     "gain": gain,
-                    #     "duration": duration,
-                    #     "temperature": temperature,
-                    #     "timestamp": timestamp
-                    # }
-                    # # save the dictionary
-                    # integrity_dict[file] = integrity
+                    integrity = {
+                        "file_name": file_name,
+                        "audiomoth_name": audiomoth_name,
+                        "calibration": calibration,
+                        "file_size": file_size,
+                        "date": date,
+                        "original_time_zone": original_time_zone,
+                        "channels": channels,
+                        "sample_rate": sample_rate,
+                        "battery_voltage": battery_voltage,
+                        "gain": gain,
+                        "duration": duration,
+                        "temperature": temperature
+                    }
+                    # save the dictionary
+                    integrity_dict[file] = integrity
 
                 except Exception as e:
                     print(f"Error processing file {file}: {e}")
@@ -83,7 +84,7 @@ def get_metadata(path: str, logger):
 
             # testing integrity
             # [1] calibration
-            filename, audiomoth_name, file_calibration = test_name_calibration(metadata, logger)
+            filename, audiomoth_name, calibration = test_name_calibration(metadata, logger)
             # [2] test channels
             channels = test_channels(metadata, logger)
             # [3] test sample rate
@@ -105,7 +106,7 @@ def get_metadata(path: str, logger):
             integrity = {
                 "filename": filename,
                 "audiomoth_name": audiomoth_name,
-                "file_calibration": file_calibration,
+                "calibration": calibration,
                 "channels": channels,
                 "sample_rate": sample_rate,
                 "time_zone_metadata": time_zone_metadata,

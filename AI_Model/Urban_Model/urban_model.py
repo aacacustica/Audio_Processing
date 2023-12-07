@@ -22,7 +22,13 @@ logging.basicConfig(level=logging.INFO,
                     )
 
 def audios_long(audio_files):
-    """Print how long the audio files are."""
+    """Print how long the audio files are.
+    Args:
+        audio_files (list): List of audio files to be analyzed.
+    
+    Returns:
+        None
+    """
     for file in audio_files:
         try:
             wav_data, sr = sf.read(os.path.join(audio_path, file), dtype=np.int16)
@@ -35,8 +41,17 @@ def audios_long(audio_files):
         except Exception as e:
                 logging.error(e)
         
+
 def print_audio_time(w_size:int, sr:int, wav_data:list):
-    """Prints the audio time."""
+    """Prints the audio time.
+    Args:
+        w_size (int): Analysis window size.
+        sr (int): Sampling frequency.
+        wav_data (list): Audio data.
+    
+    Returns:
+        None
+    """
     # Audio time length
     if (len(wav_data) / sr) < 60:
         logging.info("The audio is {:.2f} seconds long".format(len(wav_data) / sr))
@@ -51,8 +66,20 @@ def print_audio_time(w_size:int, sr:int, wav_data:list):
     else:
         logging.info("Analysis window size: {} minutes".format(w_size / sr / 60))
 
+
+
 def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mapping:dict, n_predictions:int):
-    """Get predictions from yamnet model in a collection of audio files averaged over an analysis window and map to custom classes."""
+    """Get predictions from yamnet model in a collection of audio files averaged over an analysis window and map to custom classes.
+    Args:
+        audio_files (list): List of audio files to be analyzed.
+        fs_model (float): Sampling frequency of the model.
+        w_time (int): Analysis window size in minutes.
+        taxonomy_mapping (dict): Mapping from original classes to custom classes.
+        n_predictions (int): Number of predictions to be generated.
+    
+    Returns:
+        df_sorted (pd.DataFrame): Dataframe with the predictions.
+    """
     params.PATCH_HOP_SECONDS = 1 # 1 Hz frame rate.
     params.SAMPLE_RATE = int(fs_model) # Sampling frequency.
     logging.info(f"Model configured with fs= {int(fs_model)}")
@@ -84,32 +111,47 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
         count = 0
         if len(waveform) > w_size:
             for fstart in range(0, len(waveform) - w_size + 1, w_size):
+                # getting the scores for the original taxonomy
+                # to to that, we need to reshape the waveform to [1, -1] and predict, [to get the values of the prediction fdrom 0 to 1] then average the scores over the frames
                 scores, _ = yamnet.predict(np.reshape(waveform[fstart:fstart+w_size], [1, -1]), steps=1)
                 prediction = np.mean(scores, axis=0)
 
                 # top_original = np.argsort(prediction)[::-1][:5]
+                # get the top n predictions
                 top_original = np.argsort(prediction)[::-1][:n_predictions]
+
+                # [1] get the classes and probabilities for the original taxonomy
                 clip_classes_original = [class_names[i] for i in top_original]
                 prob_classes_original = [prediction[i] for i in top_original]
+
+                # append to the lists
                 audio_classes_original.append(clip_classes_original)
                 probs_original.append(prob_classes_original)
 
-                # adjust scores based on the new taxonomy
+                # [2] adjust scores based on the new taxonomy
+                # new_scores is a dictionary with the new classes as keys and the scores as values
                 new_scores = {key: 0 for key in set(taxonomy_mapping.values())}
+                # we go through the original classes and add the scores to the new classes
                 for original_class, mapped_class in taxonomy_mapping.items():
+                    # get the index of the original class in the original taxonomy
                     index = np.where(class_names == original_class)[0][0]
+                    # add the score to the new class
                     new_scores[mapped_class] += prediction[index]
     
+                # normalize the scores
                 total_score = sum(new_scores.values())
                 for key in new_scores:
                     new_scores[key] /= total_score
                 
+                # get the top n predictions, sorted in descending order
                 top_i = np.argsort(list(new_scores.values()))[::-1][:n_predictions]
 
+                # [3] we want to order the classes and probabilities by date
                 date = datetime.datetime.strptime(file.split('.')[0], '%Y%m%d_%H%M%S')
                 date = date + datetime.timedelta(minutes=w_time * count)
                 datetimes.append(date)
 
+                # initialize lists just to show how many classes we are adding
                 clip_classes = []
                 prob_classes = []
 

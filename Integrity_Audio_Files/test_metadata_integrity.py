@@ -13,7 +13,6 @@ def test_integrity(metadata: dict, location: str, logger):
     """
     # [0] initialize the txt file
     txt_name = f"test_integrity_{location}.txt"
-    test_txt = ""
 
     # [1] go through the metadata
     for file_name, file_metadata in metadata.items():
@@ -25,9 +24,6 @@ def test_integrity(metadata: dict, location: str, logger):
         calibration = file_metadata.get('calibration', None)
         if not calibration:
             logger.error(f"{file_name} - Missing or empty calibration value")
-        else:
-            # save the calibration value in the txt file
-            test_txt += f"{file_name} - calibration: {calibration}\n"
 
         # [2.2] file size
 

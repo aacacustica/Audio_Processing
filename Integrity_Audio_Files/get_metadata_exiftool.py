@@ -10,7 +10,7 @@ def get_comment_section(metadata: dict):
     return comment
 
 
-def test_name_calibration(metadata: dict, logger, calibration_file='calibration_constants.ini'):
+def get_name_calibration(metadata: dict, logger, calibration_file='calibration_constants.ini'):
     """
     Look for the name of the calibration file in the metadata.
     If it exists, map its calibration constant
@@ -37,7 +37,7 @@ def test_name_calibration(metadata: dict, logger, calibration_file='calibration_
     return file_name, audiomoth_name, calibration
 
 
-def test_file_size(metadata: dict, logger,):
+def get_file_size(metadata: dict, logger,):
     """Get the file size from the metadata in MB."""
     file_size = metadata["File Size"].split(" ")[0]
     file_size = float(file_size)
@@ -47,7 +47,7 @@ def test_file_size(metadata: dict, logger,):
     return file_size
 
 
-def test_timestamp(metadata: dict, logger):
+def get_timestamp(metadata: dict, logger):
     """
     Getting the times from the metadata. it is in this format
     
@@ -76,7 +76,7 @@ def test_timestamp(metadata: dict, logger):
     return date, original_time_zone
 
 
-def test_channels(metadata: dict, logger):
+def get_channels(metadata: dict, logger):
     """Get the number of channels from the metadata."""
     channels = metadata["Num Channels"]
     channels = int(channels)
@@ -86,7 +86,7 @@ def test_channels(metadata: dict, logger):
     return channels
 
 
-def test_sample_rate(metadata: dict, logger):
+def get_sample_rate(metadata: dict, logger):
     """Get the sample rate from the metadata."""
     sample_rate = metadata["Sample Rate"]
 
@@ -95,7 +95,7 @@ def test_sample_rate(metadata: dict, logger):
     return sample_rate
 
 
-def test_batery_status(metadata: dict, logger):
+def get_batery_status(metadata: dict, logger):
     """Get the battery status from the metadata.
      3.5 V; battery voltage too low to reliably record.
      """
@@ -107,7 +107,7 @@ def test_batery_status(metadata: dict, logger):
     return battery_voltage
 
 
-def test_gain(metadata: dict, logger):
+def get_gain(metadata: dict, logger):
     """Get the gain from the metadata."""
     comment = get_comment_section(metadata)
     gain = comment[9]
@@ -117,7 +117,7 @@ def test_gain(metadata: dict, logger):
     return gain
 
 
-def test_recording_duration(metadata: dict, logger):
+def get_recording_duration(metadata: dict, logger):
     """Get the recording duration from the metadata and convert it to seconds.
        The format is like this: 0:15:00 (hours:minutes:seconds)
     """
@@ -129,7 +129,7 @@ def test_recording_duration(metadata: dict, logger):
     return duration
 
 
-def test_temperature(metadata: dict, logger):
+def get_temperature(metadata: dict, logger):
     """Get the temperature from the metadata
     there is no temperature range in the configuration guide
     """

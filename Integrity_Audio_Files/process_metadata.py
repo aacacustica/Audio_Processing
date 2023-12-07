@@ -2,7 +2,7 @@ from pydub.utils import mediainfo
 import os
 import tqdm
 # import argparse
-# from test_integrity import *
+# from get_integrity import *
 from get_metadata_exiftool import *
 import subprocess
 
@@ -35,23 +35,23 @@ def get_metadata(path: str, logger):
 
                     # TESTING INTEGRITY
                     # [1] filename, audiomoth_name and calibration
-                    file_name, audiomoth_name, calibration = test_name_calibration(parsed_metadata, logger)
+                    file_name, audiomoth_name, calibration = get_name_calibration(parsed_metadata, logger)
                     # [2] test file size
-                    file_size = test_file_size(parsed_metadata, logger)
+                    file_size = get_file_size(parsed_metadata, logger)
                     # [3] date
-                    date, original_time_zone = test_timestamp(parsed_metadata, logger)
+                    date, original_time_zone = get_timestamp(parsed_metadata, logger)
                     # [4] channels
-                    channels = test_channels(parsed_metadata, logger)
+                    channels = get_channels(parsed_metadata, logger)
                     # [5] sample rate
-                    sample_rate = test_sample_rate(parsed_metadata, logger)
+                    sample_rate = get_sample_rate(parsed_metadata, logger)
                     # [6] baterry status
-                    battery_voltage = test_batery_status(parsed_metadata, logger)
+                    battery_voltage = get_batery_status(parsed_metadata, logger)
                     # [7] gain
-                    gain = test_gain(parsed_metadata, logger)
+                    gain = get_gain(parsed_metadata, logger)
                     # [8] duration
-                    duration = test_recording_duration(parsed_metadata, logger)
+                    duration = get_recording_duration(parsed_metadata, logger)
                     # [9] temperature
-                    temperature = test_temperature(parsed_metadata, logger)
+                    temperature = get_temperature(parsed_metadata, logger)
 
                     # save the metadata in a dictionary
                     integrity = {
@@ -90,23 +90,23 @@ def get_metadata(path: str, logger):
 
             # TESTING INTEGRITY
             # [1] filename, audiomoth_name and calibration
-            file_name, audiomoth_name, calibration = test_name_calibration(parsed_metadata, logger)
+            file_name, audiomoth_name, calibration = get_name_calibration(parsed_metadata, logger)
             # [2] test file size
-            file_size = test_file_size(parsed_metadata, logger)
+            file_size = get_file_size(parsed_metadata, logger)
             # [3] date
-            date, original_time_zone = test_timestamp(parsed_metadata, logger)
+            date, original_time_zone = get_timestamp(parsed_metadata, logger)
             # [4] channels
-            channels = test_channels(parsed_metadata, logger)
+            channels = get_channels(parsed_metadata, logger)
             # [5] sample rate
-            sample_rate = test_sample_rate(parsed_metadata, logger)
+            sample_rate = get_sample_rate(parsed_metadata, logger)
             # [6] baterry status
-            battery_voltage = test_batery_status(parsed_metadata, logger)
+            battery_voltage = get_batery_status(parsed_metadata, logger)
             # [7] gain
-            gain = test_gain(parsed_metadata, logger)
+            gain = get_gain(parsed_metadata, logger)
             # [8] duration
-            duration = test_recording_duration(parsed_metadata, logger)
+            duration = get_recording_duration(parsed_metadata, logger)
             # [9] temperature
-            temperature = test_temperature(parsed_metadata, logger)
+            temperature = get_temperature(parsed_metadata, logger)
 
             # save the metadata in a dictionary
             integrity = {

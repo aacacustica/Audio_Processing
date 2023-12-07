@@ -34,12 +34,6 @@ def main():
 
         # TESTING METADATA
         logger.info("Starting testing...")
-
-        # [1] open json file
-        with open(json_path, "r") as f:
-            metadata = json.load(f)
-        # logger.info(metadata)
-
         # [2] test integrity
         test_integrity(metadata, location, logger)
     

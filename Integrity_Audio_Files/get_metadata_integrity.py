@@ -9,7 +9,7 @@ def get_comment_section(metadata: dict):
     return comment
 
 
-def test_name_calibration(metadata: dict, logger, calibration_file='calibration_constants.ini'):
+def get_name_calibration(metadata: dict, logger, calibration_file='calibration_constants.ini'):
     """
     Look for the name of the calibration file in the metadata.
     If it exists, map its calibration constant
@@ -33,7 +33,7 @@ def test_name_calibration(metadata: dict, logger, calibration_file='calibration_
     return filename, audiomoth_name, file_calibration
 
 
-def test_channels(metadata: dict, logger):
+def get_channels(metadata: dict, logger):
     """Get the number of channels from the metadata."""
     channels = metadata["channels"]
     channels = int(channels)
@@ -41,14 +41,14 @@ def test_channels(metadata: dict, logger):
     return channels
 
 
-def test_sample_rate(metadata: dict, logger):
+def get_sample_rate(metadata: dict, logger):
     """Get the sample rate from the metadata."""
     sample_rate = metadata["sample_rate"]
 
     return sample_rate
 
 
-def test_time_zone(metadata: dict, logger):
+def get_time_zone(metadata: dict, logger):
     """Get the time zone from the metadata.
     desired time zone (UTC +1)
     """
@@ -58,7 +58,7 @@ def test_time_zone(metadata: dict, logger):
     return time_zone_metadata
 
 
-def test_batery_status(metadata: dict, logger):
+def get_batery_status(metadata: dict, logger):
     """Get the battery status from the metadata.
      3.5 V; battery voltage too low to reliably record.
      """
@@ -67,20 +67,20 @@ def test_batery_status(metadata: dict, logger):
 
     return battery_voltage
 
-def test_gain(metadata: dict, logger):
+def get_gain(metadata: dict, logger):
     """Get the gain from the metadata."""
     comment = get_comment_section(metadata)
     gain = comment[9]
 
     return gain
 
-def test_recording_duration(metadata: dict, logger):
+def get_recording_duration(metadata: dict, logger):
     duration = metadata["duration"]
     duration = round(float(duration), 2)
 
     return duration
 
-def test_temperature(metadata: dict, logger):
+def get_temperature(metadata: dict, logger):
     """Get the temperature from the metadata
     there is no temperature range in the configuration guide
     """
@@ -90,7 +90,7 @@ def test_temperature(metadata: dict, logger):
 
     return temperature
 
-def test_timestamp(metadata: dict, logger):
+def get_timestamp(metadata: dict, logger):
     """Get the timestamp from the metadata"""
     comment = get_comment_section(metadata)
     timestamp = comment[2:4]

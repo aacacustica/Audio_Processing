@@ -30,3 +30,5 @@ def make_json_txt_directory(path: str, logger):
 def location_name(path: str, logger):
     logger.info(f"location name: {path.split('/')[-2]}")
     return path.split("/")[-2]
+
+

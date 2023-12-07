@@ -1,3 +1,6 @@
+from test_metadata_integrity import *
+from test_metadata_utils import *
+
 def test_integrity(metadata: dict, location: str, logger):
     """Test the integrity of the metadata.
     We are goint to compare the metadata with the configuration guide.
@@ -21,11 +24,10 @@ def test_integrity(metadata: dict, location: str, logger):
         # TESTING INTEGRITY
 
         # [2.1] calibration check (if calibration is empty, it is BAD)
-        calibration = file_metadata.get('calibration', None)
-        if not calibration:
-            logger.error(f"{file_name} - Missing or empty calibration value")
+        calibration = test_calibration(file_metadata, file_name, logger)
 
         # [2.2] file size
+        file_size = test_file_size(file_metadata, file_name, logger)
 
         # [2.3] date and time zone
 

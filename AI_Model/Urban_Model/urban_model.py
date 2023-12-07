@@ -79,6 +79,8 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
     
     Returns:
         df_sorted (pd.DataFrame): Dataframe with the predictions.
+
+    trafico, gente y 
     """
     params.PATCH_HOP_SECONDS = 1 # 1 Hz frame rate.
     params.SAMPLE_RATE = int(fs_model) # Sampling frequency.
@@ -132,7 +134,9 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                 audio_classes_original.append(clip_classes_original)
                 probs_original.append(prob_classes_original)
 
+
                 # [2] adjust scores based on the new taxonomy
+
                 # new_scores is a dictionary with the new classes as keys and the scores as values
                 new_scores = {key: 0 for key in set(taxonomy_mapping.values())}
                 # we go through the original classes and add the scores to the new classes
@@ -159,13 +163,21 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                 date = date + datetime.timedelta(minutes=w_time * count)
                 datetimes.append(date)
 
-                # initialize lists just to show how many classes we are adding
+
+                # [4] SAVE THE CUSTOM CLASSES AND PROBABILITIES
                 clip_classes = []
                 prob_classes = []
 
                 for i in top_i:
                     clip_classes.append(list(new_scores.keys())[i])
                     prob_classes.append(list(new_scores.values())[i])
+
+                # APPLY THE THRESHOLD TO GET CLEANER PREDICTIONS
+                if prob_classes:
+                    prob_classes = medfilt(prob_classes, kernel_size=3)
+                    pass
+
+
                 audio_classes.append(clip_classes)
                 probs.append(prob_classes)
                 files.append(file)

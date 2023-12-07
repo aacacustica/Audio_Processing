@@ -34,12 +34,7 @@ build/
 # Image files
 *.jpg
 *.png
-*.csv
-*.xlsx
 *.drawio
-*.csv
-*xlsx
-*.png
 
 # things to ignore:
 

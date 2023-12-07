@@ -194,12 +194,10 @@ if __name__ == "__main__":
     try:
         audio_files = [f for f in os.listdir(audio_path) if f.endswith(('.WAV', '.wav'))]
     except Exception as e:
-        logging.error(f"Error listing directory {audio_path}: {e}")
-        exit()
+        raise Exception(f"Error reading audio files: {e}")
 
     if not audio_files:
-        logging.error("No audio files found.")
-        exit()
+        raise Exception("No audio files found.")
 
     # get sample rate of the collection
     sample_rates = []
@@ -213,8 +211,7 @@ if __name__ == "__main__":
             logging.error(f"Error reading file {file}: {e}")
 
     if not valid_audio_files:
-        logging.error("No valid audio files to process.")
-        exit()
+        raise Exception("No valid audio files found.")
 
     sample_rates = np.array(sample_rates)
 
@@ -241,8 +238,7 @@ if __name__ == "__main__":
                                   taxonomy_mapping=taxonomy_mapping,
                                   n_predictions=n_predictions)
     except Exception as e:
-        logging.error(f"Error during prediction: {e}")
-        exit()
+        raise Exception(f"Error generating predictions: {e}")
 
     logging.info(f"{len(valid_audio_files)} procesados")
 

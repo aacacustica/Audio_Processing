@@ -14,7 +14,25 @@ SLEEP_DURATION: int -- 5 seconds
 
 # CONSTANTS
 SAMPLE_RATE = 32000
+
+# CALIBRATION
+CALIBRATION = "none"
+
+# GAIN
 GAIN = "low"
-RECORDING_DURATION = 900 # seconds
+
+
+# TIME ANALYSIS
 SLEEP_DURATION = 5 # seconds
+DURATION = 900 # seconds
+# to test the UTC time zone, it must not be empty: date_UTC1
+
+# CHANNELS
 CHANNELS = 1
+
+# BATTERY
+BATERRY_VOLTAGE = 3.5 # V
+
+# TEMPERATURE
+MAX_TEMP = 50 # C
+MIN_TEMP = -10 # C

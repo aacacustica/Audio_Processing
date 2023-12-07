@@ -111,6 +111,10 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
         count = 0
         if len(waveform) > w_size:
             for fstart in range(0, len(waveform) - w_size + 1, w_size):
+
+
+                # GETTING THE SCORES FOR THE CUSTOM TAXONOMY
+
                 # getting the scores for the original taxonomy
                 # to to that, we need to reshape the waveform to [1, -1] and predict, [to get the values of the prediction fdrom 0 to 1] then average the scores over the frames
                 scores, _ = yamnet.predict(np.reshape(waveform[fstart:fstart+w_size], [1, -1]), steps=1)
@@ -138,6 +142,10 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                     # add the score to the new class
                     new_scores[mapped_class] += prediction[index]
     
+
+
+                # NORMALIZE THE SCORES
+
                 # normalize the scores
                 total_score = sum(new_scores.values())
                 for key in new_scores:
@@ -169,6 +177,9 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                 
         else:
             logging.warning("Audio shorter than analysis window")
+
+
+    # SAVE THE PREDICTIONS IN A (DICT) DATAFRAME
 
     data_dict = {'files': files, 
                  'datetime': datetimes, 

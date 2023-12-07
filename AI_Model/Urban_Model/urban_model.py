@@ -231,7 +231,7 @@ if __name__ == "__main__":
     for device in physical_devices:
         tf.config.experimental.set_memory_growth(device, True)
 
-    with open('taxonomy_mapping.json', 'r') as f:
+    with open('taxonomy_mapping_301123.json', 'r') as f:
         taxonomy_mapping = json.load(f)
 
     try:

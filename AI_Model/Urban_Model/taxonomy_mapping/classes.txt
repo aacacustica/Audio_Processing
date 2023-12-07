@@ -1,0 +1,5 @@
+{'Electro-mechanical', 'Geonature', 'Animal', 'Other human', 'Social/communal', 'Human movement', 'Music', 'Motorised transport', 'Voice', 'Other Sounds', 'Background'}
+
+collor_pallet {
+    
+}

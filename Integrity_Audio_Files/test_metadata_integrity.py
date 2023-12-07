@@ -30,6 +30,7 @@ def test_integrity(metadata: dict, location: str, logger):
         file_size = test_file_size(file_metadata, file_name, logger)
 
         # [2.3] date and time zone
+        
 
         # [2.4] channels
 

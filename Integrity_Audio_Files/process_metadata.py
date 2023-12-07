@@ -31,7 +31,7 @@ def get_metadata(path: str, logger):
                         if ': ' in line:
                             key, value = line.split(': ', 1)
                             parsed_metadata[key.strip()] = value.strip()
-                            # logger.info(f"{key}: {value}")
+                            logger.info(f"{key}: {value}")
 
                     # TESTING INTEGRITY
                     # [1] filename, audiomoth_name and calibration

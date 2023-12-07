@@ -25,17 +25,29 @@ def test_file_size(file_metadata: str, file_name: str, logger):
     # logger.info(type(file_size))
 
     # if file size is empty or less than 29.0, it is BAD
-    if file_size is None or file_size == "":
-        logger.error(f"File size is missing or empty in {file_name}")
-        return "BAD"
-    # Check if file size is less than the minimum acceptable size
-    if float(file_size) < FILE_SIZE:
-        logger.error(f"File size is too small ({file_size}) in {file_name}")
-        return "BAD"
-    else:
-        logger.info(f"File size is acceptable ({file_size}) in {file_name}")
-        return file_size
+    if file_metadata["sample_rate"] == "16000":
+        if file_size is None or file_size == "":
+            logger.error(f"File size is missing or empty in {file_name}")
+            return "BAD"
+        # Check if file size is less than the minimum acceptable size
+        if float(file_size) < FILE_SIZE:
+            logger.error(f"File size is too small ({file_size}) in {file_name}")
+            return "BAD"
+        else:
+            logger.info(f"File size is acceptable ({file_size}) in {file_name}")
+            return file_size
 
+    elif file_metadata["sample_rate"] == "32000":
+        if file_size is None or file_size == "":
+            logger.error(f"File size is missing or empty in {file_name}")
+            return "BAD"
+        # Check if file size is less than the minimum acceptable size
+        if float(file_size) < FILE_SIZE:
+            logger.error(f"File size is too small ({file_size}) in {file_name}")
+            return "BAD"
+        else:
+            logger.info(f"File size is acceptable ({file_size}) in {file_name}")
+            return file_size
 # [2.3] date and time zone
 
 # [2.4] channels

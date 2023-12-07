@@ -1,4 +1,4 @@
-def test_integrity(metadata: dict, logger):
+def test_integrity(metadata: dict, location: str, logger):
     """Test the integrity of the metadata.
     We are goint to compare the metadata with the configuration guide.
     So, we have to check if the values from the metadata are the same as the values from the configuration guide.
@@ -11,4 +11,38 @@ def test_integrity(metadata: dict, logger):
     BATERRY_VOLTAGE = 3.5 # V
 
     """
-    logger.info(metadata)
+    # [0] initialize the txt file
+    txt_name = f"test_integrity_{location}.txt"
+    test_txt = ""
+
+    # [1] go through the metadata
+    for file_name, file_metadata in metadata.items():
+        logger.info(f"Testing audio file {file_name}")
+
+        # TESTING INTEGRITY
+
+        # [2.1] calibration check (if calibration is empty, it is BAD)
+        calibration = file_metadata.get('calibration', None)
+        if not calibration:
+            logger.error(f"{file_name} - Missing or empty calibration value")
+        else:
+            # save the calibration value in the txt file
+            test_txt += f"{file_name} - calibration: {calibration}\n"
+
+        # [2.2] file size
+
+        # [2.3] date and time zone
+
+        # [2.4] channels
+
+        # [2.5] sample rate
+
+        # [2.6] baterry status
+
+        # [2.7] gain
+
+        # [2.8] duration
+
+        # [2.9] temperature
+
+    # [3] save the results in a txt file

@@ -6,13 +6,15 @@ import json
 
 def main():
     logger = setup_logging()
-    json_dir = make_json_directory(logger)
 
     # file
-    # path = "/home/santi/Documents/AAC/audios/AudioMoths/20231019_220640.WAV"
+    # path = "/home/santi/Documents/AAC/audios/AudioMoths/OCIO/23079_BILBAO_MR_OCIO/BASURTO/AUDIOMOTH/20231019_220640.WAV"
     # folder
-    path = "/home/santi/Documents/AAC/audios/AudioMoths"
+    path = "/home/santi/Documents/AAC/audios/AudioMoths/OCIO/23079_BILBAO_MR_OCIO/BASURTO/AUDIOMOTH"
+    # path = input("Enter the path of the audio file or folder: ")
 
+    # make directories
+    json_dir, txt_directory = make_json_txt_directory(path, logger)
     location = location_name(path, logger)
 
     try:
@@ -22,22 +24,24 @@ def main():
         # logger.info(metadata)
 
         # save to json file
-        with open(os.path.join(json_dir, f"metadata_{location}.json"), "w") as f:
-            json.dump(metadata, f, indent=4)
-            logger.info("Metadata saved in metadata.json")
-        logger.info("Getting metadata finished")
+        json_file_name = f"metadata_{location}.json"
+        json_path = os.path.join(json_dir, json_file_name)
         
+        with open(json_path, "w") as f:
+            json.dump(metadata, f, indent=4)
+            logger.info(f'Metadata saved in {os.path.join(json_dir, f"{location}_metadata.json")}')
+
 
         # TESTING METADATA
         logger.info("Starting testing...")
 
         # [1] open json file
-        with open(os.path.join(json_dir, f"metadata_{location}.json"), "r") as f:
+        with open(json_path, "r") as f:
             metadata = json.load(f)
         # logger.info(metadata)
 
         # [2] test integrity
-        test_integrity(metadata, logger)
+        test_integrity(metadata, location, logger)
     
     except Exception as e:
         logger.error("Error: %s", e)

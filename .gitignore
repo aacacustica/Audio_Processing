@@ -49,3 +49,4 @@ git_commands.txt
 # ignore folders called like "old" and "test" in any subfolder
 **/old/
 **/test/
+**/Test/

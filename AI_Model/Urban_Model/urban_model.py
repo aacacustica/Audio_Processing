@@ -6,12 +6,12 @@ import os
 from tqdm import tqdm
 import datetime
 import pandas as pd
-import re
-import logging
 import argparse
+
 import params
 import yamnet as yamnet_model
 import tensorflow as tf
+
 import logging
 
 tf.get_logger().setLevel(logging.ERROR)
@@ -67,11 +67,12 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
     probs_original = [] 
     datetimes = []
     files = []
-    audio_to_process = 10
+    # audio_to_process = 10
 
-    for file in tqdm(audio_files[:audio_to_process]):
-    # for file in tqdm(audio_files):
+    # for file in tqdm(audio_files[:audio_to_process]):
+    for file in tqdm(audio_files):
         logging.info(f"Processing audio file  -->  {file}")
+        
         wav_data, sr = sf.read(os.path.join(audio_path, file), dtype=np.int16)
         waveform = wav_data / 32768.0  # 2**15
         # w_size = int(w_time * 60 * sr)

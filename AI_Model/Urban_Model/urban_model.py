@@ -192,7 +192,6 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
 
 
     # SAVE THE PREDICTIONS IN A (DICT) DATAFRAME
-
     data_dict = {'files': files, 
                  'datetime': datetimes, 
                  'classes_custom': audio_classes, 

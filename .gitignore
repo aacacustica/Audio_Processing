@@ -23,6 +23,7 @@ Thumbs.db
 *.swp
 *.suo
 *.sublime-workspace
+*.venv*
 
 # Node modules
 node_modules/

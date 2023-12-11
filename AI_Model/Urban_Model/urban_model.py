@@ -148,7 +148,7 @@ def argument_parser():
     parser.add_argument('-p', '--path', required=True, type=str, help='Path to the audio files')
     parser.add_argument('-a', '--abrev', type=str, help='Name to identify the predictions file')
     parser.add_argument('-w', '--window', type=float, default=14.99, help='tamaño ventana de analisis en minutos')
-    parser.add_argument('-n', '--n-predictions', type=int, default=1, help='Number of predictions to be generated')
+    parser.add_argument('-n', '--n-predictions', type=int, default=3, help='Number of predictions to be generated')
     parser.add_argument('-r', '--result-folder', type=str, default=None, help='Location where the results should be saved')
     args = parser.parse_args()
     return args
@@ -165,12 +165,12 @@ if __name__ == "__main__":
     else:
         # if the folder contains wavs files: the abrev is the name of that folder
         if os.path.basename(audio_path).endswith('.wav') or os.path.basename(audio_path).endswith('.WAV'):
-            abrev = os.path.basename(audio_path).split('.')[0]
-            logging.info(f"Abreviación para identificar las predicciones generadas: {abrev}")
+            abrev = os.path.basename(audio_path).split('.')[0] + "_v1.0"
+            logging.info(f"Folder name: {abrev}")
         # if else, the abrev is the name of the parent folder
         else:
-            abrev = os.path.basename(os.path.dirname(audio_path))
-            logging.info(f"Abreviación para identificar las predicciones generadas: {abrev}")
+            abrev = os.path.basename(os.path.dirname(audio_path)) + "_v1.0"
+            logging.info(f"Folder name: {abrev}")
     
     # set analysis window size in minutes
     analysis_window_time = args.window # ventana de analisis en minutos

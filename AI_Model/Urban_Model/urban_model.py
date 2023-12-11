@@ -11,6 +11,7 @@ import argparse
 import params
 import yamnet as yamnet_model
 import tensorflow as tf
+import subprocess
 
 import logging
 
@@ -20,6 +21,22 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s', 
                     filename='urban_model.log',
                     )
+
+
+# get the last git tag version
+def list_git_tags():
+    try:
+        tags = tags = subprocess.check_output(["git", "tag"]).strip().decode()
+        return tags.split('\n')
+    except subprocess.CalledProcessError:
+        return None
+    
+def select_tag(tags):
+    for i, tag in enumerate(tags):
+        print(f"{i}: {tag}")
+    choice = int(input("Select the tag to use: "))
+    
+    return tags[choice]
 
 def audios_long(audio_files):
     """Print how long the audio files are.
@@ -219,6 +236,11 @@ def argument_parser():
 
 if __name__ == "__main__":
     args = argument_parser()
+    
+    # set the version tag
+    tags = list_git_tags()
+    version_tag = select_tag(tags)
+    logging.info(f"Version tag: {version_tag}")
 
     # set path to audio files
     audio_path = args.path
@@ -230,11 +252,11 @@ if __name__ == "__main__":
         # if the folder contains wavs files: the abrev is the name of that folder
         if os.path.basename(audio_path).endswith('.wav') or os.path.basename(audio_path).endswith('.WAV'):
             abrev = os.path.basename(audio_path).split('.')[0]
-            logging.info(f"Folder name: {abrev}")
+            logging.info(f"Location: {abrev}")
         # if else, the abrev is the name of the parent folder
         else:
             abrev = os.path.basename(os.path.dirname(audio_path))
-            logging.info(f"Folder name: {abrev}")
+            logging.info(f"Location: {abrev}")
     
     # set analysis window size in minutes
     analysis_window_time = args.window # ventana de analisis en minutos
@@ -249,6 +271,9 @@ if __name__ == "__main__":
         parent_dir = os.path.dirname(audio_path)
         results_folder = "Results"  
         results_dir = os.path.join(parent_dir, results_folder)
+        # print(results_dir)
+        # exit()
+        logging.info(f"Result directory: {results_dir}")
         if not os.path.isdir(results_dir):
             os.mkdir(results_dir)
             logging.info(f"Carpeta de resultados 'Results' creada en {os.path.abspath(results_dir)}")
@@ -307,7 +332,7 @@ if __name__ == "__main__":
     logging.info(f"{len(valid_audio_files)} procesados")
 
     # csv File
-    predictions_file = f'Urban_Model_{abrev}_{n_predictions}_pred.csv'
+    predictions_file = f'Urban_Model_{abrev}_{version_tag}_{n_predictions}.csv'
     data_df.to_csv(os.path.join(results_dir, predictions_file), index=False)
 
     logging.info(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(results_folder,predictions_file))}")

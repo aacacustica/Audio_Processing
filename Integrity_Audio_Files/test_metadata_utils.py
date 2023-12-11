@@ -62,13 +62,43 @@ def test_time_zone(file_metadata: str, file_name: str, logger):
         return utc1
 
 # [2.4] channels
+def test_channels(file_metadata: str, file_name: str, logger):
+    channels = file_metadata["channels"]
+
+    if channels == 1:
+        logger.info(f"Channels properly setup to {channels}")
+        return channels
+    else:
+        logger.warning(f"Channel wrong setup to {channels}")
+        return channels
 
 # [2.5] sample rate
+def test_sample_rate(file_metadata: str, file_name: str, logger):
+    sample_rate = file_metadata["sample_rate"]
+
+    if sample_rate == 16000:
+        logger.info(f"Channels properly setup to {sample_rate}")
+        return sample_rate
+    elif sample_rate == 32000:
+        logger.info(f"Channels properly setup to {sample_rate}")
+        return sample_rate
+    else:
+        logger.warning(f"Channel wrong setup to {sample_rate}")
+        return sample_rate
 
 # [2.6] baterry status
+def test_battery(file_metadata: str, file_name: str, logger):
+    test_battery = file_metadata["battery_v"]
+    pass
 
 # [2.7] gain
+def test_gain(file_metadata: str, file_name: str, logger):
+    pass
 
 # [2.8] duration
+def test_duration(file_metadata: str, file_name: str, logger):
+    pass
 
 # [2.9] temperature
+def test_temperature(file_metadata: str, file_name: str, logger):
+    pass

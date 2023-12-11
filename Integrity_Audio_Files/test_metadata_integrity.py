@@ -15,7 +15,7 @@ def test_integrity(metadata: dict, location: str, logger):
 
     """
     logger.info(metadata)
-    
+
     # [0] initialize the txt file
     txt_name = f"test_integrity_{location}.txt"
 
@@ -37,12 +37,14 @@ def test_integrity(metadata: dict, location: str, logger):
         # [2.3] time zone
         time_zone = test_time_zone(file_metadata, file_name, logger)
         
-
         # [2.4] channels
+        channels = test_channels(file_metadata, file_name, logger)
 
         # [2.5] sample rate
+        sample_rate = test_sample_rate(file_metadata, file_name, logger)
 
         # [2.6] baterry status
+        
 
         # [2.7] gain
 

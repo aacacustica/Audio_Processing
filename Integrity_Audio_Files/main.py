@@ -11,6 +11,7 @@ def main():
     # path = "/home/santi/Documents/AAC/audios/AudioMoths/OCIO/23079_BILBAO_MR_OCIO/BASURTO/AUDIOMOTH/20231019_220640.WAV"
     # folder
     path = "/home/santi/Documents/AAC/audios/AudioMoths/OCIO/23079_BILBAO_MR_OCIO/BASURTO/AUDIOMOTH"
+    # path = "/home/santi/Documents/AAC/audios/AudioMoths/PUERTO/PUNTO_3/AUDIOMOTHS"
     # path = input("Enter the path of the audio file or folder: ")
 
     # make directories

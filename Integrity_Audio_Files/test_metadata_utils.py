@@ -30,7 +30,7 @@ def test_file_size(file_metadata: str, file_name: str, logger):
             logger.error(f"File size is missing or empty in {file_name}")
             return "BAD"
         # Check if file size is less than the minimum acceptable size
-        if float(file_size) < FILE_SIZE:
+        if float(file_size) < FILE_SIZE_16:
             logger.error(f"File size is too small ({file_size}) in {file_name}")
             return "BAD"
         else:
@@ -42,13 +42,24 @@ def test_file_size(file_metadata: str, file_name: str, logger):
             logger.error(f"File size is missing or empty in {file_name}")
             return "BAD"
         # Check if file size is less than the minimum acceptable size
-        if float(file_size) < FILE_SIZE:
+        if float(file_size) < FILE_SIZE_32:
             logger.error(f"File size is too small ({file_size}) in {file_name}")
             return "BAD"
         else:
             logger.info(f"File size is acceptable ({file_size}) in {file_name}")
             return file_size
+
+
 # [2.3] date and time zone
+def test_time_zone(file_metadata: str, file_name: str, logger):
+    utc1 = file_metadata["original_UTC"]
+
+    if utc1 == "+0100":
+        logger.info(f"UTC time zone set to {utc1}")
+        return utc1
+    else:
+        logger.warning(f"UTC time zone wrong: {utc1}")
+        return utc1
 
 # [2.4] channels
 

@@ -14,8 +14,13 @@ def test_integrity(metadata: dict, location: str, logger):
     BATERRY_VOLTAGE = 3.5 # V
 
     """
+    logger.info(metadata)
+    
     # [0] initialize the txt file
     txt_name = f"test_integrity_{location}.txt"
+
+    # [0] initialize valid audio file list
+    valid_audio_files = []
 
     # [1] go through the metadata
     for file_name, file_metadata in metadata.items():
@@ -29,7 +34,8 @@ def test_integrity(metadata: dict, location: str, logger):
         # [2.2] file size
         file_size = test_file_size(file_metadata, file_name, logger)
 
-        # [2.3] date and time zone
+        # [2.3] time zone
+        time_zone = test_time_zone(file_metadata, file_name, logger)
         
 
         # [2.4] channels

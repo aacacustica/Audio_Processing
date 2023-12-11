@@ -229,11 +229,11 @@ if __name__ == "__main__":
     else:
         # if the folder contains wavs files: the abrev is the name of that folder
         if os.path.basename(audio_path).endswith('.wav') or os.path.basename(audio_path).endswith('.WAV'):
-            abrev = os.path.basename(audio_path).split('.')[0] + "_v1.0"
+            abrev = os.path.basename(audio_path).split('.')[0]
             logging.info(f"Folder name: {abrev}")
         # if else, the abrev is the name of the parent folder
         else:
-            abrev = os.path.basename(os.path.dirname(audio_path)) + "_v1.0"
+            abrev = os.path.basename(os.path.dirname(audio_path))
             logging.info(f"Folder name: {abrev}")
     
     # set analysis window size in minutes

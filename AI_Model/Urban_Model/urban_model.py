@@ -275,14 +275,14 @@ if __name__ == "__main__":
         results_dir = args.result_folder
     else:
         parent_dir = os.path.dirname(audio_path)
-        results_folder = "Results"  
+        results_folder = "Results/Urban_Model"  
         results_dir = os.path.join(parent_dir, results_folder)
         # print(results_dir)
         # exit()
         logging.info(f"Result directory: {results_dir}")
         if not os.path.isdir(results_dir):
             os.mkdir(results_dir)
-            logging.info(f"Carpeta de resultados 'Results' creada en {os.path.abspath(results_dir)}")
+            logging.info(f"Carpeta de resultados creada en {os.path.abspath(results_dir)}")
 
     
     # get audio files

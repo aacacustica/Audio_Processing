@@ -61,6 +61,16 @@ def test_time_zone(file_metadata: str, file_name: str, logger):
         logger.warning(f"UTC time zone wrong: {utc1} in {file_name}")
         return utc1
 
+def test_original_UTC(file_metadata: str, file_name: str, logger):
+    utc1 = file_metadata["original_UTC"]
+
+    if utc1 == "+0100":
+        logger.info(f"UTC time zone set to {utc1} in {file_name}")
+        return utc1
+    else:
+        logger.warning(f"UTC time zone wrong: {utc1} in {file_name}")
+        return utc1
+
 # [2.4] channels
 def test_channels(file_metadata: str, file_name: str, logger):
     channels = file_metadata["channels"]

@@ -55,10 +55,10 @@ def test_time_zone(file_metadata: str, file_name: str, logger):
     utc1 = file_metadata["original_UTC"]
 
     if utc1 == "+0100":
-        logger.info(f"UTC time zone set to {utc1}")
+        logger.info(f"UTC time zone set to {utc1} in {file_name}")
         return utc1
     else:
-        logger.warning(f"UTC time zone wrong: {utc1}")
+        logger.warning(f"UTC time zone wrong: {utc1} in {file_name}")
         return utc1
 
 # [2.4] channels
@@ -66,10 +66,10 @@ def test_channels(file_metadata: str, file_name: str, logger):
     channels = file_metadata["channels"]
 
     if channels == 1:
-        logger.info(f"Channels properly setup to {channels}")
+        logger.info(f"Channels properly setup to {channels} in {file_name}")
         return channels
     else:
-        logger.warning(f"Channel wrong setup to {channels}")
+        logger.warning(f"Channel wrong setup to {channels} in {file_name}")
         return channels
 
 # [2.5] sample rate
@@ -77,28 +77,66 @@ def test_sample_rate(file_metadata: str, file_name: str, logger):
     sample_rate = file_metadata["sample_rate"]
 
     if sample_rate == 16000:
-        logger.info(f"Channels properly setup to {sample_rate}")
+        logger.info(f"Channels properly setup to {sample_rate} in {file_name}")
         return sample_rate
     elif sample_rate == 32000:
-        logger.info(f"Channels properly setup to {sample_rate}")
+        logger.info(f"Channels properly setup to {sample_rate} in {file_name}")
         return sample_rate
     else:
-        logger.warning(f"Channel wrong setup to {sample_rate}")
+        logger.warning(f"Channel wrong setup to {sample_rate} in {file_name}")
         return sample_rate
 
 # [2.6] baterry status
 def test_battery(file_metadata: str, file_name: str, logger):
     test_battery = file_metadata["battery_v"]
-    pass
+
+    if test_battery == "":
+        logger.error(f"Battery status is empty in {file_name}")
+        return "BAD"
+    
+    elif float(test_battery) < BATERRY_VOLTAGE:
+        logger.warning(f"Battery status is lower than 3.5V {test_battery} in {file_name}")
+        return test_battery
+    else:
+        logger.info(f"Battery status is {test_battery} in {file_name}")
+        return test_battery
 
 # [2.7] gain
 def test_gain(file_metadata: str, file_name: str, logger):
-    pass
+    file_metadata_gain = file_metadata["gain"]
+
+    if file_metadata_gain == GAIN:
+        logger.info(f"Gain is properly setup to {file_metadata_gain} in {file_name}")
+        return file_metadata_gain
+    else:
+        logger.warning(f"Gain is wrong setup to {file_metadata_gain} in {file_name}")
+        return file_metadata_gain
 
 # [2.8] duration
 def test_duration(file_metadata: str, file_name: str, logger):
-    pass
+    duration = file_metadata["duration"]
+
+    if duration == DURATION:
+        logger.info(f"Duration is properly setup to {duration} in {file_name}")
+        return duration
+    else:
+        logger.warning(f"Duration is wrong setup to {duration} in {file_name}")
+        return duration
 
 # [2.9] temperature
 def test_temperature(file_metadata: str, file_name: str, logger):
-    pass
+    temperature = file_metadata["temperature"]
+
+    if temperature == "":
+        logger.error(f"Temperature is empty in {file_name}")
+        return "BAD"
+    
+    elif float(temperature) > MAX_TEMP:
+        logger.warning(f"Temperature is higher than 50C {temperature} in {file_name}")
+        return temperature
+    elif float(temperature) < MIN_TEMP:
+        logger.warning(f"Temperature is lower than -10C {temperature} in {file_name}")
+        return temperature
+    else:
+        logger.info(f"Temperature is {temperature} in {file_name}")
+        return temperature

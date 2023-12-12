@@ -119,7 +119,13 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
     for file in tqdm(audio_files):
         logging.info(f"Processing audio file  -->  {file}")
         
-        wav_data, sr = sf.read(os.path.join(audio_path, file), dtype=np.int16)
+        # wav_data, sr = sf.read(os.path.join(audio_path, file), dtype=np.int16)
+        try:
+            wav_data, sr = sf.read(os.path.join(audio_path, file), dtype=np.int16)
+        except Exception as e:
+            logging.error(f"Failed to read file {file}: {e}")
+            continue
+        
         waveform = wav_data / 32768.0  # 2**15
         # w_size = int(w_time * 60 * sr)
         # w_size = w_time * 60 * sr

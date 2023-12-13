@@ -275,14 +275,12 @@ if __name__ == "__main__":
         results_dir = args.result_folder
     else:
         parent_dir = os.path.dirname(audio_path)
-        results_folder = "Results/Urban_Model"  
+        results_folder = "Results/Urban_Model/Predictions"  
+        # check if the results folder exists, if not, create it
         results_dir = os.path.join(parent_dir, results_folder)
-        # print(results_dir)
-        # exit()
-        logging.info(f"Result directory: {results_dir}")
-        if not os.path.isdir(results_dir):
-            os.mkdir(results_dir)
-            logging.info(f"Carpeta de resultados creada en {os.path.abspath(results_dir)}")
+        os.makedirs(results_dir, exist_ok=True)
+        
+        logging.info(f"Carpeta de resultados creada en {os.path.abspath(results_dir)}")
 
     
     # get audio files
@@ -338,7 +336,8 @@ if __name__ == "__main__":
     logging.info(f"{len(valid_audio_files)} procesados")
 
     # csv File
-    predictions_file = f'Urban_Model_{abrev}_{version_tag}_{n_predictions}.csv'
+    version_tag = version_tag.replace('.', '_')
+    predictions_file = f'Urban_Model_{abrev}_{version_tag}.csv'
     data_df.to_csv(os.path.join(results_dir, predictions_file), index=False)
 
     logging.info(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(results_folder,predictions_file))}")

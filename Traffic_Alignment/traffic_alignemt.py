@@ -72,8 +72,7 @@ plt.plot(df_temp.index, levels);
 plt.plot(df_temp.index,speed+40,"*");
 
 
-# 1.1
-# Selección de pass bys
+# 1.1 Selección de pass bys
 # Se seleccionan aquellas detecciones que tiene un espacio mayor a 10 segundos con la detección
 # anteior y la siguiente
 

@@ -7,7 +7,7 @@ import configparser
 from scipy.signal import lfilter
 import audio_metadata
 from pyfilterbank.splweighting import a_weighting_coeffs_design, c_weighting_coeffs_design
-from utils.utils import *
+from utils import *
 import argparse
 import logging
 from tqdm import tqdm

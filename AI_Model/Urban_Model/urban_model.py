@@ -31,12 +31,17 @@ def list_git_tags():
     except subprocess.CalledProcessError:
         return None
     
-def select_tag(tags):
-    for i, tag in enumerate(tags):
-        print(f"{i}: {tag}")
-    choice = int(input("Select the tag to use: "))
+def get_stable_version():
+    tags = list_git_tags()
+    # get the latest stable version
+    tag_selected = tags[-1]
+    print(f"Latest stable version: {tag_selected}")
+    # replace "." with "_" to be able to use it as a file name
+    tag_selected = tag_selected.replace(".", "_")
     
-    return tags[choice]
+    print(f"Latest stable version: {tag_selected}")
+    
+    return tag_selected
 
 def audios_long(audio_files):
     """Print how long the audio files are.
@@ -336,8 +341,8 @@ if __name__ == "__main__":
     logging.info(f"{len(valid_audio_files)} procesados")
 
     # csv File
-    version_tag = version_tag.replace('.', '_')
-    predictions_file = f'Urban_Model_{abrev}_{version_tag}.csv'
+    stable_version = get_stable_version()
+    predictions_file = f'Urban_Model_{abrev}_{stable_version}.csv'
     data_df.to_csv(os.path.join(results_dir, predictions_file), index=False)
 
     logging.info(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(results_folder,predictions_file))}")

@@ -54,12 +54,33 @@ def get_data_SV307(filename: str):
         filename: path to the measurement file
     Returns:
         df: pandas DataFrame with the measurement data"""
-    df = pd.read_csv(filename,header=14,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
+    #  Try [1]
+    # try:
+    # df = pd.read_csv(filename,header=14,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
     
-    if 'LAeq (Ch1, P1) [dB]' not in df.columns:
-        df = pd.read_csv(filename,header=14,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
+    # if 'LAeq (Ch1, P1) [dB]' not in df.columns:
+    #     df = pd.read_csv(filename,header=14,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
     
-    df['datetime'] = pd.to_datetime(df['Time'],format="%d/%m/%Y %H:%M:%S")
+    # df['datetime'] = pd.to_datetime(df['Time'],format="%d/%m/%Y %H:%M:%S")
+    
+    ########################################
+    
+    # try [2]
+    # if not, try with semicolon separator
+    # except pd.errors.ParserError:
+    df = pd.read_csv(filename,header=18,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
+
+    # Filter out rows where the 'Time' column does not contain valid datetime strings
+    df = df[pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S', errors='coerce').notnull()]
+
+    # Try converting 'Time' column to datetime
+    # try:
+    
+    df['datetime'] = pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S')
+    # except Exception as e:
+    #     # Log the error and continue
+    #     print(f"Error in datetime conversion: {e}")
+        
     return df
     
 def get_data_lx_EN(filename: str):

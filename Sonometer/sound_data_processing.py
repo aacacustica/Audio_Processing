@@ -103,7 +103,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         reg_folder = os.path.join(input_folder, folder)
     
         # Create the output folder
-        folder_output_dir = os.path.join(reg_folder, "Results", "Sonometer_plots")
+        folder_output_dir = os.path.join(reg_folder, "Results", "Sonometer")
         os.makedirs(folder_output_dir, exist_ok=True)
         logger.info(f"Created output folder: {folder_output_dir}")
         

@@ -438,39 +438,48 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         ind_column (str): Name of the column to use, tipycally LAeq
     """
     try:
+        print(df.columns)
+        print(df)
+        
         if "Fecha" not in df.columns and "Date hour" in df.columns:
             # df["Fecha"] = df["Date hour"]
             df["Fecha"] = pd.to_datetime(df['Date hour'], dayfirst=True)
         
         if "Fecha" not in df.columns and "Time" in df.columns:
             df["Fecha"] = pd.to_datetime(df['Time'], dayfirst=True)
+            
+        if "Fecha" not in df.columns:
+            # reindex datetime index column
+            if isinstance(df.index, pd.DatetimeIndex):
+                df.reset_index(inplace=True)
+                df["Fecha"] = pd.to_datetime(df['datetime'], dayfirst=True)
 
         df_indicadores = (df.groupby(['date','indicador_str'])['Fecha'].agg(['first','last']))
         df_indicadores['duration'] = df_indicadores.apply(lambda row: calculate_duration(row['first'], row['last']), axis=1)
         
-        # Indicators to check
+        # indicators to check
         indicators_to_check = ['Ld', 'Le', 'Ln']
 
-        # Select the first and last day
+        # select first and last day
         first_day = df['date'].min()
         last_day = df['date'].max()
 
-        # Check the presence of indicators
+        # check presence of indicators
         presence_first_day = {indicator: indicator in df[df['date'] == first_day]['indicador_str'].unique() for indicator in indicators_to_check}
         presence_last_day = {indicator: indicator in df[df['date'] == last_day]['indicador_str'].unique() for indicator in indicators_to_check}
         logger.info(f"Presence of indicators in first day {first_day}: {presence_first_day}")
         logger.info(f"Presence of indicators in last day {last_day}: {presence_last_day}")
 
-        # Check duration of indicators
+        # 'duration of indicators
         duration_first_day = {indicator: df_indicadores.loc[(first_day, indicator), 'duration'] if presence_first_day[indicator] else 0 for indicator in indicators_to_check}
         duration_last_day = {indicator: df_indicadores.loc[(last_day, indicator), 'duration'] if presence_last_day[indicator] else 0 for indicator in indicators_to_check}
         
-        # Log duration information
+        # log duration information
         for indicator in indicators_to_check:
             logger.info(f"Duration of {indicator} on the first day {first_day}: {duration_first_day[indicator]}")
             logger.info(f"Duration of {indicator} on the last day {last_day}: {duration_last_day[indicator]}")
 
-        # Removal logic based on duration and presence
+        # apply filter based on duration and presence
         for indicator in indicators_to_check:
             if presence_first_day[indicator] and duration_first_day[indicator] <= LE_SECONDS:
                 df = df[~((df['date'] == first_day) & (df['indicador_str'] == indicator))]
@@ -518,7 +527,7 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         logger.info(f"Indicadores data saved to {folder_output_dir}/{plotname}_indicadores.xlsx")
         logger.info(f"Indicadores plot saved to {folder_output_dir}/{plotname}_indicadores.png")
         
-        # Indicador power average
+        # indicador power average
         general_power_averages = indicadores_table.apply(leq).round(1)
         general_power_averages_df = general_power_averages.to_frame().transpose()
         
@@ -527,4 +536,4 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         logger.info(f"Indicadores generales data saved to {folder_output_dir}/{plotname}_indicadores_generales.xlsx")
     
     except Exception as e:
-        logger.error(f"Error in plot_indheatmap: {e}")
+        logger.error(f"Error in plot_indicadores_heatmap: {e}")

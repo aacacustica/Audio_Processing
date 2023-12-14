@@ -15,7 +15,7 @@ PLOT_INDICADORES_HEATMAP = True # Done
 PLOT_DAY_EVOLUTION = True # Done
 PLOT_PERIOD_EVOLUTION = True # Done
 PLOT_NIGHT_EVOLUTION = True # Done
-PLOT_NIGHT_EVOLUTION_15_MIN = True # Almost done
+PLOT_NIGHT_EVOLUTION_15_MIN = True # done
 
 
 ######################## SLM COLUMN MAPS #####################################

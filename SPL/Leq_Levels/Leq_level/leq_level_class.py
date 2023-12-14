@@ -117,7 +117,7 @@ class AudioProcessor:
             logging.warning("No audio files found in the given directory.")
             return
 
-        # Using colored text for tqdm description
+        # colored text for tqdm description
         print()
         sample_rates = []
         for audio_file in tqdm(audio_files, desc=f"{Fore.YELLOW}{Style.BRIGHT}Collecting sample rates{Style.RESET_ALL}", colour="yellow"):  
@@ -131,7 +131,7 @@ class AudioProcessor:
         predominant_fs = max(set(sample_rates), key=sample_rates.count)
         logging.info(f"Predominant sample rate across files is: {predominant_fs} Hz.")
 
-        # Coloring the print statement
+        # color the print statement
         print(f"\n{Style.BRIGHT}Predominant sample rate across files: {Fore.GREEN}{Style.BRIGHT}{predominant_fs} Hz\n")
 
         c_constants = [self.process_audio(audio_file, predominant_fs) for audio_file in tqdm(audio_files, desc=f"{Fore.YELLOW}{Style.BRIGHT}Processing audio files{Style.RESET_ALL}", colour="cyan")]

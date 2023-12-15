@@ -249,8 +249,7 @@ if __name__ == "__main__":
     args = argument_parser()
     
     # set the version tag
-    tags = list_git_tags()
-    version_tag = select_tag(tags)
+    version_tag = get_stable_version()
     logging.info(f"Version tag: {version_tag}")
 
     # set path to audio files

@@ -55,11 +55,14 @@ class AudioProcessor:
         if len(name_parts) < 2:
             raise ValueError(f"Unexpected filename format for {audio_file}")
         name = name_parts[0]
+        logging.info(f"Saving levels to CSV for {name}")
         
         df_history = pd.DataFrame(db, columns=col_names)
         df_history['filename'] = name + ".wav"
         start = datetime.strptime(name, '%Y%m%d_%H%M%S')
         df_history['date'] = pd.date_range(start=start, freq='S', periods=len(df_history))
+        
+        
         csv_name = f'{directory_name}_spl.csv'
         
         modified_directory_name = f"{directory_name}_spl"

@@ -89,12 +89,18 @@ class AudioProcessor:
                 
             folder_name = parent_dir.split("\\")[-2]
             
+            
             if not os.path.exists(os.path.join(resultados_dir, folder_name)):
                 os.makedirs(os.path.join(resultados_dir, folder_name))
             
+            # add SPL folder
+            spl_folder_result = os.path.join(resultados_dir, folder_name, 'SPL')
+            if not os.path.exists(spl_folder_result):
+                os.makedirs(spl_folder_result)
+            
             # fodler name, is the same as the csv final name
-            csv_name = folder_name + spl_extention            
-            csv_path = os.path.join(resultados_dir, folder_name, csv_name)          
+            csv_name = folder_name + spl_extention
+            csv_path = os.path.join(spl_folder_result, csv_name)
 
         df_history.to_csv(csv_path, mode='a', header=not os.path.exists(csv_path), index=False)
         return csv_name

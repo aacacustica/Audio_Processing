@@ -62,22 +62,41 @@ class AudioProcessor:
         start = datetime.strptime(name, '%Y%m%d_%H%M%S')
         df_history['date'] = pd.date_range(start=start, freq='S', periods=len(df_history))
         
+        parent_dir = os.path.dirname(audio_file)
         
         csv_name = f'{directory_name}_spl.csv'
+        sub_folder_name = f"{directory_name}_spl"
         
-        modified_directory_name = f"{directory_name}_spl"
         if result_dir:
-            directory_path = os.path.join(result_dir, modified_directory_name)
+            directory_path = os.path.join(result_dir, sub_folder_name)
+            
             if not os.path.exists(directory_path):
                 os.makedirs(directory_path)
             csv_name = os.path.join(directory_path, csv_name)
+        
         else:
-            directory_path = modified_directory_name
-            if not os.path.exists(directory_path):
-                os.makedirs(directory_path)
-            csv_name = os.path.join(directory_path, csv_name)
+            # 1 directory to save the results = 5-Resultados
+            result_dir_name = "5-Resultados"
+            spl_extention = "_spl.csv"
+            
+            resultados_dir = parent_dir.split("\\")[:-3]
+            
+            # join the path
+            resultados_dir = os.path.join('\\\\',*resultados_dir, result_dir_name)
+            
+            if not os.path.exists(resultados_dir):
+                os.makedirs(resultados_dir)
+                
+            folder_name = parent_dir.split("\\")[-2]
+            
+            if not os.path.exists(os.path.join(resultados_dir, folder_name)):
+                os.makedirs(os.path.join(resultados_dir, folder_name))
+            
+            # fodler name, is the same as the csv final name
+            csv_name = folder_name + spl_extention            
+            csv_path = os.path.join(resultados_dir, folder_name, csv_name)          
 
-        df_history.to_csv(csv_name, mode='a', header=not os.path.exists(csv_name), index=False)
+        df_history.to_csv(csv_path, mode='a', header=not os.path.exists(csv_path), index=False)
         return csv_name
 
     @staticmethod

@@ -246,6 +246,11 @@ def argument_parser():
     return args
 
 if __name__ == "__main__":
+    """Main function to get predictions from yamnet model in a collection of audio files averaged over an analysis window and map to custom classes.
+    
+    example of use:
+            python urban_model.py -p /home/usuario/audios -a "audios_1" -w 14.99 -n 3 -r /home/usuario/resultados
+    """
     args = argument_parser()
     
     # set the version tag
@@ -263,10 +268,12 @@ if __name__ == "__main__":
         if os.path.basename(audio_path).endswith('.wav') or os.path.basename(audio_path).endswith('.WAV'):
             abrev = os.path.basename(audio_path).split('.')[0]
             logging.info(f"Location: {abrev}")
+            print(abrev)
         # if else, the abrev is the name of the parent folder
         else:
             abrev = os.path.basename(os.path.dirname(audio_path))
             logging.info(f"Location: {abrev}")
+            print(abrev)
     
     # set analysis window size in minutes
     analysis_window_time = args.window # ventana de analisis en minutos
@@ -277,16 +284,37 @@ if __name__ == "__main__":
     # set results folder
     if args.result_folder:
         results_dir = args.result_folder
-    else:
-        parent_dir = os.path.dirname(audio_path)
-        results_folder = "Results/Urban_Model/Predictions"  
-        # check if the results folder exists, if not, create it
-        results_dir = os.path.join(parent_dir, results_folder)
-        os.makedirs(results_dir, exist_ok=True)
-        
-        logging.info(f"Carpeta de resultados creada en {os.path.abspath(results_dir)}")
-
     
+    else:
+        results_dir_name = "5-Resultados"
+        resultados_pred = "URBAN_Model"
+        
+        predictions_folder = "Predictions"
+        visualizations_folder = "Visualizations"
+        
+        resultados_dir = audio_path.split("\\")[:-3]
+        resultados_folder_path = os.path.join('\\\\', *resultados_dir, results_dir_name)
+        
+        if not os.path.exists(resultados_folder_path):
+            os.makedirs(resultados_folder_path)
+        
+        # add the folder name and the Urban_Model folder
+        resultados_dir = os.path.join('\\\\', *resultados_dir, results_dir_name, abrev, resultados_pred)
+        
+        if not os.path.exists(resultados_dir):
+            os.makedirs(resultados_dir)
+        
+        # add the predictions folder and the visualizations folder
+        make_predicciones = os.path.join(resultados_dir, predictions_folder)
+        
+        if not os.path.exists(make_predicciones):
+            os.makedirs(make_predicciones)
+            
+        make_visualizacion = os.path.join(resultados_dir, visualizations_folder)
+        
+        if not os.path.exists(make_visualizacion):
+            os.makedirs(make_visualizacion)
+        
     # get audio files
     try:
         audio_files = [f for f in os.listdir(audio_path) if f.endswith(('.WAV', '.wav'))]
@@ -342,7 +370,13 @@ if __name__ == "__main__":
     # csv File
     stable_version = get_stable_version()
     predictions_file = f'Urban_Model_{abrev}_{stable_version}.csv'
-    data_df.to_csv(os.path.join(results_dir, predictions_file), index=False)
+    
+    # save the predictions in a csv file
+    data_df.to_csv(os.path.join(make_predicciones, predictions_file), index=False)
+    logging.info(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(make_predicciones, predictions_file))}")
+    
+    
+    # data_df.to_csv(os.path.join(results_dir, predictions_file), index=False)
 
-    logging.info(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(results_folder,predictions_file))}")
+    # logging.info(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(results_folder,predictions_file))}")
 

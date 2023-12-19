@@ -102,10 +102,35 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         # Get the path to the folder
         reg_folder = os.path.join(input_folder, folder)
     
+        # folder_output_dir = os.path.join(reg_folder, "Results", "Sonometer")
+        # os.makedirs(folder_output_dir, exist_ok=True)
+        # logger.info(f"Created output folder: {folder_output_dir}")
+        
+        
+        
         # Create the output folder
-        folder_output_dir = os.path.join(reg_folder, "Results", "Sonometer")
-        os.makedirs(folder_output_dir, exist_ok=True)
-        logger.info(f"Created output folder: {folder_output_dir}")
+        logger.info(f"Creating output folder for folder {folder}")
+        result_dir_name = "5-Resultados"
+        
+        resultados_dir = reg_folder.split("\\")[:-3]
+        logger.info(f"resultados_dir: {resultados_dir}")
+        
+        # join the path
+        resultados_dir = os.path.join('\\\\', *resultados_dir, result_dir_name)
+        logger.info(f"resultados_dir: {resultados_dir}")
+        
+        if not os.path.exists(resultados_dir):
+            os.makedirs(resultados_dir)
+            logger.info(f"Created output folder: {resultados_dir}")
+            
+        # add the folder name
+        folder_output_dir = os.path.join(resultados_dir, folder)
+        logger.info(f"folder_output_dir: {folder_output_dir}")
+        
+        
+        
+        
+        exit()
         
         try:
             logger.info(f"Processing folder {folder}") 

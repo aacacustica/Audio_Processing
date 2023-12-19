@@ -60,11 +60,20 @@ def main():
     
     try:
         # Get the folders in the input folder
-        folders = [folder for folder in os.listdir(input_folder) if os.path.isdir(os.path.join(input_folder, folder))]
-        logger.info(f"Found folders: {folders}")
+        parent_folders = [folder for folder in os.listdir(input_folder) if os.path.isdir(os.path.join(input_folder, folder))]
+        logger.info(f"Found folders: {parent_folders}")
         
+        # look for the SPL folder inside the folders
+        spl_folders = []
+        for folder in parent_folders:
+            spl_folder = os.path.join(input_folder, folder, "SPL")
+            if os.path.exists(spl_folder):
+                spl_folders.append(spl_folder)
+                
+        print(spl_folders)
+            
         # Process all the folders
-        process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, logger)
+        process_all_folders(input_folder, spl_folders, PERIODO_AGREGACION, PERCENTILES, logger)
         
         logger.info("Finished sonometer test script")
 

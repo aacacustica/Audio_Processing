@@ -35,11 +35,8 @@ def get_stable_version():
     tags = list_git_tags()
     # get the latest stable version
     tag_selected = tags[-1]
-    print(f"Latest stable version: {tag_selected}")
     # replace "." with "_" to be able to use it as a file name
     tag_selected = tag_selected.replace(".", "_")
-    
-    print(f"Latest stable version: {tag_selected}")
     
     return tag_selected
 
@@ -268,12 +265,10 @@ if __name__ == "__main__":
         if os.path.basename(audio_path).endswith('.wav') or os.path.basename(audio_path).endswith('.WAV'):
             abrev = os.path.basename(audio_path).split('.')[0]
             logging.info(f"Location: {abrev}")
-            print(abrev)
         # if else, the abrev is the name of the parent folder
         else:
             abrev = os.path.basename(os.path.dirname(audio_path))
             logging.info(f"Location: {abrev}")
-            print(abrev)
     
     # set analysis window size in minutes
     analysis_window_time = args.window # ventana de analisis en minutos
@@ -286,6 +281,7 @@ if __name__ == "__main__":
         results_dir = args.result_folder
         if not os.path.exists(results_dir):
             os.makedirs(results_dir)
+        make_predicciones = results_dir
     
     else:
         results_dir_name = "5-Resultados"
@@ -376,9 +372,3 @@ if __name__ == "__main__":
     # save the predictions in a csv file
     data_df.to_csv(os.path.join(make_predicciones, predictions_file), index=False)
     logging.info(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(make_predicciones, predictions_file))}")
-    
-    
-    # data_df.to_csv(os.path.join(results_dir, predictions_file), index=False)
-
-    # logging.info(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(results_folder,predictions_file))}")
-

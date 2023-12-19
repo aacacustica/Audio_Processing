@@ -36,30 +36,30 @@ def main():
     logger = setup_logging()
     args = arg_parser()
     
-    # Enter the path to the sonometers folder
+    # path to the sonometers folder
     if args.path_sonometers:
         input_folder = args.path_sonometers
     else:
         raise ValueError("Path to sonometers folder not provided")
 
-    # Enter the aggregation period in seconds, default is 900 seconds (15 minutes)
+    # aggregation period in seconds, default is 900 seconds (15 minutes)
     if args.agg_period:
         PERIODO_AGREGACION = args.agg_period
     else:
         PERIODO_AGREGACION = config.PERIODO_AGREGACION
     
-    # Enter the percentiles to plot, default is [90, 10], they are L1, L5, L10, L50, L90
+    # percentiles to plot, default is [90, 10], they are L1, L5, L10, L50, L90
     if args.percentiles:
         PERCENTILES = args.percentiles
     
-    # Enter the output directory
+    # output directory
     clase_registro = os.path.basename(input_folder)
     # if class is not provided, use the name of the parent folder
     if clase_registro == '':
         clase_registro = os.path.basename(os.path.dirname(input_folder))
     
     try:
-        # Get the folders in the input folder
+        # get the folders in the input folder
         parent_folders = [folder for folder in os.listdir(input_folder) if os.path.isdir(os.path.join(input_folder, folder))]
         logger.info(f"Found folders: {parent_folders}")
         
@@ -70,14 +70,13 @@ def main():
             if os.path.exists(spl_folder):
                 spl_folders.append(spl_folder)
                 
-        # Process all the folders
+        # process all the folders
         process_all_folders(input_folder, spl_folders, PERIODO_AGREGACION, PERCENTILES, logger)
         
         logger.info("Finished sonometer test script")
 
     except Exception as e:
         logger.exception(f"Error occurred: {e}")
-        
         
 if __name__ == "__main__":
     main()

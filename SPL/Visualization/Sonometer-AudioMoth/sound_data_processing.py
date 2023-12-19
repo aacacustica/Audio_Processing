@@ -97,19 +97,24 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
     """
     # Process each folder
     for folder in tqdm(folders, desc="Processing folders"):
-        logger.info(f"Entering folder: {folder}")
-    
         # Get the path to the folder
         reg_folder = os.path.join(input_folder, folder)
+        
+        
+        folder = folder.split("\\")[:-1]
+        folder = os.path.join('\\\\', *folder)
+        logger.info(f"\nEntering folder: {folder}")
+    
     
         # folder_output_dir = os.path.join(reg_folder, "Results", "Sonometer")
         # os.makedirs(folder_output_dir, exist_ok=True)
         # logger.info(f"Created output folder: {folder_output_dir}")
         
         
-        
+        spl_string = "SPL"
+        graphics_string = "Graphics"
         # Create the output folder
-        logger.info(f"Creating output folder for folder {folder}")
+        logger.info(f"folder {folder}")
         result_dir_name = "5-Resultados"
         
         resultados_dir = reg_folder.split("\\")[:-3]
@@ -124,16 +129,14 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             logger.info(f"Created output folder: {resultados_dir}")
             
         # add the folder name
-        folder_output_dir = os.path.join(resultados_dir, folder)
+        folder_output_dir = os.path.join(resultados_dir, folder, spl_string, graphics_string)
         logger.info(f"folder_output_dir: {folder_output_dir}")
-        
-        
-        
-        
-        exit()
+        if not os.path.exists(folder_output_dir):
+            os.makedirs(folder_output_dir)
+            logger.info(f"Created output folder: {folder_output_dir}")
         
         try:
-            logger.info(f"Processing folder {folder}") 
+            logger.info(f"\nProcessing folder {folder}") 
             df, slm_type, slm_dict = process_folder(reg_folder, logger)
             if df is None:
                 logger.info(f"df is None")
@@ -157,10 +160,13 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
             #print(df)
 
-            logger.info(f"Entering the plotting section")
+            logger.info(f"\nEntering the plotting section")
+            folder = folder.split("\\")[-1]
+
             # Plotting time plot
             if PLOT_MAKE_TIME_PLOT:
                 logger.info(f"Plotting time plot for folder {folder}")
+                print(f"folder_output_dir: {folder_output_dir}")
                 make_time_plot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
             
             # Plotting heatmap

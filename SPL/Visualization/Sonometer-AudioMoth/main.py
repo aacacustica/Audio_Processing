@@ -70,8 +70,6 @@ def main():
             if os.path.exists(spl_folder):
                 spl_folders.append(spl_folder)
                 
-        print(spl_folders)
-            
         # Process all the folders
         process_all_folders(input_folder, spl_folders, PERIODO_AGREGACION, PERCENTILES, logger)
         

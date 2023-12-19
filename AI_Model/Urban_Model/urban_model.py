@@ -284,6 +284,8 @@ if __name__ == "__main__":
     # set results folder
     if args.result_folder:
         results_dir = args.result_folder
+        if not os.path.exists(results_dir):
+            os.makedirs(results_dir)
     
     else:
         results_dir_name = "5-Resultados"
@@ -353,7 +355,7 @@ if __name__ == "__main__":
     for device in physical_devices:
         tf.config.experimental.set_memory_growth(device, True)
 
-    with open('taxonomy_mapping_v1.0.json', 'r') as f:
+    with open('urban_taxonomy_map_v1_0.json', 'r') as f:
         taxonomy_mapping = json.load(f)
 
     try:

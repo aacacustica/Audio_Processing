@@ -237,26 +237,32 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
         df_resampled = df.resample('15T')[laeq_column].mean()
         # print(f"This is the df resampled: \n{df_resampled}")
         
-        df_night_str = df.resample('15T')['Día'].agg(lambda x: x.value_counts().index[0])
+        try: 
+             df_night_str = df.resample('15T')['Día'].agg(lambda x: x.value_counts().index[0])
+        except:
+            df_night_str = df.resample('15T')['Día'].agg(lambda x: x.value_counts().index[0] if len(x) > 0 else None)
+        
         df_resampled = pd.DataFrame(df_resampled).join([df_night_str])
         
-        # Add date and time columns
+        # date and time columns
         df_resampled['date'] = df_resampled.index.date
         df_resampled['time'] = df_resampled.index.time
         
-        # Convert 'time' to a plottable format with a 15-minute offset
+        # convert time column to a plottable format with a 15-minute offset
         df_resampled['plot_time'] = [(t.hour * 60 + t.minute - 15) - (23 * 60) if t.hour >= 23 else (t.hour * 60 + t.minute - 15) + 60 for t in df_resampled['time']]
 
-        # Filter the data
+        # filter data
         unique_dates = pd.to_datetime(df_resampled.index.date).unique()
         night_data = pd.DataFrame()
 
-        # Get the data for each night
+        # data for each night
         for current_date in unique_dates:
-            # Get the start time, which is the last 15-minute interval of the previous day
+            # start time, which is the last 15-minute interval of the previous day
             start_time = pd.Timestamp(current_date - pd.Timedelta(days=1)).replace(hour=23, minute=0)
-            # Get the end time, which is the first 6 hours and 45 minutes of the current day
+            
+            # end time, which is the first 6 hours and 45 minutes of the current day
             end_time = pd.Timestamp(current_date).replace(hour=6, minute=45)
+            
             # slice the data, which is the last 15-minute interval of the previous day and the first 6 hours and 45 minutes of the current day
             data_slice = df_resampled[start_time:end_time]
             
@@ -265,25 +271,23 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
                 # so we add it to the night data
                 night_data = pd.concat([night_data, data_slice])
         
-        # print(f"This is the night data: \n{night_data}")
         #save to excel
         os.makedirs(folder_output_dir, exist_ok=True)
         night_data.to_excel(f"{folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.xlsx")
         logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.xlsx")
         
-        # Create the plot
         fig = sns.relplot(
                 data=night_data, 
                 x="plot_time", 
                 y=laeq_column, 
-                kind="line", 
+                kind="line",
+                ci=None,
                 hue="Día",
                 estimator=leq, 
                 aspect=1.3,
                 palette=C_MAP_WEEKDAY_NIGHT
             )
 
-        # Setting x-axis labels
         x_labels = [f'{hour:02d}:{minute:02d}' for hour in range(23, 24) for minute in range(0, 60, 15)] + \
                 [f'{hour:02d}:{minute:02d}' for hour in range(0, 7) for minute in range(0, 60, 15)]
                 
@@ -291,7 +295,6 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
         plt.xticks(x_ticks, x_labels, rotation=90)
         plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
         
-        # Set plot limits and labels
         plt.xlim(-30, 465)
         
         for ax in fig.axes.flat:
@@ -302,7 +305,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
         plt.ylabel('dB(A)')
         plt.xlabel('Hora')
 
-        # Save the plot
+        # save the plot
         fig.savefig(os.path.join(folder_output_dir, f'{plotname}_{indicador_noche}_evolution_{name_extension}.png'))
         logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.png")
     except Exception as e:

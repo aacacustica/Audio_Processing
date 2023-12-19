@@ -114,6 +114,3 @@ def get_day_levels_valencia(df,laeq_column):
     df['indicador_valencia'] = df.apply(lambda x: evaluation_period_str_valencia(x['hour']),axis=1)
     indicadores = df.groupby('indicador_valencia').agg({laeq_column:[leq]}).round(1)
     return indicadores
-
-def make_directories():
-    pass

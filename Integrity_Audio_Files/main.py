@@ -1,5 +1,6 @@
 from process_metadata import *
 from utils import *
+from utils_plot import *
 from test_metadata_integrity import *
 from logging_config import setup_logging
 import json
@@ -45,6 +46,9 @@ def main():
         # copy valid audio files to a new folder
         logger.info("Starting copying...")
         copy_valid_audio_files(path, audio_directory, valid_audio_files, logger)
+
+        #plotting the results
+        plot_results(metadata, location, logger)
 
     except Exception as e:
         logger.error("Error: %s", e)

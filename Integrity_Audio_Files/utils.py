@@ -4,7 +4,6 @@ import tqdm
 
 
 def make_json_audio_directory(path: str, logger):
-    test = "_test"
     # current directory less the last folder
     logger.info(f"Analyzing: {path}")
     
@@ -22,19 +21,19 @@ def make_json_audio_directory(path: str, logger):
     logger.info(f"make current dir at: {current_directory}")
     
     # make a directory for the json files
-    audiomoth_metadata_dir = os.path.join(current_directory, f"METADATA{test}")
+    audiomoth_metadata_dir = os.path.join(current_directory, f"METADATA")
     os.makedirs(audiomoth_metadata_dir, exist_ok=True)
     logger.info(f"make audiomoth_metadata_dir at: {audiomoth_metadata_dir}")
 
     # make a directory for the json files
-    json_directory = os.path.join(audiomoth_metadata_dir, f"JSON{test}")
+    json_directory = os.path.join(audiomoth_metadata_dir, f"JSON")
     os.makedirs(json_directory, exist_ok=True)
-    logger.info(f"make JSON_{test} folder at: {json_directory}")
+    logger.info(f"make JSON folder at: {json_directory}")
 
     # make a directory for the txt files
-    txt_directory = os.path.join(audiomoth_metadata_dir, f"AUDIOMOTH_CLEAN{test}")
+    txt_directory = os.path.join(audiomoth_metadata_dir, f"AUDIOMOTH_CLEAN")
     os.makedirs(txt_directory, exist_ok=True)
-    logger.info(f"make TXT{test} folder at: {txt_directory}")
+    logger.info(f"make AUDIOMOTH_CLEAN folder at: {txt_directory}")
 
     return json_directory, txt_directory, location_name
 

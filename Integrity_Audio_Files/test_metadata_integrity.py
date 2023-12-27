@@ -21,6 +21,7 @@ def test_integrity(metadata: dict, location: str, logger):
 
     # [0] initialize valid audio file list
     valid_audio_files = []
+    total_audio_files = len(metadata)
 
     # [1] go through the metadata
     for file_name, file_metadata in metadata.items():
@@ -37,9 +38,6 @@ def test_integrity(metadata: dict, location: str, logger):
         # [2.4] channels
         time_zone = test_time_zone(file_metadata, file_name, logger)
 
-        # [2.3] original time zone
-        original_time_zone = test_original_UTC(file_metadata, file_name, logger)
-        
         # [2.5] channels
         channels = test_channels(file_metadata, file_name, logger)
 
@@ -65,6 +63,8 @@ def test_integrity(metadata: dict, location: str, logger):
             logger.info(f"Audio file {file_name} is valid")
             valid_audio_files.append(file_name)
     
-    logger.info(f"Valid audio files: {valid_audio_files}")
+    logger.info(f"Total audio files: {total_audio_files}")
+    logger.info(f"Valid audio files: {len(valid_audio_files)}")
+
     
     return valid_audio_files

@@ -55,16 +55,6 @@ def test_time_zone(file_metadata: str, file_name: str, logger):
         logger.warning(f"UTC+1 time zone wrong: {utc1} in {file_name}")
         return "BAD"
 
-def test_original_UTC(file_metadata: str, file_name: str, logger):
-    utc1 = file_metadata["original_UTC"]
-
-    if utc1 == "+0100":
-        logger.info(f"Original UTC time zone set to {utc1} in {file_name}")
-        return utc1
-    else:
-        logger.warning(f"Original UTC time zone wrong: {utc1} in {file_name}")
-        return utc1
-
 # [2.4] channels
 def test_channels(file_metadata: str, file_name: str, logger):
     channels = file_metadata["channels"]
@@ -74,7 +64,7 @@ def test_channels(file_metadata: str, file_name: str, logger):
         return channels
     else:
         logger.warning(f"Channel wrong setup to {channels} in {file_name}")
-        return channels
+        return "BAD"
 
 # [2.5] sample rate
 def test_sample_rate(file_metadata: str, file_name: str, logger):
@@ -89,7 +79,7 @@ def test_sample_rate(file_metadata: str, file_name: str, logger):
         return sample_rate
     else:
         logger.warning(f"Sample rate wrong setup to {sample_rate} in {file_name}")
-        return sample_rate
+        return "BAD"
 
 # [2.6] baterry status
 def test_battery(file_metadata: str, file_name: str, logger):
@@ -98,7 +88,6 @@ def test_battery(file_metadata: str, file_name: str, logger):
     if test_battery == "" or test_battery == None:
         logger.error(f"Battery status is empty in {file_name}")
         return "BAD"
-    
     elif float(test_battery) < BATERRY_VOLTAGE:
         logger.warning(f"Battery status is lower than 3.5V {test_battery} in {file_name}")
         return "BAD"
@@ -115,7 +104,7 @@ def test_gain(file_metadata: str, file_name: str, logger):
         return file_metadata_gain
     else:
         logger.warning(f"Gain is wrong setup to {file_metadata_gain} in {file_name}")
-        return file_metadata_gain
+        return "BAD"
 
 # [2.8] duration
 def test_duration(file_metadata: str, file_name: str, logger):
@@ -126,22 +115,18 @@ def test_duration(file_metadata: str, file_name: str, logger):
         return duration
     else:
         logger.warning(f"Duration is wrong setup to {duration} in {file_name}")
-        return duration
+        return "BAD"
 
 # [2.9] temperature
 def test_temperature(file_metadata: str, file_name: str, logger):
     temperature = file_metadata["temperature"]
 
-    if temperature == "":
+    if temperature == "" or temperature == None:
         logger.error(f"Temperature is empty in {file_name}")
         return "BAD"
-    
-    elif float(temperature) > MAX_TEMP:
+    elif float(temperature) > MAX_TEMP and float(temperature) < MIN_TEMP:
         logger.warning(f"Temperature is higher than 50C {temperature} in {file_name}")
-        return temperature
-    elif float(temperature) < MIN_TEMP:
-        logger.warning(f"Temperature is lower than -10C {temperature} in {file_name}")
-        return temperature
+        return "BAD"
     else:
         logger.info(f"Temperature is {temperature} in {file_name}")
         return temperature

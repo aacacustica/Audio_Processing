@@ -1,7 +1,9 @@
 import os
+import shutil
+import tqdm
 
 
-def make_json_txt_directory(path: str, logger):
+def make_json_audio_directory(path: str, logger):
     test = "_test"
     # current directory less the last folder
     logger.info(f"Analyzing: {path}")
@@ -30,8 +32,18 @@ def make_json_txt_directory(path: str, logger):
     logger.info(f"make JSON_{test} folder at: {json_directory}")
 
     # make a directory for the txt files
-    txt_directory = os.path.join(audiomoth_metadata_dir, f"TXT{test}")
+    txt_directory = os.path.join(audiomoth_metadata_dir, f"AUDIOMOTH_CLEAN{test}")
     os.makedirs(txt_directory, exist_ok=True)
     logger.info(f"make TXT{test} folder at: {txt_directory}")
 
     return json_directory, txt_directory, location_name
+
+def copy_valid_audio_files(path: str, audio_directory: str, valid_audio_files: list, logger):
+    # copy valid audio files to a new folder
+    for file in tqdm.tqdm(valid_audio_files):
+        logger.info(f"Copying {file}...")
+        try:
+            shutil.copy(os.path.join(path, file), audio_directory)
+            logger.info(f"{file} copied to {audio_directory}")
+        except Exception as e:
+            logger.error(f"Error: {e}")

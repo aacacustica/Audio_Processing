@@ -12,11 +12,15 @@ def main():
     # folder
     # path = "/home/santi/Documents/AAC/audios/AudioMoths/OCIO/23079_BILBAO_MR_OCIO/BASURTO/AUDIOMOTH"
     # path = "/home/santi/Documents/AAC/audios/AudioMoths/PUERTO/PUNTO_3/AUDIOMOTHS"
-    path = r"\\192.168.205.117\AAC_Server\OCIO\Tests\TEST_AUDIOMOTH\BASURTO\AUDIOMOTH"
+    # path = r"\\192.168.205.117\AAC_Server\OCIO\Tests\TEST_AUDIOMOTH\BASURTO\AUDIOMOTH"
+    path = "/media/santi/AAC_Deep_Learning/santi_vacaciones/3-Medidas/graneles-nemar-P1/AUDIOMOTH"
     # path = input("Enter the path of the audio file or folder: ")
 
     # make directories
-    json_dir, txt_directory, location = make_json_txt_directory(path, logger)
+    try:
+        json_dir, txt_directory, location = make_json_txt_directory(path, logger)
+    except:
+        json_dir, txt_directory, location = make_directory_linux(path, logger)
 
     try:
         # GETTING METADATA

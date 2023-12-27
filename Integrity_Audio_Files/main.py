@@ -14,8 +14,9 @@ def main():
     # path = "/home/santi/Documents/AAC/audios/AudioMoths/OCIO/23079_BILBAO_MR_OCIO/BASURTO/AUDIOMOTH"
     # path = "/home/santi/Documents/AAC/audios/AudioMoths/PUERTO/PUNTO_3/AUDIOMOTHS"
     # path = r"\\192.168.205.117\AAC_Server\OCIO\Tests\TEST_AUDIOMOTH\BASURTO\AUDIOMOTH"
-    path = "/media/santi/AAC_Deep_Learning/santi_vacaciones/3-Medidas/graneles-nemar-P1/AUDIOMOTH"
-    # path = "/home/santi/Documents/AAC/audios/AudioMoths/PUERTO/PUNTO_3/AUDIOMOTHS"
+    
+    # path = "/media/santi/AAC_Deep_Learning/santi_vacaciones/3-Medidas/graneles-nemar-P1/AUDIOMOTH"
+    path = "/home/santi/Documents/AAC/audios/AudioMoths/PUERTO/PUNTO_3/AUDIOMOTHS"
     # path = input("Enter the path of the audio file or folder: ")
 
     logger.info(f"Preprocessing...")
@@ -41,14 +42,18 @@ def main():
         logger.info("Starting testing...")
         # [2] test integrity
         # test_integrity(metadata, location, logger)
-        valid_audio_files = test_integrity(metadata, location, logger)
+        # valid_audio_files = test_integrity(metadata, location, logger)
 
         # copy valid audio files to a new folder
-        logger.info("Starting copying...")
-        copy_valid_audio_files(path, audio_directory, valid_audio_files, logger)
+        logger.info("Copying...")
+        # copy_valid_audio_files(path, audio_directory, valid_audio_files, logger)
 
-        #plotting the results
-        plot_results(metadata, audio_directory, location, logger)
+        #get the df of the results
+        df, metadata_folder_path = df_results(metadata, audio_directory, location, logger)
+
+        # plot the results
+        # plot_temperature(df, metadata_folder_path, location, logger)
+        plot_battery(df, metadata_folder_path, location, logger)
 
     except Exception as e:
         logger.error("Error: %s", e)

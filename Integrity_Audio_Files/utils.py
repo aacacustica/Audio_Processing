@@ -1,6 +1,7 @@
 import os
 import shutil
 import tqdm
+import pandas as pd
 
 
 def make_json_audio_directory(path: str, logger):
@@ -47,3 +48,33 @@ def copy_valid_audio_files(path: str, audio_directory: str, valid_audio_files: l
             logger.info(f"{file} copied to {audio_directory}")
         except Exception as e:
             logger.error(f"Error: {e}")
+
+def df_results(metadata, metadata_result_path, location, logger):
+    """
+    Plotting the results
+    """
+    matadata_folder = "METADATA"
+
+    # remove the last folder from the path
+    metadata_result_path = os.path.dirname(metadata_result_path)
+
+    # get the path of the metadata folder
+    metadata_folder_path = os.path.join(metadata_result_path, matadata_folder)
+
+    # create a df
+    df = pd.DataFrame.from_dict(metadata, orient='index')
+
+    # convert 'date_UTC1' to datetime
+    df['date_UTC1'] = pd.to_datetime(df['date_UTC1'])
+    
+    # set index to 'date_UTC1'
+    df.set_index('date_UTC1', inplace=True)
+    
+    # sort the index
+    df.sort_index(inplace=True)
+    
+    # save the df to a csv file
+    df.to_csv(f"{metadata_folder_path}/{location}_metadata_clean.csv")
+    logger.info(f"\n{location}_metadata.csv saved in {metadata_folder_path}")
+
+    return df, metadata_folder_path

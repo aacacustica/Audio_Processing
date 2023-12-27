@@ -16,11 +16,9 @@ def main():
     path = "/media/santi/AAC_Deep_Learning/santi_vacaciones/3-Medidas/graneles-nemar-P1/AUDIOMOTH"
     # path = input("Enter the path of the audio file or folder: ")
 
+    logger.info(f"Preprocessing...")
     # make directories
-    try:
-        json_dir, txt_directory, location = make_json_txt_directory(path, logger)
-    except:
-        json_dir, txt_directory, location = make_directory_linux(path, logger)
+    json_dir, txt_directory, location = make_json_txt_directory(path, logger)
 
     try:
         # GETTING METADATA

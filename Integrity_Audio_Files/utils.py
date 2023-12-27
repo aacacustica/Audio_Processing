@@ -21,17 +21,17 @@ def make_json_audio_directory(path: str, logger):
     logger.info(f"make current dir at: {current_directory}")
     
     # make a directory for the json files
-    audiomoth_metadata_dir = os.path.join(current_directory, f"METADATA")
+    audiomoth_metadata_dir = os.path.join(current_directory, f"PREPROCESSING")
     os.makedirs(audiomoth_metadata_dir, exist_ok=True)
-    logger.info(f"make audiomoth_metadata_dir at: {audiomoth_metadata_dir}")
+    logger.info(f"make PREPROCESSING folder at: {audiomoth_metadata_dir}")
 
     # make a directory for the json files
-    json_directory = os.path.join(audiomoth_metadata_dir, f"JSON")
+    json_directory = os.path.join(audiomoth_metadata_dir, f"METADATA")
     os.makedirs(json_directory, exist_ok=True)
-    logger.info(f"make JSON folder at: {json_directory}")
+    logger.info(f"make METADATA folder at: {json_directory}")
 
     # make a directory for the txt files
-    txt_directory = os.path.join(audiomoth_metadata_dir, f"AUDIOMOTH_CLEAN")
+    txt_directory = os.path.join(audiomoth_metadata_dir, f"AUDIOMOTH")
     os.makedirs(txt_directory, exist_ok=True)
     logger.info(f"make AUDIOMOTH_CLEAN folder at: {txt_directory}")
 

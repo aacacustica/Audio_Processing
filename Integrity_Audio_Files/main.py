@@ -48,7 +48,7 @@ def main():
         copy_valid_audio_files(path, audio_directory, valid_audio_files, logger)
 
         #plotting the results
-        plot_results(metadata, location, logger)
+        plot_results(metadata, audio_directory, location, logger)
 
     except Exception as e:
         logger.error("Error: %s", e)

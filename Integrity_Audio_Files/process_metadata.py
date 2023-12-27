@@ -16,6 +16,7 @@ def get_metadata(path: str, logger):
 
     # if it is a dir
     if os.path.isdir(path):
+        print(f"\nProcessing folder {path}")
         for file in tqdm.tqdm(os.listdir(path)):
             if file.endswith('wav') or file.endswith('WAV'):
                 # get the full path

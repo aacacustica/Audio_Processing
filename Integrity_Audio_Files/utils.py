@@ -40,6 +40,7 @@ def make_json_audio_directory(path: str, logger):
 
 def copy_valid_audio_files(path: str, audio_directory: str, valid_audio_files: list, logger):
     # copy valid audio files to a new folder
+    print(f"\n\nCopying valid audio files to {audio_directory}")
     for file in tqdm.tqdm(valid_audio_files):
         logger.info(f"Copying {file}...")
         try:

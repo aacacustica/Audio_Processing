@@ -41,8 +41,6 @@ def plot_temperature(df, metadata_folder_path, location, logger):
     plt.savefig(f"{metadata_folder_path}/{location}_temperature.png")
     logger.info(f"Plot saved in {metadata_folder_path}/{location}_temperature.png")
 
-    plt.show()
-
 
 def plot_battery(df, metadata_folder_path, location, logger):
     """
@@ -78,8 +76,6 @@ def plot_battery(df, metadata_folder_path, location, logger):
 
     # save the plot
     plt.savefig(f"{metadata_folder_path}/{location}_battery.png")
-
-    plt.show()
 
 
 def plot_all_at_one(df, metadata_folder_path, location, logger):
@@ -128,7 +124,6 @@ def plot_all_at_one(df, metadata_folder_path, location, logger):
     # save the plot
     plt.savefig(f"{plot_folder}/{location}_battery_temperature.png")
 
-    plt.show()
 
 def plot_standar_deviation(df, metadata_folder_path, location, logger):
     """
@@ -179,5 +174,3 @@ def plot_standar_deviation(df, metadata_folder_path, location, logger):
 
     # save the plot
     plt.savefig(f"{plot_folder}/{location}_battery_temperature.png")
-
-    plt.show()

@@ -49,9 +49,9 @@ def main():
         copy_valid_audio_files_with_metadata(path, audio_directory, valid_audio_files, logger)
 
         #get the df of the results
-        df, metadata_folder_path = df_results(metadata, audio_directory, location, logger)
-        print(f"Original metadata: \n{df}")
-        print(len(df))
+        # df, metadata_folder_path = df_results(metadata, audio_directory, location, logger)
+        # print(f"Original metadata: \n{df}")
+        # print(len(df))
 
         # plot the results
         # plot_temperature(df, metadata_folder_path, location, logger)
@@ -59,10 +59,9 @@ def main():
         # plot_all_at_one(df, metadata_folder_path, location, logger)
 
         # clean metadata
-        print(audio_directory)
         clean_metadata = get_metadata(audio_directory, logger)
-        print(f"\n\nClean metadata: \n{clean_metadata}")
-        print(len(clean_metadata))
+        # print(f"\n\nClean metadata: \n{clean_metadata}")
+        logger.info(f"{len(clean_metadata)}")
         
         # exit()
 
@@ -76,11 +75,10 @@ def main():
         
         # convert to csv
         df_clean, metadata_folder_path_clean = df_results(clean_metadata, audio_directory, location, logger)
-        print(df)
         
         # plot the results
-        plot_temperature(df_clean, metadata_folder_path_clean, location, logger)
-        plot_battery(df_clean, metadata_folder_path_clean, location, logger)
+        # plot_temperature(df_clean, metadata_folder_path_clean, location, logger)
+        # plot_battery(df_clean, metadata_folder_path_clean, location, logger)
         plot_all_at_one(df_clean, metadata_folder_path_clean, location, logger)
 
     except Exception as e:

@@ -67,6 +67,7 @@ def main():
         
         # plot the results
         plot_all_at_one(df_clean, metadata_folder_path_clean, location, logger)
+        # plot_standar_deviation(df_clean, metadata_folder_path_clean, location, logger)
 
     except Exception as e:
         logger.error("Error: %s", e)

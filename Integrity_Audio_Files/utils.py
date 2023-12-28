@@ -57,7 +57,7 @@ def copy_valid_audio_files_with_metadata(path: str, audio_directory: str, valid_
 
 
 
-def df_results(metadata: dict, metadata_result_path: str, location: str, logger):
+def df_results(metadata, metadata_result_path, location, logger):
     """
     Plotting the results
     """

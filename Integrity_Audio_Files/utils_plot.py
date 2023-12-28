@@ -33,6 +33,10 @@ def plot_temperature(df, metadata_folder_path, location, logger):
     fig = plt.gcf()
     fig.autofmt_xdate()
 
+    # make plot folder
+    plot_folder = os.path.join(metadata_folder_path, "Plots")
+    os.makedirs(plot_folder, exist_ok=True)
+
     # save the plot
     plt.savefig(f"{metadata_folder_path}/{location}_temperature.png")
     logger.info(f"Plot saved in {metadata_folder_path}/{location}_temperature.png")
@@ -68,6 +72,10 @@ def plot_battery(df, metadata_folder_path, location, logger):
     fig = plt.gcf()
     fig.autofmt_xdate()
 
+    # make plot folder
+    plot_folder = os.path.join(metadata_folder_path, "Plots")
+    os.makedirs(plot_folder, exist_ok=True)
+
     # save the plot
     plt.savefig(f"{metadata_folder_path}/{location}_battery.png")
 
@@ -78,8 +86,6 @@ def plot_all_at_one(df, metadata_folder_path, location, logger):
     """
     Plotting the battery voltage over time with color changes for high and low levels.
     """
-    print(df)
-    
     df.index = pd.to_datetime(df.index)
 
     # first date withouth time
@@ -115,7 +121,63 @@ def plot_all_at_one(df, metadata_folder_path, location, logger):
     fig = plt.gcf()
     fig.autofmt_xdate()
 
+    # make plot folder
+    plot_folder = os.path.join(metadata_folder_path, "Plots")
+    os.makedirs(plot_folder, exist_ok=True)
+
     # save the plot
-    plt.savefig(f"{metadata_folder_path}/{location}_battery_temperature.png")
+    plt.savefig(f"{plot_folder}/{location}_battery_temperature.png")
+
+    plt.show()
+
+def plot_standar_deviation(df, metadata_folder_path, location, logger):
+    """
+    Plotting the battery voltage over time with color changes for high and low levels.
+    """
+    df.index = pd.to_datetime(df.index)
+
+    # first date withouth time
+    first_date = df.index[0].strftime("%Y-%m-%d")
+    last_date = df.index[-1].strftime("%Y-%m-%d")
+
+    print(f"\nPlotting temperature and battery voltage in {location}")
+    
+    plt.figure(figsize=(20, 10))
+
+    # in two plots, plot the battery voltage and temperature standard deviation
+    plt.subplot(2, 1, 1)
+    plt.plot(df.index, df['battery_v'], color='blue', label='Battery Voltage')
+    plt.xlabel('Time')
+    plt.ylabel('Battery Voltage (V)')
+    plt.title(f'Battery Voltage and Temperature in {location} from {first_date} to {last_date}')
+
+    # time interval
+    plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=9))
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m-%d %H:%M'))
+
+    # rotate and align the tick labels so they look better
+    fig = plt.gcf()
+    fig.autofmt_xdate()
+
+    plt.subplot(2, 1, 2)
+    plt.plot(df.index, df['temperature'], color='red', label='Temperature')
+    plt.xlabel('Time')
+    plt.ylabel('Temperature (Celsius)')
+    plt.tick_params(axis='y')
+
+    # time interval
+    plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=9))
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m-%d %H:%M'))
+
+    # rotate and align the tick labels so they look better
+    fig = plt.gcf()
+    fig.autofmt_xdate()
+
+    # make plot folder
+    plot_folder = os.path.join(metadata_folder_path, "Plots")
+    os.makedirs(plot_folder, exist_ok=True)
+
+    # save the plot
+    plt.savefig(f"{plot_folder}/{location}_battery_temperature.png")
 
     plt.show()

@@ -38,16 +38,23 @@ def make_json_audio_directory(path: str, logger):
 
     return json_directory, txt_directory, location_name
 
+
+
 def copy_valid_audio_files(path: str, audio_directory: str, valid_audio_files: list, logger):
     # copy valid audio files to a new folder
-    print(f"\n\nCopying valid audio files to {audio_directory}")
+    logger.info(f"\n\nCopying valid audio files to {audio_directory}")
+    
     for file in tqdm.tqdm(valid_audio_files):
         logger.info(f"Copying {file}...")
+        
         try:
             shutil.copy(os.path.join(path, file), audio_directory)
             logger.info(f"{file} copied to {audio_directory}")
+        
         except Exception as e:
             logger.error(f"Error: {e}")
+
+
 
 def df_results(metadata, metadata_result_path, location, logger):
     """
@@ -72,9 +79,11 @@ def df_results(metadata, metadata_result_path, location, logger):
     
     # sort the index
     df.sort_index(inplace=True)
+
+    print(df)
     
     # save the df to a csv file
-    df.to_csv(f"{metadata_folder_path}/{location}_metadata_clean.csv")
+    df.to_csv(f"{metadata_folder_path}/{location}_metadata.csv")
     logger.info(f"\n{location}_metadata.csv saved in {metadata_folder_path}")
 
     return df, metadata_folder_path

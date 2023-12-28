@@ -14,7 +14,7 @@ def main():
     # path = "/home/santi/Documents/AAC/audios/AudioMoths/OCIO/23079_BILBAO_MR_OCIO/BASURTO/AUDIOMOTH"
     # path = "/home/santi/Documents/AAC/audios/AudioMoths/PUERTO/PUNTO_3/AUDIOMOTHS"
     # path = r"\\192.168.205.117\AAC_Server\OCIO\Tests\TEST_AUDIOMOTH\BASURTO\AUDIOMOTH"
-    
+
     # path = "/media/santi/AAC_Deep_Learning/santi_vacaciones/3-Medidas/graneles-nemar-P1/AUDIOMOTH"
     path = "/home/santi/Documents/AAC/audios/AudioMoths/PUERTO/PUNTO_3/AUDIOMOTHS"
     # path = input("Enter the path of the audio file or folder: ")
@@ -41,19 +41,39 @@ def main():
         # TESTING METADATA
         logger.info("Starting testing...")
         # [2] test integrity
-        # test_integrity(metadata, location, logger)
-        # valid_audio_files = test_integrity(metadata, location, logger)
+        valid_audio_files = test_integrity(metadata, location, logger)
 
         # copy valid audio files to a new folder
-        logger.info("Copying...")
-        # copy_valid_audio_files(path, audio_directory, valid_audio_files, logger)
+        # logger.info("Copying...")
+        copy_valid_audio_files(path, audio_directory, valid_audio_files, logger)
 
         #get the df of the results
-        df, metadata_folder_path = df_results(metadata, audio_directory, location, logger)
+        # df, metadata_folder_path = df_results(metadata, audio_directory, location, logger)
 
         # plot the results
         # plot_temperature(df, metadata_folder_path, location, logger)
-        plot_battery(df, metadata_folder_path, location, logger)
+        # plot_battery(df, metadata_folder_path, location, logger)
+        # plot_all_at_one(df, metadata_folder_path, location, logger)
+
+        # clean metadata
+        clean_metadata = get_metadata(audio_directory, logger)
+        print(f"Clean metadata: \n{clean_metadata}")
+
+        # save to json file
+        json_file_name = f"metadata_{location}_clean.json"
+        json_path = os.path.join(json_dir, json_file_name)
+
+        with open(json_path, "w") as f:
+            json.dump(clean_metadata, f, indent=4)
+            logger.info(f'Clean metadata saved in {os.path.join(json_dir, f"{location}_metadata_clean.json")}')
+        
+        # convert to csv
+        df_clean, metadata_folder_path_clean = df_results(clean_metadata, audio_directory, location, logger)
+        
+        # plot the results
+        plot_temperature(df_clean, metadata_folder_path_clean, location, logger)
+        plot_battery(df_clean, metadata_folder_path_clean, location, logger)
+        plot_all_at_one(df_clean, metadata_folder_path_clean, location, logger)
 
     except Exception as e:
         logger.error("Error: %s", e)

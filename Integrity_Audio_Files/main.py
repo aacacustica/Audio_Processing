@@ -10,6 +10,7 @@ def main():
 
     # file
     # path = "/home/santi/Documents/AAC/audios/AudioMoths/OCIO/23079_BILBAO_MR_OCIO/BASURTO/AUDIOMOTH/20231019_220640.WAV"
+    
     # folder
     # path = "/home/santi/Documents/AAC/audios/AudioMoths/OCIO/23079_BILBAO_MR_OCIO/BASURTO/AUDIOMOTH"
     # path = "/home/santi/Documents/AAC/audios/AudioMoths/PUERTO/PUNTO_3/AUDIOMOTHS"
@@ -44,11 +45,13 @@ def main():
         valid_audio_files = test_integrity(metadata, location, logger)
 
         # copy valid audio files to a new folder
-        # logger.info("Copying...")
-        copy_valid_audio_files(path, audio_directory, valid_audio_files, logger)
+        logger.info("Copying...")
+        copy_valid_audio_files_with_metadata(path, audio_directory, valid_audio_files, logger)
 
         #get the df of the results
-        # df, metadata_folder_path = df_results(metadata, audio_directory, location, logger)
+        df, metadata_folder_path = df_results(metadata, audio_directory, location, logger)
+        print(f"Original metadata: \n{df}")
+        print(len(df))
 
         # plot the results
         # plot_temperature(df, metadata_folder_path, location, logger)
@@ -56,8 +59,12 @@ def main():
         # plot_all_at_one(df, metadata_folder_path, location, logger)
 
         # clean metadata
+        print(audio_directory)
         clean_metadata = get_metadata(audio_directory, logger)
-        print(f"Clean metadata: \n{clean_metadata}")
+        print(f"\n\nClean metadata: \n{clean_metadata}")
+        print(len(clean_metadata))
+        
+        # exit()
 
         # save to json file
         json_file_name = f"metadata_{location}_clean.json"
@@ -69,6 +76,7 @@ def main():
         
         # convert to csv
         df_clean, metadata_folder_path_clean = df_results(clean_metadata, audio_directory, location, logger)
+        print(df)
         
         # plot the results
         plot_temperature(df_clean, metadata_folder_path_clean, location, logger)

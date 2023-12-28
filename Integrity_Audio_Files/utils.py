@@ -40,17 +40,17 @@ def make_json_audio_directory(path: str, logger):
 
 
 
-def copy_valid_audio_files(path: str, audio_directory: str, valid_audio_files: list, logger):
-    # copy valid audio files to a new folder
-    logger.info(f"\n\nCopying valid audio files to {audio_directory}")
-    
+def copy_valid_audio_files_with_metadata(path: str, audio_directory: str, valid_audio_files: list, logger):
+    # copy valid audio files to a new folder along with their metadata
+    logger.info(f"\n\nCopying valid audio files to {audio_directory} along with metadata")
+
     for file in tqdm.tqdm(valid_audio_files):
-        logger.info(f"Copying {file}...")
-        
+        logger.info(f"Copying {file} with metadata...")
+
         try:
-            shutil.copy(os.path.join(path, file), audio_directory)
-            logger.info(f"{file} copied to {audio_directory}")
-        
+            shutil.copy2(os.path.join(path, file), audio_directory)
+            logger.info(f"{file} copied to {audio_directory} with metadata")
+
         except Exception as e:
             logger.error(f"Error: {e}")
 

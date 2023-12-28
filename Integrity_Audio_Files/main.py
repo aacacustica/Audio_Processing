@@ -25,12 +25,12 @@ def main():
     json_dir, audio_directory, location = make_json_audio_directory(path, logger)
 
     try:
-        # GETTING METADATA
+        # [1] GETTING METADATA
         logger.info("Starting process...")
         metadata = get_metadata(path, logger)
         # logger.info(metadata)
 
-        # save to json file
+        # save metadata dict to json file
         json_file_name = f"metadata_{location}.json"
         json_path = os.path.join(json_dir, json_file_name)
         
@@ -39,32 +39,21 @@ def main():
             logger.info(f'Metadata saved in {os.path.join(json_dir, f"{location}_metadata.json")}')
 
 
-        # TESTING METADATA
+        # [2] TESTING METADATA
         logger.info("Starting testing...")
-        # [2] test integrity
+
+        logger.info(f"Testing integrity of {location} metadata")
+        # [2.1] testing integrity and get valid audio files
         valid_audio_files = test_integrity(metadata, location, logger)
 
-        # copy valid audio files to a new folder
-        logger.info("Copying...")
+        # [2.2] copy valid audio files to a new folder
+        logger.info("Copying audio files with metadata...")
         copy_valid_audio_files_with_metadata(path, audio_directory, valid_audio_files, logger)
 
-        #get the df of the results
-        # df, metadata_folder_path = df_results(metadata, audio_directory, location, logger)
-        # print(f"Original metadata: \n{df}")
-        # print(len(df))
-
-        # plot the results
-        # plot_temperature(df, metadata_folder_path, location, logger)
-        # plot_battery(df, metadata_folder_path, location, logger)
-        # plot_all_at_one(df, metadata_folder_path, location, logger)
-
-        # clean metadata
+        # [2.3] clean metadata
         clean_metadata = get_metadata(audio_directory, logger)
-        # print(f"\n\nClean metadata: \n{clean_metadata}")
-        logger.info(f"{len(clean_metadata)}")
+        logger.info(f"There are {len(clean_metadata)} cleaned auduio files in {audio_directory}")
         
-        # exit()
-
         # save to json file
         json_file_name = f"metadata_{location}_clean.json"
         json_path = os.path.join(json_dir, json_file_name)
@@ -77,8 +66,6 @@ def main():
         df_clean, metadata_folder_path_clean = df_results(clean_metadata, audio_directory, location, logger)
         
         # plot the results
-        # plot_temperature(df_clean, metadata_folder_path_clean, location, logger)
-        # plot_battery(df_clean, metadata_folder_path_clean, location, logger)
         plot_all_at_one(df_clean, metadata_folder_path_clean, location, logger)
 
     except Exception as e:

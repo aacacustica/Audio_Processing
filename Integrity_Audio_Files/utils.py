@@ -44,6 +44,7 @@ def copy_valid_audio_files_with_metadata(path: str, audio_directory: str, valid_
     # copy valid audio files to a new folder along with their metadata
     logger.info(f"\n\nCopying valid audio files to {audio_directory} along with metadata")
 
+    print(f"\nCopying valid audio files to {audio_directory}")
     for file in tqdm.tqdm(valid_audio_files):
         logger.info(f"Copying {file} with metadata...")
 
@@ -56,7 +57,7 @@ def copy_valid_audio_files_with_metadata(path: str, audio_directory: str, valid_
 
 
 
-def df_results(metadata, metadata_result_path, location, logger):
+def df_results(metadata: dict, metadata_result_path: str, location: str, logger):
     """
     Plotting the results
     """
@@ -80,10 +81,8 @@ def df_results(metadata, metadata_result_path, location, logger):
     # sort the index
     df.sort_index(inplace=True)
 
-    print(df)
-    
     # save the df to a csv file
-    df.to_csv(f"{metadata_folder_path}/{location}_metadata.csv")
-    logger.info(f"\n{location}_metadata.csv saved in {metadata_folder_path}")
+    df.to_csv(f"{metadata_folder_path}/{location}_metadata_clean.csv")
+    logger.info(f"\n{location}_metadata_clean.csv saved in {metadata_folder_path}")
 
     return df, metadata_folder_path

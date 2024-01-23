@@ -311,7 +311,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
     except Exception as e:
         logger.error(f"Error in plot_night_evolution_15_min: {e}")
 
-def plot_heatmap_evolution(df, folder_output_dir: str, logger, values_column: str, agg_func: str, plotname:str):
+def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_column: str, agg_func: str, plotname:str):
     """Plot heatmap of pivot table with hour evolution of each day,
     Args:
         df (_type_): DataFrame
@@ -358,6 +358,75 @@ def plot_heatmap_evolution(df, folder_output_dir: str, logger, values_column: st
         
         logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}_heatmap_evolucion.png")
         logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_evolucion.xlsx")
+    except Exception as e:
+        logger.error(f"Error in plot_heatmap: {e}")
+        
+        
+def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_column: str, agg_func: str, plotname:str):
+    """Plot heatmap of pivot table with hour evolution of each day,
+    Args:
+        df (_type_): DataFrame
+        folder_output_dir (str): Output directory
+        logger (_type_): Logger
+        values_column (str): Name of the column to use, tipycally LAeq
+        agg_func (str): Aggregation function, Leq
+        plotname (str): Prefix to name the plot
+    """
+    print(df)
+    print(df.columns)
+    
+    if not isinstance(df.index, pd.DatetimeIndex):
+        logger.error("DataFrame index is not a datetime index.")
+        return
+
+    try:
+        # leq_day_hour = pd.pivot_table(
+        #     df, 
+        #     values=values_column, 
+        #     index=['date'],
+        #     columns=['hour'], 
+        #     aggfunc=agg_func
+        # ).round(1)
+        
+        def get_15min_interval(dt):
+            return f"{dt.hour:02d}:{(dt.minute // 15) * 15:02d}"
+
+        df['15min_interval'] = df.index.map(get_15min_interval)
+
+        leq_day_15min = pd.pivot_table(
+            df, 
+            values=values_column, 
+            index=['date'],
+            columns=['15min_interval'], 
+            aggfunc=agg_func
+        ).round(1)
+        
+        plt.figure(figsize=(25,15))
+        
+        sns.heatmap(
+            leq_day_15min, 
+            vmin=30, 
+            vmax=85, 
+            cmap=cmap_dict, 
+            annot=True
+        )
+        
+        plt.xlabel('Hora')
+        plt.ylabel('Día')
+        plt.title(f'{plotname} Nivel equivalente')
+        
+        plt.yticks(rotation=0)
+        plt.tight_layout()
+        
+        os.makedirs(f'{folder_output_dir}', exist_ok=True)
+        plt.savefig(f'{folder_output_dir}/{plotname}_heatmap_evolucion_15_min.png',dpi=150)
+        
+        leq_day_15min.to_excel(f'{folder_output_dir}/{plotname}_heatmap_evolucion_15_min.xlsx')
+        
+        plt.close()
+        
+        logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}_heatmap_evolucion_15_min.png")
+        logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_evolucion_15_min.xlsx")
     except Exception as e:
         logger.error(f"Error in plot_heatmap: {e}")
         

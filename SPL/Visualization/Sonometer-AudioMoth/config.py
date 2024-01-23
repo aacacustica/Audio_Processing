@@ -9,13 +9,13 @@ LE_SECONDS = 7200
 LN_SECONDS = 14400
 
 # Plotting Flags
-PLOT_MAKE_TIME_PLOT = True # Done
-PLOT_HEATMAP_EVOLUTION = True # Done
-PLOT_INDICADORES_HEATMAP = True # Done 
-PLOT_DAY_EVOLUTION = True # Done
-PLOT_PERIOD_EVOLUTION = True # Done
-PLOT_NIGHT_EVOLUTION = True # Done
-PLOT_NIGHT_EVOLUTION_15_MIN = True # done
+PLOT_MAKE_TIME_PLOT = False # Done
+PLOT_HEATMAP_EVOLUTION_HOUR = False # Done
+PLOT_HEATMAP_EVOLUTION_15_MIN = True # Done
+PLOT_INDICADORES_HEATMAP = False # Done 
+PLOT_DAY_EVOLUTION = False # Done
+PLOT_PERIOD_EVOLUTION = False # Done
+PLOT_NIGHT_EVOLUTION = False # Done
 
 
 ######################## SLM COLUMN MAPS #####################################

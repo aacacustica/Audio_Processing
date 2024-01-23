@@ -56,15 +56,19 @@ def process_folder(folder_path, logger):
     
     # Check if the folder contains a CESVA folder
     cesva_path = os.path.join(folder_path, 'CESVA')
+   
     if os.path.isdir(cesva_path):
         # If it does, load the data from the CESVA folder
         subfolders = [f for f in os.listdir(cesva_path) if os.path.isdir(os.path.join(cesva_path, f))]
+        
         # Check if the CESVA folder contains subfolders
         for subfolder in subfolders:
             # If it does, load the data from the first subfolder
             subfolder_path = os.path.join(cesva_path, subfolder)
+            
             # Check if the subfolder contains measurement files
             files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV', 'XLSX'))]
+            
             # If it does, load the data from the first measurement file
             if files:
                 return load_data(files[0], logger)  
@@ -169,10 +173,15 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 print(f"folder_output_dir: {folder_output_dir}")
                 make_time_plot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
             
-            # Plotting heatmap
-            if PLOT_HEATMAP_EVOLUTION:
+            # Plotting heatmap evolution hour
+            if PLOT_HEATMAP_EVOLUTION_HOUR:
                 logger.info(f"Plotting heatmap for folder {folder}")
-                plot_heatmap_evolution(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN'], agg_func=leq,plotname=folder)
+                plot_heatmap_evolution_hour(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN'], agg_func=leq,plotname=folder)
+            
+            # Plotting heatmap evolution 15 min
+            if PLOT_HEATMAP_EVOLUTION_15_MIN:
+                logger.info(f"Plotting heatmap 15 min for folder {folder}")
+                plot_heatmap_evolution_15_min(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN'], agg_func=leq,plotname=folder)
             
             # Plotting day evolution
             if PLOT_DAY_EVOLUTION:

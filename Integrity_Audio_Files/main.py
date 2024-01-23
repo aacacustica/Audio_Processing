@@ -5,6 +5,13 @@ from test_metadata_integrity import *
 from logging_config import setup_logging
 import json
 
+
+"""Usage example:
+    
+    python main.py 
+"""
+
+
 def main():
     logger = setup_logging()
 
@@ -17,8 +24,8 @@ def main():
     # path = r"\\192.168.205.117\AAC_Server\OCIO\Tests\TEST_AUDIOMOTH\BASURTO\AUDIOMOTH"
 
     # path = "/media/santi/AAC_Deep_Learning/santi_vacaciones/3-Medidas/graneles-nemar-P1/AUDIOMOTH"
-    path = "/home/santi/Documents/AAC/audios/AudioMoths/PUERTO/PUNTO_3/AUDIOMOTHS"
-    # path = input("Enter the path of the audio file or folder: ")
+    # path = "/home/santi/Documents/AAC/audios/AudioMoths/PUERTO/PUNTO_3/AUDIOMOTHS"
+    path = input("Enter the path of the audio file or folder: ")
 
     logger.info(f"Preprocessing...")
     # make directories

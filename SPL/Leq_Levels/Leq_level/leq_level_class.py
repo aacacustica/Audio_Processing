@@ -187,7 +187,7 @@ if __name__ == '__main__':
     try:
         processor = AudioProcessor(args.path, args.calibration)
         processor.process_directory()
-    
+
     except Exception as e:
         logging.critical(f"Critical error occurred: {str(e)}")
         print(f"Critical error occurred: {str(e)}")

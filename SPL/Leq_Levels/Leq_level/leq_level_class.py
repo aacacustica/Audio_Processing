@@ -13,6 +13,13 @@ import logging
 from tqdm import tqdm
 from colorama import init, Fore, Style
 
+"""
+Usage:
+
+    python leq_level_class.py -p \\192.168.205.117\AAC_Server\22903-NoiseTech\3-Medidas\
+"""
+
+
 logging.basicConfig(filename='leq_levels.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class AudioProcessor:
@@ -59,7 +66,11 @@ class AudioProcessor:
         
         df_history = pd.DataFrame(db, columns=col_names)
         df_history['filename'] = name + ".wav"
-        start = datetime.strptime(name, '%Y%m%d_%H%M%S')
+        
+        # start = datetime.strptime(name, '%Y%m%d_%H%M%S')
+        name = name.split("_")[0]
+        start = datetime.strptime(name, '%y%m%d')
+
         df_history['date'] = pd.date_range(start=start, freq='S', periods=len(df_history))
         
         parent_dir = os.path.dirname(audio_file)
@@ -79,16 +90,21 @@ class AudioProcessor:
             result_dir_name = "5-Resultados"
             spl_extention = "_spl.csv"
             
-            resultados_dir = parent_dir.split("\\")[:-3]
+            parent_dir = parent_dir.split("\\")[:-1]
             
             # join the path
-            resultados_dir = os.path.join('\\\\',*resultados_dir, result_dir_name)
+            resultados_dir = os.path.join('\\\\',*parent_dir, result_dir_name)
+            
+            # join the path
+            # resultados_dir = os.path.join('\\\\',*resultados_dir, result_dir_name)
+            # resultados_dir = os.path.join('\\\\',parent_dir, result_dir_name)
+            print(resultados_dir)
             
             if not os.path.exists(resultados_dir):
                 os.makedirs(resultados_dir)
                 
             folder_name = parent_dir.split("\\")[-2]
-            
+            print(folder_name)
             
             if not os.path.exists(os.path.join(resultados_dir, folder_name)):
                 os.makedirs(os.path.join(resultados_dir, folder_name))

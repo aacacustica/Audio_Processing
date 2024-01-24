@@ -101,20 +101,12 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
     """
     # Process each folder
     for folder in tqdm(folders, desc="Processing folders"):
-        # Get the path to the folder
         reg_folder = os.path.join(input_folder, folder)
-        
         
         folder = folder.split("\\")[:-1]
         folder = os.path.join('\\\\', *folder)
         logger.info(f"\nEntering folder: {folder}")
     
-    
-        # folder_output_dir = os.path.join(reg_folder, "Results", "Sonometer")
-        # os.makedirs(folder_output_dir, exist_ok=True)
-        # logger.info(f"Created output folder: {folder_output_dir}")
-        
-        
         spl_string = "SPL"
         graphics_string = "Graphics"
         # Create the output folder

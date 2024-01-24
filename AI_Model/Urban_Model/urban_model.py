@@ -131,7 +131,8 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
         waveform = wav_data / 32768.0  # 2**15
         # w_size = int(w_time * 60 * sr)
         # w_size = w_time * 60 * sr
-        w_size = int(round(14.99 * 60 * sr))
+        # w_size = int(round(14.99 * 60 * sr))
+        w_size = int(round(10.0 * 60 * sr))
         
         print_audio_time(w_size, sr, wav_data)      
 
@@ -272,7 +273,6 @@ if __name__ == "__main__":
     
     # set analysis window size in minutes
     analysis_window_time = args.window # ventana de analisis en minutos
-    
     # set number of predictions
     n_predictions = args.n_predictions
     
@@ -358,6 +358,7 @@ if __name__ == "__main__":
         data_df = get_predictions(audio_files=valid_audio_files,
                                   fs_model=fs_model,
                                   w_time=analysis_window_time,
+                                #   w_time=5/60,
                                   taxonomy_mapping=taxonomy_mapping,
                                   n_predictions=n_predictions)
     except Exception as e:

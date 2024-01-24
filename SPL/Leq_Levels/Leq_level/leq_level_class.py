@@ -67,56 +67,72 @@ class AudioProcessor:
         df_history = pd.DataFrame(db, columns=col_names)
         df_history['filename'] = name + ".wav"
         
-        # start = datetime.strptime(name, '%Y%m%d_%H%M%S')
-        name = name.split("_")[0]
-        start = datetime.strptime(name, '%y%m%d')
+        start = datetime.strptime(name, '%Y%m%d_%H%M%S')
+        # name = name.split("_")[0]
+        # start = datetime.strptime(name, '%y%m%d')
 
         df_history['date'] = pd.date_range(start=start, freq='S', periods=len(df_history))
         
         parent_dir = os.path.dirname(audio_file)
+        logging.info(f"Parent dir: {parent_dir}")
         
         csv_name = f'{directory_name}_spl.csv'
         sub_folder_name = f"{directory_name}_spl"
+        logging.info(f"CSV name: {csv_name}")
+        logging.info(f"Sub folder name: {sub_folder_name}")
         
         if result_dir:
             directory_path = os.path.join(result_dir, sub_folder_name)
+            logging.info(f"Directory path: {directory_path}")
             
             if not os.path.exists(directory_path):
                 os.makedirs(directory_path)
+                logging.info(f"Created directory: {directory_path}")
             csv_name = os.path.join(directory_path, csv_name)
+            logging.info(f"CSV join path name: {csv_name}")
         
         else:
             # 1 directory to save the results = 5-Resultados
             result_dir_name = "5-Resultados"
             spl_extention = "_spl.csv"
             
-            parent_dir = parent_dir.split("\\")[:-1]
+            # second_parent_dir = parent_dir.split("\\")[:-1]
             
             # join the path
-            resultados_dir = os.path.join('\\\\',*parent_dir, result_dir_name)
+            # resultados_dir = os.path.join('\\\\',*second_parent_dir, result_dir_name)
+            # print(f"Resultados_dir --> {resultados_dir}")
+            
+            resultados_dir = parent_dir.split("\\")[:-3]
+            logging.info(f"Resultados_dir --> {resultados_dir}")
             
             # join the path
-            # resultados_dir = os.path.join('\\\\',*resultados_dir, result_dir_name)
-            # resultados_dir = os.path.join('\\\\',parent_dir, result_dir_name)
-            print(resultados_dir)
+            resultados_dir = os.path.join('\\\\',*resultados_dir, result_dir_name)
+            logging.info(f"Resultados_dir join path --> {resultados_dir}")
             
             if not os.path.exists(resultados_dir):
                 os.makedirs(resultados_dir)
+                logging.info(f"Created directory: {resultados_dir}")
                 
-            folder_name = parent_dir.split("\\")[-2]
-            print(folder_name)
-            
+            folder_name = parent_dir.split("\\")[-1]
+            logging.info(f"Folder name: {folder_name}")
+            # exit()            
             if not os.path.exists(os.path.join(resultados_dir, folder_name)):
                 os.makedirs(os.path.join(resultados_dir, folder_name))
+                logging.info(f"Created directory: {os.path.join(resultados_dir, folder_name)}")
             
             # add SPL folder
             spl_folder_result = os.path.join(resultados_dir, folder_name, 'SPL')
+            logging.info(f"SPL folder result: {spl_folder_result}")
             if not os.path.exists(spl_folder_result):
                 os.makedirs(spl_folder_result)
+                logging.info(f"Created directory: {spl_folder_result}")
             
             # fodler name, is the same as the csv final name
             csv_name = folder_name + spl_extention
+            logging.info(f"CSV FINALname: {csv_name}")
             csv_path = os.path.join(spl_folder_result, csv_name)
+            logging.info(f"CSV FINAL path: {csv_path}")
+            
 
         df_history.to_csv(csv_path, mode='a', header=not os.path.exists(csv_path), index=False)
         return csv_name
@@ -124,6 +140,7 @@ class AudioProcessor:
     @staticmethod
     def sort_csv_by_date(filename):
         try:
+            logging.info(f"Sorting CSV file {filename} by date.")
             df = pd.read_csv(filename, parse_dates=['date'])
             df_sorted = df.sort_values('date')
             df_sorted.to_csv(filename, index=False)
@@ -147,6 +164,7 @@ class AudioProcessor:
             bA, aA, bC, aC = self.get_weighting_coeffs(predominant_fs)
             db = self.process_audio_files(full_path, predominant_fs, int(predominant_fs), C, bA, aA, bC, aC)
             csv_name = self.save_levels_to_csv(db, full_path, os.path.basename(os.path.normpath(self.directory_path)), args.result_dir)
+            print(f"CSV file saved: {csv_name}")
             self.sort_csv_by_date(csv_name)
             return C
         except Exception as e:

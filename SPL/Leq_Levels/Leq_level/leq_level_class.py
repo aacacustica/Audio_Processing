@@ -73,9 +73,6 @@ class AudioProcessor:
 
         df_history['date'] = pd.date_range(start=start, freq='S', periods=len(df_history))
         
-        parent_dir = os.path.dirname(audio_file)
-        logging.info(f"Parent dir: {parent_dir}")
-        
         csv_name = f'{directory_name}_spl.csv'
         sub_folder_name = f"{directory_name}_spl"
         logging.info(f"CSV name: {csv_name}")
@@ -101,6 +98,9 @@ class AudioProcessor:
             # join the path
             # resultados_dir = os.path.join('\\\\',*second_parent_dir, result_dir_name)
             # print(f"Resultados_dir --> {resultados_dir}")
+
+            parent_dir = os.path.dirname(audio_file)
+            logging.info(f"Parent dir: {parent_dir}")
             
             resultados_dir = parent_dir.split("\\")[:-3]
             logging.info(f"Resultados_dir --> {resultados_dir}")
@@ -113,7 +113,7 @@ class AudioProcessor:
                 os.makedirs(resultados_dir)
                 logging.info(f"Created directory: {resultados_dir}")
                 
-            folder_name = parent_dir.split("\\")[-1]
+            folder_name = parent_dir.split("\\")[-2]
             logging.info(f"Folder name: {folder_name}")
             # exit()            
             if not os.path.exists(os.path.join(resultados_dir, folder_name)):

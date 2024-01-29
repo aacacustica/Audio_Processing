@@ -129,18 +129,16 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
             continue
         
         waveform = wav_data / 32768.0  # 2**15
-        # w_size = int(w_time * 60 * sr)
+        w_size = int(w_time * 60 * sr)
         # w_size = w_time * 60 * sr
         # w_size = int(round(14.99 * 60 * sr))
-        w_size = int(round(10.0 * 60 * sr))
+        # w_size = int(round(10.0 * 60 * sr))
         
         print_audio_time(w_size, sr, wav_data)      
 
         count = 0
         if len(waveform) > w_size:
             for fstart in range(0, len(waveform) - w_size + 1, w_size):
-
-
                 # GETTING THE SCORES FOR THE CUSTOM TAXONOMY
 
                 # getting the scores for the original taxonomy

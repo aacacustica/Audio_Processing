@@ -30,7 +30,7 @@ def load_data(file_path, logger):
     } # SLM stands for Sound Level Meter
     
     logger.info(f"Analizing {file_path}")
-    # Try to load the data for each SLM type until one works |  for each slm_type, (func, slm_dict) in slm_type_function_mapping.items(): means that for each key and value in the dictionary, the key is slm_type and the value is a tuple with the function and the dictionary | the function is the function to load the data and the dictionary is the dictionary with the column names for the SLM type
+    # load the data for each SLM type until one works |  for each slm_type, (func, slm_dict) in slm_type_function_mapping.items(): means that for each key and value in the dictionary, the key is slm_type and the value is a tuple with the function and the dictionary | the function is the function to load the data and the dictionary is the dictionary with the column names for the SLM type
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
         try:
             logger.info(f"Loading data for SLM type {slm_type}")
@@ -54,22 +54,22 @@ def process_folder(folder_path, logger):
         slm_dict (dict): Dictionary with the columns names for the SLM type
     """
     
-    # Check if the folder contains a CESVA folder
+    # folder contains a CESVA folder
     cesva_path = os.path.join(folder_path, 'CESVA')
    
     if os.path.isdir(cesva_path):
-        # If it does, load the data from the CESVA folder
+        # load the data from the CESVA folder
         subfolders = [f for f in os.listdir(cesva_path) if os.path.isdir(os.path.join(cesva_path, f))]
         
-        # Check if the CESVA folder contains subfolders
+        # CESVA folder contains subfolders
         for subfolder in subfolders:
             # If it does, load the data from the first subfolder
             subfolder_path = os.path.join(cesva_path, subfolder)
             
-            # Check if the subfolder contains measurement files
+            # subfolder contains measurement files
             files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV', 'XLSX'))]
             
-            # If it does, load the data from the first measurement file
+            # load the data from the first measurement file
             if files:
                 return load_data(files[0], logger)  
             else:
@@ -99,7 +99,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             df_indicadores (pd.DataFrame): Dataframe with the indicators
             df_common_format (pd.DataFrame): Dataframe with the data in a common format
     """
-    # Process each folder
     for folder in tqdm(folders, desc="Processing folders"):
         reg_folder = os.path.join(input_folder, folder)
         
@@ -109,7 +108,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
     
         spl_string = "SPL"
         graphics_string = "Graphics"
-        # Create the output folder
+        #  output folder
         logger.info(f"folder {folder}")
         result_dir_name = "5-Resultados"
         
@@ -162,7 +161,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             # Plotting time plot
             if PLOT_MAKE_TIME_PLOT:
                 logger.info(f"Plotting time plot for folder {folder}")
-                print(f"folder_output_dir: {folder_output_dir}")
+                # print(f"folder_output_dir: {folder_output_dir}")
                 make_time_plot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
             
             # Plotting heatmap evolution hour

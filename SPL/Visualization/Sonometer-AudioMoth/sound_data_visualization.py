@@ -226,6 +226,9 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
         plotname (str): Prefix to name the plot    
     """
     try:
+        print(df)
+        print(df.columns)
+        
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
@@ -510,8 +513,8 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         ind_column (str): Name of the column to use, tipycally LAeq
     """
     try:
-        print(df.columns)
-        print(df)
+        # print(df.columns)
+        # print(df)
         
         if "Fecha" not in df.columns and "Date hour" in df.columns:
             # df["Fecha"] = df["Date hour"]

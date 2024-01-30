@@ -1,6 +1,5 @@
 import os
 import subprocess
-# import logging
 import logging
 
 # usage example:
@@ -29,4 +28,18 @@ base_directory = input("Enter the 3-Medidas folder: ")
 base_directory = os.path.join(base_directory)
 
 process_audiomoth_folders(base_directory)
-logging.info("Finished processing all folders")
+logging.info("Finished processing all folders for leq levels")
+
+
+###############################################################
+###############################################################
+###############################################################
+
+
+logging.info("Starting plotting leq levels")
+
+# change path
+os.chdir(r'C:\\Users\\GIS2\\Documents\\santi\\GitHub\\AAC\\\SPL\\Visualization\\Sonometer-AudioMoth')
+base_directory_plot = base_directory.replace('3-Medidas', '5-Resultados')
+
+subprocess.run(['python', './main.py', '-f', base_directory_plot, '-a', '900', '-p', '90', '10'])

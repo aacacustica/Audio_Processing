@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO,
 ###############################################################
 ###############################################################
 ###############################################################
-# PROCESSING MODEL
+# PROCESSING AI MODEL
 
 # usage example:
 #     (inference) PS C:\Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Urban_Model> python .\process_urban_model.py
@@ -29,6 +29,7 @@ def process_urban_model(base_directory):
             subprocess.run(['python', './urban_model.py', '-p', audiopath])
 
 logging.info("Starting processing LEQ LEVELS")
+
 # go to path
 os.chdir(r'C:\\Users\\GIS2\\Documents\\santi\\GitHub\\AAC\\\AI_Model\\Urban_Model')
 
@@ -36,7 +37,6 @@ base_directory = input("Enter the 3-Medidas folder: ")
 base_directory = os.path.join(base_directory)
 
 process_urban_model(base_directory)
-logging.info("Finished processing all folders")
 
 ###############################################################
 ###############################################################

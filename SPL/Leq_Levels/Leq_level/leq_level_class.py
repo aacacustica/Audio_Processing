@@ -164,7 +164,7 @@ class AudioProcessor:
             bA, aA, bC, aC = self.get_weighting_coeffs(predominant_fs)
             db = self.process_audio_files(full_path, predominant_fs, int(predominant_fs), C, bA, aA, bC, aC)
             csv_name = self.save_levels_to_csv(db, full_path, os.path.basename(os.path.normpath(self.directory_path)), args.result_dir)
-            print(f"CSV file saved: {csv_name}")
+            # print(f"CSV file saved: {csv_name}")
             self.sort_csv_by_date(csv_name)
             return C
         except Exception as e:

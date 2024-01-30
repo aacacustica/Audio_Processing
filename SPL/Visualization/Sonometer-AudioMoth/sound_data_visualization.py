@@ -372,8 +372,8 @@ def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_col
         agg_func (str): Aggregation function, Leq
         plotname (str): Prefix to name the plot
     """
-    print(df)
-    print(df.columns)
+    # print(df)
+    # print(df.columns)
     
     if not isinstance(df.index, pd.DatetimeIndex):
         logger.error("DataFrame index is not a datetime index.")

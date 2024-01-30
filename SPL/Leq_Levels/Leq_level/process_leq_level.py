@@ -5,13 +5,12 @@ import logging
 
 # usage example:
 
-#     (inference) PS C:\Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Urban_Model> python .\process_urban_model.py
-#     Enter the 3-Medidas folder: \\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas
-
+# (inference) PS C:\Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Urban_Model> python .\process_urban_model.py
+# Enter the 3-Medidas folder: \\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas            
 
 logging.basicConfig(level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s', 
-                    filename='urban_model.log',
+                    filename='leq_levels.log',
                     )
 
 def process_audiomoth_folders(base_directory):
@@ -24,7 +23,7 @@ def process_audiomoth_folders(base_directory):
             audiopath = os.path.join(full_path, 'AUDIOMOTH')
             logging.info("Processing: " + audiopath)
             
-            subprocess.run(['python', './urban_model.py', '-p', audiopath])
+            subprocess.run(['python', './leq_level_class.py', '-p', audiopath])
 
 base_directory = input("Enter the 3-Medidas folder: ")
 base_directory = os.path.join(base_directory)

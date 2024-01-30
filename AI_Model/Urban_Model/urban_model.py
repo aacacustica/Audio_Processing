@@ -355,8 +355,8 @@ if __name__ == "__main__":
     try:
         data_df = get_predictions(audio_files=valid_audio_files,
                                   fs_model=fs_model,
-                                  w_time=analysis_window_time,
-                                #   w_time=5/60,
+                                #   w_time=analysis_window_time,
+                                  w_time=10/60,
                                   taxonomy_mapping=taxonomy_mapping,
                                   n_predictions=n_predictions)
     except Exception as e:

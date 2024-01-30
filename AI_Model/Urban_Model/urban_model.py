@@ -129,9 +129,9 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
             continue
         
         waveform = wav_data / 32768.0  # 2**15
-        w_size = int(w_time * 60 * sr)
+        # w_size = int(w_time * 60 * sr)
         # w_size = w_time * 60 * sr
-        # w_size = int(round(14.99 * 60 * sr))
+        w_size = int(round(14.99 * 60 * sr))
         # w_size = int(round(10.0 * 60 * sr))
         
         print_audio_time(w_size, sr, wav_data)      
@@ -310,7 +310,9 @@ if __name__ == "__main__":
         
         if not os.path.exists(make_visualizacion):
             os.makedirs(make_visualizacion)
-        
+    
+    # get 
+    
     # get audio files
     try:
         audio_files = [f for f in os.listdir(audio_path) if f.endswith(('.WAV', '.wav'))]
@@ -355,8 +357,8 @@ if __name__ == "__main__":
     try:
         data_df = get_predictions(audio_files=valid_audio_files,
                                   fs_model=fs_model,
-                                #   w_time=analysis_window_time,
-                                  w_time=10/60,
+                                  w_time=analysis_window_time,
+                                #   w_time=10/60,
                                   taxonomy_mapping=taxonomy_mapping,
                                   n_predictions=n_predictions)
     except Exception as e:

@@ -52,11 +52,11 @@ It allows users to specify parameters such as the path to the sonometers folder,
 ## Prerequisites
 Before running this script, ensure that you have Python installed on your system. Additionally, you should have the following Python packages installed:
 
-`argparse`
-`os`
-`logging_config` (custom module)
-`config` (custom module)
-`sound_data_processing` (custom module)
+- `argparse`
+- `os`
+- `logging_config` (custom module)
+- `config` (custom module)
+- `sound_data_processing` (custom module)
 
 ## Installation
 Install the required Python packages using pip, if they are not already installed:
@@ -74,9 +74,9 @@ To use this script, run it from the command line with the required and optional 
 ```
 
 ## Optional Arguments
-`-a, --agg_period:` Aggregation period in seconds. Default is 900 seconds (15 minutes).
-`-o, --output-dir:` Output directory. If not provided, the output directory is the same as the input directory.
-`-p, --percentiles:` Percentiles to plot (e.g., [90, 10]). Default is L90 and L10.
+- `-a, --agg_period:` Aggregation period in seconds. Default is 900 seconds (15 minutes).
+- `-o, --output-dir:` Output directory. If not provided, the output directory is the same as the input directory.
+- `-p, --percentiles:` Percentiles to plot (e.g., [90, 10]). Default is L90 and L10.
 
 ## Example Command
 ```bash

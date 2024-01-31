@@ -8,6 +8,12 @@ import librosa
 import librosa.display
 plt.style.use("bmh")
 
+""" 
+python .\plot_spectrogram_octave.py -p "\ 192.168.205.117\AAC_Server\OCIO\Tests\CALIBRACION\AUDIO\ 20231117_140100.WAV" -t audio -sd=0 -ed=-20
+
+python .\plot_spectrogram_octave.py -p "\ 192.168.205.117\AAC_Server\OCIO\Tests\CALIBRACION\Results\CALIBRACION_spl_oct.csv" -i 1
+"""
+
 octave_bands = [
     '12.4', '15.62', '19.69', '24.8', '31.25', '39.37', '49.61', '62.5', '78.75', '99.21',
     '125.0', '157.49', '198.43', '250.0', '314.98', '396.85', '500.0', '629.96', '793.7', 
@@ -146,7 +152,7 @@ def main():
                 full_audio_path = os.path.join(file_path, audio_file)
                 if os.path.isfile(full_audio_path) and audio_file.lower().endswith(('.wav', '.mp3', '.flac', '.WAV', '.MP3', '.FLAC')):
                     process_audio_file(full_audio_path, start_db, end_db)
-        elif os.path.isfile(file_path):
+        elif os.path.isfile(file_path) and file_path.lower().endswith(('.wav', '.mp3', '.flac', '.WAV', '.MP3', '.FLAC')):
             # process a single audio file
             process_audio_file(file_path, start_db, end_db)
         else:
@@ -165,3 +171,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

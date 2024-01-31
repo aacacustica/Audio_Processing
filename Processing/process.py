@@ -1,76 +1,75 @@
 import os
 import subprocess
 import logging
+import sys
+
+# python .\process.py \\192.168.205.117\AAC_Server\TEST\3-Medidas
 
 logging.basicConfig(level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s', 
-                    filename='processing.log',
-                    )
+                    filename='processing.log')
 
-###############################################################
-###############################################################
-###############################################################
-# PROCESSING AI MODEL
+def run_subprocess(command):
+    try:
+        logging.info(f"Running command: {' '.join(command)}")
+        subprocess.run(command, check=True)
+        logging.info("Command finished successfully.")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"An error occurred while running command: {e}")
 
-# usage example:
-#     (inference) PS C:\Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Urban_Model> python .\process_urban_model.py
-#     Enter the 3-Medidas folder: \\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas
+urban_model_program = 'urban_model.py'
+leq_level_program = 'leq_level_class.py'
+plotting_program = 'main.py'
 
 def process_urban_model(base_directory):
+    os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Urban_Model')
+    logging.info("Changed directory to Urban Model")
+    logging.info(f"There are {len(os.listdir(base_directory))} folders to process in Urban Model")
+    
     for folder in os.listdir(base_directory):
-        logging.info(f"There are {len(os.listdir(base_directory))} folders in {base_directory}")
-        
+        logging.info(f"Processing folder: {folder}")
         full_path = os.path.join(base_directory, folder)
-        
-        if os.path.isdir(full_path) and 'AUDIOMOTH' in os.listdir(full_path):
+        if os.path.isdir(full_path):
             audiopath = os.path.join(full_path, 'AUDIOMOTH')
-            logging.info("Processing: " + audiopath)
-            
-            subprocess.run(['python', './urban_model.py', '-p', audiopath])
+            if os.path.exists(audiopath):
+                logging.info(f"Found AUDIOMOTH in {full_path}. Processing...")
+                subprocess.run(['python', urban_model_program, '-p', audiopath])
 
-logging.info("Starting processing LEQ LEVELS")
-
-# go to path
-os.chdir(r'C:\\Users\\GIS2\\Documents\\santi\\GitHub\\AAC\\\AI_Model\\Urban_Model')
-
-base_directory = input("Enter the 3-Medidas folder: ")
-base_directory = os.path.join(base_directory)
-
-process_urban_model(base_directory)
-
-###############################################################
-###############################################################
-###############################################################
-
-# PROCESSING LEQ LEVELS
 def process_leq_level(base_directory):
+    os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Leq_Levels\Leq_level')
+    logging.info("Changed directory to Leq Level")
     for folder in os.listdir(base_directory):
         full_path = os.path.join(base_directory, folder)
-        
-        if os.path.isdir(full_path) and 'AUDIOMOTH' in os.listdir(full_path):
+        if os.path.isdir(full_path):
             audiopath = os.path.join(full_path, 'AUDIOMOTH')
-            logging.info("Processing: " + audiopath)
+            if os.path.exists(audiopath):
+                logging.info(f"Processing: {audiopath} in Leq Level")
+                run_subprocess(['python', leq_level_program, '-p', audiopath])
             
-            subprocess.run(['python', './leq_level_class.py', '-p', audiopath])
-
-logging.info("Starting processing LEQ LEVELS")
-# go to path
-os.chdir(r'C:\\Users\\GIS2\\Documents\\santi\\GitHub\\AAC\\\SPL\\Leq_Levels\\Leq_level')
-
-process_leq_level(base_directory)
-
-
-###############################################################
-###############################################################
-###############################################################
-
-# PLOTTING LEQ LEVELS
 def process_plotting(base_directory):
-    subprocess.run(['python', './main.py', '-f', base_directory, '-a', '900', '-p', '90', '10'])
+    os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Visualization\Sonometer-AudioMoth')
+    logging.info("Changed directory to Plotting")
+    base_directory_plot = base_directory.replace('3-Medidas', '5-Resultados')
+    logging.info(f"Processing plotting for: {base_directory_plot}")
+    run_subprocess(['python', plotting_program, '-f', base_directory_plot, '-a', '900', '-p', '90', '10'])
 
-logging.info("Starting plotting leq levels")
-# go to path
-os.chdir(r'C:\\Users\\GIS2\\Documents\\santi\\GitHub\\AAC\\\SPL\\Visualization\\Sonometer-AudioMoth')
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        logging.error("Incorrect number of arguments passed.")
+        print("Usage: python script.py <3-Medidas folder path>")
+        sys.exit(1)
 
-base_directory_plot = base_directory.replace('3-Medidas', '5-Resultados')
-process_plotting(base_directory)
+    base_directory = sys.argv[1]
+    if not os.path.exists(base_directory):
+        logging.error(f"The provided path does not exist: {base_directory}")
+        print(f"The provided path does not exist: {base_directory}")
+        sys.exit(1)
+
+    logging.info("Starting processing AI MODEL")
+    process_urban_model(base_directory)
+
+    logging.info("Starting processing LEQ LEVELS")
+    process_leq_level(base_directory)
+
+    logging.info("Starting plotting leq levels")
+    process_plotting(base_directory)

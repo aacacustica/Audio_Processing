@@ -21,6 +21,15 @@ urban_model_program = 'urban_model.py'
 leq_level_program = 'leq_level_class.py'
 plotting_program = 'main.py'
 
+def get_last_subfolder(directory):
+    subfolders = [os.path.join(directory, o) for o in os.listdir(directory) 
+                  if os.path.isdir(os.path.join(directory, o))]
+    if not subfolders:
+        return None
+    # Sort subfolders by name and return the last one
+    subfolders.sort()
+    return subfolders[-1]
+
 def process_urban_model(base_directory):
     os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Urban_Model')
     logging.info("Changed directory to Urban Model")
@@ -30,10 +39,10 @@ def process_urban_model(base_directory):
         logging.info(f"Processing folder: {folder}")
         full_path = os.path.join(base_directory, folder)
         if os.path.isdir(full_path):
-            audiopath = os.path.join(full_path, 'AUDIOMOTH')
-            if os.path.exists(audiopath):
-                logging.info(f"Found AUDIOMOTH in {full_path}. Processing...")
-                subprocess.run(['python', urban_model_program, '-p', audiopath])
+            last_subfolder = get_last_subfolder(full_path)
+            if last_subfolder:
+                logging.info(f"Found last subfolder in {full_path}. Processing...")
+                subprocess.run(['python', urban_model_program, '-p', last_subfolder])
 
 def process_leq_level(base_directory):
     os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Leq_Levels\Leq_level')
@@ -41,10 +50,10 @@ def process_leq_level(base_directory):
     for folder in os.listdir(base_directory):
         full_path = os.path.join(base_directory, folder)
         if os.path.isdir(full_path):
-            audiopath = os.path.join(full_path, 'AUDIOMOTH')
-            if os.path.exists(audiopath):
-                logging.info(f"Processing: {audiopath} in Leq Level")
-                run_subprocess(['python', leq_level_program, '-p', audiopath])
+            last_subfolder = get_last_subfolder(full_path)
+            if last_subfolder:
+                logging.info(f"Processing: {last_subfolder} in Leq Level")
+                run_subprocess(['python', leq_level_program, '-p', last_subfolder])
             
 def process_plotting(base_directory):
     os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Visualization\Sonometer-AudioMoth')

@@ -69,9 +69,9 @@ pip install argparse os
 To use this script, run it from the command line with the required and optional arguments.
 
 ## Required Arguments
-```bash
--f, --path_sonometers: Path to the sonometers folder.
-```
+
+- `-f, --path_sonometers:` Path to the sonometers folder.
+
 
 ## Optional Arguments
 - `-a, --agg_period:` Aggregation period in seconds. Default is 900 seconds (15 minutes).

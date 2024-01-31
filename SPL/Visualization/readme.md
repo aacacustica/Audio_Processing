@@ -64,7 +64,7 @@ Install the required Python packages using pip, if they are not already installe
 ```bash
 pip install argparse os
 ```
-# Install any other dependencies that are specific to your project
+# Install any other dependencies
 ## Usage
 To use this script, run it from the command line with the required and optional arguments.
 

@@ -45,7 +45,7 @@ To use this script, run it from the command line with the required and optional 
 
 ### Example Command
 ```bash
-python urban_model.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\P1_CONTENEDORES\AUDIOMOTH" -a "session1" -w 15 -n 3 -r /path/to/results
+python urban_model.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\P1_CONTENEDORES\AUDIOMOTH" -w 15 -n 3 -r </path/to/results>
 ```
 
 ### Output

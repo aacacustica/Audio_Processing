@@ -9,6 +9,10 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s', 
                     filename='processing.log')
 
+urban_model_program = 'urban_model.py'
+leq_level_program = 'leq_level_class.py'
+plotting_program = 'main.py'
+
 def run_subprocess(command):
     try:
         logging.info(f"Running command: {' '.join(command)}")
@@ -17,18 +21,17 @@ def run_subprocess(command):
     except subprocess.CalledProcessError as e:
         logging.error(f"An error occurred while running command: {e}")
 
-urban_model_program = 'urban_model.py'
-leq_level_program = 'leq_level_class.py'
-plotting_program = 'main.py'
+
 
 def get_last_subfolder(directory):
     subfolders = [os.path.join(directory, o) for o in os.listdir(directory) 
                   if os.path.isdir(os.path.join(directory, o))]
     if not subfolders:
         return None
-    # Sort subfolders by name and return the last one
     subfolders.sort()
     return subfolders[-1]
+
+
 
 def process_urban_model(base_directory):
     os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Urban_Model')
@@ -44,6 +47,8 @@ def process_urban_model(base_directory):
                 logging.info(f"Found last subfolder in {full_path}. Processing...")
                 subprocess.run(['python', urban_model_program, '-p', last_subfolder])
 
+
+
 def process_leq_level(base_directory):
     os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Leq_Levels\Leq_level')
     logging.info("Changed directory to Leq Level")
@@ -54,6 +59,8 @@ def process_leq_level(base_directory):
             if last_subfolder:
                 logging.info(f"Processing: {last_subfolder} in Leq Level")
                 run_subprocess(['python', leq_level_program, '-p', last_subfolder])
+
+
             
 def process_plotting(base_directory):
     os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Visualization\Sonometer-AudioMoth')
@@ -61,6 +68,9 @@ def process_plotting(base_directory):
     base_directory_plot = base_directory.replace('3-Medidas', '5-Resultados')
     logging.info(f"Processing plotting for: {base_directory_plot}")
     run_subprocess(['python', plotting_program, '-f', base_directory_plot, '-a', '900', '-p', '90', '10'])
+
+
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -73,6 +83,8 @@ if __name__ == "__main__":
         logging.error(f"The provided path does not exist: {base_directory}")
         print(f"The provided path does not exist: {base_directory}")
         sys.exit(1)
+
+
 
     logging.info("Starting processing AI MODEL")
     process_urban_model(base_directory)

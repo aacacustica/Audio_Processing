@@ -49,7 +49,7 @@ The program expects audio files to be in `.wav` format.
 This script is designed to process the visualization of csv files. 
 It allows users to specify parameters such as the path to the sonometers folder, aggregation period, percentiles for plotting, and an output directory.
 
-## Prerequisites
+### Prerequisites
 Before running this script, ensure that you have Python installed on your system. Additionally, you should have the following Python packages installed:
 
 - `argparse`
@@ -58,50 +58,50 @@ Before running this script, ensure that you have Python installed on your system
 - `config` (custom module)
 - `sound_data_processing` (custom module)
 
-## Installation
+### Installation
 Install the required Python packages using pip, if they are not already installed:
 
 ```bash
 pip install argparse os
 ```
-## Usage
+### Usage
 To use this script, run it from the command line with the required and optional arguments.
 
-## Required Arguments
+### Required Arguments
 
 - `-f, --path_sonometers:` Path to the sonometers folder.
 
 
-## Optional Arguments
+### Optional Arguments
 - `-a, --agg_period:` Aggregation period in seconds. Default is 900 seconds (15 minutes).
 - `-o, --output-dir:` Output directory. If not provided, the output directory is the same as the input directory.
 - `-p, --percentiles:` Percentiles to plot (e.g., [90, 10]). Default is L90 and L10.
 
-## Example Command
+### Example Command
 ```bash
 python .\main.py -f "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\5-Resultados" -a 900 -p 90 10
 ```
-## Output
+### Output
 The script creates a folder with the same name as the sonometer folder in the output directory. Inside this folder, it creates a folder for each sonometer with the corresponding plots.
 
-## Help Command
+### Help Command
 For a detailed description of all the available options and default values, run the help command:
 
 ```bash
 python main.py -h
 ```
 
-## Logging
+### Logging
 The script uses a custom logging configuration. Ensure that the `logging_config` module is correctly set up to capture logs as desired.
 
 <br>
 <br>
 
-### [Spectrogram](#Spectrogram)
+## [Spectrogram](#Spectrogram)
 
 This Python script is designed for plotting spectrograms from audio files or CSV data. It supports various audio formats and can plot octave band data from CSV files. The script generates visual representations of spectral data over time, useful for analyzing audio characteristics.
 
-## Prerequisites
+### Prerequisites
 
 Libraries: pandas, numpy, matplotlib, librosa, argparse, os
 Audio files in .wav, .mp3, .flac formats or CSV files containing octave band data.
@@ -112,10 +112,10 @@ Ensure you have Python 3.x installed along with the required libraries. You can 
 pip install pandas numpy matplotlib librosa
 ```
 
-## Usage
+### Usage
 The script can be used in two modes: Audio and CSV.
 
-## For Audio Files
+### For Audio Files
 To plot spectrograms from audio files, use the following command:
 
 ```bash
@@ -126,7 +126,7 @@ python plot_spectrogram_octave.py -p "path_to_audio_file" -t audio [-sd start_db
 - sd: (Optional) Start decibel for the spectrogram.
 - ed: (Optional) End decibel for the spectrogram.
 
-## For CSV Files
+### For CSV Files
 To plot octave band spectrograms from CSV data, use this command:
 
 ``` bash
@@ -138,10 +138,10 @@ python plot_spectrogram_octave.py -p "path_to_csv_file" -i interval [-s start_ti
     -s: (Optional) Start time for filtering the data.
     -e: (Optional) End time for filtering the data.
 
-## Parameters
+### Parameters
 - `start_db` and `end_db` are used for setting the dB range in audio spectrograms.
 - `start_time` and `end_time` are used to filter the data by time in CSV spectrograms.
 - `interval` sets the x-axis tick interval for CSV spectrograms.
 
-## Output
+### Output
 The script generates spectrogram images and saves them in a Spectrogram folder within the same directory as the input files. For CSV files, it also generates an Excel file with the processed data.

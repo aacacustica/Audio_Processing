@@ -226,8 +226,8 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
         plotname (str): Prefix to name the plot    
     """
     try:
-        print(df)
-        print(df.columns)
+        # print(df)
+        # print(df.columns)
         
         sns.set_style("whitegrid")
         sns.set_palette("tab10")

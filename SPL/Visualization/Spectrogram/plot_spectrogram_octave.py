@@ -68,46 +68,44 @@ def plot_spectrogram_octave(path: str, df_filtered, file_name: str, interval_min
         plt.savefig(f'{path}/Spectrogram/{file_name}_spect_oct.png')
 
 def plot_spectrogram_audio(file_path, path, file_name, bands_multifunction, start_db=None, end_db=None, n_fft=2048, hop_length=512, win_length=None):
-    # Load the audio file
     y, sr = librosa.load(file_path, sr=None)
-    # Compute the Short-Time Fourier Transform (STFT)
+    # Short-Time Fourier Transform (STFT)
     D = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length, win_length=win_length))
-    # Convert amplitude to decibels
+    #   convert amplitude to decibels
     DB = librosa.amplitude_to_db(D, ref=np.max)
 
-    # Obtain the frequencies for the STFT
+    # get the frequencies for the STFT
     freqs = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
 
-    # Filter the frequencies for plotting
+    # filter the frequencies for plotting
     min_freq = min(bands_multifunction)
     max_freq = max(bands_multifunction)
     freq_indices_plot = np.where((freqs >= min_freq) & (freqs <= max_freq))[0]
     DB_filtered_plot = DB[freq_indices_plot, :]
 
-    # Plot the spectrogram
+    # plottting
     plt.figure(figsize=(15, 6))
-    librosa.display.specshow(DB_filtered_plot, sr=sr, hop_length=hop_length, x_axis='time', y_axis='log', fmin=min_freq, fmax=max_freq, vmin=start_db, vmax=end_db)
+    librosa.display.specshow(DB_filtered_plot, sr=sr, hop_length=hop_length, x_axis='time', y_axis='log', fmin=min_freq, fmax=max_freq, vmin=start_db, vmax=end_db, cmap='inferno')
     plt.colorbar(format='%+2.0f dB')
     plt.title(f'Spectrogram {file_name} {"(Detail)" if start_db or end_db else ""}')
     
-    # Save the plot
     os.makedirs(f'{path}/Spectrogram', exist_ok=True)
     plt.savefig(f'{path}/Spectrogram/{file_name}_spect{"_detail" if start_db or end_db else "rogram"}.png')
     plt.close()
 
-    # Find indices of the closest frequencies to the desired bands for the Excel file
+    # find indices of the closest frequencies to the desired bands
     freq_indices_excel = np.unique([np.argmin(np.abs(freqs - band)) for band in bands_multifunction])
     DB_filtered_excel = DB[freq_indices_excel, :]
 
-    # Convert DB_filtered_excel to a DataFrame
+    # convert filtered excel to a df
     df_excel = pd.DataFrame(DB_filtered_excel)
 
-    # Set column and row labels for time and frequency bins
+    # setting column and row labels for time and frequency bins
     times = librosa.frames_to_time(range(DB_filtered_excel.shape[1]), sr=sr, hop_length=hop_length)
     df_excel.columns = times
     df_excel.index = freqs[freq_indices_excel]
 
-    # Save to Excel
+    # save
     excel_filename = f'{path}/Spectrogram/{file_name}_spectrogram.xlsx'
     df_excel.to_excel(excel_filename)
     
@@ -149,7 +147,7 @@ def main():
                 if os.path.isfile(full_audio_path) and audio_file.lower().endswith(('.wav', '.mp3', '.flac', '.WAV', '.MP3', '.FLAC')):
                     process_audio_file(full_audio_path, start_db, end_db)
         elif os.path.isfile(file_path):
-            # Process a single audio file
+            # process a single audio file
             process_audio_file(file_path, start_db, end_db)
         else:
             print("The provided path is neither a file nor a directory, or the file format is not supported.")

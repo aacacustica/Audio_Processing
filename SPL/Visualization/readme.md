@@ -76,11 +76,11 @@ The program expects audio files to be in `.wav` format.
 <br>
 <br>
 
-## [Spectrogram](#Spectrogram)
+### [Spectrogram](#Spectrogram)
 
 This Python script is designed for plotting spectrograms from audio files or CSV data. It supports various audio formats and can plot octave band data from CSV files. The script generates visual representations of spectral data over time, useful for analyzing audio characteristics.
 
-### Prerequisites
+## Prerequisites
 
 Libraries: pandas, numpy, matplotlib, librosa, argparse, os
 Audio files in .wav, .mp3, .flac formats or CSV files containing octave band data.
@@ -94,7 +94,7 @@ pip install pandas numpy matplotlib librosa
 ## Usage
 The script can be used in two modes: Audio and CSV.
 
-# For Audio Files
+## For Audio Files
 To plot spectrograms from audio files, use the following command:
 
 ```bash
@@ -105,7 +105,7 @@ python plot_spectrogram_octave.py -p "path_to_audio_file" -t audio [-sd start_db
 - sd: (Optional) Start decibel for the spectrogram.
 - ed: (Optional) End decibel for the spectrogram.
 
-# For CSV Files
+## For CSV Files
 To plot octave band spectrograms from CSV data, use this command:
 
 ``` bash

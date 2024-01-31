@@ -80,7 +80,7 @@ To use this script, run it from the command line with the required and optional 
 
 ## Example Command
 ```bash
-python main.py -f "C:/Users/usuario/Desktop/sonometers" -a 900 -p 90 10
+python .\main.py -f "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\5-Resultados" -a 900 -p 90 10
 ```
 ## Output
 The script creates a folder with the same name as the sonometer folder in the output directory. Inside this folder, it creates a folder for each sonometer with the corresponding plots.

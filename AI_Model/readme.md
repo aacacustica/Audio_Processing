@@ -60,4 +60,59 @@ The script uses a custom taxonomy mapping (`urban_taxonomy_map_v1_0.json`). Ensu
 ### GPU Configuration
 The script is configured to utilize GPU for TensorFlow if available. Ensure your system has a compatible GPU and TensorFlow GPU version installed.
 
+
+
 ## [Visualization](#Visualization)
+
+### Overview
+This Python script is designed for visualizing audio classification results. It processes a CSV file containing audio classification data, generates a heatmap of classes over time, and saves the visualization as an image. The script also provides options for handling audio file intervals and class label manipulations.
+
+### Prerequisites
+Before running this script, ensure you have the following Python packages installed:
+
+- `pandas`
+- `seaborn`
+- `matplotlib`
+- `ast`
+- `numpy`
+- `os`
+- `subprocess`
+
+### Installation
+Install the required Python packages using pip:
+
+```bash
+pip install pandas seaborn matplotlib numpy
+```
+
+### Usage
+To use this script, you need to provide the path to a CSV file containing audio classification results. The script performs several operations including extracting the location from the file name, processing class labels, and generating a heatmap.
+
+### Running the Script
+Run the script in a Python environment.
+Input the path to the CSV file when prompted.
+The script will process the data and generate a heatmap visualization.
+
+```bash
+"\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\5-Resultados\P1_CONTENEDORES\URBAN_Model\Predictions\Urban_Model_P1_CONTENEDORES_v1_0.csv"
+```
+
+### Key Functions
+- `Location Extraction:` Extracts the location identifier from the file name.
+- `Label Processing:` Includes functions to remove or change labels, and select the first element from class lists.
+- `Interval Printing:` Prints the average interval between audio files based on predefined constants.
+- `Date Insertion:` Enhances the DataFrame with additional date and time columns for detailed analysis.
+- `Output Directory Creation:` Creates a directory for saving visualizations.
+- `Heatmap Generation:` Generates a heatmap of classes over time and saves it as an image.
+
+### Visualization
+The output is a heatmap saved as an image in a visualization directory. The heatmap displays the distribution of audio classes across different times of the day.
+
+### Customization
+You can modify the script to handle different class labels or adjust the visualization parameters according to your dataset.
+
+### Output
+The script saves the generated heatmap image in a specified directory. The file name includes the location identifier and the stable version tag obtained from the Git repository.
+
+### Note
+The script uses Git tags to manage versions. Ensure your Git environment is properly set up if you're using this feature.

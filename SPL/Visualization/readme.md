@@ -138,9 +138,7 @@ python plot_spectrogram_octave.py -p "path_to_csv_file" -i interval [-s start_ti
     -s: (Optional) Start time for filtering the data.
     -e: (Optional) End time for filtering the data.
 
-
 ## Parameters
-
 - `start_db` and `end_db` are used for setting the dB range in audio spectrograms.
 - `start_time` and `end_time` are used to filter the data by time in CSV spectrograms.
 - `interval` sets the x-axis tick interval for CSV spectrograms.

@@ -6,6 +6,12 @@
 `Subprocess Management:` Uses subprocess module to run external scripts.
 `Logging and Output:` Displays logs and subprocess outputs in the GUI.
 
+### Execution
+Just execute the `process.py` program. You either have to press the `run` bottom on Visual Studio Code or execute the program from the terminal:
+
+```bash
+python process.py
+```
 
 ### Key Components
 `TextHandler (Class):` A custom logging handler to redirect logs to a Tkinter Text widget.

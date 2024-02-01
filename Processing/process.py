@@ -6,8 +6,17 @@ import threading
 import queue
 import logging
 
+urban_model_program = 'urban_model.py'
+leq_level_program = 'leq_level_class.py'
+plotting_program = 'main.py'
+
+
+
+
 class TextHandler(logging.Handler):
+    """This class allows you to log to a Tkinter Text or ScrolledText widget"""
     def __init__(self, text):
+        # run the regular Handler __init__
         super().__init__()
         self.text = text
 
@@ -18,11 +27,10 @@ class TextHandler(logging.Handler):
         self.text.configure(state='disabled')
         self.text.yview(tk.END)
 
-urban_model_program = 'urban_model.py'
-leq_level_program = 'leq_level_class.py'
-plotting_program = 'main.py'
+
 
 def run_subprocess(command, queue):
+    """Run the given command in a subprocess and put the output in the queue."""
     try:
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         for line in iter(process.stdout.readline, ''):
@@ -33,7 +41,9 @@ def run_subprocess(command, queue):
     except subprocess.CalledProcessError as e:
         queue.put(f"An error occurred: {e}")
 
+
 def get_last_subfolder(directory):
+    """Return the last subfolder in the given directory."""
     subfolders = [os.path.join(directory, o) for o in os.listdir(directory) 
                   if os.path.isdir(os.path.join(directory, o))]
     if not subfolders:
@@ -41,7 +51,9 @@ def get_last_subfolder(directory):
     subfolders.sort()
     return subfolders[-1]
 
+
 def process_urban_model(base_directory, queue):
+    """Process the Urban Model for the given base directory."""
     os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Urban_Model')
     queue.put("Changed directory to Urban Model")
     for folder in os.listdir(base_directory):
@@ -52,7 +64,9 @@ def process_urban_model(base_directory, queue):
                 queue.put(f"Processing folder: {folder}")
                 run_subprocess(['python', urban_model_program, '-p', last_subfolder], queue)
 
+
 def process_leq_level(base_directory, queue):
+    """Process the Leq Level for the given base directory."""
     os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Leq_Levels\Leq_level')
     queue.put("Changed directory to Leq Level")
     for folder in os.listdir(base_directory):
@@ -63,14 +77,18 @@ def process_leq_level(base_directory, queue):
                 queue.put(f"Processing: {last_subfolder} in Leq Level")
                 run_subprocess(['python', leq_level_program, '-p', last_subfolder], queue)
 
+
 def process_plotting(base_directory, queue):
+    """Process the Plotting for the given base directory."""
     os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Visualization\Sonometer-AudioMoth')
     queue.put("Changed directory to Plotting")
     base_directory_plot = base_directory.replace('3-Medidas', '5-Resultados')
     queue.put(f"Processing plotting for: {base_directory_plot}")
     run_subprocess(['python', plotting_program, '-f', base_directory_plot, '-a', '900', '-p', '90', '10'], queue)
 
+
 def process_in_thread(base_directory, queue):
+    """Process the Urban Model, Leq Level and Plotting in a separate thread."""
     try:
         process_urban_model(base_directory, queue)
         process_leq_level(base_directory, queue)
@@ -79,7 +97,9 @@ def process_in_thread(base_directory, queue):
     except Exception as e:
         queue.put(str(e))
 
+
 def start_processing():
+    """Start processing the given path in a separate thread."""
     base_directory = path_entry.get()
     if not os.path.exists(base_directory):
         messagebox.showerror("Error", "The provided path does not exist.")
@@ -89,7 +109,9 @@ def start_processing():
     process_thread.start()
     root.after(100, check_queue)
 
+
 def check_queue():
+    """Check if there is something new in the queue to display."""
     while True:
         try:
             message = output_queue.get_nowait()
@@ -105,13 +127,9 @@ def check_queue():
 
     root.after(100, check_queue)
 
-# def browse_folder():
-#     dirname = filedialog.askdirectory()
-#     if dirname:
-#         path_entry.delete(0, tk.END)
-#         path_entry.insert(0, dirname)
 
 def browse_folder():
+    """Browse the folder and insert the path in the entry."""
     dirname = filedialog.askdirectory()
     if dirname:
         normalized_path = os.path.normpath(dirname)  # normalize the path
@@ -120,22 +138,26 @@ def browse_folder():
 
 
 if __name__ == "__main__":
+    # initialize logging handler
     root = tk.Tk()
     root.title("Audio Processing")
 
+    # label and entry for the path
     tk.Label(root, text="Enter the 3-Medidas folder path:").pack(padx=10, pady=5)
     path_entry = tk.Entry(root, width=50)
     path_entry.pack(padx=10, pady=5)
 
+    # browse button
     browse_button = tk.Button(root, text="Browse", command=browse_folder)
     browse_button.pack(padx=10, pady=5)
 
+    # start button
     start_button = tk.Button(root, text="Start Processing", command=start_processing)
     start_button.pack(padx=10, pady=5)
 
+    # logging handler
     log_text = scrolledtext.ScrolledText(root, state='disabled', height=10)
     log_text.pack(padx=10, pady=5)
 
     output_queue = queue.Queue()
-
     root.mainloop()

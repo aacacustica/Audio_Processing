@@ -7,8 +7,14 @@ import queue
 import logging
 
 urban_model_program = 'urban_model.py'
+urban_model_path = r"AI_Model\Urban_Model"
+
 leq_level_program = 'leq_level_class.py'
+leq_level_path = r"SPL\Leq_Levels\Leq_level"
+
 plotting_program = 'main.py'
+plotting_path = r"SPL\Visualization\Sonometer-AudioMoth"
+
 
 class TextHandler(logging.Handler):
     """This class allows you to log to a Tkinter Text or ScrolledText widget"""
@@ -25,6 +31,7 @@ class TextHandler(logging.Handler):
         self.text.yview(tk.END)
 
 
+
 def run_subprocess(command, queue):
     """Run the given command in a subprocess and put the output in the queue."""
     try:
@@ -37,6 +44,7 @@ def run_subprocess(command, queue):
     except subprocess.CalledProcessError as e:
         queue.put(f"An error occurred: {e}")
 
+
 def get_last_subfolder(directory):
     """Return the last subfolder in the given directory."""
     subfolders = [os.path.join(directory, o) for o in os.listdir(directory) 
@@ -46,9 +54,27 @@ def get_last_subfolder(directory):
     subfolders.sort()
     return subfolders[-1]
 
+
+def current_directory():
+    """Return the current directory."""
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    current_dir = current_dir.split('\\')[:-1]
+    current_dir = os.path.join(*current_dir)
+    # set c: in upper case
+    current_dir = current_dir[0].upper() + current_dir[1:]
+    print(current_dir) # c:Users\GIS2\Documents\santi\GitHub\AAC
+    return current_dir
+
+
 def process_urban_model(base_directory, queue):
     """Process the Urban Model for the given base directory."""
-    os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Urban_Model')
+    path = current_directory()
+    join_path = os.path.join(path, urban_model_path)
+    #normalize the path
+    # join_path = os.path.normpath(join_path)
+    print(join_path) # c:Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Urban_Model
+    os.chdir(join_path)
+    
     queue.put("Changed directory to Urban Model")
     for folder in os.listdir(base_directory):
         full_path = os.path.join(base_directory, folder)
@@ -58,9 +84,17 @@ def process_urban_model(base_directory, queue):
                 queue.put(f"Processing folder: {folder}")
                 run_subprocess(['python', urban_model_program, '-p', last_subfolder], queue)
 
+
 def process_leq_level(base_directory, queue):
     """Process the Leq Level for the given base directory."""
-    os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Leq_Levels\Leq_level')
+    path = current_directory()
+    join_path = os.path.join(path, leq_level_path)
+    #normalize the path
+    # join_path = os.path.normpath(join_path)
+    print(join_path) # c:Users\GIS2\Documents\santi\GitHub\AAC\SPL\Leq_Levels\Leq_level
+    os.chdir(join_path)
+    
+    # os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Leq_Levels\Leq_level')
     queue.put("Changed directory to Leq Level")
     for folder in os.listdir(base_directory):
         full_path = os.path.join(base_directory, folder)
@@ -70,13 +104,22 @@ def process_leq_level(base_directory, queue):
                 queue.put(f"Processing: {last_subfolder} in Leq Level")
                 run_subprocess(['python', leq_level_program, '-p', last_subfolder], queue)
 
+
 def process_plotting(base_directory, queue):
     """Process the Plotting for the given base directory."""
-    os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Visualization\Sonometer-AudioMoth')
+    current_directory()
+    join_path = os.path.join(current_directory(), plotting_path)
+    #normalize the path
+    # join_path = os.path.normpath(join_path)
+    print(join_path) # c:Users\GIS2\Documents\santi\GitHub\AAC\SPL\Visualization\Sonometer-AudioMoth
+    os.chdir(join_path)
+    
+    # os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Visualization\Sonometer-AudioMoth')
     queue.put("Changed directory to Plotting")
     base_directory_plot = base_directory.replace('3-Medidas', '5-Resultados')
     queue.put(f"Processing plotting for: {base_directory_plot}")
     run_subprocess(['python', plotting_program, '-f', base_directory_plot, '-a', '900', '-p', '90', '10'], queue)
+
 
 def process_in_thread(base_directory, queue):
     """Process the Urban Model, Leq Level and Plotting in a separate thread."""
@@ -88,6 +131,7 @@ def process_in_thread(base_directory, queue):
     except Exception as e:
         queue.put(str(e))
 
+
 def start_processing():
     """Start processing the given path in a separate thread."""
     base_directory = path_entry.get()
@@ -98,6 +142,7 @@ def start_processing():
     process_thread = threading.Thread(target=process_in_thread, args=(base_directory, output_queue))
     process_thread.start()
     root.after(100, check_queue)
+
 
 def check_queue():
     """Check if there is something new in the queue to display."""
@@ -116,6 +161,7 @@ def check_queue():
 
     root.after(100, check_queue)
 
+
 def browse_folder():
     """Browse the folder and insert the path in the entry."""
     dirname = filedialog.askdirectory()
@@ -126,6 +172,8 @@ def browse_folder():
 
 
 if __name__ == "__main__":
+    current_directory()
+    # exit()
     # initialize logging handler
     root = tk.Tk()
     root.title("Audio Processing")
@@ -148,5 +196,4 @@ if __name__ == "__main__":
     log_text.pack(padx=10, pady=5)
 
     output_queue = queue.Queue()
-
     root.mainloop()

@@ -7,10 +7,13 @@ import queue
 import logging
 
 urban_model_program = 'urban_model.py'
+urban_model_path = r"AI_Model\Urban_Model"
+
 leq_level_program = 'leq_level_class.py'
+leq_level_path = r"SPL\Leq_Levels\Leq_level"
+
 plotting_program = 'main.py'
-
-
+plotting_path = r"SPL\Visualization\Sonometer-AudioMoth"
 
 
 class TextHandler(logging.Handler):
@@ -52,9 +55,22 @@ def get_last_subfolder(directory):
     return subfolders[-1]
 
 
+def current_directory():
+    """Return the current directory."""
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    current_dir = current_dir.split('\\')[:-1]
+    current_dir = os.path.join(*current_dir)
+    print(current_dir) # c:Users\GIS2\Documents\santi\GitHub\AAC
+    return current_dir
+
+
 def process_urban_model(base_directory, queue):
     """Process the Urban Model for the given base directory."""
-    os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Urban_Model')
+    path = current_directory()
+    join_path = os.path.join(path, urban_model_path)
+    os.chdir(join_path)
+    print(join_path) # c:Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Urban_Model
+    
     queue.put("Changed directory to Urban Model")
     for folder in os.listdir(base_directory):
         full_path = os.path.join(base_directory, folder)
@@ -67,7 +83,12 @@ def process_urban_model(base_directory, queue):
 
 def process_leq_level(base_directory, queue):
     """Process the Leq Level for the given base directory."""
-    os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Leq_Levels\Leq_level')
+    path = current_directory()
+    join_path = os.path.join(path, leq_level_path)
+    os.chdir(join_path)
+    print(join_path) # c:Users\GIS2\Documents\santi\GitHub\AAC\SPL\Leq_Levels\Leq_level
+    
+    # os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Leq_Levels\Leq_level')
     queue.put("Changed directory to Leq Level")
     for folder in os.listdir(base_directory):
         full_path = os.path.join(base_directory, folder)
@@ -80,7 +101,12 @@ def process_leq_level(base_directory, queue):
 
 def process_plotting(base_directory, queue):
     """Process the Plotting for the given base directory."""
-    os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Visualization\Sonometer-AudioMoth')
+    current_directory()
+    join_path = os.path.join(current_directory(), plotting_path)
+    os.chdir(join_path)
+    print(join_path) # c:Users\GIS2\Documents\santi\GitHub\AAC\SPL\Visualization\Sonometer-AudioMoth
+    
+    # os.chdir(r'C:\Users\GIS2\Documents\santi\GitHub\AAC\SPL\Visualization\Sonometer-AudioMoth')
     queue.put("Changed directory to Plotting")
     base_directory_plot = base_directory.replace('3-Medidas', '5-Resultados')
     queue.put(f"Processing plotting for: {base_directory_plot}")
@@ -138,6 +164,8 @@ def browse_folder():
 
 
 if __name__ == "__main__":
+    current_directory()
+    exit()
     # initialize logging handler
     root = tk.Tk()
     root.title("Audio Processing")

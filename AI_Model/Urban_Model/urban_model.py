@@ -129,10 +129,8 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
             continue
         
         waveform = wav_data / 32768.0  # 2**15
+        w_size = int(w_time * sr)
         # w_size = int(w_time * 60 * sr)
-        # w_size = w_time * 60 * sr
-        w_size = int(round(14.99 * 60 * sr))
-        # w_size = int(round(10.0 * 60 * sr))
         
         print_audio_time(w_size, sr, wav_data)      
 
@@ -235,7 +233,7 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='Inferencia Yamnet de todos los archivos de audio en un directorio')
     parser.add_argument('-p', '--path', required=True, type=str, help='Path to the audio files')
     parser.add_argument('-a', '--abrev', type=str, help='Name to identify the predictions file')
-    parser.add_argument('-w', '--window', type=float, default=14.99, help='tamaño ventana de analisis en minutos')
+    parser.add_argument('-w', '--window', type=int, default=899, help='Analysis window size in seconds')
     parser.add_argument('-n', '--n-predictions', type=int, default=3, help='Number of predictions to be generated')
     parser.add_argument('-r', '--result-folder', type=str, default=None, help='Location where the results should be saved')
     args = parser.parse_args()
@@ -271,6 +269,7 @@ if __name__ == "__main__":
     
     # set analysis window size in minutes
     analysis_window_time = args.window # ventana de analisis en minutos
+    
     # set number of predictions
     n_predictions = args.n_predictions
     
@@ -310,9 +309,7 @@ if __name__ == "__main__":
         
         if not os.path.exists(make_visualizacion):
             os.makedirs(make_visualizacion)
-    
-    # get 
-    
+
     # get audio files
     try:
         audio_files = [f for f in os.listdir(audio_path) if f.endswith(('.WAV', '.wav'))]
@@ -358,7 +355,7 @@ if __name__ == "__main__":
         data_df = get_predictions(audio_files=valid_audio_files,
                                   fs_model=fs_model,
                                   w_time=analysis_window_time,
-                                #   w_time=10/60,
+                                #   w_time=1/60,
                                   taxonomy_mapping=taxonomy_mapping,
                                   n_predictions=n_predictions)
     except Exception as e:
@@ -368,7 +365,7 @@ if __name__ == "__main__":
 
     # csv File
     stable_version = get_stable_version()
-    predictions_file = f'Urban_Model_{abrev}_{stable_version}.csv'
+    predictions_file = f'Urban_Model_{args.abrev}_{stable_version}_window{args.window}s.csv'
     
     # save the predictions in a csv file
     data_df.to_csv(os.path.join(make_predicciones, predictions_file), index=False)

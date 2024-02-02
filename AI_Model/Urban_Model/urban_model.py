@@ -143,6 +143,7 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                 # to to that, we need to reshape the waveform to [1, -1] and predict, [to get the values of the prediction fdrom 0 to 1] then average the scores over the frames
                 scores, _ = yamnet.predict(np.reshape(waveform[fstart:fstart+w_size], [1, -1]), steps=1)
                 prediction = np.mean(scores, axis=0)
+                logging.debug(f"Raw predictions for {file}: {prediction}")
 
                 # top_original = np.argsort(prediction)[::-1][:5]
                 # get the top n predictions
@@ -158,9 +159,9 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
 
 
                 # [2] adjust scores based on the new taxonomy
-
                 # new_scores is a dictionary with the new classes as keys and the scores as values
                 new_scores = {key: 0 for key in set(taxonomy_mapping.values())}
+                logging.debug(f"New scores for {file}: {new_scores}")
                 # we go through the original classes and add the scores to the new classes
                 for original_class, mapped_class in taxonomy_mapping.items():
                     # get the index of the original class in the original taxonomy
@@ -169,30 +170,40 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                     new_scores[mapped_class] += prediction[index]
     
 
-
                 # NORMALIZE THE SCORES
 
-                # normalize the scores
+                # [1] normalize the scores
                 total_score = sum(new_scores.values())
                 for key in new_scores:
                     new_scores[key] /= total_score
+                logging.debug(f"Normalized scores for {file}: {new_scores}")
                 
-                # get the top n predictions, sorted in descending order
+                # [2] get the top n predictions, sorted in descending order
                 top_i = np.argsort(list(new_scores.values()))[::-1][:n_predictions]
+                logging.debug(f"Top indices for {file}: {top_i}")
 
                 # [3] we want to order the classes and probabilities by date
                 date = datetime.datetime.strptime(file.split('.')[0], '%Y%m%d_%H%M%S')
                 date = date + datetime.timedelta(minutes=w_time * count)
                 datetimes.append(date)
 
-
                 # [4] SAVE THE CUSTOM CLASSES AND PROBABILITIES
                 clip_classes = []
                 prob_classes = []
 
                 for i in top_i:
-                    clip_classes.append(list(new_scores.keys())[i])
-                    prob_classes.append(list(new_scores.values())[i])
+                    clip_class = list(new_scores.keys())[i]
+                    prob_class = list(new_scores.values())[i]
+                    clip_classes.append(clip_class)
+                    prob_classes.append(prob_class)
+
+                    # Log each class and probability as they're added
+                    logging.debug(f"Class: {clip_class}, Probability: {prob_class}")
+
+                # Log the final classes and probabilities for each window
+                logging.info(f"Custom classes for {file}: {clip_classes}")
+                logging.info(f"Custom probabilities for {file}: {prob_classes}")
+
 
                 # APPLY THE THRESHOLD TO GET CLEANER PREDICTIONS
                 if prob_classes:

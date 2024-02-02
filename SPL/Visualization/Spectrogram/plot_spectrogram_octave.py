@@ -114,6 +114,7 @@ def plot_spectrogram_audio(file_path, path, file_name, bands_multifunction, star
     # save
     excel_filename = f'{path}/Spectrogram/{file_name}_spectrogram.xlsx'
     df_excel.to_excel(excel_filename)
+    print(f"Excel file saved at: {excel_filename}")
     
     
 

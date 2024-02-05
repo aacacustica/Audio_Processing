@@ -30,7 +30,7 @@ def main():
     
     An example of how to run this script from the command line is:
     
-    python main.py -f "C:/Users/usuario/Desktop/sonometers" -a 900 -p 90 10
+    python main.py -f "C:/Users/usuario/Desktop/5-Resultados" -a 900 -p 90 10
     
     """
     logger = setup_logging()

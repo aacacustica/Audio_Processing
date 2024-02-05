@@ -48,6 +48,7 @@ def leq_levels_oct(audio_files:list ,fs_filterbanks:float , w_size: int, C:float
         try:        
             db = []
             x, _ = sf.read(os.path.join(audio_path,audio_file))
+            
             # aplicar ponderacion a y c a la señal
             y_A_weighted = lfilter(bA, aA, x)
             y_C_weighted = lfilter(bC, aC, x)
@@ -70,8 +71,10 @@ def leq_levels_oct(audio_files:list ,fs_filterbanks:float , w_size: int, C:float
                 
                 Lmax = np.max(fast_levels)
                 Lmin = np.min(fast_levels)
+                
                 # niveles tercio de octava en ponderacion Z
                 oct_level_temp = get_oct_levels(frame, third_oct,C)
+                
                 # creacion listas temporales
                 level_temp =  [LA,LC,LZ,Lmax, Lmin]
                 level_temp.extend(oct_level_temp)

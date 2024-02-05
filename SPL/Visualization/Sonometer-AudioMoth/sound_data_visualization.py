@@ -324,11 +324,16 @@ def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_colum
         agg_func (str): Aggregation function, Leq
         plotname (str): Prefix to name the plot
     """
+    # print(df)
     try:
+        
+        df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
+        df['date_day'] = df['date'].astype(str) + ' ' + df['Día']
+        
         leq_day_hour = pd.pivot_table(
             df, 
             values=values_column, 
-            index=['date'],
+            index=['date_day'],
             columns=['hour'], 
             aggfunc=agg_func
         ).round(1)
@@ -382,24 +387,19 @@ def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_col
         logger.error("DataFrame index is not a datetime index.")
         return
 
-    try:
-        # leq_day_hour = pd.pivot_table(
-        #     df, 
-        #     values=values_column, 
-        #     index=['date'],
-        #     columns=['hour'], 
-        #     aggfunc=agg_func
-        # ).round(1)
-        
+    try:      
         def get_15min_interval(dt):
             return f"{dt.hour:02d}:{(dt.minute // 15) * 15:02d}"
 
+        df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
+        df['date_day'] = df['date'].astype(str) + ' ' + df['Día']
+        
         df['15min_interval'] = df.index.map(get_15min_interval)
 
         leq_day_15min = pd.pivot_table(
             df, 
             values=values_column, 
-            index=['date'],
+            index=['date_day'],
             columns=['15min_interval'], 
             aggfunc=agg_func
         ).round(1)
@@ -532,6 +532,9 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         df_indicadores = (df.groupby(['date','indicador_str'])['Fecha'].agg(['first','last']))
         df_indicadores['duration'] = df_indicadores.apply(lambda row: calculate_duration(row['first'], row['last']), axis=1)
         
+        # set weekday in the plot
+        df['date_weekday'] = df['Fecha'].dt.strftime('%Y-%m-%d') + ' ' + df['Fecha'].dt.day_name().replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
+        
         # indicators to check
         indicators_to_check = ['Ld', 'Le', 'Ln']
 
@@ -567,7 +570,7 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         # make the energy average of the indicators
         indicadores_table = pd.pivot_table(
             data=df,
-            index="date",
+            index="date_weekday",
             columns="indicador_str",
             values=ind_column,
             aggfunc=leq
@@ -576,7 +579,7 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         desired_order = ["Ln", "Ld", "Le"]
         indicadores_table = indicadores_table.reindex(columns=desired_order)
 
-        plt.figure(figsize=(10, 8))
+        plt.figure(figsize=(15, 8))
         
         ax = sns.heatmap(
             indicadores_table, 

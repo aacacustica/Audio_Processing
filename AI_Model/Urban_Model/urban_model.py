@@ -1,12 +1,12 @@
 import json
 import numpy as np
 import soundfile as sf
-from scipy.signal import medfilt
 import os
 from tqdm import tqdm
 import datetime
 import pandas as pd
 import argparse
+import json
 
 import params
 import yamnet as yamnet_model
@@ -115,7 +115,8 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
     probs_original = [] 
     datetimes = []
     files = []
-    # audio_to_process = 10
+    spectrograms = []
+    # audio_to_process = 1
 
     # for file in tqdm(audio_files[:audio_to_process]):
     for file in tqdm(audio_files):
@@ -141,10 +142,15 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
 
                 # getting the scores for the original taxonomy
                 # to to that, we need to reshape the waveform to [1, -1] and predict, [to get the values of the prediction fdrom 0 to 1] then average the scores over the frames
-                scores, _ = yamnet.predict(np.reshape(waveform[fstart:fstart+w_size], [1, -1]), steps=1)
+                # scores, _ = yamnet.predict(np.reshape(waveform[fstart:fstart+w_size], [1, -1]), steps=1)
+                # get the spectrogram
+                scores, spectrogram = yamnet.predict(np.reshape(waveform[fstart:fstart+w_size], [1, -1]), steps=1)
+                
                 prediction = np.mean(scores, axis=0)
                 # logging.info(f"Raw predictions ({len(prediction)}) for {file}: {prediction}")
                 logging.info(f"Raw predictions ({len(prediction)}) for {file}")
+                
+                spectrograms.append(spectrogram)
 
                 # top_original = np.argsort(prediction)[::-1][:5]
                 # get the top n predictions
@@ -208,11 +214,6 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                 logging.info(f"Custom probabilities for {file}: {prob_classes}")
 
 
-                # APPLY THE THRESHOLD TO GET CLEANER PREDICTIONS
-                # if prob_classes:
-                #     prob_classes = medfilt(prob_classes, kernel_size=3)
-                #     pass
-
                 # append to the lists
                 logging.info(f"Appending custom classes for {file}: {clip_classes} \nwith probabilities {prob_classes} to the list.")
                 audio_classes.append(clip_classes)
@@ -229,19 +230,21 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
 
 
     # SAVE THE PREDICTIONS IN A (DICT) DATAFRAME
-    data_dict = {'files': files, 
+    data_dict = {'file': files, 
                  'datetime': datetimes, 
                  'classes_custom': audio_classes, 
                  'probabilities_custom': probs,
-                 'sum_probs_custom': [sum(x) for x in probs],
+                #  'sum_probs_custom': [sum(x) for x in probs],
                  'classes_original': audio_classes_original, 
                  'probabilities_original': probs_original,
-                 'sum_probs_original': [sum(x) for x in probs_original]} 
+                #  'sum_probs_original': [sum(x) for x in probs_original],
+                 'spectrograms': spectrograms
+                 } 
 
     # sort by datetime in ascending order
     df = pd.DataFrame(data_dict)
     df_sorted = df.sort_values(by='datetime')
-    
+      
     return df_sorted
 
 def argument_parser():
@@ -384,4 +387,10 @@ if __name__ == "__main__":
     
     # save the predictions in a csv file
     data_df.to_csv(os.path.join(make_predicciones, predictions_file), index=False)
+    
+    # set index to datetime
+    # data_df.set_index('datetime', inplace=True)
+    data_df.to_json(os.path.join(make_predicciones, predictions_file.replace('.csv', '.json')), orient='records', date_format='iso', indent=4)
+    
     logging.info(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(make_predicciones, predictions_file))}")
+    logging.info(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(make_predicciones, predictions_file.replace('.csv', '.json')))}")

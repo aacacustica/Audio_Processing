@@ -19,7 +19,7 @@ tf.get_logger().setLevel(logging.ERROR)
 
 logging.basicConfig(level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s', 
-                    filename='urban_model.log',
+                    filename='urban_model_debug.log',
                     )
 
 
@@ -143,7 +143,8 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                 # to to that, we need to reshape the waveform to [1, -1] and predict, [to get the values of the prediction fdrom 0 to 1] then average the scores over the frames
                 scores, _ = yamnet.predict(np.reshape(waveform[fstart:fstart+w_size], [1, -1]), steps=1)
                 prediction = np.mean(scores, axis=0)
-                logging.debug(f"Raw predictions for {file}: {prediction}")
+                # logging.info(f"Raw predictions ({len(prediction)}) for {file}: {prediction}")
+                logging.info(f"Raw predictions ({len(prediction)}) for {file}")
 
                 # top_original = np.argsort(prediction)[::-1][:5]
                 # get the top n predictions
@@ -156,12 +157,14 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                 # append to the lists
                 audio_classes_original.append(clip_classes_original)
                 probs_original.append(prob_classes_original)
+                logging.info(f"Original classes for {file}: {clip_classes_original}")
+                logging.info(f"Original probabilities for {file}: {prob_classes_original}")
 
 
                 # [2] adjust scores based on the new taxonomy
                 # new_scores is a dictionary with the new classes as keys and the scores as values
                 new_scores = {key: 0 for key in set(taxonomy_mapping.values())}
-                logging.debug(f"New scores for {file}: {new_scores}")
+                logging.info(f"New scores for {file}: {new_scores}")
                 # we go through the original classes and add the scores to the new classes
                 for original_class, mapped_class in taxonomy_mapping.items():
                     # get the index of the original class in the original taxonomy
@@ -176,11 +179,11 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                 total_score = sum(new_scores.values())
                 for key in new_scores:
                     new_scores[key] /= total_score
-                logging.debug(f"Normalized scores for {file}: {new_scores}")
+                logging.info(f"Normalized scores for {file}: {new_scores}")
                 
                 # [2] get the top n predictions, sorted in descending order
                 top_i = np.argsort(list(new_scores.values()))[::-1][:n_predictions]
-                logging.debug(f"Top indices for {file}: {top_i}")
+                logging.info(f"Top indices for {file}: {top_i}")
 
                 # [3] we want to order the classes and probabilities by date
                 date = datetime.datetime.strptime(file.split('.')[0], '%Y%m%d_%H%M%S')
@@ -198,7 +201,7 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                     prob_classes.append(prob_class)
 
                     # Log each class and probability as they're added
-                    logging.debug(f"Class: {clip_class}, Probability: {prob_class}")
+                    logging.info(f"Class: {clip_class}, Probability: {prob_class}")
 
                 # Log the final classes and probabilities for each window
                 logging.info(f"Custom classes for {file}: {clip_classes}")
@@ -206,11 +209,12 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
 
 
                 # APPLY THE THRESHOLD TO GET CLEANER PREDICTIONS
-                if prob_classes:
-                    prob_classes = medfilt(prob_classes, kernel_size=3)
-                    pass
+                # if prob_classes:
+                #     prob_classes = medfilt(prob_classes, kernel_size=3)
+                #     pass
 
-
+                # append to the lists
+                logging.info(f"Appending custom classes for {file}: {clip_classes} \nwith probabilities {prob_classes} to the list.")
                 audio_classes.append(clip_classes)
                 probs.append(prob_classes)
                 files.append(file)

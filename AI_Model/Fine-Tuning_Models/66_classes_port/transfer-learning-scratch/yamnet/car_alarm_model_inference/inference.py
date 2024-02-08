@@ -1,15 +1,13 @@
 import tensorflow as tf
 import tensorflow_io as tfio
 
-def load_and_preprocess_audio(file_path, target_sample_rate=16000):
-    audio = tfio.audio.AudioIOTensor(file_path)
-    waveform = tf.squeeze(audio.to_tensor(), axis=-1)
-    sample_rate = audio.rate
+class ReduceMeanLayer(tf.keras.layers.Layer):
+    def __init__(self, axis=0, **kwargs):
+        super().__init__(**kwargs)
+        self.axis = axis
 
-    if sample_rate != target_sample_rate:
-        waveform = tfio.audio.resample(waveform, rate_in=sample_rate, rate_out=target_sample_rate)
-
-    return waveform
+    def call(self, inputs):
+        return tf.math.reduce_mean(inputs, axis=self.axis)
 
 @tf.function
 def load_wav_16k_mono(filename):
@@ -23,19 +21,12 @@ def load_wav_16k_mono(filename):
     wav = tfio.audio.resample(wav, rate_in=sample_rate, rate_out=16000)
     return wav
 
-loaded_model = tf.keras.models.load_model(r"C:\Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Fine-Tuning_Models\66_classes_port\transfer-learning-scratch\yamnet\cars_and_alarms_yamnet")
+model_path = r'C:\Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Fine-Tuning_Models\66_classes_port\transfer-learning-scratch\yamnet\cars_and_alarms_yamnet.h5'
+model = tf.keras.models.load_model(model_path, custom_objects={'ReduceMeanLayer': ReduceMeanLayer})
 
-testing_wav_data = r"C:\Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Fine-Tuning_Models\66_classes_port\transfer-learning-scratch\yamnet\-0x1a0a4fce078dd9e.wav"
+testing_wav_file_name = r"C:\Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Fine-Tuning_Models\66_classes_port\transfer-learning-scratch\yamnet\-0x1a0a4fce078dd9e.wav"
 
-waveform = load_wav_16k_mono(testing_wav_data)
+testing_wav_data = load_wav_16k_mono(testing_wav_file_name)
 
-# Convert to mono and the sample's rate expected by YAMNet.
-waveform = tf.squeeze(waveform, axis=-1)
-waveform = tf.cast(waveform, tf.float32)
-
-# Run the model.
-scores, embeddings, spectrogram = loaded_model(waveform)
-scores = tf.reduce_mean(scores, axis=0)
-top_class = tf.argmax(scores)
-infered_class = class_names[top_class]
-print(f'The main sound is: {infered_class}')
+predictions = model.predict(testing_wav_data)
+print(predictions)

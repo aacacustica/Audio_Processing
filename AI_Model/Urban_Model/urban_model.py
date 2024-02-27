@@ -19,7 +19,7 @@ tf.get_logger().setLevel(logging.ERROR)
 
 logging.basicConfig(level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s', 
-                    filename='urban_model_debug.log',
+                    filename='urban_model.log',
                     )
 
 
@@ -180,7 +180,6 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
     
 
                 # NORMALIZE THE SCORES
-
                 # [1] normalize the scores
                 total_score = sum(new_scores.values())
                 for key in new_scores:
@@ -238,7 +237,7 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                  'classes_original': audio_classes_original, 
                  'probabilities_original': probs_original,
                 #  'sum_probs_original': [sum(x) for x in probs_original],
-                 'spectrograms': spectrograms
+                #  'spectrograms': spectrograms
                  } 
 
     # sort by datetime in ascending order
@@ -251,7 +250,7 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='Inferencia Yamnet de todos los archivos de audio en un directorio')
     parser.add_argument('-p', '--path', required=True, type=str, help='Path to the audio files')
     parser.add_argument('-a', '--abrev', type=str, help='Name to identify the predictions file')
-    parser.add_argument('-w', '--window', type=int, default=899, help='Analysis window size in seconds')
+    parser.add_argument('-w', '--window', type=float, default=899, help='Analysis window size in seconds')
     parser.add_argument('-n', '--n-predictions', type=int, default=3, help='Number of predictions to be generated')
     parser.add_argument('-r', '--result-folder', type=str, default=None, help='Location where the results should be saved')
     args = parser.parse_args()
@@ -383,14 +382,15 @@ if __name__ == "__main__":
 
     # csv File
     stable_version = get_stable_version()
-    predictions_file = f'Urban_Model_{args.abrev}_{stable_version}_window{args.window}s.csv'
+    predictions_file = f'Urban_Model_{abrev}_{stable_version}_window_{args.window}s.csv'
     
     # save the predictions in a csv file
     data_df.to_csv(os.path.join(make_predicciones, predictions_file), index=False)
     
     # set index to datetime
     # data_df.set_index('datetime', inplace=True)
-    data_df.to_json(os.path.join(make_predicciones, predictions_file.replace('.csv', '.json')), orient='records', date_format='iso', indent=4)
+    # data_df.to_json(os.path.join(make_predicciones, predictions_file.replace('.csv', '.json')), orient='records', date_format='iso', indent=4)
     
     logging.info(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(make_predicciones, predictions_file))}")
-    logging.info(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(make_predicciones, predictions_file.replace('.csv', '.json')))}")
+    print(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(make_predicciones, predictions_file))}")
+    # logging.info(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(make_predicciones, predictions_file.replace('.csv', '.json')))}")

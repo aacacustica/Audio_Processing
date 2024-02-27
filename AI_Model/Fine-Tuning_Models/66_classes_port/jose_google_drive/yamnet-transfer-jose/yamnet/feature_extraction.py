@@ -40,7 +40,6 @@ embedding_layer = tf.keras.Model(inputs=yamnet.input,
 embedding_layer.trainable = False
 
 ##### Read Database
-
 df_metadata = pd.read_csv(dataset_file)
 
 df_metadata["label"] = df_metadata["label"].astype("category")

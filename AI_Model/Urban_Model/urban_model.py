@@ -232,7 +232,7 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
     data_dict = {'file': files, 
                  'datetime': datetimes, 
                  'classes_custom': audio_classes, 
-                 'probabilities_custom': probs,
+                #  'probabilities_custom': probs,
                 #  'sum_probs_custom': [sum(x) for x in probs],
                  'classes_original': audio_classes_original, 
                  'probabilities_original': probs_original,
@@ -382,7 +382,7 @@ if __name__ == "__main__":
 
     # csv File
     stable_version = get_stable_version()
-    predictions_file = f'Urban_Model_{abrev}_{stable_version}_window_{args.window}s.csv'
+    predictions_file = f'Urban_Model_{abrev}_{stable_version}_window_{args.window}s_test.csv'
     
     # save the predictions in a csv file
     data_df.to_csv(os.path.join(make_predicciones, predictions_file), index=False)

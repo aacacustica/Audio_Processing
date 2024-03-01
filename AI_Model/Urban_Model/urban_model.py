@@ -133,11 +133,20 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
         w_size = int(w_time * sr)
         # w_size = int(w_time * 60 * sr)
         
-        print_audio_time(w_size, sr, wav_data)      
+        print_audio_time(w_size, sr, wav_data)
+        
+        start_datetime = datetime.datetime.strptime(file.split('.')[0], '%Y%m%d_%H%M%S')
+        print()
+        print(start_datetime)
 
-        count = 0
+        # count = 0
+        # if len(waveform) > w_size:
+        #     for fstart in range(0, len(waveform) - w_size + 1, w_size):
+                
         if len(waveform) > w_size:
-            for fstart in range(0, len(waveform) - w_size + 1, w_size):
+            for count, fstart in enumerate(range(0, len(waveform) - w_size + 1, w_size)):
+                scores, spectrogram = yamnet.predict(np.reshape(waveform[fstart:fstart+w_size], [1, -1]), steps=1)
+                
                 # GETTING THE SCORES FOR THE CUSTOM TAXONOMY
 
                 # getting the scores for the original taxonomy
@@ -191,9 +200,11 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                 logging.info(f"Top indices for {file}: {top_i}")
 
                 # [3] we want to order the classes and probabilities by date
-                date = datetime.datetime.strptime(file.split('.')[0], '%Y%m%d_%H%M%S')
-                date = date + datetime.timedelta(minutes=w_time * count)
-                datetimes.append(date)
+                # date = datetime.datetime.strptime(file.split('.')[0], '%Y%m%d_%H%M%S')
+                # date = date + datetime.timedelta(minutes=w_time * count)
+                # datetimes.append(date)
+                window_datetime = start_datetime + datetime.timedelta(seconds=w_time * count)
+                datetimes.append(window_datetime)
 
                 # [4] SAVE THE CUSTOM CLASSES AND PROBABILITIES
                 clip_classes = []
@@ -231,7 +242,7 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
     # SAVE THE PREDICTIONS IN A (DICT) DATAFRAME
     data_dict = {'file': files, 
                  'datetime': datetimes, 
-                 'classes_custom': audio_classes, 
+                #  'classes_custom': audio_classes, 
                 #  'probabilities_custom': probs,
                 #  'sum_probs_custom': [sum(x) for x in probs],
                  'classes_original': audio_classes_original, 
@@ -243,7 +254,14 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
     # sort by datetime in ascending order
     df = pd.DataFrame(data_dict)
     df_sorted = df.sort_values(by='datetime')
+
+    # remove the first and last 15 minutes
+    # new_start_time = df_sorted['datetime'].min() + pd.Timedelta(minutes=15)
+    # new_end_time = df_sorted['datetime'].max() - pd.Timedelta(minutes=15)    
+
+    # df_sorted_filtered = df_sorted[(df_sorted['datetime'] > new_start_time) & (df_sorted['datetime'] < new_end_time)]
       
+    # return df_sorted_filtered
     return df_sorted
 
 def argument_parser():

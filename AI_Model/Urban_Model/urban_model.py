@@ -152,8 +152,6 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                 # getting the scores for the original taxonomy
                 # to to that, we need to reshape the waveform to [1, -1] and predict, [to get the values of the prediction fdrom 0 to 1] then average the scores over the frames
                 # scores, _ = yamnet.predict(np.reshape(waveform[fstart:fstart+w_size], [1, -1]), steps=1)
-                # get the spectrogram
-                scores, spectrogram = yamnet.predict(np.reshape(waveform[fstart:fstart+w_size], [1, -1]), steps=1)
                 
                 prediction = np.mean(scores, axis=0)
                 # logging.info(f"Raw predictions ({len(prediction)}) for {file}: {prediction}")

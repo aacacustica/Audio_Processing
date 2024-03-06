@@ -7,6 +7,7 @@ from sound_data_reader import *
 from time_level_utils import *
 from config import *
 from tqdm import tqdm
+from config import *
 
 def load_data(file_path, logger):
     """Loading data from file_path and returning a dataframe with the data and the SLM type
@@ -147,7 +148,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             
             # drop the beginning and ending of the measurement (15min)
             try:
-                df = df.loc[start_date + pd.Timedelta(900, unit='seconds'):end_date - pd.Timedelta(900, unit='seconds')]
+                df = df.loc[start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')]
                 logger.info(f"df was trimmed, 15 min from the beggining and 15 min from the end")
             except:
                 continue

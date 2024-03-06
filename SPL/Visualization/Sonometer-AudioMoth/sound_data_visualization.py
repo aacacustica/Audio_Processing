@@ -40,7 +40,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
 
         fig.set(xlim=(-1, 24), ylim=(30, 105))
 
-        # Change the x-axis labels to 24-hour format
+        # change the x-axis labels to 24-hour format
         hour_labels = [f"{hour:02d}:00" for hour in range(24)]
         plt.xticks(range(24), hour_labels, rotation=90)
 
@@ -483,7 +483,7 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         ax.xaxis.set_major_formatter(h_fmt)
 
         plt.xlim(df.index.min(), df.index.max())
-        plt.ylim([30, 105])
+        plt.ylim([20, 105])
         plt.ylabel('dB(A)')
         plt.xlabel('Hora')
 

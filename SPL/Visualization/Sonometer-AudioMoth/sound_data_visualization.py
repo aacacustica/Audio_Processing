@@ -448,7 +448,7 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
     """
     try:
         agg_funcs = {
-            columns_dict['LAEQ_COLUMN']: 'mean',
+            columns_dict['LAEQ_COLUMN']: leq,
             columns_dict['LAMAX_COLUMN']: 'max',
             columns_dict['LAMIN_COLUMN']: 'min'
         }
@@ -615,3 +615,28 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
     
     except Exception as e:
         logger.error(f"Error in plot_indicadores_heatmap: {e}")
+        
+        
+def plot_predic_laeq(df: pd.DataFrame, yamnet_csv:pd.DataFrame, perdictions_csv:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
+    try:
+        agg_funcs = {
+            columns_dict['LAEQ_COLUMN']: leq,
+        }
+        agg_data = df.resample(f'{agg_period}s').agg(agg_funcs)
+        print(agg_data)
+        print(yamnet_csv)
+        exit()
+
+        plt.xticks(rotation=90)
+        plt.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0.1, fancybox=True, framealpha=1, edgecolor='black')
+
+        os.makedirs(folder_output_dir, exist_ok=True)
+        plt.savefig(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.png', dpi=150)
+        agg_data.to_excel(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.xlsx')
+
+        plt.close()
+
+        logger.info(f"Timeplot saved to {folder_output_dir}/{plotname}_{agg_period}s_time_plot.png")
+        logger.info(f"Timeplot data saved to {folder_output_dir}/{plotname}_{agg_period}s_time_plot.xlsx")
+    except Exception as e:
+        logger.error(f"Error in make_timeplot: {e}")

@@ -13,15 +13,15 @@ LE_SECONDS = 7200
 LN_SECONDS = 14400
 
 # Plotting Flags
-PLOT_MAKE_TIME_PLOT = False # Done
-PLOT_HEATMAP_EVOLUTION_HOUR = False # Done
-PLOT_HEATMAP_EVOLUTION_15_MIN = False # Done
-PLOT_DAY_EVOLUTION = False # Done
-PLOT_PERIOD_EVOLUTION = True # Done
-PLOT_INDICADORES_HEATMAP = True # Done 
-PLOT_NIGHT_EVOLUTION = True # Done
-PLOT_NIGHT_EVOLUTION_15_MIN = True # Done
-
+PLOT_MAKE_TIME_PLOT = False 
+PLOT_HEATMAP_EVOLUTION_HOUR = False 
+PLOT_HEATMAP_EVOLUTION_15_MIN = False 
+PLOT_DAY_EVOLUTION = False 
+PLOT_PERIOD_EVOLUTION = False 
+PLOT_INDICADORES_HEATMAP = False  
+PLOT_NIGHT_EVOLUTION = False 
+PLOT_NIGHT_EVOLUTION_15_MIN = False 
+PLOT_PREDIC_LAEQ = True
 
 
 ######################## SLM COLUMN MAPS #####################################
@@ -94,3 +94,20 @@ PERCENTIL_COLOUR = {
     50: '#FFABAB',
     90: '#9E9E9E'
 }
+
+C_MAP_GRADIENT = {
+    1: '#C8FFC8',
+    2: '#00C800',
+    3: '#007800',
+    4: '#FFFF00',
+    5: '#FFC878',
+    6: '#FF9600',
+    7: '#FF0000',
+    8: '#780000',
+    9: '#FF00FF',
+    10: '#8C3CFF',
+    11: '#000078',
+}
+
+
+# cmap_dict = sns.color_palette(palette=["#C8FFC8", "#00C800", "#007800", "#FFFF00", "#FFC878", "#FF9600", "#FF0000", "#780000", "#FF00FF", "#8C3CFF", "#000078"],n_colors=11)

@@ -52,6 +52,8 @@ def main():
     if args.percentiles:
         PERCENTILES = args.percentiles
     
+    yamnet_csv = yamnet_class_map_csv()
+    
     # output directory
     clase_registro = os.path.basename(input_folder)
     # if class is not provided, use the name of the parent folder
@@ -67,11 +69,12 @@ def main():
         spl_folders = []
         for folder in parent_folders:
             spl_folder = os.path.join(input_folder, folder, "SPL")
+            
             if os.path.exists(spl_folder):
                 spl_folders.append(spl_folder)
-                
+                            
         # process all the folders
-        process_all_folders(input_folder, spl_folders, PERIODO_AGREGACION, PERCENTILES, logger)
+        process_all_folders(input_folder, spl_folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, logger)
         
         logger.info("Finished sonometer test script")
 

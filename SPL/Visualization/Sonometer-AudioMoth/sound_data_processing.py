@@ -88,7 +88,7 @@ def process_folder(folder_path, logger):
     return None, None, None 
 
 
-def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, logger):
+def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, perdictions_csv, logger):
     """Process all the folders in the input folder
     Args:
         input_folder (str): Path to the input folder
@@ -102,6 +102,8 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
     """
     for folder in tqdm(folders, desc="Processing folders"):
         reg_folder = os.path.join(input_folder, folder)
+        print(f"reg_folder: {reg_folder}")
+        exit()
         
         folder = folder.split("\\")[:-1]
         folder = os.path.join('\\\\', *folder)
@@ -164,6 +166,12 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"Plotting time plot for folder {folder}")
                 # print(f"folder_output_dir: {folder_output_dir}")
                 make_time_plot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
+            
+            # Plotting time plot
+            if PLOT_PREDIC_LAEQ:
+                logger.info(f"Plotting PLOT_PREDIC_LAEQ for folder {folder}")
+                # print(f"folder_output_dir: {folder_output_dir}")
+                plot_predic_laeq(df, yamnet_csv, perdictions_csv, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
             
             # Plotting heatmap evolution hour
             if PLOT_HEATMAP_EVOLUTION_HOUR:

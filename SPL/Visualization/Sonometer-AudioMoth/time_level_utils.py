@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 def calculate_duration(start_time, end_time):
     """Calculate duration in seconds
@@ -114,3 +115,21 @@ def get_day_levels_valencia(df,laeq_column):
     df['indicador_valencia'] = df.apply(lambda x: evaluation_period_str_valencia(x['hour']),axis=1)
     indicadores = df.groupby('indicador_valencia').agg({laeq_column:[leq]}).round(1)
     return indicadores
+
+
+def remove_unnamed_columns(df_preds):
+    df_preds = df_preds.loc[:, ~df_preds.columns.str.contains('^Unnamed')]
+    df_preds = df_preds.drop(columns=['Brown_Level_1'])
+    df_preds = df_preds.drop(columns=['index'])
+    return df_preds
+
+def yamnet_class_map_csv():
+    yammnet_class_map = r"C:\Users\GIS2\Documents\santi\GitHub\AAC\AI_Model\Urban_Model\taxonomy_mapping\yamnet_class_AAC_v1_0.csv"
+    df_audioset = pd.read_csv(yammnet_class_map,sep=';')
+    df_audioset = remove_unnamed_columns(df_audioset)
+    return df_audioset
+
+def prediction_csv(path_input):
+    df_prediction = pd.read_csv(path_input)
+    df_prediction = df_prediction.drop(columns=['classes_custom'])
+    return df_prediction

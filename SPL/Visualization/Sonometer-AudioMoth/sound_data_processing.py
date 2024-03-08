@@ -8,6 +8,7 @@ from time_level_utils import *
 from config import *
 from tqdm import tqdm
 from config import *
+import glob
 
 def load_data(file_path, logger):
     """Loading data from file_path and returning a dataframe with the data and the SLM type
@@ -88,7 +89,7 @@ def process_folder(folder_path, logger):
     return None, None, None 
 
 
-def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, perdictions_csv, logger):
+def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, logger):
     """Process all the folders in the input folder
     Args:
         input_folder (str): Path to the input folder
@@ -101,9 +102,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             df_common_format (pd.DataFrame): Dataframe with the data in a common format
     """
     for folder in tqdm(folders, desc="Processing folders"):
-        reg_folder = os.path.join(input_folder, folder)
-        print(f"reg_folder: {reg_folder}")
-        exit()
+        reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
         
         folder = folder.split("\\")[:-1]
         folder = os.path.join('\\\\', *folder)
@@ -120,7 +119,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         
         # join the path
         resultados_dir = os.path.join('\\\\', *resultados_dir, result_dir_name)
-        logger.info(f"resultados_dir: {resultados_dir}")
+        logger.info(f"resultados_dir: {resultados_dir}") # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados
         
         if not os.path.exists(resultados_dir):
             os.makedirs(resultados_dir)
@@ -132,7 +131,18 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         if not os.path.exists(folder_output_dir):
             os.makedirs(folder_output_dir)
             logger.info(f"Created output folder: {folder_output_dir}")
-        
+            
+        ##### trying to get the prediction file for each folder #####
+        predictions_folder = os.path.join(resultados_dir, folder, "URBAN_Model", "Predictions")
+        if os.path.exists(predictions_folder):
+            # list csv files in the directory
+            predictions_files = glob.glob(os.path.join(predictions_folder, "*.csv"))
+            if predictions_files:
+                prediction_file = predictions_files[0]
+                prediction_csv_file = prediction_csv(prediction_file)
+            else:
+                logger.info("No CSV files found in the predictions folder.")
+
         try:
             logger.info(f"\nProcessing folder {folder}") 
             df, slm_type, slm_dict = process_folder(reg_folder, logger)
@@ -151,7 +161,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             # drop the beginning and ending of the measurement (15min)
             try:
                 df = df.loc[start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')]
-                logger.info(f"df was trimmed, 15 min from the beggining and 15 min from the end")
+                logger.info(f"df was trimmed, {REMOVE_START_TIME} secs from the beggining and {REMOVE_END_TIME} secs from the end")
             except:
                 continue
 
@@ -171,7 +181,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if PLOT_PREDIC_LAEQ:
                 logger.info(f"Plotting PLOT_PREDIC_LAEQ for folder {folder}")
                 # print(f"folder_output_dir: {folder_output_dir}")
-                plot_predic_laeq(df, yamnet_csv, perdictions_csv, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
+                plot_predic_laeq(df, yamnet_csv, prediction_csv_file, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
             
             # Plotting heatmap evolution hour
             if PLOT_HEATMAP_EVOLUTION_HOUR:

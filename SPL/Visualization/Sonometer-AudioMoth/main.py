@@ -69,10 +69,9 @@ def main():
         spl_folders = []
         for folder in parent_folders:
             spl_folder = os.path.join(input_folder, folder, "SPL")
-            
             if os.path.exists(spl_folder):
                 spl_folders.append(spl_folder)
-                            
+                
         # process all the folders
         process_all_folders(input_folder, spl_folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, logger)
         

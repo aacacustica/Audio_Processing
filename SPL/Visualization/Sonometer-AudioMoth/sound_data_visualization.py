@@ -5,8 +5,16 @@ import seaborn as sns
 from time_level_utils import *
 import os
 from config import *
+import ast
+# impor px
+import plotly.express as px
+import matplotlib.colors as mcolors
 
 cmap_dict = sns.color_palette(palette=["#C8FFC8", "#00C800", "#007800", "#FFFF00", "#FFC878", "#FF9600", "#FF0000", "#780000", "#FF00FF", "#8C3CFF", "#000078"],n_colors=11)
+
+hex_colors = [mcolors.to_hex(color) for color in cmap_dict]
+custom_color_scale = [[i/len(hex_colors), color] for i, color in enumerate(hex_colors)]
+custom_color_scale.append([1, hex_colors[-1]])
     
 def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
     """ Line plots for each day
@@ -452,17 +460,17 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
             columns_dict['LAMAX_COLUMN']: 'max',
             columns_dict['LAMIN_COLUMN']: 'min'
         }
-        agg_data = df.resample(f'{agg_period}s').agg(agg_funcs)
+        df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs)
         #oca = df.resample(f'{agg_period}s').agg({'oca': 'min'})
 
         plt.style.use('seaborn-whitegrid')
         fig, ax = plt.subplots(figsize=(20, 10))
         ax.set_facecolor("white")
 
-        x = agg_data.index
-        ax.plot(x, agg_data[columns_dict['LAEQ_COLUMN']], linewidth=3, color='red', label='LAeq')
-        ax.plot(x, agg_data[columns_dict['LAMAX_COLUMN']], linewidth=1, color='#FF99FF', label='Lmax')
-        ax.plot(x, agg_data[columns_dict['LAMIN_COLUMN']], linewidth=1, color='#92D050', label='Lmin')
+        x = df_LAeq.index
+        ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN']], linewidth=3, color='red', label='LAeq')
+        ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN']], linewidth=1, color='#FF99FF', label='Lmax')
+        ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN']], linewidth=1, color='#92D050', label='Lmin')
         # OCA
         # #ax.plot(x, oca.values, color='#00B0F0')
 
@@ -494,7 +502,7 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
 
         os.makedirs(folder_output_dir, exist_ok=True)
         plt.savefig(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.png', dpi=150)
-        agg_data.to_excel(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.xlsx')
+        df_LAeq.to_excel(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.xlsx')
 
         plt.close()
 
@@ -617,26 +625,111 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         logger.error(f"Error in plot_indicadores_heatmap: {e}")
         
         
-def plot_predic_laeq(df: pd.DataFrame, yamnet_csv:pd.DataFrame, perdictions_csv:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
+def plot_predic_laeq(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
     try:
         agg_funcs = {
             columns_dict['LAEQ_COLUMN']: leq,
         }
-        agg_data = df.resample(f'{agg_period}s').agg(agg_funcs)
-        print(agg_data)
+        df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs) # 900 seconds = 15 minutes
+        
+        #########################################################
+        print(df_LAeq)
+        print(df_Pred)
         print(yamnet_csv)
-        exit()
+        
+        df_Pred['datetime'] = pd.to_datetime(df_Pred['datetime'])
+        df_Pred.set_index('datetime', inplace=True)
 
-        plt.xticks(rotation=90)
-        plt.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0.1, fancybox=True, framealpha=1, edgecolor='black')
+        df_Pred.index = df_Pred.index.round('15min')
+        print("\n\nThis is the index of df_Pred")
+        print(df_Pred)
+
+        # Example: Merging df_LAeq and df_Pred on their index
+        df_aligned = df_LAeq.merge(df_Pred, how='left', left_index=True, right_index=True)
+        
+        print("\n\nThis is the merged dataframe")
+        print(df_aligned)
+        
+        # remove rows with NaN values
+        df_aligned.dropna(inplace=True)
+        print("\n\nThis is the merged dataframe after removing NaN values")
+        print(df_aligned)
+        
+        # explode the list of classes
+        df_aligned['classes'] = df_aligned['classes'].apply(ast.literal_eval)
+        df_aligned['probabilities'] = df_aligned['probabilities'].apply(ast.literal_eval)
+
+        df_exploded_classes = df_aligned.explode('classes')
+        df_exploded = df_aligned.apply(lambda x: x.explode() if x.name in ['classes', 'probabilities'] else x)
+
+        print(df_exploded)
+        
+        # create the df_all, merge with the audioset dataframe
+        df_exploded['display_name'] = df_exploded['classes']
+        df_all = df_exploded.merge(yamnet_csv, how='left', on='display_name')
+        
+        print(df_all)
+        #########################################################
+        #### Plotting the data ####
+        
+        display_name = 'display_name'
+        iso_taxonomy = 'iso_taxonomy'
+        classes = 'classes'
+
+        brown_1 = 'Brown_Level_1'
+        brown_2 = 'Brown_Level_2'
+        brown_3 = 'Brown_Level_3'
+
+        class_to_plot = brown_2
+        
+        # grouped_df = df_all.groupby([class_to_plot, classes]).size().reset_index(name='number')
+        # fig = px.treemap(grouped_df, 
+        #                 path=[class_to_plot, classes], 
+        #                 values='number',
+        #                 color=class_to_plot,
+        #                 color_discrete_map=COLOR_PALLET_URBAN
+        #                 )
+
+        # fig.update_layout(title='Title')
+        # fig.show()
+        
+        # grouped_df = df_all.groupby(class_to_plot).agg(
+        #     number=(classes, 'size'),
+        #     LAeq=('LA', lambda x: leq(x))
+        # ).reset_index()
+
+        grouped_df = df_all.groupby(class_to_plot).agg(
+            number=(classes, 'size'),
+            LAeq=('LA', lambda x: leq(x))
+        ).reset_index()
+
+        fig = px.treemap(grouped_df, 
+                        path=[class_to_plot],  
+                        values='number',
+                        color='LAeq',
+                        color_continuous_scale=custom_color_scale,
+                        range_color=[30, 85],
+                        hover_data={'LAeq': True, 'number': True},
+                        custom_data=['LAeq'],
+                        # make bigger the plot to save it in a png
+                        height=800,
+                        width=2000                      
+                        )
+
+        # title(f'{plotname} Indicadores')
+        fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) por Clases Predecidas')
+        fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
+        fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
+
+        # fig.show()
 
         os.makedirs(folder_output_dir, exist_ok=True)
-        plt.savefig(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.png', dpi=150)
-        agg_data.to_excel(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.xlsx')
+        # save fig plot
+        fig.write_image(f"{folder_output_dir}/{plotname}_LAeq_class_mean.png")
+        fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_mean.html")
+        grouped_df.to_excel(f"{folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
 
-        plt.close()
-
-        logger.info(f"Timeplot saved to {folder_output_dir}/{plotname}_{agg_period}s_time_plot.png")
-        logger.info(f"Timeplot data saved to {folder_output_dir}/{plotname}_{agg_period}s_time_plot.xlsx")
+        logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean.png")
+        logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
     except Exception as e:
         logger.error(f"Error in make_timeplot: {e}")

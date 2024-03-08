@@ -131,5 +131,27 @@ def yamnet_class_map_csv():
 
 def prediction_csv(path_input):
     df_prediction = pd.read_csv(path_input)
-    df_prediction = df_prediction.drop(columns=['classes_custom'])
+    columns_to_check = ["classes_custom", "probabilities_custom", "sum_probs_custom", "sum_probs_original"]
+    
+    for col in columns_to_check:
+        if col in df_prediction.columns:
+            df_prediction = df_prediction.drop(col, axis=1)
+            
+    # columns to rename
+    columns_to_rename = ["classes_original", "probabilities_original"]
+    new_columns = ["classes", "probabilities"]
+    
+    for i in range(len(columns_to_rename)):
+        if columns_to_rename[i] in df_prediction.columns:
+            df_prediction = df_prediction.rename(columns={columns_to_rename[i]: new_columns[i]})
+    
     return df_prediction
+
+def remove_row_out_timespan(df_LAeq, df_Pred):
+    df_LAeq.index = pd.to_datetime(df_LAeq.index)
+    df_Pred['datetime'] = pd.to_datetime(df_Pred['datetime'])
+    start_date = df_LAeq.index.min()
+    end_date = df_LAeq.index.max()
+    df_Pred_filtered = df_Pred[(df_Pred['datetime'] >= start_date) & (df_Pred['datetime'] <= end_date)]
+    
+    return df_Pred_filtered

@@ -95,6 +95,20 @@ PERCENTIL_COLOUR = {
     90: '#9E9E9E'
 }
 
+COLOR_PALLET_URBAN = {
+            'Other human': '#2986cc', # BLUE
+            'Electro-mechanical': '#cc0000', # RED
+            'Voice': '#6aa84f', #  green 6aa84f
+            'Motorised transport': '#ffa500', # orange
+            'Geonature': '#8e7cc3', # PURPLE
+            'Animal': '#9b5f00', # BROWN
+            'Music': '#d172a4', # PINK
+            'Background': '#000000', # BLACK
+            'Other Sounds': '#c9d631', # yellow
+            'Social/communal': '#d8cbf8', # Light purple
+            'Human movement': '#40b674', # light green 40b674
+        }
+
 C_MAP_GRADIENT = {
     1: '#C8FFC8',
     2: '#00C800',

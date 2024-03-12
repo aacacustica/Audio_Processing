@@ -178,10 +178,10 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 make_time_plot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
             
             # Plotting time plot
-            if PLOT_PREDIC_LAEQ:
+            if PLOT_PREDIC_LAEQ_15_MIN:
                 logger.info(f"Plotting PLOT_PREDIC_LAEQ for folder {folder}")
                 # print(f"folder_output_dir: {folder_output_dir}")
-                plot_predic_laeq(df, yamnet_csv, prediction_csv_file, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
+                plot_predic_laeq_15_min(df, yamnet_csv, prediction_csv_file, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
             
             # Plotting heatmap evolution hour
             if PLOT_HEATMAP_EVOLUTION_HOUR:

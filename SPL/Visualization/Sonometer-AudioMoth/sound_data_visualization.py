@@ -268,7 +268,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
 
         # data for each night
         for current_date in unique_dates:
-            # start time, which is the last 15-minute interval of the previous day
+            #  time, which is the last 15-minute interval of the previous day
             start_time = pd.Timestamp(current_date - pd.Timedelta(days=1)).replace(hour=23, minute=0)
             
             # end time, which is the first 6 hours and 45 minutes of the current day
@@ -625,7 +625,7 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         logger.error(f"Error in plot_indicadores_heatmap: {e}")
         
         
-def plot_predic_laeq(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
+def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
     try:
         agg_funcs = {
             columns_dict['LAEQ_COLUMN']: leq,
@@ -639,12 +639,25 @@ def plot_predic_laeq(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataF
         
         df_Pred['datetime'] = pd.to_datetime(df_Pred['datetime'])
         df_Pred.set_index('datetime', inplace=True)
+               
+        start_date = max(df_LAeq.index.min(), df_Pred.index.min())
+        end_date = min(df_LAeq.index.max(), df_Pred.index.max())
 
+        df_LAeq = df_LAeq[start_date:end_date]
+        df_Pred = df_Pred[start_date:end_date]
+        print(f"Aligned period from {start_date} to {end_date} for both df_LAeq and df_Pred.")
+        
+        print("\n\nThis is the df_LAeq")
+        print(df_LAeq)
+        print("\n\nThis is the df_Pred")
+        print(df_Pred)
+        
         df_Pred.index = df_Pred.index.round('15min')
         print("\n\nThis is the index of df_Pred")
         print(df_Pred)
+        # exit()
 
-        # Example: Merging df_LAeq and df_Pred on their index
+        # merge df
         df_aligned = df_LAeq.merge(df_Pred, how='left', left_index=True, right_index=True)
         
         print("\n\nThis is the merged dataframe")
@@ -655,7 +668,7 @@ def plot_predic_laeq(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataF
         print("\n\nThis is the merged dataframe after removing NaN values")
         print(df_aligned)
         
-        # explode the list of classes
+        # explode by list of classes
         df_aligned['classes'] = df_aligned['classes'].apply(ast.literal_eval)
         df_aligned['probabilities'] = df_aligned['probabilities'].apply(ast.literal_eval)
 
@@ -681,22 +694,6 @@ def plot_predic_laeq(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataF
         brown_3 = 'Brown_Level_3'
 
         class_to_plot = brown_2
-        
-        # grouped_df = df_all.groupby([class_to_plot, classes]).size().reset_index(name='number')
-        # fig = px.treemap(grouped_df, 
-        #                 path=[class_to_plot, classes], 
-        #                 values='number',
-        #                 color=class_to_plot,
-        #                 color_discrete_map=COLOR_PALLET_URBAN
-        #                 )
-
-        # fig.update_layout(title='Title')
-        # fig.show()
-        
-        # grouped_df = df_all.groupby(class_to_plot).agg(
-        #     number=(classes, 'size'),
-        #     LAeq=('LA', lambda x: leq(x))
-        # ).reset_index()
 
         grouped_df = df_all.groupby(class_to_plot).agg(
             number=(classes, 'size'),

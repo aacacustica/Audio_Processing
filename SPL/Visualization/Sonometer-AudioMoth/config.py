@@ -21,7 +21,7 @@ PLOT_PERIOD_EVOLUTION = False
 PLOT_INDICADORES_HEATMAP = False  
 PLOT_NIGHT_EVOLUTION = False 
 PLOT_NIGHT_EVOLUTION_15_MIN = False 
-PLOT_PREDIC_LAEQ = True
+PLOT_PREDIC_LAEQ_15_MIN = True
 
 
 ######################## SLM COLUMN MAPS #####################################

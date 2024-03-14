@@ -27,24 +27,24 @@ def select_tag(tags):
 version_tag = select_tag(tags)
 
 # [1] Open the csv file and read the data
-file_path = 'yamnet_class_AAC_301123.csv'
+file_path = r'C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Port_Model\taxonomy_mapping\yamnet_class_AAC_v2_0 _copy.csv'
 yamnet_classes = pd.read_csv(file_path, sep=';')
-print(yamnet_classes.head())
+# remove any column that starts with "Unnamed:"
+yamnet_classes = yamnet_classes.loc[:, ~yamnet_classes.columns.str.contains('^Unnamed')]
+print(yamnet_classes)
 
-# [2] Create a dictionary with the original classes name (display_name) as keys and the AAC classes (Brown_Level_1) as values
+# # [2] Create a dictionary with the original classes name (display_name) as keys and the AAC classes (Brown_Level_1) as values
 yamnet_classes_dict = {}
 for i in range(len(yamnet_classes)):
-    yamnet_classes_dict[yamnet_classes['display_name'][i]] = yamnet_classes['Brown_Level_2'][i]
-
+    yamnet_classes_dict[yamnet_classes['display_name'][i]] = yamnet_classes['NoisePort'][i]
 
 print(f"\nThis is the taxonomy mapping:\n{yamnet_classes_dict}")
 print(f"\n{len(yamnet_classes_dict)}")
+
+# # print unique values of the new dictionary
+print(f"\nThere are {len(set(yamnet_classes_dict.values()))} classes:\n {set(yamnet_classes_dict.values())}")
 
 # save the taxonomy mapping in a json file
 with open(f'taxonomy_mapping_{version_tag}.json', 'w') as fp:
     json.dump(yamnet_classes_dict, fp)
 print(f"\nFile taxonomy_mapping_{version_tag}.json saved!")
-
-# print unique values of the new dictionary
-print(f"\n{set(yamnet_classes_dict.values())}")
-print(f"\n{len(set(yamnet_classes_dict.values()))}")

@@ -19,7 +19,7 @@ tf.get_logger().setLevel(logging.ERROR)
 
 logging.basicConfig(level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s', 
-                    filename='urban_model_debug.log',
+                    filename='port_model_debug.log',
                     )
 
 
@@ -366,7 +366,7 @@ if __name__ == "__main__":
     for device in physical_devices:
         tf.config.experimental.set_memory_growth(device, True)
 
-    with open('urban_taxonomy_map_v1_0.json', 'r') as f:
+    with open('port_taxonomy_mapping_v1.0.json', 'r') as f:
         taxonomy_mapping = json.load(f)
 
     try:

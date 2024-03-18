@@ -355,7 +355,7 @@ if __name__ == "__main__":
 
     if np.std(sample_rates) < 0.1:
         fs_model = np.median(sample_rates)
-        logging.info('Todos los audios tienen una frecuencia de muestreo de  {} Hz'.format(np.median(sample_rates)))
+        logging.info('Todos los audios tienen una frecuencia de muestreo de {} Hz'.format(np.median(sample_rates)))
     else:
         fs_model = np.median(sample_rates)
         logging.info('Los audios tienen una frecuencia de muestreo diferente, El modelo evaluara la frecuencia predominante {}'.format(fs_model))

@@ -64,6 +64,7 @@ def process_audio_files(folder_path):
             for i in top5_i:
                 if prediction[i] >= 0.35:
                     writer.writerow([file_name, yamnet_classes[i], f'{prediction[i]:.3f}'])
+                    print(f'{file_name} \t{yamnet_classes[i]} \t{prediction[i]:.3f}')
 
 def main(argv):
     assert len(argv) == 1, 'Usage: inference_custom.py <folder containing wav files>'

@@ -7,6 +7,7 @@ import tqdm
 import resampy
 import soundfile as sf
 import tensorflow as tf
+import csv
 
 import params as yamnet_params
 import yamnet as yamnet_model
@@ -34,41 +35,35 @@ def process_audio_files(folder_path):
 
     all_files = os.listdir(folder_path)
     wav_files = [file for file in all_files if file.lower().endswith('.wav')]
+    
+    # Open a CSV file to write the predictions
+    with open('predictions.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['File Name', 'Class', 'Probability'])  # Write the header
 
-    for file_name in tqdm.tqdm(wav_files):
-        full_path = os.path.join(folder_path, file_name)
-        
-        # Decode the WAV file.
-        wav_data, sr = sf.read(full_path, dtype=np.int16)
-        assert wav_data.dtype == np.int16, 'Bad sample type: %r' % wav_data.dtype
-        print(f" sr {sr}")
-        waveform = wav_data / 32768.0  # Convert to [-1.0, +1.0]
-        waveform = waveform.astype('float32')
+        for file_name in tqdm.tqdm(wav_files):
+            full_path = os.path.join(folder_path, file_name)
+            
+            # Decode the WAV file
+            wav_data, sr = sf.read(full_path, dtype=np.int16)
+            waveform = wav_data / 32768.0
+            waveform = waveform.astype('float32')
 
-        # Convert to mono and the sample rate expected by YAMNet.
-        if len(waveform.shape) > 1:
-            waveform = np.mean(waveform, axis=1)
-            print(f"new shape to mono {waveform.shape}")
-        if sr != params.sample_rate:
-            waveform = resampy.resample(waveform, sr, params.sample_rate)
-            # print the new sr
-            print(f"file resampled to {params.sample_rate}")
+            # Convert to mono and the sample rate expected by YAMNet
+            if len(waveform.shape) > 1:
+                waveform = np.mean(waveform, axis=1)
+            if sr != params.sample_rate:
+                waveform = resampy.resample(waveform, sr, params.sample_rate)
 
-        # Predict YAMNet classes.
-        scores, embeddings, spectrogram = yamnet(waveform)
-        prediction = np.mean(scores, axis=0)
-        top5_i = np.argsort(prediction)[::-1][:5]
+            # Predict YAMNet classes
+            scores, embeddings, spectrogram = yamnet(waveform)
+            prediction = np.mean(scores, axis=0)
+            top5_i = np.argsort(prediction)[::-1][:5]
 
-        # Filter predictions below threshold
-        filtered_predictions = [(i, prediction[i]) for i in top5_i if prediction[i] >= 0.35]
-
-        if filtered_predictions:
-            print(f'{file_name}: ')
-            for i, score in filtered_predictions:
-                print(f'  {yamnet_classes[i]:12s}: {score:.3f}\n')
-        else:
-            print(file_name, ': No predictions above threshold\n')
-
+            # Filter predictions below threshold and write to CSV
+            for i in top5_i:
+                if prediction[i] >= 0.35:
+                    writer.writerow([file_name, yamnet_classes[i], f'{prediction[i]:.3f}'])
 
 def main(argv):
     assert len(argv) == 1, 'Usage: inference_custom.py <folder containing wav files>'

@@ -1,4 +1,4 @@
-
+import json
 import numpy as np
 import soundfile as sf
 import os
@@ -6,6 +6,7 @@ from tqdm import tqdm
 import datetime
 import pandas as pd
 import argparse
+import json
 
 import params
 import yamnet as yamnet_model
@@ -14,13 +15,18 @@ import subprocess
 
 import logging
 
+from tensorflow.keras.mixed_precision import set_global_policy
+set_global_policy('mixed_float16')
+
 tf.get_logger().setLevel(logging.ERROR)
 
 logging.basicConfig(level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s', 
-                    filename='urban_model_reduced.log',
+                    filename='urban_model.log',
                     )
 
+
+# get the last git tag version
 def list_git_tags():
     try:
         tags = tags = subprocess.check_output(["git", "tag"]).strip().decode()
@@ -30,7 +36,9 @@ def list_git_tags():
     
 def get_stable_version():
     tags = list_git_tags()
+    # get the latest stable version
     tag_selected = tags[-1]
+    # replace "." with "_" to be able to use it as a file name
     tag_selected = tag_selected.replace(".", "_")
     
     return tag_selected
@@ -47,6 +55,7 @@ def audios_long(audio_files):
                 logging.info("The audio is {:.2f} hours long".format(len(wav_data) / sr / 3600))
         except Exception as e:
                 logging.error(e)
+        
 
 def print_audio_time(w_size:int, sr:int, wav_data:list):
     if (len(wav_data) / sr) < 60:
@@ -62,7 +71,9 @@ def print_audio_time(w_size:int, sr:int, wav_data:list):
     else:
         logging.info("Analysis window size: {} minutes".format(w_size / sr / 60))
 
-def get_predictions(audio_files:list, fs_model:float, w_time:int, n_predictions:int):
+
+
+def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mapping:dict, n_predictions:int):
     params.PATCH_HOP_SECONDS = 1 # 1 Hz frame rate.
     params.SAMPLE_RATE = int(fs_model) # Sampling frequency.
     logging.info(f"Model configured with fs= {int(fs_model)}")
@@ -71,14 +82,14 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, n_predictions:
     yamnet.load_weights('yamnet.h5')
     class_names = yamnet_model.class_names('yamnet_class_map.csv')
 
-    classes_original = [] 
+    audio_classes_original = [] 
     probs_original = [] 
     datetimes = []
     files = []
-    spectrograms = []
 
     for file in tqdm(audio_files):
         logging.info(f"Processing audio file  -->  {file}")
+        
         try:
             wav_data, sr = sf.read(os.path.join(audio_path, file), dtype=np.int16)
         except Exception as e:
@@ -86,35 +97,24 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, n_predictions:
             continue
         
         waveform = wav_data / 32768.0  # 2**15
-        w_size = int(w_time * sr) # w_size = int(w_time * 60 * sr)
+        w_size = int(w_time * sr)
         print_audio_time(w_size, sr, wav_data)
 
         if len(waveform) > w_size:
             for count, fstart in enumerate(range(0, len(waveform) - w_size + 1, w_size)):
-                scores, spectrogram = yamnet(np.reshape(waveform[fstart : fstart + w_size], [1, -1]), steps=1)
-
-                # prediction, scores
+                scores, spectrogram = yamnet.predict(np.reshape(waveform[fstart:fstart+w_size], [1, -1]), steps=1)
                 prediction = np.mean(scores, axis=0)
-                spectrogram = spectrogram.numpy()
-                logging.info(f"Raw predictions ({len(prediction)}) for {file}")
-                spectrograms.append(spectrogram)
 
                 top_original = np.argsort(prediction)[::-1][:n_predictions]
 
-                # get the classes and probabilities 
+                # [1] get the classes and probabilities for the original taxonomy
                 clip_classes_original = [class_names[i] for i in top_original]
                 prob_classes_original = [prediction[i] for i in top_original]
 
                 # append to the lists
-                classes_original.append(clip_classes_original)
+                audio_classes_original.append(clip_classes_original)
                 probs_original.append(prob_classes_original)
-
                 files.append(file)
-                
-                date = datetime.datetime.strptime(file.split('.')[0], '%Y%m%d_%H%M%S')
-                date = date + datetime.timedelta(minutes=w_time * count)
-                datetimes.append(date)
-
                 logging.info(f"Original classes for {file}: {clip_classes_original}")
                 logging.info(f"Original probabilities for {file}: {prob_classes_original}")
                 
@@ -123,12 +123,13 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, n_predictions:
 
     data_dict = {'file': files, 
                  'datetime': datetimes, 
-                 'classes_original': classes_original, 
+                 'classes_original': audio_classes_original, 
                  'probabilities_original': probs_original,
                  } 
 
     df = pd.DataFrame(data_dict)
     df_sorted = df.sort_values(by='datetime')
+
     return df_sorted
 
 def argument_parser():
@@ -143,7 +144,8 @@ def argument_parser():
 
 if __name__ == "__main__":
     """
-    python urban_model.py -p /home/usuario/audios -a "audios_1" -w 14.99 -n 3 -r /home/usuario/resultados
+    example of use:
+            python urban_model.py -p /home/usuario/audios -a "audios_1" -w 14.99 -n 3 -r /home/usuario/resultados
     """
     args = argument_parser()
     
@@ -192,21 +194,15 @@ if __name__ == "__main__":
         
         if not os.path.exists(resultados_folder_path):
             os.makedirs(resultados_folder_path)
-        
         # add the folder name and the Urban_Model folder
         resultados_dir = os.path.join('\\\\', *resultados_dir, results_dir_name, abrev, resultados_pred)
-        
         if not os.path.exists(resultados_dir):
             os.makedirs(resultados_dir)
-        
         # add the predictions folder and the visualizations folder
         make_predicciones = os.path.join(resultados_dir, predictions_folder)
-        
         if not os.path.exists(make_predicciones):
             os.makedirs(make_predicciones)
-            
         make_visualizacion = os.path.join(resultados_dir, visualizations_folder)
-        
         if not os.path.exists(make_visualizacion):
             os.makedirs(make_visualizacion)
 
@@ -229,6 +225,7 @@ if __name__ == "__main__":
             valid_audio_files.append(file)
         except Exception as e:
             logging.error(f"Error reading file {file}: {e}")
+
     if not valid_audio_files:
         raise Exception("No valid audio files found.")
 
@@ -241,25 +238,34 @@ if __name__ == "__main__":
         fs_model = np.median(sample_rates)
         logging.info('Los audios tienen una frecuencia de muestreo diferente, El modelo evaluara la frecuencia predominante {}'.format(fs_model))
 
-    # allow growth 
-    physical_devices = tf.config.experimental.list_physical_devices('GPU')
-    for device in physical_devices:
-        tf.config.experimental.set_memory_growth(device, True)
+    # tensorflow configuration
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
+        try:
+            # Restrict TensorFlow to only allocate 10GB of memory on the first GPU
+            tf.config.experimental.set_virtual_device_configuration(
+                gpus[0],
+                [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=9536)])
+        except RuntimeError as e:
+            print(e)
+
+    with open('urban_taxonomy_map_v1_0.json', 'r') as f:
+        taxonomy_mapping = json.load(f)
 
     try:
         data_df = get_predictions(audio_files=valid_audio_files,
                                   fs_model=fs_model,
                                   w_time=analysis_window_time,
+                                  taxonomy_mapping=taxonomy_mapping,
                                   n_predictions=n_predictions)
     except Exception as e:
         raise Exception(f"Error generating predictions: {e}")
-
     logging.info(f"{len(valid_audio_files)} procesados")
 
     # csv File
     stable_version = get_stable_version()
     predictions_file = f'Urban_Model_{abrev}_{stable_version}_window_{args.window}s_test.csv'
-    
     # save the predictions in a csv file
     data_df.to_csv(os.path.join(make_predicciones, predictions_file), index=False)
     logging.info(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(make_predicciones, predictions_file))}")
+    print(f"Archivo de prediciones creado en {os.path.abspath(os.path.join(make_predicciones, predictions_file))}")

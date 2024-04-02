@@ -31,8 +31,8 @@ class Params:
   mel_max_hz: float = 7500.0
   log_offset: float = 0.001
   patch_window_seconds: float = 0.96
-  # patch_hop_seconds: float = 0.48 # hop secdonds is aimed to be half of the window seconds
-  patch_hop_seconds: float = 1.0
+  patch_hop_seconds: float = 0.48 # hop secdonds is aimed to be half of the window seconds
+  # patch_hop_seconds: float = 1.0
 
   @property
   def patch_frames(self):

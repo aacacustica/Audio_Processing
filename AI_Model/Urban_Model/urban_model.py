@@ -155,9 +155,9 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                 
                 prediction = np.mean(scores, axis=0)
                 # logging.info(f"Raw predictions ({len(prediction)}) for {file}: {prediction}")
-                logging.info(f"Raw predictions ({len(prediction)}) for {file}")
+                # logging.info(f"Raw predictions ({len(prediction)}) for {file}")
                 
-                spectrograms.append(spectrogram)
+                # spectrograms.append(spectrogram)
 
                 # top_original = np.argsort(prediction)[::-1][:5]
                 # get the top n predictions
@@ -174,64 +174,64 @@ def get_predictions(audio_files:list, fs_model:float, w_time:int, taxonomy_mappi
                 logging.info(f"Original probabilities for {file}: {prob_classes_original}")
 
 
-                # [2] adjust scores based on the new taxonomy
-                # new_scores is a dictionary with the new classes as keys and the scores as values
-                new_scores = {key: 0 for key in set(taxonomy_mapping.values())}
-                logging.info(f"New scores for {file}: {new_scores}")
-                # we go through the original classes and add the scores to the new classes
-                for original_class, mapped_class in taxonomy_mapping.items():
-                    # get the index of the original class in the original taxonomy
-                    index = np.where(class_names == original_class)[0][0]
-                    # add the score to the new class
-                    new_scores[mapped_class] += prediction[index]
+                # # [2] adjust scores based on the new taxonomy
+                # # new_scores is a dictionary with the new classes as keys and the scores as values
+                # new_scores = {key: 0 for key in set(taxonomy_mapping.values())}
+                # logging.info(f"New scores for {file}: {new_scores}")
+                # # we go through the original classes and add the scores to the new classes
+                # for original_class, mapped_class in taxonomy_mapping.items():
+                #     # get the index of the original class in the original taxonomy
+                #     index = np.where(class_names == original_class)[0][0]
+                #     # add the score to the new class
+                #     new_scores[mapped_class] += prediction[index]
     
 
-                # NORMALIZE THE SCORES
-                # [1] normalize the scores
-                total_score = sum(new_scores.values())
-                for key in new_scores:
-                    new_scores[key] /= total_score
-                logging.info(f"Normalized scores for {file}: {new_scores}")
+                # # NORMALIZE THE SCORES
+                # # [1] normalize the scores
+                # total_score = sum(new_scores.values())
+                # for key in new_scores:
+                #     new_scores[key] /= total_score
+                # logging.info(f"Normalized scores for {file}: {new_scores}")
                 
-                # [2] get the top n predictions, sorted in descending order
-                top_i = np.argsort(list(new_scores.values()))[::-1][:n_predictions]
-                logging.info(f"Top indices for {file}: {top_i}")
+                # # [2] get the top n predictions, sorted in descending order
+                # top_i = np.argsort(list(new_scores.values()))[::-1][:n_predictions]
+                # logging.info(f"Top indices for {file}: {top_i}")
 
-                # [3] we want to order the classes and probabilities by date
+                # # [3] we want to order the classes and probabilities by date
                 # date = datetime.datetime.strptime(file.split('.')[0], '%Y%m%d_%H%M%S')
                 # date = date + datetime.timedelta(minutes=w_time * count)
                 # datetimes.append(date)
-                window_datetime = start_datetime + datetime.timedelta(seconds=w_time * count)
-                datetimes.append(window_datetime)
+                # # window_datetime = start_datetime + datetime.timedelta(seconds=w_time * count)
+                # # datetimes.append(window_datetime)
 
-                # [4] SAVE THE CUSTOM CLASSES AND PROBABILITIES
-                clip_classes = []
-                prob_classes = []
+                # # [4] SAVE THE CUSTOM CLASSES AND PROBABILITIES
+                # clip_classes = []
+                # prob_classes = []
 
-                for i in top_i:
-                    clip_class = list(new_scores.keys())[i]
-                    prob_class = list(new_scores.values())[i]
-                    clip_classes.append(clip_class)
-                    prob_classes.append(prob_class)
+                # for i in top_i:
+                #     clip_class = list(new_scores.keys())[i]
+                #     prob_class = list(new_scores.values())[i]
+                #     clip_classes.append(clip_class)
+                #     prob_classes.append(prob_class)
 
-                    # Log each class and probability as they're added
-                    logging.info(f"Class: {clip_class}, Probability: {prob_class}")
+                #     # Log each class and probability as they're added
+                #     logging.info(f"Class: {clip_class}, Probability: {prob_class}")
 
-                # Log the final classes and probabilities for each window
-                logging.info(f"Custom classes for {file}: {clip_classes}")
-                logging.info(f"Custom probabilities for {file}: {prob_classes}")
+                # # Log the final classes and probabilities for each window
+                # logging.info(f"Custom classes for {file}: {clip_classes}")
+                # logging.info(f"Custom probabilities for {file}: {prob_classes}")
 
 
-                # append to the lists
-                logging.info(f"Appending custom classes for {file}: {clip_classes} \nwith probabilities {prob_classes} to the list.")
-                audio_classes.append(clip_classes)
-                probs.append(prob_classes)
+                # # append to the lists
+                # logging.info(f"Appending custom classes for {file}: {clip_classes} \nwith probabilities {prob_classes} to the list.")
+                # audio_classes.append(clip_classes)
+                # probs.append(prob_classes)
                 files.append(file)
                 
-                if len(clip_classes) == 1:
-                    logging.info(f"We are adding 1 class for window analysis.")
-                else:
-                    logging.info(f"We are adding {len(clip_classes)} classes for window analysis.")
+                # if len(clip_classes) == 1:
+                #     logging.info(f"We are adding 1 class for window analysis.")
+                # else:
+                #     logging.info(f"We are adding {len(clip_classes)} classes for window analysis.")
                 
         else:
             logging.warning("Audio shorter than analysis window")

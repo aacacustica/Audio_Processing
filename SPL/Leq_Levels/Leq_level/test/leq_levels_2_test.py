@@ -40,6 +40,8 @@ class LeqLevel:
 
         return np.round(db_levels, 2)
 
+
+
 def read_calibration_constants(ini_file):
     config = configparser.ConfigParser()
     config.read(ini_file)
@@ -57,29 +59,28 @@ def parse_arguments():
     parser.add_argument('--abrev', type=str, help='Abbreviation to identify the generated outputs')
     return parser.parse_args()
 
+
+
 def main():
     args = parse_arguments()
     audio_path = args.path
     abrev = args.abrev if args.abrev else os.path.basename(audio_path)
+    calibration_constants = read_calibration_constants('calibration_constants.ini')
+    print(f'Calibration constants: {calibration_constants}')
 
     assert os.path.exists(audio_path), f"Directory does not exist: {audio_path}"
     audio_files = [file for file in os.listdir(audio_path) if file.lower().endswith('.wav')]
     assert audio_files, "No audio files found in the directory"
-
+    
     sample_rates = []
     valid_audio_files = []
     for file in audio_files:
         try:
             metadata = audio_metadata.load(os.path.join(audio_path, file))
-            print(metadata)
-            device_id = get_device_id(metadata)
-            print(f'Device ID: {device_id}')
-            print(f'Sample rate: {metadata.streaminfo.sample_rate}')
             sample_rates.append(metadata.streaminfo.sample_rate)
             valid_audio_files.append(file)
         except Exception as e:
             print(f'Error reading file metadata: {file}, {e}')
-
     if not valid_audio_files:
         print("No valid audio files to process.")
         return
@@ -87,13 +88,17 @@ def main():
     fs_filterbanks = np.median(sample_rates)
     print(f'Median sample rate determined: {fs_filterbanks} Hz')
 
-    calculator = LeqLevel(fs_filterbanks, C, int(fs_filterbanks))
     col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin', 'Filename', 'Timestamp']
     all_data = []
-
     for audio_file in tqdm(valid_audio_files, desc="Processing audio files"):
         try:
             filepath = os.path.join(audio_path, audio_file)
+            metadata = audio_metadata.load(filepath)
+            device_id = get_device_id(metadata)
+            C = calibration_constants.get(device_id, -10.16)
+            print(f'Processing file: {audio_file}, device_id: {device_id}, calibration constant: {C}')
+            calculator = LeqLevel(fs_filterbanks, C, int(fs_filterbanks))  
+
             audio_data, _ = sf.read(filepath)
             db_levels = calculator.calculate_spl_levels(audio_data)
 
@@ -110,7 +115,6 @@ def main():
         except Exception as e:
             print(f'Error processing file: {audio_file}, {e}')
 
-    # save output to csv
     df = pd.DataFrame(all_data, columns=col_names)
     df.to_csv(f'leq_levels_{abrev}.csv', index=False)
     print(f'Output saved to leq_levels_{abrev}.csv')

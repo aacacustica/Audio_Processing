@@ -90,7 +90,7 @@ def leq_levels_oct(audio_files:list ,fs_filterbanks:float , w_size: int, C:float
                 df_history['filename'] = audio_file
                 start = datetime.datetime.strptime(name, '%Y%m%d_%H%M%S')
                 n = len(df_history)
-                df_history['date'] = pd.date_range(start=start, freq='S', periods=n)
+                df_history['date'] = pd.date_range(start=start, freq='s', periods=n)
                 df_all = pd.concat([df_all,df_history])
             else:
                 logger.error(f"No data to write for file {audio_file}")

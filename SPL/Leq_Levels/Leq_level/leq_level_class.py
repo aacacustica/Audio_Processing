@@ -71,7 +71,7 @@ class AudioProcessor:
         # name = name.split("_")[0]
         # start = datetime.strptime(name, '%y%m%d')
 
-        df_history['date'] = pd.date_range(start=start, freq='S', periods=len(df_history))
+        df_history['date'] = pd.date_range(start=start, freq='s', periods=len(df_history))
         
         csv_name = f'{directory_name}_spl.csv'
         sub_folder_name = f"{directory_name}_spl"

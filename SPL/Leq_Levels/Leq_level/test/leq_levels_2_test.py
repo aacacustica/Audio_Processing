@@ -8,7 +8,8 @@ import argparse
 import os
 import datetime
 from tqdm import tqdm
-import logging
+import configparser
+import audio_metadata
 
 class LeqLevel:
     def __init__(self, fs, calibration_constant, window_size):
@@ -38,7 +39,18 @@ class LeqLevel:
             db_levels.append([LA, LC, LZ, Lmax, Lmin])
 
         return np.round(db_levels, 2)
-    
+
+def read_calibration_constants(ini_file):
+    config = configparser.ConfigParser()
+    config.read(ini_file)
+    return {key: float(value) for key, value in config['CalibrationConstants'].items()}
+
+def get_device_id(metadata):
+        artist_tags = metadata.tags.get("artist", ["songmeter"])
+        if not artist_tags or len(artist_tags[0].split(" ")) < 2:
+            return "songmeter"
+        return artist_tags[0].split(" ")[1].lower()
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Calculate SPL levels for audio files in a directory')
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
@@ -58,11 +70,15 @@ def main():
     valid_audio_files = []
     for file in audio_files:
         try:
-            metadata = sf.info(os.path.join(audio_path, file))
-            sample_rates.append(metadata.samplerate)
+            metadata = audio_metadata.load(os.path.join(audio_path, file))
+            print(metadata)
+            device_id = get_device_id(metadata)
+            print(f'Device ID: {device_id}')
+            print(f'Sample rate: {metadata.streaminfo.sample_rate}')
+            sample_rates.append(metadata.streaminfo.sample_rate)
             valid_audio_files.append(file)
         except Exception as e:
-            logging.error(f'Error reading file metadata: {file}, {e}')
+            print(f'Error reading file metadata: {file}, {e}')
 
     if not valid_audio_files:
         print("No valid audio files to process.")
@@ -71,7 +87,6 @@ def main():
     fs_filterbanks = np.median(sample_rates)
     print(f'Median sample rate determined: {fs_filterbanks} Hz')
 
-    C = -14.08  # default calibration constant
     calculator = LeqLevel(fs_filterbanks, C, int(fs_filterbanks))
     col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin', 'Filename', 'Timestamp']
     all_data = []
@@ -83,7 +98,7 @@ def main():
             db_levels = calculator.calculate_spl_levels(audio_data)
 
             if db_levels.shape[1] != 5:
-                logging.error(f'Unexpected shape for db_levels: {db_levels.shape} for file {audio_file}')
+                print(f'Unexpected shape for db_levels: {db_levels.shape} for file {audio_file}')
                 continue
 
             name_split = audio_file.split(".")[0]
@@ -93,7 +108,7 @@ def main():
             for row, timestamp in zip(db_levels, timestamps):
                 all_data.append(list(row) + [audio_file, timestamp.strftime('%Y-%m-%d_%H:%M:%S')])
         except Exception as e:
-            logging.error(f'Error processing file: {audio_file}, {e}')
+            print(f'Error processing file: {audio_file}, {e}')
 
     # save output to csv
     df = pd.DataFrame(all_data, columns=col_names)

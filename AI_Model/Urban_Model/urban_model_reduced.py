@@ -146,14 +146,16 @@ if __name__ == "__main__":
     python urban_model.py -p /home/usuario/audios -a "audios_1" -w 14.99 -n 3 -r /home/usuario/resultados
     """
     args = argument_parser()
-    
     # set the version tag
     version_tag = get_stable_version()
     logging.info(f"Version tag: {version_tag}")
 
     # set path to audio files
     audio_path = args.path
-
+    # check if the path exists
+    if not os.path.exists(audio_path):
+        raise Exception(f"Path {audio_path} does not exist.")
+    
     # set abreviation
     if args.abrev:
         abrev = args.abrev
@@ -169,10 +171,8 @@ if __name__ == "__main__":
     
     # set analysis window size in minutes
     analysis_window_time = args.window # ventana de analisis en minutos
-    
     # set number of predictions
     n_predictions = args.n_predictions
-    
     # set results folder
     if args.result_folder:
         results_dir = args.result_folder
@@ -187,26 +187,23 @@ if __name__ == "__main__":
         predictions_folder = "Predictions"
         visualizations_folder = "Visualizations"
         
-        resultados_dir = audio_path.split("\\")[:-3]
-        resultados_folder_path = os.path.join('\\\\', *resultados_dir, results_dir_name)
-        
+        resultados_dir = audio_path.split("\\")[2:-3]
+        # convert resultados_dir to a os.PathLike object
+        resultados_folder_path = os.path.join('\\', *resultados_dir, results_dir_name)        
         if not os.path.exists(resultados_folder_path):
             os.makedirs(resultados_folder_path)
         
         # add the folder name and the Urban_Model folder
-        resultados_dir = os.path.join('\\\\', *resultados_dir, results_dir_name, abrev, resultados_pred)
-        
+        resultados_dir = os.path.join(resultados_folder_path, abrev, resultados_pred)
         if not os.path.exists(resultados_dir):
             os.makedirs(resultados_dir)
         
         # add the predictions folder and the visualizations folder
         make_predicciones = os.path.join(resultados_dir, predictions_folder)
-        
         if not os.path.exists(make_predicciones):
             os.makedirs(make_predicciones)
             
         make_visualizacion = os.path.join(resultados_dir, visualizations_folder)
-        
         if not os.path.exists(make_visualizacion):
             os.makedirs(make_visualizacion)
 
@@ -220,6 +217,7 @@ if __name__ == "__main__":
         raise Exception("No audio files found.")
 
     # get sample rate of the collection
+    print("Getting sample rates of the audio files...")
     sample_rates = []
     valid_audio_files = []
     for file in audio_files:
@@ -247,6 +245,7 @@ if __name__ == "__main__":
         tf.config.experimental.set_memory_growth(device, True)
 
     try:
+        print("Generating predictions...")
         data_df = get_predictions(audio_files=valid_audio_files,
                                   fs_model=fs_model,
                                   w_time=analysis_window_time,

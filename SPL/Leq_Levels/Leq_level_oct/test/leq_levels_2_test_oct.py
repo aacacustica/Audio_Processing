@@ -14,11 +14,14 @@ import configparser
 import audio_metadata
 
 class LeqLevelOct:
-    def __init__(self, fs, calibration_constants, window_size, audio_path):
+    def __init__(self, fs, window_size, audio_path, calibration_file='calibration_constants.ini'):
         self.fs = fs
-        self.calibration_constants = calibration_constants
         self.window_size = window_size
         self.audio_path = audio_path
+
+        self.config = configparser.ConfigParser()
+        self.config.read(calibration_file)
+        self.calibration_dict = {k: float(v) for k, v in self.config['CalibrationConstants'].items()}
 
         # A and C weighting filters
         self.bA, self.aA = a_weighting_coeffs_design(fs)
@@ -32,7 +35,7 @@ class LeqLevelOct:
         oct_level_temp = [get_db_level(y_band, self.C) for y_band in y_oct.T]
         return oct_level_temp
 
-    def process_audio_files(self, audio_files):
+    def process_audio_files(self, audio_files, C):
         col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin']
         band_names = [f"{freq:.2f}Hz" for freq in self.third_oct.center_frequencies]
         col_names.extend(band_names)
@@ -79,6 +82,12 @@ class LeqLevelOct:
 
         return pd.concat(all_data, ignore_index=True)
 
+def get_device_id(metadata):
+        artist_tags = metadata.tags.get("artist", ["songmeter"])
+        if not artist_tags or len(artist_tags[0].split(" ")) < 2:
+            return "songmeter"
+        return artist_tags[0].split(" ")[1].lower()
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Calculate SPL levels for audio files in a directory')
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
@@ -98,10 +107,14 @@ def main():
     for file in audio_files:
         try:
             metadata = sf.info(os.path.join(audio_path, file))
+            sample_rates.append(metadata.samplerate)
+
             metadata_id = audio_metadata.load(os.path.join(audio_path, file))
             print(metadata_id)
-            exit()
-            sample_rates.append(metadata.samplerate)
+            device_id = get_device_id(metadata_id)
+            print(device_id)
+            C = float(config['CalibrationConstants'][device_id])
+            print(C)
         except Exception as e:
             print(f'Error reading file metadata: {file}, {e}')
     if not sample_rates:
@@ -111,7 +124,6 @@ def main():
     fs_filterbanks = np.median(sample_rates)
     print(f'Median sample rate determined: {fs_filterbanks} Hz')
 
-    C = -14.08
     calculator = LeqLevelOct(fs_filterbanks, C, int(fs_filterbanks), audio_path)
     df = calculator.process_audio_files(audio_files)
     

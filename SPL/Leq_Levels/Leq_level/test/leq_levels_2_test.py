@@ -15,7 +15,7 @@ import logging
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s', 
-    filename='leq_analysis.log', 
+    filename='leq_level.log', 
     filemode='a'
     )
 
@@ -27,6 +27,7 @@ class LeqLevel:
         self.bA, self.aA = a_weighting_coeffs_design(fs)
         self.bC, self.aC = c_weighting_coeffs_design(fs)
         self.fast_samples = int(window_size / 8)
+        logging.info(f"LeqLevel initialized with fs: {fs}, C: {calibration_constant}, window_size: {window_size} bA: {self.bA}, aA: {self.aA}, bC: {self.bC}, aC: {self.aC}")
 
     def calculate_spl_levels(self, audio_data):
         db_levels = []
@@ -45,18 +46,22 @@ class LeqLevel:
             Lmin = np.min(fast_levels)
 
             db_levels.append([LA, LC, LZ, Lmax, Lmin])
+            logging.info(f"Processed frame: {fstart} - {fstart + self.window_size}")
+            logging.info(f"LA: {LA}, LC: {LC}, LZ: {LZ}, Lmax: {Lmax}, Lmin: {Lmin}")
         return np.round(db_levels, 2)
     
 
 def read_calibration_constants(ini_file):
     config = configparser.ConfigParser()
     config.read(ini_file)
+    logging.info(f"Reading calibration constants from {ini_file}")
     return {key: float(value) for key, value in config['CalibrationConstants'].items()}
 
 def get_device_id(metadata):
         artist_tags = metadata.tags.get("artist", ["songmeter"])
         if not artist_tags or len(artist_tags[0].split(" ")) < 2:
             return "songmeter"
+        logging.info(f"Device ID: {artist_tags[0].split(' ')[1].lower()}")
         return artist_tags[0].split(" ")[1].lower()
 
 def folder_result(path):
@@ -69,8 +74,10 @@ def folder_result(path):
     else:
         if not os.path.exists(path + result_folder):
             os.makedirs(path + result_folder)
+            logging.info(f"Creating folder {path + result_folder}")
         else:
             result_folder = path + result_folder
+            logging.info(f"Folder {result_folder} already exists")
     return result_folder
 
 def parse_arguments():
@@ -87,6 +94,7 @@ def main():
     result_folder = folder_result(base_path)
 
     for subfolder in tqdm(os.listdir(base_path), desc='Processing subfolders'):
+        logging.info(f"Processing subfolder: {subfolder}...")
         audio_path = os.path.join(base_path, subfolder, "AUDIOMOTH")
         
         if not os.path.exists(audio_path):
@@ -101,6 +109,7 @@ def main():
         sample_rates = []
         valid_audio_files = []
         for file in audio_files:
+            logging.info(f"Getting metadata...")
             try:
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)
@@ -122,13 +131,14 @@ def main():
 
         for audio_file in valid_audio_files:
             try:
+                logging.info(f"Processsing file: {audio_file}...")
                 filepath = os.path.join(audio_path, audio_file)
                 metadata = audio_metadata.load(filepath)
                 device_id = get_device_id(metadata)
                 C = calibration_constants.get(device_id, -10.16)
                 calculator = LeqLevel(fs_filterbanks, C, int(fs_filterbanks))
                 logging.info(f'Processing file: {audio_file} with calibration constant: {C} and sample rate: {fs_filterbanks} Hz')
-                
+
                 audio_data, _ = sf.read(filepath)
                 db_levels = calculator.calculate_spl_levels(audio_data)
 

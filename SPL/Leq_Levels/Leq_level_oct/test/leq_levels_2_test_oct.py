@@ -13,7 +13,12 @@ import configparser
 import audio_metadata
 import logging
 
-logging.basicConfig(filename='leq_levels.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - %(levelname)s - %(message)s', 
+    filename='leq_level_1_3_oct.log', 
+    filemode='a'
+    )
 
 class LeqLevelOct:
     def __init__(self, fs, calibration_constant, window_size, audio_path):
@@ -26,10 +31,12 @@ class LeqLevelOct:
         self.bC, self.aC = c_weighting_coeffs_design(fs)
         # 1/3 and octave filter banks
         self.third_oct, self.octave = filterbanks(fs)
+        logging.info(f"LeqLevelOct initialized with fs: {fs}, C: {calibration_constant}, window_size: {window_size} bA: {self.bA}, aA: {self.aA}, bC: {self.bC}, aC: {self.aC}")
 
     def get_oct_levels(self, frame):
         y_oct, _ = self.third_oct.filter(frame)
         oct_level_temp = [get_db_level(y_band, self.C) for y_band in y_oct.T]
+        logging.info(f"Processed frame: {frame}")
         return oct_level_temp
 
     def process_audio_files(self, audio_files):
@@ -78,12 +85,14 @@ class LeqLevelOct:
 def read_calibration_constants(ini_file):
     config = configparser.ConfigParser()
     config.read(ini_file)
+    logging.info(f"Reading calibration constants from {ini_file}")
     return {key: float(value) for key, value in config['CalibrationConstants'].items()}
 
 def get_device_id(metadata):
     artist_tags = metadata.tags.get("artist", ["songmeter"])
     if not artist_tags or len(artist_tags[0].split(" ")) < 2:
         return "songmeter"
+    logging.info(f"Device ID: {artist_tags[0].split(' ')[1].lower()}")
     return artist_tags[0].split(" ")[1].lower()
 
 def folder_result(path):
@@ -92,6 +101,9 @@ def folder_result(path):
     result_path = os.path.join(base_dir, result_folder)
     if not os.path.exists(result_path):
         os.makedirs(result_path)
+        logging.info(f"Creating folder {result_path}")
+    else:
+        logging.info(f"Folder {result_path} already exists")
     return result_path
 
 def parse_arguments():
@@ -107,6 +119,7 @@ def main():
     result_folder = folder_result(base_path)
 
     for subfolder in tqdm(os.listdir(base_path), desc='Processing subfolders'):
+        logging.info(f"Processing subfolder: {subfolder}...")
         audio_path = os.path.join(base_path, subfolder, "AUDIOMOTH")
         if not os.path.exists(audio_path):
             logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
@@ -130,12 +143,15 @@ def main():
         if not valid_audio_files:
             logging.warning(f"No valid audio files to process in {subfolder}")
             continue
+        logging.info(f"Valid audio files: {len(valid_audio_files)}")
 
         fs_filterbanks = np.median(sample_rates)
+        logging.info(f"Median Sample rate: {fs_filterbanks}")
         calculator = LeqLevelOct(fs_filterbanks, -10.16, int(fs_filterbanks), audio_path)
 
         for audio_file in valid_audio_files:
             try:
+                logging.info(f"Processing file: {audio_file}")
                 filepath = os.path.join(audio_path, audio_file)
                 metadata = audio_metadata.load(filepath)
                 device_id = get_device_id(metadata)
@@ -143,6 +159,7 @@ def main():
                 calculator.C = C
                 file_data = calculator.process_audio_files([audio_file])
                 all_data_subfolder.extend(file_data)
+                logging.info(f"Processed file: {audio_file} with device_id: {device_id} and C: {C} and sample rate: {fs_filterbanks}")
             except Exception as e:
                 logging.warning(f'Error processing file: {audio_file}, {e}')
 
@@ -154,6 +171,9 @@ def main():
             output_folder = os.path.join(result_folder, subfolder, 'SPL')
             if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
+                logging.info(f"Creating folder {output_folder}")
+            else:
+                logging.info(f"Folder {output_folder} already exists")
 
             output_filename = f'leq_levels_oct_{subfolder}.csv'
             output_path = os.path.join(output_folder, output_filename)

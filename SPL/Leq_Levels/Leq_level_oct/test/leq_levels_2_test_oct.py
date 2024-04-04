@@ -3,15 +3,17 @@ import pandas as pd
 import soundfile as sf
 from scipy.signal import lfilter
 from pyfilterbank.splweighting import a_weighting_coeffs_design, c_weighting_coeffs_design
-from pyfilterbank.octbank import frequencies_fractional_octaves
 from tqdm import tqdm
 from utils import *
 import os
 import datetime
 import argparse
-from scipy.signal import lfilter, sosfilt
+from scipy.signal import lfilter
 import configparser
 import audio_metadata
+import logging
+
+logging.basicConfig(filename='leq_levels.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class LeqLevelOct:
     def __init__(self, fs, calibration_constant, window_size, audio_path):
@@ -57,19 +59,22 @@ class LeqLevelOct:
                 LA = round(get_db_level(yA, self.C), 2)
                 LC = round(get_db_level(yC, self.C), 2)
                 LZ = round(get_db_level(frame, self.C), 2)
+
                 # LAmax and LAmin over fast intervals
                 fast_levels = [get_db_level(yA[i:i + self.window_size // 8], self.C) for i in range(0, len(frame) - self.window_size // 8 + 1, self.window_size // 8)]
                 Lmax = round(np.max(fast_levels), 2)
                 Lmin = round(np.min(fast_levels), 2)
+                
                 # 1/3 levels
                 oct_level_temp = [round(level, 2) for level in self.get_oct_levels(frame)]
+                
                 # lists 
                 level_temp = [LA, LC, LZ, Lmax, Lmin] + oct_level_temp + [audio_file, timestamp.strftime('%Y-%m-%d-%H:%M:%S')]
                 db.append(level_temp)
-
             all_data.append(db)
         return all_data
     
+
 def read_calibration_constants(ini_file):
     config = configparser.ConfigParser()
     config.read(ini_file)
@@ -94,6 +99,7 @@ def parse_arguments():
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
     return parser.parse_args()
 
+
 def main():
     args = parse_arguments()
     base_path = args.path
@@ -103,12 +109,12 @@ def main():
     for subfolder in tqdm(os.listdir(base_path), desc='Processing subfolders'):
         audio_path = os.path.join(base_path, subfolder, "AUDIOMOTH")
         if not os.path.exists(audio_path):
-            print(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
+            logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
             continue
 
         audio_files = [file for file in os.listdir(audio_path) if file.lower().endswith('.wav')]
         if not audio_files:
-            print(f"No audio files found in: {audio_path}")
+            logging.warning(f"No audio files found in: {audio_path}")
             continue
 
         sample_rates = []
@@ -120,9 +126,9 @@ def main():
                 sample_rates.append(metadata.streaminfo.sample_rate)
                 valid_audio_files.append(file)
             except Exception as e:
-                print(f'Error reading file metadata: {file}, {e}')
+                logging.warning(f'Error reading file metadata: {file}, {e}')
         if not valid_audio_files:
-            print(f"No valid audio files to process in {subfolder}")
+            logging.warning(f"No valid audio files to process in {subfolder}")
             continue
 
         fs_filterbanks = np.median(sample_rates)
@@ -138,7 +144,7 @@ def main():
                 file_data = calculator.process_audio_files([audio_file])
                 all_data_subfolder.extend(file_data)
             except Exception as e:
-                print(f'Error processing file: {audio_file}, {e}')
+                logging.warning(f'Error processing file: {audio_file}, {e}')
 
         if all_data_subfolder:
             col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin'] + [f"{freq:.2f}Hz" for freq in calculator.third_oct.center_frequencies] + ['Filename', 'Time']
@@ -152,9 +158,9 @@ def main():
             output_filename = f'leq_levels_oct_{subfolder}.csv'
             output_path = os.path.join(output_folder, output_filename)
             df_subfolder.to_csv(output_path, index=False)
-            print(f'Output saved to {output_path}')
+            logging.info(f'Output saved to {output_path}')
         else:
-            print(f"No valid audio files to process in {subfolder}")
+            logging.warning(f"No valid audio files to process in {subfolder}")
 
 if __name__ == '__main__':
     main()

@@ -10,6 +10,14 @@ import datetime
 from tqdm import tqdm
 import configparser
 import audio_metadata
+import logging
+
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - %(levelname)s - %(message)s', 
+    filename='leq_analysis.log', 
+    filemode='a'
+    )
 
 class LeqLevel:
     def __init__(self, fs, calibration_constant, window_size):
@@ -56,7 +64,7 @@ def folder_result(path):
     path = path.split('\\')[2:-2]
     path = '\\\\' + '\\'.join(path)
     if not os.path.exists(path):
-        print(f"Skipping {path}, AUDIOMOTH folder not found.")
+        logging.warning(f"Skipping {path}, AUDIOMOTH folder not found.")
         return False
     else:
         if not os.path.exists(path + result_folder):
@@ -82,12 +90,12 @@ def main():
         audio_path = os.path.join(base_path, subfolder, "AUDIOMOTH")
         
         if not os.path.exists(audio_path):
-            print(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
+            logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
             continue
 
         audio_files = [file for file in os.listdir(audio_path) if file.lower().endswith('.wav')]
         if not audio_files:
-            print(f"No audio files found in: {audio_path}")
+            logging.warning(f"No audio files found in: {audio_path}")
             continue
 
         sample_rates = []
@@ -98,15 +106,18 @@ def main():
                 sample_rates.append(metadata.streaminfo.sample_rate)
                 valid_audio_files.append(file)
             except Exception as e:
-                print(f'Error reading file metadata: {file}, {e}')
+                logging.warning(f'Error reading file metadata: {file}, {e}')
         if not sample_rates:
-            print("No valid audio files to process.")
+            logging.warning("No valid audio files to process.")
             continue
         if not valid_audio_files:
-            print(f"No valid audio files to process in {subfolder}")
+            logging.warning(f"No valid audio files to process in {subfolder}")
             continue
 
+        logging.info(f'Processing {len(valid_audio_files)} files in {subfolder}')
+
         fs_filterbanks = np.median(sample_rates)
+        logging.info(f'Using sample rate: {fs_filterbanks}')
         all_data_subfolder = []
 
         for audio_file in valid_audio_files:
@@ -116,12 +127,13 @@ def main():
                 device_id = get_device_id(metadata)
                 C = calibration_constants.get(device_id, -10.16)
                 calculator = LeqLevel(fs_filterbanks, C, int(fs_filterbanks))
-
+                logging.info(f'Processing file: {audio_file} with calibration constant: {C} and sample rate: {fs_filterbanks} Hz')
+                
                 audio_data, _ = sf.read(filepath)
                 db_levels = calculator.calculate_spl_levels(audio_data)
 
                 if db_levels.shape[1] != 5:
-                    print(f'Unexpected shape for db_levels: {db_levels.shape} for file {audio_file}')
+                    logging.warning(f'Unexpected shape for db_levels: {db_levels.shape} for file {audio_file}')
                     continue
 
                 name_split = audio_file.split(".")[0]
@@ -131,7 +143,7 @@ def main():
                 for row, timestamp in zip(db_levels, timestamps):
                     all_data_subfolder.append(list(row) + [audio_file, timestamp.strftime('%Y-%m-%d_%H:%M:%S')])
             except Exception as e:
-                print(f'Error processing file: {audio_file}, {e}')
+                logging.warning(f'Error processing file: {audio_file}, {e}')
 
         if all_data_subfolder:
             df_subfolder = pd.DataFrame(all_data_subfolder, columns=col_names)
@@ -139,9 +151,9 @@ def main():
             output_folder = os.path.join(result_folder, subfolder, 'SPL')
             output_path = os.path.join(output_folder, output_filename)
             df_subfolder.to_csv(output_path, index=False)
-            print(f'Output saved to {output_path}')
+            logging.info(f'Output saved to {output_path}')
         else:
-            print(f"No data to save for folder {subfolder}")
+            logging.warning(f"No data to save for folder {subfolder}")
 
 if __name__ == '__main__':
     main()

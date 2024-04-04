@@ -54,104 +54,107 @@ class LeqLevelOct:
                 yC = y_C_weighted[fstart:fstart + self.window_size]
 
                 # levels with weightings
-                LA = get_db_level(yA, self.C)
-                LC = get_db_level(yC, self.C)
-                LZ = get_db_level(frame, self.C)
+                LA = round(get_db_level(yA, self.C), 2)
+                LC = round(get_db_level(yC, self.C), 2)
+                LZ = round(get_db_level(frame, self.C), 2)
                 # LAmax and LAmin over fast intervals
                 fast_levels = [get_db_level(yA[i:i + self.window_size // 8], self.C) for i in range(0, len(frame) - self.window_size // 8 + 1, self.window_size // 8)]
-                Lmax = np.max(fast_levels)
-                Lmin = np.min(fast_levels)
+                Lmax = round(np.max(fast_levels), 2)
+                Lmin = round(np.min(fast_levels), 2)
                 # 1/3 levels
-                oct_level_temp = self.get_oct_levels(frame)
+                oct_level_temp = [round(level, 2) for level in self.get_oct_levels(frame)]
                 # lists 
                 level_temp = [LA, LC, LZ, Lmax, Lmin] + oct_level_temp + [audio_file, timestamp.strftime('%Y-%m-%d-%H:%M:%S')]
                 db.append(level_temp)
 
             all_data.append(db)
         return all_data
-
-
-
-
+    
 def read_calibration_constants(ini_file):
     config = configparser.ConfigParser()
     config.read(ini_file)
     return {key: float(value) for key, value in config['CalibrationConstants'].items()}
 
 def get_device_id(metadata):
-        artist_tags = metadata.tags.get("artist", ["songmeter"])
-        if not artist_tags or len(artist_tags[0].split(" ")) < 2:
-            return "songmeter"
-        return artist_tags[0].split(" ")[1].lower()
+    artist_tags = metadata.tags.get("artist", ["songmeter"])
+    if not artist_tags or len(artist_tags[0].split(" ")) < 2:
+        return "songmeter"
+    return artist_tags[0].split(" ")[1].lower()
 
 def folder_result(path):
-    result_folder = '\\5-Resultados'
-    path = path.split('\\')[2:-2]
-    path = '\\\\' + '\\'.join(path)
-    if not os.path.exists(path):
-        print(f"Skipping {path}, AUDIOMOTH folder not found.")
-        return False
-    else:
-        if not os.path.exists(path + result_folder):
-            os.makedirs(path + result_folder)
-        else:
-            result_folder = path + result_folder
-    return result_folder
+    result_folder = '5-Resultados'
+    base_dir = os.path.dirname(os.path.dirname(path))
+    result_path = os.path.join(base_dir, result_folder)
+    if not os.path.exists(result_path):
+        os.makedirs(result_path)
+    return result_path
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Calculate SPL levels for audio files in a directory')
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
-    parser.add_argument('--abrev', type=str, help='Abbreviation to identify the generated outputs')
     return parser.parse_args()
-
-
-
 
 def main():
     args = parse_arguments()
-    audio_path = args.path
-    abrev = args.abrev if args.abrev else os.path.basename(audio_path)
+    base_path = args.path
     calibration_constants = read_calibration_constants('calibration_constants.ini')
-    result_folder = folder_result(audio_path)
+    result_folder = folder_result(base_path)
 
-    assert os.path.exists(audio_path), f"Directory does not exist: {audio_path}"
-    audio_files = [file for file in os.listdir(audio_path) if file.lower().endswith('.wav')]
-    assert audio_files, "No audio files found in the directory"
+    for subfolder in tqdm(os.listdir(base_path), desc='Processing subfolders'):
+        audio_path = os.path.join(base_path, subfolder, "AUDIOMOTH")
+        if not os.path.exists(audio_path):
+            print(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
+            continue
 
-    sample_rates = []
-    valid_audio_files = []
-    for file in audio_files:
-        try:
-            metadata = sf.info(os.path.join(audio_path, file))
-            sample_rates.append(metadata.samplerate)
-            valid_audio_files.append(file)
-        except Exception as e:
-            print(f'Error reading file metadata: {file}, {e}')
-    if not sample_rates:
-        print("No valid audio files to process.")
-        return
+        audio_files = [file for file in os.listdir(audio_path) if file.lower().endswith('.wav')]
+        if not audio_files:
+            print(f"No audio files found in: {audio_path}")
+            continue
 
-    fs_filterbanks = np.median(sample_rates)
-    # print(f'Median sample rate determined: {fs_filterbanks} Hz')
+        sample_rates = []
+        valid_audio_files = []
+        all_data_subfolder = []
+        for file in audio_files:
+            try:
+                metadata = audio_metadata.load(os.path.join(audio_path, file))
+                sample_rates.append(metadata.streaminfo.sample_rate)
+                valid_audio_files.append(file)
+            except Exception as e:
+                print(f'Error reading file metadata: {file}, {e}')
+        if not valid_audio_files:
+            print(f"No valid audio files to process in {subfolder}")
+            continue
 
-    calculator = LeqLevelOct(fs_filterbanks, -10.16, int(fs_filterbanks), audio_path)
-    all_data = []
-    for audio_file in tqdm(valid_audio_files, desc="Processing audio files"):
-        filepath = os.path.join(audio_path, audio_file)
-        metadata = audio_metadata.load(filepath)
-        device_id = get_device_id(metadata)
-        C = calibration_constants.get(device_id, -10.16)
-        print(f'Processing file: {audio_file}, device_id: {device_id}, calibration constant: {C}')
-        calculator.C = C  
-        file_data = calculator.process_audio_files([audio_file])
-        all_data.extend(file_data)
+        fs_filterbanks = np.median(sample_rates)
+        calculator = LeqLevelOct(fs_filterbanks, -10.16, int(fs_filterbanks), audio_path)
 
-    col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin'] + [f"{freq:.2f}Hz" for freq in calculator.third_oct.center_frequencies] + ['Filename', 'Time']
-    flat_data = [item for sublist in all_data for item in sublist]
-    final_df = pd.DataFrame(flat_data, columns=col_names)
-    
-    final_df.to_csv(f'leq_levels_{abrev}_oct.csv', index=False)
-    print(f'Output saved to leq_levels_{abrev}_oct.csv')
+        for audio_file in valid_audio_files:
+            try:
+                filepath = os.path.join(audio_path, audio_file)
+                metadata = audio_metadata.load(filepath)
+                device_id = get_device_id(metadata)
+                C = calibration_constants.get(device_id, -10.16)
+                calculator.C = C
+                file_data = calculator.process_audio_files([audio_file])
+                all_data_subfolder.extend(file_data)
+            except Exception as e:
+                print(f'Error processing file: {audio_file}, {e}')
+
+        if all_data_subfolder:
+            col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin'] + [f"{freq:.2f}Hz" for freq in calculator.third_oct.center_frequencies] + ['Filename', 'Time']
+            flat_data = [item for sublist in all_data_subfolder for item in sublist]
+            df_subfolder = pd.DataFrame(flat_data, columns=col_names)
+            
+            output_folder = os.path.join(result_folder, subfolder, 'SPL')
+            if not os.path.exists(output_folder):
+                os.makedirs(output_folder)
+
+            output_filename = f'leq_levels_oct_{subfolder}.csv'
+            output_path = os.path.join(output_folder, output_filename)
+            df_subfolder.to_csv(output_path, index=False)
+            print(f'Output saved to {output_path}')
+        else:
+            print(f"No valid audio files to process in {subfolder}")
 
 if __name__ == '__main__':
     main()

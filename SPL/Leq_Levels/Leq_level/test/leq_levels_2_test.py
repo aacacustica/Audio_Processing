@@ -37,7 +37,6 @@ class LeqLevel:
             Lmin = np.min(fast_levels)
 
             db_levels.append([LA, LC, LZ, Lmax, Lmin])
-
         return np.round(db_levels, 2)
     
 
@@ -69,7 +68,6 @@ def folder_result(path):
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Calculate SPL levels for audio files in a directory')
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
-    parser.add_argument('--abrev', type=str, help='Abbreviation to identify the generated outputs')
     return parser.parse_args()
 
 
@@ -101,6 +99,9 @@ def main():
                 valid_audio_files.append(file)
             except Exception as e:
                 print(f'Error reading file metadata: {file}, {e}')
+        if not sample_rates:
+            print("No valid audio files to process.")
+            continue
         if not valid_audio_files:
             print(f"No valid audio files to process in {subfolder}")
             continue

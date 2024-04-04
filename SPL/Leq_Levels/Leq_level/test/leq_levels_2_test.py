@@ -53,7 +53,7 @@ def get_device_id(metadata):
         return artist_tags[0].split(" ")[1].lower()
 
 def folder_result(path):
-    result_folder = '\\5-Resultados\\SPL'
+    result_folder = '\\5-Resultados'
     path = path.split('\\')[2:-2]
     path = '\\\\' + '\\'.join(path)
     if not os.path.exists(path):
@@ -139,9 +139,12 @@ def main():
         
         if all_data_subfolder:
             df_subfolder = pd.DataFrame(all_data_subfolder, columns=col_names)
+
             output_filename = f'leq_levels_{subfolder}.csv'
-            df_subfolder.to_csv(os.path.join(result_folder, subfolder, output_filename), index=False)
-            print(f'Output saved to {os.path.join(result_folder, subfolder,output_filename)}')
+            output_folder = os.path.join(result_folder, subfolder, 'SPL')
+            output_path = os.path.join(output_folder, output_filename)
+            df_subfolder.to_csv(output_path, index=False)
+            print(f'Output saved to {output_path}')
         else:
             print(f"No data to save for folder {subfolder}")
 

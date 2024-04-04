@@ -11,6 +11,7 @@ import datetime
 import argparse
 from scipy.signal import lfilter, sosfilt
 import configparser
+import audio_metadata
 
 class LeqLevelOct:
     def __init__(self, fs, calibration_constant, window_size, audio_path):
@@ -21,7 +22,7 @@ class LeqLevelOct:
         # A and C weighting filters
         self.bA, self.aA = a_weighting_coeffs_design(fs)
         self.bC, self.aC = c_weighting_coeffs_design(fs)
-        # Third-octave and octave filter banks
+        # 1/3 and octave filter banks
         self.third_oct, self.octave = filterbanks(fs)
 
     def get_oct_levels(self, frame):
@@ -35,35 +36,40 @@ class LeqLevelOct:
         col_names.extend(band_names)
         all_data = []
 
-        for audio_file in tqdm(audio_files, desc="Processing audio files"):
+        for audio_file in audio_files:
             db = []
             x, _ = sf.read(os.path.join(self.audio_path, audio_file))
             
-            # Apply A and C weighting to the signal
+            name_split = audio_file.split(".")[0]
+            start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
+            timestamps = [start_timestamp + datetime.timedelta(seconds=fstart/self.fs) for fstart in range(0, len(x) - self.window_size + 1, self.window_size)]
+            
+            # A and C weighting to the signal
             y_A_weighted = lfilter(self.bA, self.aA, x)
             y_C_weighted = lfilter(self.bC, self.aC, x)
 
-            for fstart in range(0, len(x) - self.window_size + 1, self.window_size):
+            for fstart, timestamp in zip(range(0, len(x) - self.window_size + 1, self.window_size), timestamps):
                 frame = x[fstart:fstart + self.window_size]
                 yA = y_A_weighted[fstart:fstart + self.window_size]
                 yC = y_C_weighted[fstart:fstart + self.window_size]
 
-                # Total levels with weightings
+                # levels with weightings
                 LA = get_db_level(yA, self.C)
                 LC = get_db_level(yC, self.C)
                 LZ = get_db_level(frame, self.C)
-                # Calculating LAmax and LAmin over fast intervals
+                # LAmax and LAmin over fast intervals
                 fast_levels = [get_db_level(yA[i:i + self.window_size // 8], self.C) for i in range(0, len(frame) - self.window_size // 8 + 1, self.window_size // 8)]
                 Lmax = np.max(fast_levels)
                 Lmin = np.min(fast_levels)
-                # Third-octave levels in Z weighting
+                # 1/3 levels
                 oct_level_temp = self.get_oct_levels(frame)
-                # Temporary lists creation
-                level_temp = [LA, LC, LZ, Lmax, Lmin] + oct_level_temp
+                # lists 
+                level_temp = [LA, LC, LZ, Lmax, Lmin] + oct_level_temp + [audio_file, timestamp.strftime('%Y-%m-%d-%H:%M:%S')]
                 db.append(level_temp)
 
-            all_data.append({'audio_file': audio_file, 'data': np.round(np.array(db), 2)})
+            all_data.append(db)
         return all_data
+
 
 
 
@@ -83,6 +89,7 @@ def parse_arguments():
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
     parser.add_argument('--abrev', type=str, help='Abbreviation to identify the generated outputs')
     return parser.parse_args()
+
 
 
 
@@ -113,30 +120,22 @@ def main():
     fs_filterbanks = np.median(sample_rates)
     print(f'Median sample rate determined: {fs_filterbanks} Hz')
 
-    C = -14.08
-    calculator = LeqLevelOct(fs_filterbanks, C, int(fs_filterbanks), audio_path)
-    all_data = calculator.process_audio_files(audio_files)
+    calculator = LeqLevelOct(fs_filterbanks, -10.16, int(fs_filterbanks), audio_path)
+    all_data = []
+    for audio_file in tqdm(valid_audio_files, desc="Processing audio files"):
+        filepath = os.path.join(audio_path, audio_file)
+        metadata = audio_metadata.load(filepath)
+        device_id = get_device_id(metadata)
+        C = calibration_constants.get(device_id, -10.16)
+        print(f'Processing file: {audio_file}, device_id: {device_id}, calibration constant: {C}')
+        calculator.C = C  
+        file_data = calculator.process_audio_files([audio_file])
+        all_data.extend(file_data)
 
-    # Prepare DataFrame columns
-    col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin']
-    band_names = [f"{freq:.2f}Hz" for freq in calculator.third_oct.center_frequencies]
-    col_names.extend(band_names)
-
-    df_list = []
-    for item in all_data:
-        audio_file = item['audio_file']
-        db = item['data']
-        name = audio_file.split(".")[0]
-        timestamps = [datetime.datetime.strptime(name, '%Y%m%d_%H%M%S') + datetime.timedelta(seconds=i) for i in range(len(db))]
-        file_data = pd.DataFrame(db, columns=col_names)
-        file_data['Filename'] = audio_file
-        file_data['Timestamp'] = timestamps
-        df_list.append(file_data)
-
-    # Concatenate all file data into a single DataFrame
-    final_df = pd.concat(df_list, ignore_index=True)
-
-    # Save the final DataFrame to CSV
+    col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin'] + [f"{freq:.2f}Hz" for freq in calculator.third_oct.center_frequencies] + ['Filename', 'Time']
+    flat_data = [item for sublist in all_data for item in sublist]
+    final_df = pd.DataFrame(flat_data, columns=col_names)
+    
     final_df.to_csv(f'leq_levels_{abrev}_oct.csv', index=False)
     print(f'Output saved to leq_levels_{abrev}_oct.csv')
 

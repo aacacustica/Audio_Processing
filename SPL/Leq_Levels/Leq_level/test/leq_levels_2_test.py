@@ -88,7 +88,7 @@ def main():
     fs_filterbanks = np.median(sample_rates)
     print(f'Median sample rate determined: {fs_filterbanks} Hz')
 
-    col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin', 'Filename', 'Timestamp']
+    col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin', 'Filename', 'Time']
     all_data = []
     for audio_file in tqdm(valid_audio_files, desc="Processing audio files"):
         try:
@@ -111,7 +111,7 @@ def main():
             timestamps = [start_timestamp + datetime.timedelta(seconds=i) for i in range(db_levels.shape[0])]
 
             for row, timestamp in zip(db_levels, timestamps):
-                all_data.append(list(row) + [audio_file, timestamp.strftime('%Y-%m-%d_%H:%M:%S')])
+                all_data.append(list(row) + [audio_file, timestamp.strftime('%Y-%m-%d-%H:%M:%S')])
         except Exception as e:
             print(f'Error processing file: {audio_file}, {e}')
 

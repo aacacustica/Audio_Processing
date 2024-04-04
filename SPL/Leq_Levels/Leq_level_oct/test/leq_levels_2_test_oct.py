@@ -79,6 +79,7 @@ class LeqLevelOct:
                 level_temp = [LA, LC, LZ, Lmax, Lmin] + oct_level_temp + [audio_file, timestamp.strftime('%Y-%m-%d-%H:%M:%S')]
                 db.append(level_temp)
             all_data.append(db)
+            logging.info(f"Processed file: {audio_file}")
         return all_data
     
 
@@ -147,7 +148,10 @@ def main():
 
         fs_filterbanks = np.median(sample_rates)
         logging.info(f"Median Sample rate: {fs_filterbanks}")
+
         calculator = LeqLevelOct(fs_filterbanks, -10.16, int(fs_filterbanks), audio_path)
+
+        logging.info(f"Processing {len(valid_audio_files)} files in {subfolder}...")
 
         for audio_file in valid_audio_files:
             try:

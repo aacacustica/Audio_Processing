@@ -98,7 +98,7 @@ def main():
     audio_path = args.path
     abrev = args.abrev if args.abrev else os.path.basename(audio_path)
     calibration_constants = read_calibration_constants('calibration_constants.ini')
-    print(f'Calibration constants: {calibration_constants}')
+    # print(f'Calibration constants: {calibration_constants}')
 
     assert os.path.exists(audio_path), f"Directory does not exist: {audio_path}"
     audio_files = [file for file in os.listdir(audio_path) if file.lower().endswith('.wav')]
@@ -118,7 +118,7 @@ def main():
         return
 
     fs_filterbanks = np.median(sample_rates)
-    print(f'Median sample rate determined: {fs_filterbanks} Hz')
+    # print(f'Median sample rate determined: {fs_filterbanks} Hz')
 
     calculator = LeqLevelOct(fs_filterbanks, -10.16, int(fs_filterbanks), audio_path)
     all_data = []

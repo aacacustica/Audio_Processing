@@ -80,15 +80,12 @@ def main():
     col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin', 'Filename', 'Time']
     result_folder = folder_result(base_path)
 
-    # Iterate over each subfolder in the base path
     for subfolder in tqdm(os.listdir(base_path), desc='Processing subfolders'):
         audio_path = os.path.join(base_path, subfolder, "AUDIOMOTH")
         
         if not os.path.exists(audio_path):
             print(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
             continue
-
-        print(f"Processing folder: {audio_path}")
 
         audio_files = [file for file in os.listdir(audio_path) if file.lower().endswith('.wav')]
         if not audio_files:
@@ -117,7 +114,6 @@ def main():
                 metadata = audio_metadata.load(filepath)
                 device_id = get_device_id(metadata)
                 C = calibration_constants.get(device_id, -10.16)
-                # print(f'Processing file: {audio_file}, device_id: {device_id}, calibration constant: {C}')
                 calculator = LeqLevel(fs_filterbanks, C, int(fs_filterbanks))
 
                 audio_data, _ = sf.read(filepath)
@@ -136,10 +132,8 @@ def main():
             except Exception as e:
                 print(f'Error processing file: {audio_file}, {e}')
 
-        
         if all_data_subfolder:
             df_subfolder = pd.DataFrame(all_data_subfolder, columns=col_names)
-
             output_filename = f'leq_levels_{subfolder}.csv'
             output_folder = os.path.join(result_folder, subfolder, 'SPL')
             output_path = os.path.join(output_folder, output_filename)

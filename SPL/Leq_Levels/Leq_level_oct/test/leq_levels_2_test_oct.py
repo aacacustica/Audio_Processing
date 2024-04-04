@@ -84,6 +84,20 @@ def get_device_id(metadata):
             return "songmeter"
         return artist_tags[0].split(" ")[1].lower()
 
+def folder_result(path):
+    result_folder = '\\5-Resultados'
+    path = path.split('\\')[2:-2]
+    path = '\\\\' + '\\'.join(path)
+    if not os.path.exists(path):
+        print(f"Skipping {path}, AUDIOMOTH folder not found.")
+        return False
+    else:
+        if not os.path.exists(path + result_folder):
+            os.makedirs(path + result_folder)
+        else:
+            result_folder = path + result_folder
+    return result_folder
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Calculate SPL levels for audio files in a directory')
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
@@ -98,7 +112,7 @@ def main():
     audio_path = args.path
     abrev = args.abrev if args.abrev else os.path.basename(audio_path)
     calibration_constants = read_calibration_constants('calibration_constants.ini')
-    # print(f'Calibration constants: {calibration_constants}')
+    result_folder = folder_result(audio_path)
 
     assert os.path.exists(audio_path), f"Directory does not exist: {audio_path}"
     audio_files = [file for file in os.listdir(audio_path) if file.lower().endswith('.wav')]

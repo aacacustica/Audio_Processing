@@ -110,7 +110,7 @@ def main():
         valid_audio_files = []
         for file in audio_files:
             try:
-                logging.info(f"Getting metadata...")
+                logging.info(f"Reading metadata...")
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)
                 valid_audio_files.append(file)

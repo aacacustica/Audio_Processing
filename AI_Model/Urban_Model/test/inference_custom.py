@@ -43,26 +43,37 @@ class AudioClassifier:
         return waveform, prediction
 
 
-def process_audio_files(classifier, folder_path):
-    all_files = os.listdir(folder_path)
-    wav_files = [file for file in all_files if file.lower().endswith('.wav')]
-
+def process_audio_files(classifier, base_path):
+    subfolders = [f.path for f in os.scandir(base_path) if f.is_dir()]
+    
     with open('predictions.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['filename', 'class', 'probability'])  # header
 
-        for file_name in tqdm.tqdm(wav_files):
-            try:
-                full_path = os.path.join(folder_path, file_name)
-                waveform, prediction = classifier.process_single_file(full_path)
-                write_predictions(writer, file_name, prediction, classifier.yamnet_classes)
-            except Exception as e:
-                print(f"Error processing file {file_name}: {e}")
+        for subfolder in tqdm.tqdm(subfolders, desc='Processing subfolders'):
+            audio_path = os.path.join(subfolder, "AUDIOMOTH")
+            logging.info(f"Processing subfolder: {subfolder}...")
+            
+            if not os.path.exists(audio_path):
+                logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
+                continue
+
+            audio_files = [file for file in os.listdir(audio_path) if file.lower().endswith('.wav')]
+            if not audio_files:
+                logging.warning(f"No audio files found in: {audio_path}")
+                continue
+
+            for file_name in audio_files:
+                try:
+                    full_path = os.path.join(audio_path, file_name)
+                    waveform, prediction = classifier.process_single_file(full_path)
+                    write_predictions(writer, file_name, prediction, classifier.yamnet_classes)
+                except Exception as e:
+                    logging.error(f"Error processing file {file_name}: {e}")
 
 
 def write_predictions(writer, file_name, prediction, yamnet_classes):
     top5_i = np.argsort(prediction)[::-1][:5]
-
     classes = []
     probabilities = []
     for i in top5_i:
@@ -75,7 +86,6 @@ def write_predictions(writer, file_name, prediction, yamnet_classes):
     writer.writerow(row)
 
 if __name__ == '__main__':
-    import sys
     assert len(sys.argv) == 2, 'Usage: script.py <folder containing wav files>'
     folder_path = sys.argv[1]
     setup_gpu()

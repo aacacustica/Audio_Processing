@@ -29,9 +29,10 @@ class AudioClassifier:
         self.yamnet.load_weights('yamnet.h5')
         self.yamnet_classes = yamnet_model.class_names('yamnet_class_map.csv')
 
-    def process_single_file(self, file_path):
+    def process_single_file(self, file_path, window_size=None):
+        logging.info(f"Processing file: {file_path}")
         wav_data, sr = sf.read(file_path, dtype=np.int16)
-        waveform = wav_data / 32768.0
+        waveform = wav_data / 32768.0  # Normalize audio
         waveform = waveform.astype('float32')
 
         if len(waveform.shape) > 1:
@@ -39,12 +40,28 @@ class AudioClassifier:
         if sr != self.params.sample_rate:
             waveform = resampy.resample(waveform, sr, self.params.sample_rate)
 
-        scores, embeddings, spectrogram = self.yamnet(waveform)
-        prediction = np.mean(scores, axis=0)
-        return waveform, prediction
+        if window_size is None:
+            logging.info("Processing whole file without window size")
+            scores, embeddings, spectrogram = self.yamnet(waveform)
+            prediction = np.mean(scores, axis=0)
+            return [prediction]
 
+        else:
+            logging.info(f"Processing file with window size: {window_size}")
+            window_size_samples = int(window_size * sr)
+            predictions = []
+            for start_idx in range(0, len(waveform), window_size_samples):
+                end_idx = start_idx + window_size_samples
+                if end_idx > len(waveform):
+                    break
+                window = waveform[start_idx:end_idx]
+                scores, embeddings, spectrogram = self.yamnet(window)
+                prediction = np.mean(scores, axis=0)
+                predictions.append(prediction)
+            return predictions
 
-def process_audio_files(classifier, base_path):
+        
+def process_audio_files(classifier, base_path, window_size):
     subfolders = [f.path for f in os.scandir(base_path) if f.is_dir()]
     col_names = ['Filename', 'Time', 'Class', 'Probability']
     result_folder = folder_result(base_path)
@@ -67,25 +84,27 @@ def process_audio_files(classifier, base_path):
         for file_name in audio_files:
             try:
                 full_path = os.path.join(audio_path, file_name)
-                waveform, prediction = classifier.process_single_file(full_path)
-
-                # sort predictions
-                top_indices = np.argsort(prediction)[::-1]
-                filtered_classes = []
-                filtered_probabilities = []
-                for idx in top_indices:
-                    if prediction[idx] >= 0.3:  # Threshold check
-                        filtered_classes.append(classifier.yamnet_classes[idx])
-                        filtered_probabilities.append(f'{prediction[idx]:.4f}')
-                
-                # join the classes and probabilities
-                filtered_classes_str = ', '.join(filtered_classes)
-                filtered_probabilities_str = ', '.join(filtered_probabilities)
+                predictions_list = classifier.process_single_file(full_path, window_size)
 
                 name_split = file_name.split(".")[0]
                 start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
 
-                all_data_subfolder.append([file_name, start_timestamp.strftime('%Y-%m-%d_%H:%M:%S'), filtered_classes_str, filtered_probabilities_str])
+                for i, prediction in enumerate(predictions_list):
+                    top_indices = np.argsort(prediction)[::-1]
+                    filtered_classes = [classifier.yamnet_classes[idx] for idx in top_indices if prediction[idx] >= 0.3]
+                    filtered_probabilities = [f'{prediction[idx]:.4f}' for idx in top_indices if prediction[idx] >= 0.3]
+
+                    filtered_classes_str = ', '.join(filtered_classes)
+                    filtered_probabilities_str = ', '.join(filtered_probabilities)
+
+                    adjusted_timestamp = start_timestamp if window_size is None else start_timestamp + datetime.timedelta(seconds=i*window_size)
+
+                    all_data_subfolder.append([
+                        file_name, 
+                        adjusted_timestamp.strftime('%Y-%m-%d_%H:%M:%S'), 
+                        filtered_classes_str, 
+                        filtered_probabilities_str
+                    ])
 
             except Exception as e:
                 logging.error(f"Error processing file {file_name}: {e}")
@@ -98,6 +117,7 @@ def process_audio_files(classifier, base_path):
 if __name__ == '__main__':
     args = parse_arguments()
     folder_path = args.path
+    window_size = args.window_size
     setup_gpu()
     classifier = AudioClassifier()
-    process_audio_files(classifier, folder_path)
+    process_audio_files(classifier, folder_path, window_size)

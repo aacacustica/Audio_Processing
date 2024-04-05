@@ -17,10 +17,13 @@ def setup_gpu():
             print(e)
             print()
 
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Make prediction with YAMNet model for audio files in a directory')
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
+    parser.add_argument('w', '--window_size', type=float, default=None, help='Window size in seconds for processing audio files. Default is None for processing full audio.')
     return parser.parse_args()
+
 
 def folder_result(path):
     result_folder = '\\5-Resultados'
@@ -37,6 +40,7 @@ def folder_result(path):
             result_folder = path + result_folder
             logging.info(f"Folder {result_folder} already exists")
     return result_folder
+
 
 def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder):
     df_subfolder = pd.DataFrame(all_data_subfolder, columns=col_names)

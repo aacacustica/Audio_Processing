@@ -5,6 +5,7 @@ import argparse
 import pandas as pd
 import time
 import numpy as np
+import subprocess
 
 def setup_gpu():
     physical_devices = tf.config.list_physical_devices('GPU')
@@ -44,11 +45,11 @@ def folder_result(path):
     return result_folder
 
 
-def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder, window_size=None):
+def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder, window_size=None, stable_version=None):
     if window_size is not None:
-        output_filename = f'predictions_{subfolder_name}_window_{window_size}s.csv'
+        output_filename = f'predictions_{subfolder_name}_w_{window_size}s_{stable_version}.csv'
     else:
-        output_filename = f'predictions_{subfolder_name}.csv'
+        output_filename = f'predictions_{subfolder_name}_{stable_version}.csv'
     
     output_folder = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'Predictions')
     if not os.path.exists(output_folder):
@@ -69,3 +70,30 @@ def print_top_predictions(file_name, predictions, class_names, top_n=5):
         probability = predictions[idx]
         print(f"{rank}. {class_name}: {probability:.4f}")
         time.sleep(1)  
+
+
+def list_git_tags():
+    try:
+        tags = tags = subprocess.check_output(["git", "tag"]).strip().decode()
+        return tags.split('\n')
+    except subprocess.CalledProcessError:
+        return None
+    
+def select_tag(tags):
+    for i, tag in enumerate(tags):
+        logging.info(f"{i}: {tag}")
+    choice = int(input("Select the tag to use: "))
+    tag_selected = tags[choice]
+    # replace "." with "_" to be able to use it as a file name
+    tag_selected = tag_selected.replace(".", "_")
+    return tag_selected
+
+def get_stable_version():
+    tags = list_git_tags()
+    # get the latest stable version
+    tag_selected = tags[-1]
+    logging.info(f"Latest stable version: {tag_selected}")
+    # replace "." with "_" to be able to use it as a file name
+    tag_selected = tag_selected.replace(".", "_")
+    logging.info(f"Latest stable version: {tag_selected}")
+    return tag_selected

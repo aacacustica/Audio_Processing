@@ -61,7 +61,7 @@ class AudioClassifier:
             return predictions
 
         
-def process_audio_files(classifier, base_path, window_size):
+def process_audio_files(classifier, base_path, window_size, stable_version):
     subfolders = [f.path for f in os.scandir(base_path) if f.is_dir()]
     col_names = ['Filename', 'Time', 'Class', 'Probability']
     result_folder = folder_result(base_path)
@@ -89,12 +89,12 @@ def process_audio_files(classifier, base_path, window_size):
                 name_split = file_name.split(".")[0]
                 start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
 
-                # classification threshold
+                #lassification threshold
                 threshold = classifier.params.classification_threshold
-
                 for i, prediction in enumerate(predictions_list):
                     top_indices = np.argsort(prediction)[::-1][:5]
-                    print_top_predictions(file_name, prediction, classifier.yamnet_classes, top_n=5)
+                    #debugging print
+                    # print_top_predictions(file_name, prediction, classifier.yamnet_classes, top_n=5)
                     
                     filtered_classes = []
                     filtered_probabilities = []
@@ -105,7 +105,7 @@ def process_audio_files(classifier, base_path, window_size):
 
                     filtered_classes_str = ', '.join(filtered_classes)
                     filtered_probabilities_str = ', '.join(filtered_probabilities)
-
+                    # adjust timestamp based on window size
                     adjusted_timestamp = start_timestamp if window_size is None else start_timestamp + datetime.timedelta(seconds=i*window_size)
 
                     all_data_subfolder.append([
@@ -119,15 +119,19 @@ def process_audio_files(classifier, base_path, window_size):
                 logging.error(f"Error processing file {file_name}: {e}")
 
         if all_data_subfolder:
-            save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder, window_size)
+            save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder, window_size, stable_version)
         else:
             logging.warning(f"No data to save for folder {subfolder}")
 
 
 if __name__ == '__main__':
     setup_gpu()
+    stable_version = get_stable_version()
+    
     args = parse_arguments()
+    
     folder_path = args.path
     window_size = args.window_size
+    
     classifier = AudioClassifier()
-    process_audio_files(classifier, folder_path, window_size)
+    process_audio_files(classifier, folder_path, window_size, stable_version)

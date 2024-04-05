@@ -42,14 +42,17 @@ def folder_result(path):
     return result_folder
 
 
-def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder):
-    df_subfolder = pd.DataFrame(all_data_subfolder, columns=col_names)
-    output_filename = f'predictions_{subfolder_name}.csv'
+def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder, window_size=None):
+    if window_size is not None:
+        output_filename = f'predictions_{subfolder_name}_window_{window_size}s.csv'
+    else:
+        output_filename = f'predictions_{subfolder_name}.csv'
     
     output_folder = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'Predictions')
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     
     output_path = os.path.join(output_folder, output_filename)
+    df_subfolder = pd.DataFrame(all_data_subfolder, columns=col_names)
     df_subfolder.to_csv(output_path, index=False)
     logging.info(f'Output saved to {output_path}')

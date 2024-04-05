@@ -110,7 +110,7 @@ def process_audio_files(classifier, base_path, window_size):
                 logging.error(f"Error processing file {file_name}: {e}")
 
         if all_data_subfolder:
-            save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder)
+            save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder, window_size)
         else:
             logging.warning(f"No data to save for folder {subfolder}")
 

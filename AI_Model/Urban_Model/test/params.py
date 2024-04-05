@@ -50,3 +50,6 @@ class Params:
   classifier_activation: str = 'sigmoid'
 
   tflite_compatible: bool = False
+  
+  # threshold for probability of classification
+  classification_threshold: float = 0.3

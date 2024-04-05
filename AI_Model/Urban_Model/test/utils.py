@@ -3,6 +3,8 @@ import os
 import logging
 import argparse
 import pandas as pd
+import time
+import numpy as np
 
 def setup_gpu():
     physical_devices = tf.config.list_physical_devices('GPU')
@@ -21,7 +23,7 @@ def setup_gpu():
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Make prediction with YAMNet model for audio files in a directory')
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
-    parser.add_argument('w', '--window_size', type=float, default=None, help='Window size in seconds for processing audio files. Default is None for processing full audio.')
+    parser.add_argument('-w', '--window_size', type=float, default=None, help='Window size in seconds for processing audio files. Default is None for processing full audio.')
     return parser.parse_args()
 
 
@@ -56,3 +58,14 @@ def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, resul
     df_subfolder = pd.DataFrame(all_data_subfolder, columns=col_names)
     df_subfolder.to_csv(output_path, index=False)
     logging.info(f'Output saved to {output_path}')
+
+
+def print_top_predictions(file_name, predictions, class_names, top_n=5):
+    print(f"\nTop {top_n} predictions for {file_name}:")
+    top_indices = np.argsort(predictions)[::-1][:top_n] 
+    
+    for rank, idx in enumerate(top_indices, start=1):
+        class_name = class_names[idx]
+        probability = predictions[idx]
+        print(f"{rank}. {class_name}: {probability:.4f}")
+        time.sleep(1)  

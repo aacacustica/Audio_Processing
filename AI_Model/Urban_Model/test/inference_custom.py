@@ -1,6 +1,5 @@
 from __future__ import division, print_function
 
-import sys
 import os
 import numpy as np
 import tqdm
@@ -10,7 +9,6 @@ import tensorflow as tf
 import logging
 from utils import *
 import datetime
-import pandas as pd
 
 import params as yamnet_params
 import yamnet as yamnet_model
@@ -37,8 +35,10 @@ class AudioClassifier:
 
         if len(waveform.shape) > 1:
             waveform = np.mean(waveform, axis=1)
+            logging.warning(f"Audio file has more than 1 channel. Taking the mean of all channels.")
         if sr != self.params.sample_rate:
             waveform = resampy.resample(waveform, sr, self.params.sample_rate)
+            logging.warning(f"Resampling audio from {sr} to {self.params.sample_rate}")
 
         if window_size is None:
             logging.info("Processing whole file without window size")
@@ -89,10 +89,19 @@ def process_audio_files(classifier, base_path, window_size):
                 name_split = file_name.split(".")[0]
                 start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
 
+                # classification threshold
+                threshold = classifier.params.classification_threshold
+
                 for i, prediction in enumerate(predictions_list):
-                    top_indices = np.argsort(prediction)[::-1]
-                    filtered_classes = [classifier.yamnet_classes[idx] for idx in top_indices if prediction[idx] >= 0.3]
-                    filtered_probabilities = [f'{prediction[idx]:.4f}' for idx in top_indices if prediction[idx] >= 0.3]
+                    top_indices = np.argsort(prediction)[::-1][:5]
+                    print_top_predictions(file_name, prediction, classifier.yamnet_classes, top_n=5)
+                    
+                    filtered_classes = []
+                    filtered_probabilities = []
+                    for idx in top_indices:
+                        if prediction[idx] >= threshold:
+                            filtered_classes.append(classifier.yamnet_classes[idx])
+                            filtered_probabilities.append(f'{prediction[idx]:.4f}')
 
                     filtered_classes_str = ', '.join(filtered_classes)
                     filtered_probabilities_str = ', '.join(filtered_probabilities)
@@ -114,10 +123,11 @@ def process_audio_files(classifier, base_path, window_size):
         else:
             logging.warning(f"No data to save for folder {subfolder}")
 
+
 if __name__ == '__main__':
+    setup_gpu()
     args = parse_arguments()
     folder_path = args.path
     window_size = args.window_size
-    setup_gpu()
     classifier = AudioClassifier()
     process_audio_files(classifier, folder_path, window_size)

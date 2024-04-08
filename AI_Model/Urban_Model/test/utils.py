@@ -71,6 +71,9 @@ def print_top_predictions(file_name, predictions, class_names, top_n=5):
         print(f"{rank}. {class_name}: {probability:.4f}")
         time.sleep(1)  
 
+def get_audiofiles(path):
+    audio_files = [file for file in os.listdir(path) if file.lower().endswith('.wav')]
+    return audio_files
 
 def list_git_tags():
     try:
@@ -95,5 +98,5 @@ def get_stable_version():
     logging.info(f"Latest stable version: {tag_selected}")
     # replace "." with "_" to be able to use it as a file name
     tag_selected = tag_selected.replace(".", "_")
-    logging.info(f"Latest stable version: {tag_selected}")
+    logging.info(f"Latest stable version string: {tag_selected}")
     return tag_selected

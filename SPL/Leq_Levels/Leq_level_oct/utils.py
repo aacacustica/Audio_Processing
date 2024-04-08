@@ -5,7 +5,8 @@ from pyfilterbank.octbank import FractionalOctaveFilterbank
 from scipy.fft import fft
 from pyfilterbank.octbank import frequencies_fractional_octaves
 from scipy.signal import lfilter
-
+import subprocess
+import logging
 
 # Constantes de inicializacion
 T = 1
@@ -183,7 +184,31 @@ def get_audiofiles(path):
     Returns:
         list: A list containing the full paths to all '.wav' files in the specified directory.
     """    
-    files = os.listdir(path)
-    audiofiles = [os.path.join(path,f) for f in files if f.endswith('.wav')]
-    return audiofiles
+    audio_files = [file for file in os.listdir(path) if file.lower().endswith('.wav')]
+    return audio_files
 
+def list_git_tags():
+    try:
+        tags = tags = subprocess.check_output(["git", "tag"]).strip().decode()
+        return tags.split('\n')
+    except subprocess.CalledProcessError:
+        return None
+    
+def select_tag(tags):
+    for i, tag in enumerate(tags):
+        logging.info(f"{i}: {tag}")
+    choice = int(input("Select the tag to use: "))
+    tag_selected = tags[choice]
+    # replace "." with "_" to be able to use it as a file name
+    tag_selected = tag_selected.replace(".", "_")
+    return tag_selected
+
+def get_stable_version():
+    tags = list_git_tags()
+    # get the latest stable version
+    tag_selected = tags[-1]
+    logging.info(f"Latest stable version: {tag_selected}")
+    # replace "." with "_" to be able to use it as a file name
+    tag_selected = tag_selected.replace(".", "_")
+    logging.info(f"Latest stable version string: {tag_selected}")
+    return tag_selected

@@ -11,6 +11,7 @@ from tqdm import tqdm
 import configparser
 import audio_metadata
 import logging
+from utils import *
 
 logging.basicConfig(
     level=logging.INFO, 
@@ -87,6 +88,7 @@ def parse_arguments():
 
 
 def main():
+    stable_version = get_stable_version()
     args = parse_arguments()
     base_path = args.path
     calibration_constants = read_calibration_constants('calibration_constants.ini')
@@ -94,14 +96,14 @@ def main():
     result_folder = folder_result(base_path)
 
     for subfolder in tqdm(os.listdir(base_path), desc='Processing subfolders'):
-        logging.info(f"Processing subfolder: {subfolder}...")
+        logging.info(f"Processing audio files: {subfolder}...")
         audio_path = os.path.join(base_path, subfolder, "AUDIOMOTH")
         
         if not os.path.exists(audio_path):
             logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
             continue
 
-        audio_files = [file for file in os.listdir(audio_path) if file.lower().endswith('.wav')]
+        audio_files = get_audiofiles(audio_path)
         if not audio_files:
             logging.warning(f"No audio files found in: {audio_path}")
             continue
@@ -157,7 +159,7 @@ def main():
 
         if all_data_subfolder:
             df_subfolder = pd.DataFrame(all_data_subfolder, columns=col_names)
-            output_filename = f'leq_levels_{subfolder}.csv'
+            output_filename = f'leq_levels_{subfolder}_{stable_version}.csv'
             output_folder = os.path.join(result_folder, subfolder, 'SPL')
             output_path = os.path.join(output_folder, output_filename)
             df_subfolder.to_csv(output_path, index=False)

@@ -75,7 +75,7 @@ def process_audio_files(classifier, base_path, window_size, stable_version):
             logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
             continue
 
-        audio_files = [file for file in os.listdir(audio_path) if file.lower().endswith('.wav')]
+        audio_files = get_audiofiles(audio_path)
         if not audio_files:
             logging.warning(f"No audio files found in: {audio_path}")
             continue

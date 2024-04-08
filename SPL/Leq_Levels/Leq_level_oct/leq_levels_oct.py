@@ -114,19 +114,20 @@ def parse_arguments():
 
 
 def main():
+    stable_version = get_stable_version()
     args = parse_arguments()
     base_path = args.path
     calibration_constants = read_calibration_constants('calibration_constants.ini')
     result_folder = folder_result(base_path)
 
     for subfolder in tqdm(os.listdir(base_path), desc='Processing subfolders'):
-        logging.info(f"Processing subfolder: {subfolder}...")
+        logging.info(f"Processing audio files: {subfolder}...")
         audio_path = os.path.join(base_path, subfolder, "AUDIOMOTH")
         if not os.path.exists(audio_path):
             logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
             continue
 
-        audio_files = [file for file in os.listdir(audio_path) if file.lower().endswith('.wav')]
+        audio_files = get_audiofiles(audio_path)
         if not audio_files:
             logging.warning(f"No audio files found in: {audio_path}")
             continue
@@ -151,7 +152,6 @@ def main():
         logging.info(f"Median Sample rate: {fs_filterbanks}")
 
         calculator = LeqLevelOct(fs_filterbanks, -10.16, int(fs_filterbanks), audio_path)
-
         logging.info(f"Processing {len(valid_audio_files)} files in {subfolder}...")
 
         for audio_file in valid_audio_files:
@@ -180,7 +180,7 @@ def main():
             else:
                 logging.info(f"Folder {output_folder} already exists")
 
-            output_filename = f'leq_levels_oct_{subfolder}.csv'
+            output_filename = f'leq_levels_oct_{subfolder}_{stable_version}.csv'
             output_path = os.path.join(output_folder, output_filename)
             df_subfolder.to_csv(output_path, index=False)
             logging.info(f'Output saved to {output_path}')

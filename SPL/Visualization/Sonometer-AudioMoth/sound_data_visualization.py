@@ -637,4 +637,4 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean.html")
         logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
     except Exception as e:
-        logger.error(f"Error in make_timeplot: {e}")
+        logger.error(f"Error in plot_predic_laeq_15_min: {e}")

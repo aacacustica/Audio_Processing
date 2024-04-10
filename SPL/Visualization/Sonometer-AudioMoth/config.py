@@ -12,15 +12,15 @@ LD_SECONDS = 21600
 LE_SECONDS = 7200
 LN_SECONDS = 14400
 
-# Plotting Flags
-PLOT_MAKE_TIME_PLOT = False 
-PLOT_HEATMAP_EVOLUTION_HOUR = False 
-PLOT_HEATMAP_EVOLUTION_15_MIN = False 
-PLOT_DAY_EVOLUTION = False 
-PLOT_PERIOD_EVOLUTION = False 
-PLOT_INDICADORES_HEATMAP = False  
-PLOT_NIGHT_EVOLUTION = False 
-PLOT_NIGHT_EVOLUTION_15_MIN = False 
+# Plotting Flags there are 9 flags to plot the following plots
+PLOT_MAKE_TIME_PLOT = True 
+PLOT_HEATMAP_EVOLUTION_HOUR = True 
+PLOT_HEATMAP_EVOLUTION_15_MIN = True 
+PLOT_DAY_EVOLUTION = True 
+PLOT_PERIOD_EVOLUTION = True 
+PLOT_INDICADORES_HEATMAP = True  
+PLOT_NIGHT_EVOLUTION = True 
+PLOT_NIGHT_EVOLUTION_15_MIN = True 
 PLOT_PREDIC_LAEQ_15_MIN = True
 
 
@@ -30,7 +30,7 @@ PLOT_PREDIC_LAEQ_15_MIN = True
         LAEQ_COLUMN: LAeq column name
         LAMAX_COLUMN: LAFmax column name
         LAMIN_COLUMN: LAFmin column name
-   
+
    The column maps are used in the following functions:
         get_data_814
         get_data_824

@@ -1,13 +1,6 @@
 import logging
 
 def setup_logging(log_file='sonometer.log', level=logging.DEBUG):
-    """Setup logging configuration
-    Arfs:
-        log_file: name of the log file
-        level: logging level
-    Returns:
-            logger: logging.Logger object
-    """
     logger = logging.getLogger(__name__)
     logger.setLevel(level)
 
@@ -22,5 +15,4 @@ def setup_logging(log_file='sonometer.log', level=logging.DEBUG):
 
     logger.addHandler(file_handler)
     # logger.addHandler(console_handler)
-
     return logger

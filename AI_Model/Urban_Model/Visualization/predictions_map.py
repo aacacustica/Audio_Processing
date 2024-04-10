@@ -2,7 +2,7 @@ from utils import *
 import os
 import pandas as pd
 import tqdm
-import time
+
 
 def main():
     args = parse_arguments()
@@ -104,21 +104,19 @@ def main():
         ###################
         # leq 
         ###################
-        # rename columns
         df_merged.rename(columns={'Time_2':'Time'}, inplace=True)
         df_leq['Time'] = pd.to_datetime(df_leq['Time'], format='%Y-%m-%d_%H:%M:%S')
         df_merge_leq = pd.merge_asof(df_merged, df_leq, on='Time', direction='nearest')
         df_merge_leq = df_merge_leq.drop(columns=['Filename'])
-        # print(df_merge_leq)
 
 
         ################# 
         #plot
         #################
-        # plot_prediction_map(df_exploded, title, visualization_dir, stable_version)
-        # plot_stack_bar(df_exploded, title, visualization_dir, stable_version)
-        # plot_tree_map(df_merged, global_category, original_classes, title, visualization_dir, stable_version)
-        # plot_aggregated_tree_map(df_merged, global_category, original_classes, title, visualization_dir, stable_version)
+        plot_prediction_map(df_exploded, title, visualization_dir, stable_version)
+        plot_stack_bar(df_exploded, title, visualization_dir, stable_version)
+        plot_tree_map(df_merged, global_category, original_classes, title, visualization_dir, stable_version)
+        plot_aggregated_tree_map(df_merged, global_category, original_classes, title, visualization_dir, stable_version)
         plot_leq_pred(df_merge_leq, global_category, original_classes, title, visualization_dir, stable_version)
 
 if __name__ == '__main__':

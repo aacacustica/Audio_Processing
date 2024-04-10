@@ -10,21 +10,17 @@ import ast
 import plotly.express as px
 import matplotlib.colors as mcolors
 
+
+
 cmap_dict = sns.color_palette(palette=["#C8FFC8", "#00C800", "#007800", "#FFFF00", "#FFC878", "#FF9600", "#FF0000", "#780000", "#FF00FF", "#8C3CFF", "#000078"],n_colors=11)
 
 hex_colors = [mcolors.to_hex(color) for color in cmap_dict]
 custom_color_scale = [[i/len(hex_colors), color] for i, color in enumerate(hex_colors)]
 custom_color_scale.append([1, hex_colors[-1]])
     
+
+
 def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
-    """ Line plots for each day
-    Args:
-        df (_type_): DataFrame
-        folder_output_dir (str): Output directory
-        logger (_type_): Logger
-        laeq_column (str): Name of the column to use, typically LAeq
-        plotname (str): Prefix to name the plot
-    """
     try:
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
@@ -67,11 +63,11 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
         plt.text(s="Le", x=0.85, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
         plt.text(s="Ln", x=0.96, y=0.97, transform=plt.gca().transAxes, c="Black", weight="bold")
         
-        plt.title(f"Evolución día {plotname} Date {df['date'][0]} - {df['date'][-1]}", fontsize=14)
+        plt.title(f"Evolución día {plotname} Date {df['date'].iloc[0]} - {df['date'].iloc[-1]}", fontsize=14)
         plt.ylabel('dB(A)')
         plt.xlabel('Hora')
 
-        logger.info(f"Day evolution plot created for {plotname} Date {df['date'][0]} - {df['date'][-1]}")
+        logger.info(f"Day evolution plot created for {plotname} Date {df['date'].iloc[0]} - {df['date'].iloc[-1]}")
         
         os.makedirs(folder_output_dir, exist_ok=True)
         fig.savefig(f"{folder_output_dir}/{plotname}_day_evolution.png", dpi=300)
@@ -81,19 +77,12 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
 
         logger.info(f"Day evolution plot saved to {folder_output_dir}/{plotname}_day_evolution.png")
         logger.info(f"Day evolution data saved to {folder_output_dir}/{plotname}_day_evolution.xlsx")
-
     except Exception as e:
         logger.error(f"Error in plot_day_evolution: {e}")
 
+
+
 def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, plotname:str):
-    """ Lineplots per each period
-    Args:
-        df (_type_): DataFrame
-        folder_output_dir (str): Output directory
-        logger (_type_): Logger
-        laeq_column (str): Name of the column to use, tipycally LAeq
-        plotname (str): Prefix to name the plot
-    """
     try:
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
@@ -128,7 +117,7 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
                 
             elif ind == 'Le':
                 fig.set(xlim=(18.7, 22.3), ylim=(30, 105))  # Adjust xlim to be tighter
-                plt.xticks([18.7, 19, 20, 21, 22, 22.3], ['', '19:00', '20:00', '21:00', '22:00', ''])  # Adjust xticks to match the new xlim
+                plt.xticks([18.7, 19, 20, 21, 22, 22.3], ['', '19:00', '20:00', '21:00', '22:00', ''])
                 logger.info(f"Ploted Le")
 
             plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
@@ -153,15 +142,9 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
     except Exception as e:
         logger.error(f"Error in plot_period_evolution: {e}")
 
+
+
 def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str, indicador_noche:str):
-    """Plot night evolution of the measurement period.
-    Args:
-        df (_type_): DataFrame
-        folder_output_dir (str): Output directory
-        logger (_type_): Logger
-        laeq_column (str): Name of the column to use, tipycally LAeq
-        plotname (str): Prefix to name the plot    
-    """
     try:
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
@@ -224,15 +207,6 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
 
 
 def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extension, laeq_column:str, plotname:str, indicador_noche:str):
-    """Plot night evolution of the measurement period.
-    Args:
-        df (_type_): DataFrame
-        folder_output_dir (str): Output directory
-        logger (_type_): Logger
-        name_extension (str): Extension to name the plot
-        laeq_column (str): Name of the column to use, tipycally LAeq
-        plotname (str): Prefix to name the plot    
-    """
     try:
         # print(df)
         # print(df.columns)
@@ -245,13 +219,13 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
 
         df.index = pd.to_datetime(df.index)
 
-        df_resampled = df.resample('15T')[laeq_column].mean()
+        df_resampled = df.resample('15min')[laeq_column].mean()
         # print(f"This is the df resampled: \n{df_resampled}")
         
         # try: 
-        #      df_night_str = df.resample('15T')['Día'].agg(lambda x: x.value_counts().index[0])
+        #      df_night_str = df.resample('15min')['Día'].agg(lambda x: x.value_counts().index[0])
         # except:
-        df_night_str = df.resample('15T')['Día'].agg(lambda x: x.value_counts().index[0] if len(x) > 0 else None)
+        df_night_str = df.resample('15min')['Día'].agg(lambda x: x.value_counts().index[0] if len(x) > 0 else None)
         
         df_resampled = pd.DataFrame(df_resampled).join([df_night_str])
         
@@ -292,7 +266,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
                 x="plot_time", 
                 y=laeq_column, 
                 kind="line",
-                ci=None,
+                errorbar=None,
                 hue="Día",
                 estimator=leq, 
                 aspect=1.3,
@@ -322,17 +296,8 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
     except Exception as e:
         logger.error(f"Error in plot_night_evolution_15_min: {e}")
 
+
 def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_column: str, agg_func: str, plotname:str):
-    """Plot heatmap of pivot table with hour evolution of each day,
-    Args:
-        df (_type_): DataFrame
-        folder_output_dir (str): Output directory
-        logger (_type_): Logger
-        values_column (str): Name of the column to use, tipycally LAeq
-        agg_func (str): Aggregation function, Leq
-        plotname (str): Prefix to name the plot
-    """
-    # print(df)
     try:
         
         df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
@@ -376,21 +341,10 @@ def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_colum
         logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_evolucion.xlsx")
     except Exception as e:
         logger.error(f"Error in plot_heatmap: {e}")
-        
+
+
         
 def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_column: str, agg_func: str, plotname:str):
-    """Plot heatmap of pivot table with hour evolution of each day,
-    Args:
-        df (_type_): DataFrame
-        folder_output_dir (str): Output directory
-        logger (_type_): Logger
-        values_column (str): Name of the column to use, tipycally LAeq
-        agg_func (str): Aggregation function, Leq
-        plotname (str): Prefix to name the plot
-    """
-    # print(df)
-    # print(df.columns)
-    
     if not isinstance(df.index, pd.DatetimeIndex):
         logger.error("DataFrame index is not a datetime index.")
         return
@@ -440,20 +394,10 @@ def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_col
         logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_evolucion_15_min.xlsx")
     except Exception as e:
         logger.error(f"Error in plot_heatmap: {e}")
-        
-def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: list):
-    """
-    Plot timeplot of the data for LAeq, Lmax, Lmin and percentiles.
 
-    Args:
-        df (pd.DataFrame): DataFrame containing the data.
-        folder_output_dir (str): Output directory.
-        logger: Logger for logging messages.
-        columns_dict (dict): Dictionary with the column names.
-        agg_period (int): Aggregation period in seconds.
-        plotname (str): Prefix to name the plot.
-        percentiles (list): List of percentiles to plot.
-    """
+
+
+def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: list):
     try:
         agg_funcs = {
             columns_dict['LAEQ_COLUMN']: leq,
@@ -463,7 +407,7 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs)
         #oca = df.resample(f'{agg_period}s').agg({'oca': 'min'})
 
-        plt.style.use('seaborn-whitegrid')
+        plt.style.use('seaborn-v0_8-whitegrid')
         fig, ax = plt.subplots(figsize=(20, 10))
         ax.set_facecolor("white")
 
@@ -511,19 +455,10 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
     except Exception as e:
         logger.error(f"Error in make_timeplot: {e}")
 
+
+
 def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, ind_column:str):
-    """Plot heatmap of pivot table with hour evolution of each day
-    Args:
-        df (_type_): DataFrame
-        folder_output_dir (str): Output directory
-        logger (_type_): Logger
-        plotname (str): Prefix to name the plot
-        ind_column (str): Name of the column to use, tipycally LAeq
-    """
     try:
-        # print(df.columns)
-        # print(df)
-        
         if "Fecha" not in df.columns and "Date hour" in df.columns:
             # df["Fecha"] = df["Date hour"]
             df["Fecha"] = pd.to_datetime(df['Date hour'], dayfirst=True)
@@ -623,7 +558,8 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
     
     except Exception as e:
         logger.error(f"Error in plot_indicadores_heatmap: {e}")
-        
+
+
         
 def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
     try:
@@ -633,10 +569,6 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs) # 900 seconds = 15 minutes
         
         #########################################################
-        print(df_LAeq)
-        print(df_Pred)
-        print(yamnet_csv)
-        
         df_Pred['datetime'] = pd.to_datetime(df_Pred['datetime'])
         df_Pred.set_index('datetime', inplace=True)
                
@@ -645,43 +577,24 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
 
         df_LAeq = df_LAeq[start_date:end_date]
         df_Pred = df_Pred[start_date:end_date]
-        print(f"Aligned period from {start_date} to {end_date} for both df_LAeq and df_Pred.")
-        
-        print("\n\nThis is the df_LAeq")
-        print(df_LAeq)
-        print("\n\nThis is the df_Pred")
-        print(df_Pred)
-        
         df_Pred.index = df_Pred.index.round('15min')
-        print("\n\nThis is the index of df_Pred")
-        print(df_Pred)
-        # exit()
-
+        
         # merge df
         df_aligned = df_LAeq.merge(df_Pred, how='left', left_index=True, right_index=True)
-        
-        print("\n\nThis is the merged dataframe")
-        print(df_aligned)
-        
+
         # remove rows with NaN values
         df_aligned.dropna(inplace=True)
-        print("\n\nThis is the merged dataframe after removing NaN values")
-        print(df_aligned)
-        
         # explode by list of classes
         df_aligned['classes'] = df_aligned['classes'].apply(ast.literal_eval)
         df_aligned['probabilities'] = df_aligned['probabilities'].apply(ast.literal_eval)
 
         df_exploded_classes = df_aligned.explode('classes')
         df_exploded = df_aligned.apply(lambda x: x.explode() if x.name in ['classes', 'probabilities'] else x)
-
-        print(df_exploded)
         
         # create the df_all, merge with the audioset dataframe
         df_exploded['display_name'] = df_exploded['classes']
         df_all = df_exploded.merge(yamnet_csv, how='left', on='display_name')
-        
-        print(df_all)
+    
         #########################################################
         #### Plotting the data ####
         
@@ -707,26 +620,21 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
                         color_continuous_scale=custom_color_scale,
                         range_color=[30, 85],
                         hover_data={'LAeq': True, 'number': True},
-                        custom_data=['LAeq'],
-                        # make bigger the plot to save it in a png
-                        height=800,
-                        width=2000                      
+                        custom_data=['LAeq'],                  
                         )
 
-        # title(f'{plotname} Indicadores')
-        fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) por Clases Predecidas')
+        fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) por Clases')
         fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
         fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
 
-        # fig.show()
+        fig.show()
 
+        # save
         os.makedirs(folder_output_dir, exist_ok=True)
-        # save fig plot
-        fig.write_image(f"{folder_output_dir}/{plotname}_LAeq_class_mean.png")
         fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_mean.html")
         grouped_df.to_excel(f"{folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
 
-        logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean.png")
+        logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean.html")
         logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
     except Exception as e:
         logger.error(f"Error in make_timeplot: {e}")

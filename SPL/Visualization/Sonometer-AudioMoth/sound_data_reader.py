@@ -2,13 +2,9 @@ from datetime import datetime
 import os
 import pandas as pd
 
+
+
 def get_data_814(filename: str):
-    """Getting data from Larson Davis 814 SLM
-    Args:
-        filename: path to the measurement file
-    Returns:
-        df: pandas DataFrame with the measurement data
-    """
     try:
         df = pd.read_csv(filename, header=16, encoding='latin1')
    
@@ -21,24 +17,17 @@ def get_data_814(filename: str):
     df['datetime'] = pd.to_datetime(df['Date'] + ' ' + df['Time'])
     return df
 
+
+
 def get_data_lx_ES(filename: str):
-    """Getting data from Lx Es
-    Args:
-        filename: path to the measurement file
-    Returns:
-        df: pandas DataFrame with the measurement data
-    """
     df = pd.read_excel(filename, sheet_name='Historia del tiempo')
     df['datetime'] = pd.to_datetime(df['Fecha'])
     
     return df
 
+
+
 def get_data_824(filename: str):
-    """Getting data from Larson Davis 824 SLM
-    Args:
-        filename: path to the measurement file
-    Returns:
-        df: pandas DataFrame with the measurement data"""
     df = pd.read_csv(filename, sep=',', encoding='latin1', header=15)
     df = df.dropna(axis=1)
     
@@ -48,12 +37,9 @@ def get_data_824(filename: str):
     df['datetime'] = pd.to_datetime(df['Date'] + ' '+ df['Time'])
     return df
 
+
+
 def get_data_SV307(filename: str):
-    """Getting data from Svantek SV307 SLM
-    Args:
-        filename: path to the measurement file
-    Returns:
-        df: pandas DataFrame with the measurement data"""
     #  Try [1]
     # try:
     # df = pd.read_csv(filename,header=14,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
@@ -83,35 +69,25 @@ def get_data_SV307(filename: str):
         
     return df
     
+    
 def get_data_lx_EN(filename: str):
-    """Getting data from Lx En
-    Args:
-        filename: path to the measurement file
-    Returns:
-        df: pandas DataFrame with the measurement data
-    """
     df = pd.read_excel(filename,sheet_name=4)
     df['datetime'] = pd.to_datetime(df['Date'])
     return df
 
+
+
 def get_data_audio(filename: str):
-    """Getting data from AudioPost SLM
-    Args:
-        filename (str): path to the measurement file
-    Returns:
-        df: pandas DataFrame with the measurement data
-    """
     df = pd.read_csv(filename)
-    df['datetime'] = pd.to_datetime(df['date'])
+    if 'Time' in df.columns:
+        df['datetime'] = pd.to_datetime(df['Time'], format='%Y-%m-%d_%H:%M:%S')
+    else:
+        df['datetime'] = pd.to_datetime(df['date'])
     return df 
 
+
+
 def get_data_cesva(measurement_folder: str):
-    """Getting data from CESVA SLM
-    Args:
-        measurement_folder: path to the measurement folder
-    Returns:
-        df: pandas DataFrame with the measurement data
-    """
     # Check if the measurement folder is a file
     if os.path.isfile(measurement_folder):
         cesva_index = measurement_folder.find('CESVA')
@@ -164,5 +140,4 @@ def get_data_cesva(measurement_folder: str):
     # Add the datetime column to the dataframe
     df['datetime'] = df.apply(lambda x: datetime.strptime(x['Date hour'], '%d/%m/%Y %H:%M:%S'),axis=1)
     df['datetime'] = pd.to_datetime(df['datetime'])
-    
     return df

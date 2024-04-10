@@ -1,6 +1,6 @@
 # Remove start time and end time
-REMOVE_START_TIME = 600
-REMOVE_END_TIME = 1200
+REMOVE_START_TIME = 900
+REMOVE_END_TIME = 900
 
 # Limits
 LIMITE_DIA = 65
@@ -77,6 +77,7 @@ C_MAP_WEEKDAY = {
             'Domingo': '#d172a4', # PINK
         }
 
+
 C_MAP_WEEKDAY_NIGHT = {
             'Lunes-Martes': '#cc0000', # RED
             'Martes-Miércoles': '#8e7cc3', # PURPLE
@@ -87,6 +88,7 @@ C_MAP_WEEKDAY_NIGHT = {
             'Domingo-Lunes': '#d172a4', # PINK
 }
 
+
 PERCENTIL_COLOUR = {
     1: '#B28DFF',
     5: '#6EB5FF',
@@ -94,6 +96,7 @@ PERCENTIL_COLOUR = {
     50: '#FFABAB',
     90: '#9E9E9E'
 }
+
 
 COLOR_PALLET_URBAN = {
             'Other human': '#2986cc', # BLUE
@@ -109,6 +112,7 @@ COLOR_PALLET_URBAN = {
             'Human movement': '#40b674', # light green 40b674
         }
 
+
 C_MAP_GRADIENT = {
     1: '#C8FFC8',
     2: '#00C800',
@@ -122,6 +126,3 @@ C_MAP_GRADIENT = {
     10: '#8C3CFF',
     11: '#000078',
 }
-
-
-# cmap_dict = sns.color_palette(palette=["#C8FFC8", "#00C800", "#007800", "#FFFF00", "#FFC878", "#FF9600", "#FF0000", "#780000", "#FF00FF", "#8C3CFF", "#000078"],n_colors=11)

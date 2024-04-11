@@ -61,6 +61,15 @@ def db_limit(hour_column,ld_limit,le_limit,ln_limit):
     return limit
 
 
+def categorize_time_of_day(hour):
+    if 7 <= hour < 19:
+        return 'Ld'
+    elif 19 <= hour < 23:
+        return 'Le'
+    else:
+        return 'Ln'
+
+
 def leq(levels):
     levels = levels[~np.isnan(levels)]
     l = np.array(levels)

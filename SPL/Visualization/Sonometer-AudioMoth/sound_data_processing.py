@@ -13,16 +13,6 @@ import glob
 
 
 def load_data(file_path, logger):
-    """Loading data from file_path and returning a dataframe with the data and the SLM type
-    Args:
-        file_path (str): Path to the file to load
-        logger (logging.Logger): Logger object
-        Returns:
-            df (pd.DataFrame): Dataframe with the data
-            slm_type (str): SLM type
-            slm_dict (dict): Dictionary with the columns names for the SLM type
-    """
-    
     slm_type_function_mapping = {
         "814": (get_data_814, larson814_dict),
         "824": (get_data_824, larson824_dict),
@@ -42,7 +32,7 @@ def load_data(file_path, logger):
             return df, slm_type, slm_dict
         
         except Exception as e:
-            clean_message = str(e).replace('\n', ' ')  # Replace newlines with spaces
+            clean_message = str(e).replace('\n', ' ')
             logger.warning(f"Failed to load data for SLM type {slm_type}: {clean_message}. Trying next SLM type")
             continue
     raise ValueError("SLM type not found or file could not be loaded")
@@ -50,16 +40,6 @@ def load_data(file_path, logger):
 
 
 def process_folder(folder_path, logger):
-    """Process a folder containing the measurement files
-    Args:
-        folder_path (str): Path to the folder containing the measurement files
-        logger (logging.Logger): Logger object
-    Returns:
-        df (pd.DataFrame): Dataframe with the data
-        slm_type (str): SLM type
-        slm_dict (dict): Dictionary with the columns names for the SLM type
-    """
-    
     # folder contains a CESVA folder
     cesva_path = os.path.join(folder_path, 'CESVA')
    
@@ -69,13 +49,11 @@ def process_folder(folder_path, logger):
         
         # CESVA folder contains subfolders
         for subfolder in subfolders:
-            # If it does, load the data from the first subfolder
+            #load the data from the first subfolder
             subfolder_path = os.path.join(cesva_path, subfolder)
             
             # subfolder contains measurement files
             files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV', 'XLSX'))]
-            
-            # load the data from the first measurement file
             if files:
                 return load_data(files[0], logger)  
             else:
@@ -85,36 +63,31 @@ def process_folder(folder_path, logger):
         logger.info(f"Files found: {files}")
         if not files:
             logger.warning(f"No measurement files found in {folder_path}")
-            
             return None, None, None
-        
         return load_data(files[0], logger) 
-    
     return None, None, None 
 
 
-def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, logger):
-    """Process all the folders in the input folder
-    Args:
-        input_folder (str): Path to the input folder
-        folders (list): List of folders to process
-        PERIODO_AGREGACION (int): Aggregation period in seconds
-        PERCENTILES (list): Percentiles to plot
-        logger (logging.Logger): Logger object
-    Returns:
-            df_indicadores (pd.DataFrame): Dataframe with the indicators
-            df_common_format (pd.DataFrame): Dataframe with the data in a common format
-    """
+def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, sufix_string, logger):
     for folder in tqdm(folders, desc="Processing folders"):
         reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
-        
+
+        if '3-Medidas' in reg_folder and 'SONOMETRO' in reg_folder:
+                reg_folder = reg_folder.replace('3-Medidas', '5-Resultados')
+                reg_folder = reg_folder.replace('SONOMETRO', 'SPL')
+        # print(f"Reg folder modified: {reg_folder}")
+
+        if '3-Medidas' in folder and 'SONOMETRO' in folder:
+            folder = folder.replace('3-Medidas', '5-Resultados')
+            folder = folder.replace('SONOMETRO', 'SPL')
+
         folder = folder.split("\\")[:-1]
         folder = os.path.join('\\\\', *folder)
         logger.info(f"\nEntering folder: {folder}")
-    
+        
         spl_string = "SPL"
-        graphics_string = "Graphics"
-        #  output folder
+        graphics_string = f"Graphics_{sufix_string}"
+
         logger.info(f"folder {folder}")
         result_dir_name = "5-Resultados"
         
@@ -128,10 +101,10 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         if not os.path.exists(resultados_dir):
             os.makedirs(resultados_dir)
             logger.info(f"Created output folder: {resultados_dir}")
-            
-        # add the folder name
+        
         folder_output_dir = os.path.join(resultados_dir, folder, spl_string, graphics_string)
         logger.info(f"folder_output_dir: {folder_output_dir}")
+
         if not os.path.exists(folder_output_dir):
             os.makedirs(folder_output_dir)
             logger.info(f"Created output folder: {folder_output_dir}")
@@ -154,7 +127,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"df is None")
                 continue
             
-            # Add datetime columns, sort by datetime and set datetime as index
+            # add datetime columns, sort by datetime and set datetime as index
             df = add_datetime_columns(df, date_col='datetime') 
             df = df.sort_values('datetime')
             df.set_index('datetime', inplace=True)
@@ -162,23 +135,22 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             end_date = df.index[-1]
             logger.info(f"df was sorted by datetime and datetime was set as index")
             
-            # drop the beginning and ending of the measurement (15min)
             try:
+                # drop the beginning and ending of the measurement (15min)
                 df = df.loc[start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')]
                 logger.info(f"df was trimmed, {REMOVE_START_TIME} secs from the beggining and {REMOVE_END_TIME} secs from the end")
 
                 # add indicators column
                 df['indicador_str'] = df.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
-
                 # add nights column
-                logger.info(f"Adding nights_str column for folder {folder}")
                 df['night_str'] = df.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
+                logger.info(f"Adding nights_str column for folder {folder}")
+                
+                #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
+                #print(df)
             except:
                 logger.error(f"An error occurred while trimming the dataframe")
                 continue
-
-            #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
-            #print(df)
 
             logger.info(f"\nEntering the plotting section")
             folder = folder.split("\\")[-1]

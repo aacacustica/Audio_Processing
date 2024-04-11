@@ -626,8 +626,7 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) por Clases')
         fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
         fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
-
-        fig.show()
+        # fig.show()
 
         # save
         os.makedirs(folder_output_dir, exist_ok=True)

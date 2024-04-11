@@ -5,6 +5,9 @@ import tqdm
 
 
 def main():
+    """
+    python .\predictions_map.py -p ""
+    """
     args = parse_arguments()
     stable_version = get_stable_version()
 

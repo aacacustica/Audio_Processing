@@ -54,7 +54,7 @@ custom_color_scale.append([1, hex_colors[-1]])
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='Make prediction with YAMNet model for audio files in a directory')
+    parser = argparse.ArgumentParser(description='Plot prediction audio files in a directory')
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
     parser.add_argument('-w', '--window_size', type=float, default=None, help='Window size in seconds for processing audio files. Default is None for processing full audio.')
     return parser.parse_args()
@@ -138,24 +138,22 @@ def list_git_tags():
     except subprocess.CalledProcessError:
         return None
     
+
 def select_tag(tags):
     for i, tag in enumerate(tags):
         print(f"{i}: {tag}")
     choice = int(input("Select the tag to use: "))
     tag_selected = tags[choice]
-    # replace "." with "_" to be able to use it as a file name
     tag_selected = tag_selected.replace(".", "_")
     return tag_selected
 
+
 def get_stable_version():
     tags = list_git_tags()
-    # get the latest stable version
     tag_selected = tags[-1]
-    # print(f"Latest stable version: {tag_selected}")
-    # replace "." with "_" to be able to use it as a file name
     tag_selected = tag_selected.replace(".", "_")
-    # print(f"Latest stable version: {tag_selected}")
     return tag_selected
+
 
 def match_classes(class_label, yamnet_classes):
     parts = class_label.split(',')

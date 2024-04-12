@@ -637,3 +637,97 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
     except Exception as e:
         logger.error(f"Error in plot_predic_laeq_15_min: {e}")
+
+
+
+def plot_predic_laeq_15_min_Lx(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
+    try:
+        agg_funcs = {
+            columns_dict['LAEQ_COLUMN']: leq,
+        }
+        df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs) # 900 seconds = 15 minutes
+        
+        #########################################################
+        df_Pred['datetime'] = pd.to_datetime(df_Pred['datetime'])
+        # copy the datetime column to a column named 'time'
+        df_Pred['time'] = df_Pred['datetime']
+        df_Pred.set_index('datetime', inplace=True)
+               
+        start_date = max(df_LAeq.index.min(), df_Pred.index.min())
+        end_date = min(df_LAeq.index.max(), df_Pred.index.max())
+
+        df_LAeq = df_LAeq[start_date:end_date]
+        df_Pred = df_Pred[start_date:end_date]
+        df_Pred.index = df_Pred.index.round('15min')
+        
+        # merge df
+        df_aligned = df_LAeq.merge(df_Pred, how='left', left_index=True, right_index=True)
+
+        # remove rows with NaN values
+        df_aligned.dropna(inplace=True)
+        # explode by list of classes
+        df_aligned['classes'] = df_aligned['classes'].apply(ast.literal_eval)
+        df_aligned['probabilities'] = df_aligned['probabilities'].apply(ast.literal_eval)
+
+        df_exploded_classes = df_aligned.explode('classes')
+        df_exploded = df_aligned.apply(lambda x: x.explode() if x.name in ['classes', 'probabilities'] else x)
+        df_exploded['number'] = 1
+        
+        # create the df_all, merge with the audioset dataframe
+        df_exploded['display_name'] = df_exploded['classes']
+        df_all = df_exploded.merge(yamnet_csv, how='left', on='display_name')
+
+        df_all['time_of_day'] = df_all['time'].dt.hour.apply(categorize_time_of_day)
+        print(df_all.columns)
+        # exit()
+    
+        #########################################################
+        #### Plotting the data ####
+        # Brown_Level_2, Brown_Level_3, NoisePort
+        # brown_2 = 'Brown_Level_2'
+        # brown_3 = 'Brown_Level_3'
+        # noiseport = 'NoisePort'
+
+        # # set what detail level to use
+        # original_classes = 'Class_yamnet'
+        # global_category = brown_2
+        
+        display_name = 'display_name'
+        iso_taxonomy = 'iso_taxonomy'
+        classes = 'classes'
+
+        brown_1 = 'Brown_Level_1'
+        brown_2 = 'Brown_Level_2'
+        brown_3 = 'Brown_Level_3'
+
+        class_to_plot = brown_2
+
+        grouped_df = df_all.groupby(class_to_plot, display_name,'time_of_day').agg(
+            number=(classes, 'size'),
+            LAeq=(columns_dict['LAEQ_COLUMN'], lambda x: leq(x))
+        ).reset_index()
+
+        fig = px.treemap(grouped_df, 
+                        path=['time_of_day', class_to_plot, display_name],  
+                        values='number',
+                        color='LAeq',
+                        color_continuous_scale=custom_color_scale,
+                        range_color=[30, 85],
+                        hover_data={'LAeq': True, 'number': True},
+                        custom_data=['LAeq'],                  
+                        )
+
+        fig.update_layout(title=f'{plotname} | Promedio energetico (LAeq) por franjas horarias')
+        fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
+        fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
+        fig.show()
+
+        # save
+        # os.makedirs(folder_output_dir, exist_ok=True)
+        # fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_mean.html")
+        # grouped_df.to_excel(f"{folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
+
+        # logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean.html")
+        # logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
+    except Exception as e:
+        logger.error(f"Error in plot_predic_laeq_15_min: {e}")

@@ -101,7 +101,6 @@ def main():
         original_classes = 'Class_yamnet'
         global_category = brown_2
         df_merged['TimeOfDay'] = df_merged['hour'].apply(categorize_time_of_day)
-        # print(df_merged.columns)
 
 
         ###################

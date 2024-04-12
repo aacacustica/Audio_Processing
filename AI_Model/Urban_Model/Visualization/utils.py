@@ -330,8 +330,8 @@ def plot_aggregated_tree_map(df, global_category, original_classes, title, visua
 
 def plot_leq_pred(df_merge_leq, global_category, title, visualization_dir, stable_version):
     grouped_df = df_merge_leq.groupby(global_category).agg(
-    number=('Class_yamnet', 'size'),
-    LAeq=('LA', lambda x: leq(x))
+        number=('Class_yamnet', 'size'),
+        LAeq=('LA', lambda x: leq(x))
     ).reset_index()
 
     fig = px.treemap(grouped_df, 

@@ -13,7 +13,6 @@ LE_SECONDS = 7200
 LN_SECONDS = 14400
 
 # Plotting Flags there are 9 flags to plot the following plots
-PLOT_NIGHT_EVOLUTION_15_MIN_L_TIME = True
 PLOT_MAKE_TIME_PLOT = False 
 PLOT_HEATMAP_EVOLUTION_HOUR = False 
 PLOT_HEATMAP_EVOLUTION_15_MIN = False 
@@ -23,6 +22,7 @@ PLOT_INDICADORES_HEATMAP = False
 PLOT_NIGHT_EVOLUTION = False 
 PLOT_NIGHT_EVOLUTION_15_MIN = False 
 PLOT_PREDIC_LAEQ_15_MIN = False
+PLOT_PREDIC_LAEQ_15_MIN_Lx = True
 
 
 ######################## SLM COLUMN MAPS #####################################

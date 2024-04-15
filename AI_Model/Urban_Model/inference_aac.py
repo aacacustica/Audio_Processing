@@ -30,7 +30,7 @@ class AudioClassifier:
     def process_single_file(self, file_path, window_size=None):
         logging.info(f"Processing file: {file_path}")
         wav_data, sr = sf.read(file_path, dtype=np.int16)
-        waveform = wav_data / 32768.0  # Normalize audio
+        waveform = wav_data / 32768.0  # normalize audio
         waveform = waveform.astype('float32')
 
         if len(waveform.shape) > 1:
@@ -81,7 +81,7 @@ def process_audio_files(classifier, base_path, window_size, stable_version):
             continue
 
         all_data_subfolder = []
-        for file_name in audio_files:
+        for file_name in tqdm.tqdm(audio_files, desc='Processing audio files'):
             try:
                 full_path = os.path.join(audio_path, file_name)
                 predictions_list = classifier.process_single_file(full_path, window_size)
@@ -93,8 +93,6 @@ def process_audio_files(classifier, base_path, window_size, stable_version):
                 threshold = classifier.params.classification_threshold
                 for i, prediction in enumerate(predictions_list):
                     top_indices = np.argsort(prediction)[::-1][:5]
-                    #debugging print
-                    # print_top_predictions(file_name, prediction, classifier.yamnet_classes, top_n=5)
                     
                     filtered_classes = []
                     filtered_probabilities = []
@@ -110,7 +108,7 @@ def process_audio_files(classifier, base_path, window_size, stable_version):
 
                     all_data_subfolder.append([
                         file_name, 
-                        adjusted_timestamp.strftime('%Y-%m-%d_%H:%M:%S'), 
+                        adjusted_timestamp.strftime('%Y-%m-%d %H:%M:%S'), 
                         filtered_classes_str, 
                         filtered_probabilities_str
                     ])
@@ -125,13 +123,16 @@ def process_audio_files(classifier, base_path, window_size, stable_version):
 
 
 if __name__ == '__main__':
+    """
+    python .\inference_custom.py -p "\\192.168.205.117\AAC_Server\OCIO\OCIO_BILBAO\CAMPAÑA_3\3-Medidas\" -w 1
+    """
     setup_gpu()
     stable_version = get_stable_version()
-    
     args = parse_arguments()
     
     folder_path = args.path
     window_size = args.window_size
     
+    # process audio files
     classifier = AudioClassifier()
     process_audio_files(classifier, folder_path, window_size, stable_version)

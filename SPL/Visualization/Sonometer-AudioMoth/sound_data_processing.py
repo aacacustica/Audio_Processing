@@ -68,14 +68,16 @@ def process_folder(folder_path, logger):
     return None, None, None 
 
 
-def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, sufix_string, logger):
+def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, sufix_string, folder_coefficients, logger):
     for folder in tqdm(folders, desc="Processing folders"):
+        correction_coefficient = folder_coefficients.get(folder, 0)
+        logger.info(f"Correction coefficient for folder {folder}: {correction_coefficient}")
+        print(f"Correction coefficient for folder {folder}: {correction_coefficient}")
         reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
 
         if '3-Medidas' in reg_folder and 'SONOMETRO' in reg_folder:
                 reg_folder = reg_folder.replace('3-Medidas', '5-Resultados')
                 reg_folder = reg_folder.replace('SONOMETRO', 'SPL')
-        # print(f"Reg folder modified: {reg_folder}")
 
         if '3-Medidas' in folder and 'SONOMETRO' in folder:
             folder = folder.replace('3-Medidas', '5-Resultados')
@@ -126,6 +128,11 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if df is None:
                 logger.info(f"df is None")
                 continue
+
+            # applying the correction to the laeq column
+            logger.info(f"Applying correction to the laeq column with coefficient {correction_coefficient}")
+            print(f"Applying correction to the laeq column with coefficient {correction_coefficient}")
+            df = apply_db_correction(df, correction_coefficient, slm_dict["LAEQ_COLUMN"])
             
             # add datetime columns, sort by datetime and set datetime as index
             df = add_datetime_columns(df, date_col='datetime') 
@@ -134,6 +141,10 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             start_date = df.index[0]
             end_date = df.index[-1]
             logger.info(f"df was sorted by datetime and datetime was set as index")
+
+            print(df)
+            print(df.columns)
+            exit()
             
             try:
                 # drop the beginning and ending of the measurement (15min)
@@ -148,6 +159,9 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 
                 #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
                 #print(df)
+
+                # add the correction coefficient to the dataframe, create a new column with the value of the coefficient
+
             except:
                 logger.error(f"An error occurred while trimming the dataframe")
                 continue

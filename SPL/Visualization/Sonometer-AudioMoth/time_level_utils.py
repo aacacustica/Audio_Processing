@@ -141,3 +141,7 @@ def remove_row_out_timespan(df_LAeq, df_Pred):
     df_Pred_filtered = df_Pred[(df_Pred['datetime'] >= start_date) & (df_Pred['datetime'] <= end_date)]
     
     return df_Pred_filtered
+
+def apply_db_correction(df, coefficient, laeq_column):
+    df['laeq_coeff'] = 10 * np.log10(10**(df[laeq_column] / 10) * 10**(coefficient / 10))
+    return df

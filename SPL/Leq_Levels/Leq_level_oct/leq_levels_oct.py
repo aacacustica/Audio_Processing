@@ -76,7 +76,7 @@ class LeqLevelOct:
                 oct_level_temp = [round(level, 2) for level in self.get_oct_levels(frame)]
                 
                 # lists 
-                level_temp = [LA, LC, LZ, Lmax, Lmin] + oct_level_temp + [audio_file, timestamp.strftime('%Y-%m-%d-%H:%M:%S')]
+                level_temp = [LA, LC, LZ, Lmax, Lmin] + oct_level_temp + [audio_file, timestamp.strftime('%Y-%m-%d %H:%M:%S')]
                 db.append(level_temp)
             all_data.append(db)
             logging.info(f"Processed file: {audio_file}")

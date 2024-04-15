@@ -50,6 +50,8 @@ def main():
         print(f"Folder {input_folder_sonometer} does not exist")
 
     try:
+        folder_coefficients = {}
+
         # audiomoth
         # get the folders in the input folder
         parent_audiomoth_folders = [folder for folder in os.listdir(input_folder_audiomoth) if os.path.isdir(os.path.join(input_folder_audiomoth, folder))]
@@ -59,6 +61,8 @@ def main():
         for folder in parent_audiomoth_folders:
             spl_audiomoth_folder = os.path.join(input_folder_audiomoth, folder, "SPL")
             if os.path.exists(spl_audiomoth_folder):
+                coeff = float(input(f"Enter correction coefficient for {spl_audiomoth_folder}: "))
+                folder_coefficients[spl_audiomoth_folder] = coeff
                 spl_audiomoth_folders.append(spl_audiomoth_folder)
 
         # sonometro
@@ -70,11 +74,13 @@ def main():
         for folder in parent_sonometer_folders:
             spl_sonometer_folder = os.path.join(input_folder_sonometer, folder, "SONOMETRO")
             if os.path.exists(spl_sonometer_folder):
+                coeff = float(input(f"Enter correction coefficient for {spl_sonometer_folder}: "))
+                folder_coefficients[spl_sonometer_folder] = coeff
                 spl_sonometer_folders.append(spl_sonometer_folder)
               
         # process all the folders
-        # process_all_folders(input_folder, spl_audiomoth_folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, 'AUDIOMOTH', logger)
-        process_all_folders(input_folder, spl_sonometer_folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, 'SONOMETRO', logger)
+        # process_all_folders(input_folder, spl_audiomoth_folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, 'AUDIOMOTH', folder_coefficients, logger)
+        process_all_folders(input_folder, spl_sonometer_folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, 'SONOMETRO', folder_coefficients, logger)
         logger.info("Finished sonometer test script")
     except Exception as e:
         logger.exception(f"Error occurred: {e}")

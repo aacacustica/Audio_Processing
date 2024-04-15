@@ -153,7 +153,7 @@ def main():
                 timestamps = [start_timestamp + datetime.timedelta(seconds=i) for i in range(db_levels.shape[0])]
 
                 for row, timestamp in zip(db_levels, timestamps):
-                    all_data_subfolder.append(list(row) + [audio_file, timestamp.strftime('%Y-%m-%d_%H:%M:%S')])
+                    all_data_subfolder.append(list(row) + [audio_file, timestamp.strftime('%Y-%m-%d %H:%M:%S')])
             except Exception as e:
                 logging.warning(f'Error processing file: {audio_file}, {e}')
 

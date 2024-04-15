@@ -71,9 +71,11 @@ def print_top_predictions(file_name, predictions, class_names, top_n=5):
         print(f"{rank}. {class_name}: {probability:.4f}")
         time.sleep(1)  
 
+
 def get_audiofiles(path):
     audio_files = [file for file in os.listdir(path) if file.lower().endswith('.wav')]
     return audio_files
+
 
 def list_git_tags():
     try:
@@ -82,6 +84,7 @@ def list_git_tags():
     except subprocess.CalledProcessError:
         return None
     
+
 def select_tag(tags):
     for i, tag in enumerate(tags):
         logging.info(f"{i}: {tag}")
@@ -90,6 +93,7 @@ def select_tag(tags):
     # replace "." with "_" to be able to use it as a file name
     tag_selected = tag_selected.replace(".", "_")
     return tag_selected
+
 
 def get_stable_version():
     tags = list_git_tags()

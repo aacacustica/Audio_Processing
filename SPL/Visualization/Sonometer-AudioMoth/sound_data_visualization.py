@@ -630,11 +630,11 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
 
         # save
         os.makedirs(folder_output_dir, exist_ok=True)
-        fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_mean.html")
-        grouped_df.to_excel(f"{folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
+        fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_mean_Lx.html")
+        grouped_df.to_excel(f"{folder_output_dir}/{plotname}_LAeq_class_mean_Lx.xlsx")
 
-        logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean.html")
-        logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
+        logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean_Lx.html")
+        logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean_Lx.xlsx")
     except Exception as e:
         logger.error(f"Error in plot_predic_laeq_15_min: {e}")
 
@@ -678,40 +678,49 @@ def plot_predic_laeq_15_min_Lx(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pre
         df_all = df_exploded.merge(yamnet_csv, how='left', on='display_name')
 
         df_all['time_of_day'] = df_all['time'].dt.hour.apply(categorize_time_of_day)
-        print(df_all.columns)
-        # exit()
+        # remove row from the probabilities column if there are bewlow 0.3
+        df_all = df_all[df_all['probabilities'] >= 0.2]
     
         #########################################################
         #### Plotting the data ####
         # Brown_Level_2, Brown_Level_3, NoisePort
-        # brown_2 = 'Brown_Level_2'
-        # brown_3 = 'Brown_Level_3'
-        # noiseport = 'NoisePort'
-
-        # # set what detail level to use
-        # original_classes = 'Class_yamnet'
-        # global_category = brown_2
-        
-        display_name = 'display_name'
-        iso_taxonomy = 'iso_taxonomy'
-        classes = 'classes'
-
-        brown_1 = 'Brown_Level_1'
         brown_2 = 'Brown_Level_2'
         brown_3 = 'Brown_Level_3'
+        noiseport = 'NoisePort'
 
-        class_to_plot = brown_2
+        # set what detail level to use
+        original_classes = 'Class_yamnet'
+        global_category = brown_2
+        
+        display_name = 'display_name'
+        # iso_taxonomy = 'iso_taxonomy'
+        classes = 'classes'
 
-        grouped_df = df_all.groupby(class_to_plot, display_name,'time_of_day').agg(
+        ############
+        # order 'Ld', 'Le', 'Ln'
+        # or 'Ld_1', 'Ld_2', 'Ld_3', 'Le', 'Ln_1', 'Ln_2'
+        ############
+        if 'Ld' in df_all['time_of_day'].unique():
+            print("Perido Ld Le Ln") 
+            order_time_of_day = ['Ld', 'Le', 'Ln']
+            df_all['time_of_day'] = pd.Categorical(df_all['time_of_day'], categories=order_time_of_day, ordered=True)
+        else:
+            print("Period 4h")
+            order_time_of_day = ['Ld_1', 'Ld_2', 'Ld_3', 'Le', 'Ln_1', 'Ln_2']
+            df_all['time_of_day'] = pd.Categorical(df_all['time_of_day'], categories=order_time_of_day, ordered=True)
+
+        grouped_df = df_all.groupby([global_category, display_name,'time_of_day']).agg(
             number=(classes, 'size'),
             LAeq=(columns_dict['LAEQ_COLUMN'], lambda x: leq(x))
         ).reset_index()
 
-        fig = px.treemap(grouped_df, 
-                        path=['time_of_day', class_to_plot, display_name],  
+        filtered_df = grouped_df[grouped_df['number'] > 0]
+        
+        fig = px.treemap(filtered_df, 
+                        path=['time_of_day', global_category, display_name],  
                         values='number',
                         color='LAeq',
-                        color_continuous_scale=custom_color_scale,
+                        color_continuous_scale=custom_color_scale, #global_category
                         range_color=[30, 85],
                         hover_data={'LAeq': True, 'number': True},
                         custom_data=['LAeq'],                  
@@ -721,13 +730,14 @@ def plot_predic_laeq_15_min_Lx(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pre
         fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
         fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
         fig.show()
+        exit()
 
         # save
-        # os.makedirs(folder_output_dir, exist_ok=True)
-        # fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_mean.html")
-        # grouped_df.to_excel(f"{folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
+        os.makedirs(folder_output_dir, exist_ok=True)
+        fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_mean_Lx.html")
+        grouped_df.to_excel(f"{folder_output_dir}/{plotname}_LAeq_class_mean_Lx.xlsx")
 
-        # logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean.html")
-        # logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
+        logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean_Lx.html")
+        logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean_Lx.xlsx")
     except Exception as e:
         logger.error(f"Error in plot_predic_laeq_15_min: {e}")

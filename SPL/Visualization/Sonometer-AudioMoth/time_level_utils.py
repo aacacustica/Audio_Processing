@@ -62,12 +62,25 @@ def db_limit(hour_column,ld_limit,le_limit,ln_limit):
 
 
 def categorize_time_of_day(hour):
-    if 7 <= hour < 19:
-        return 'Ld'
+    # if 7 <= hour < 19:
+    #     return 'Ld'
+    # elif 19 <= hour < 23:
+    #     return 'Le'
+    # else:
+    #     return 'Ln'
+    
+    if 7 <= hour < 11:
+        return 'Ld_1'
+    elif 11 <= hour < 15:
+        return 'Ld_2'
+    elif 15 <= hour < 19:
+        return 'Ld_3'
     elif 19 <= hour < 23:
         return 'Le'
-    else:
-        return 'Ln'
+    elif 23 <= hour or hour < 3:
+        return 'Ln_1'
+    elif 3 <= hour < 7:
+        return 'Ln_2'
 
 
 def leq(levels):

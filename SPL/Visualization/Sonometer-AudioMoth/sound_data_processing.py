@@ -73,6 +73,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         correction_coefficient = folder_coefficients.get(folder, 0)
         logger.info(f"Correction coefficient for folder {folder}: {correction_coefficient}")
         print(f"Correction coefficient for folder {folder}: {correction_coefficient}")
+
         reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
 
         if '3-Medidas' in reg_folder and 'SONOMETRO' in reg_folder:
@@ -141,10 +142,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             start_date = df.index[0]
             end_date = df.index[-1]
             logger.info(f"df was sorted by datetime and datetime was set as index")
-
-            print(df)
-            print(df.columns)
-            exit()
             
             try:
                 # drop the beginning and ending of the measurement (15min)
@@ -158,13 +155,14 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"Adding nights_str column for folder {folder}")
                 
                 #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
-                #print(df)
-
-                # add the correction coefficient to the dataframe, create a new column with the value of the coefficient
-
             except:
                 logger.error(f"An error occurred while trimming the dataframe")
                 continue
+
+            print(df)
+            print(df.columns)
+            print(slm_dict)
+            exit()
 
             logger.info(f"\nEntering the plotting section")
             folder = folder.split("\\")[-1]

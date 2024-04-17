@@ -19,13 +19,15 @@ custom_color_scale = [[i/len(hex_colors), color] for i, color in enumerate(hex_c
 custom_color_scale.append([1, hex_colors[-1]])
     
 
-# [1]
+
 def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
     try:
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
+        
         # translate the day name to spanish from english in day_name
         df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
+        
         weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
         df['Día'] = pd.Categorical(df['Día'], categories=weekdays, ordered=True)
         
@@ -39,6 +41,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
             aspect=1.3, # aspect is the width/height ratio
             palette=C_MAP_WEEKDAY,
         )
+
         fig.set(xlim=(-1, 24), ylim=(30, 105))
 
         # change the x-axis labels to 24-hour format
@@ -68,9 +71,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
         
         os.makedirs(folder_output_dir, exist_ok=True)
         fig.savefig(f"{folder_output_dir}/{plotname}_day_evolution.png", dpi=300)
-        excel_path = os.path.join(folder_output_dir, f"{plotname}_day_evolution.xlsx")
-        with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-            df.to_excel(writer)
+        df.to_excel(f"{folder_output_dir}/{plotname}_day_evolution.xlsx")
 
         plt.close()
 
@@ -81,164 +82,79 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
 
 
 
-# [2]
-# def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, plotname:str):
-#     try:
-#         sns.set_style("whitegrid")
-#         sns.set_palette("tab10")
-#         # translate the day name to spanish from english in day_name
-#         df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
-#         weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
-#         df['Día'] = pd.Categorical(df['Día'], categories=weekdays, ordered=True)
-        
-#         logger.info(f"Plotting period evolution (1) Ld and (2) Le")
-#         for ind in df["indicador_str"].unique():
-#             if ind == 'Ln':
-#                 continue
-            
-#             df_temp = df[df["indicador_str"] == ind]
-            
-#             fig = sns.relplot(
-#                 data=df_temp,
-#                 x="hour",
-#                 y=laeq_column,
-#                 kind="line", # kind is the type of plot to draw
-#                 hue="Día", # hue is the column to split the data
-#                 estimator=leq,  # estimator is the function to apply to the data
-#                 aspect=1.3, # aspect is the width/height ratio
-#                 palette=C_MAP_WEEKDAY,
-#             )
-            
-#             if ind == 'Ld':
-#                 fig.set(xlim=(6, 19), ylim=(30, 105))
-#                 plt.xticks(range(7, 19), [f"{hour:02d}:00" for hour in range(7, 19)])
-#                 logger.info(f"Plotted Ld")
-                
-#             elif ind == 'Le':
-#                 fig.set(xlim=(18.7, 22.3), ylim=(30, 105))  # Adjust xlim to be tighter
-#                 plt.xticks([18.7, 19, 20, 21, 22, 22.3], ['', '19:00', '20:00', '21:00', '22:00', ''])
-#                 logger.info(f"Ploted Le")
-
-#             plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
-
-#             for ax in fig.axes.flat:
-#                 ax.spines['top'].set_visible(True)
-            
-#             ax.spines['right'].set_visible(True)
-#             plt.title(f"Evolución {ind}")
-#             plt.ylabel('dB(A)')
-#             plt.xlabel('Hora')
-        
-#             os.makedirs(f'{folder_output_dir}', exist_ok=True)
-#             fig.savefig(f"{folder_output_dir}/{plotname}_{ind}_evolution.png",dpi=150)
-#             excel_path = os.path.join(folder_output_dir, f"{plotname}_{ind}_evolution.xlsx")
-#             with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-#                 df_temp.to_excel(writer)
-        
-#             plt.close()
-        
-#         logger.info(f"Period evolution plot saved to {folder_output_dir}/{plotname}_{ind}_evolution.png")
-#         logger.info(f"Period evolution data saved to {folder_output_dir}/{plotname}_{ind}_evolution.xlsx")
-    
-#     except Exception as e:
-#         logger.error(f"Error in plot_period_evolution: {e}")
-
-
-def plot_ld_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
+def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, plotname:str):
     try:
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
+        
         # translate the day name to spanish from english in day_name
         df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
+        
         weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
         df['Día'] = pd.Categorical(df['Día'], categories=weekdays, ordered=True)
-
-        df_ld = df[df["indicador_str"] == 'Ld']
-        if df_ld.empty:
-            logger.info("No Ld data available")
-            return
         
-        fig = sns.relplot(
-            data=df_ld,
-            x="hour",
-            y=laeq_column,
-            kind="line",
-            hue="Día",
-            estimator=leq,
-            aspect=1.3,
-            palette=C_MAP_WEEKDAY,
-        )
-        fig.set(xlim=(6, 19), ylim=(30, 105))
-        plt.xticks(range(7, 19), [f"{hour:02d}:00" for hour in range(7, 19)])
-        plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
+        for ind in df["indicador_str"].unique():
+            if ind == 'Ln':
+                continue
+            
+            df_temp = df[df["indicador_str"] == ind]
+            
+            fig = sns.relplot(
+                data=df_temp,
+                x="hour",
+                y=laeq_column,
+                kind="line", # kind is the type of plot to draw
+                hue="Día", # hue is the column to split the data
+                estimator=leq,  # estimator is the function to apply to the data
+                aspect=1.3, # aspect is the width/height ratio
+                palette=C_MAP_WEEKDAY,
+            )
+            
+            if ind == 'Ld':
+                fig.set(xlim=(6, 19), ylim=(30, 105))
+                plt.xticks(range(7, 19), [f"{hour:02d}:00" for hour in range(7, 19)])
+                logger.info(f"Plotted Ld")
+                
+            elif ind == 'Le':
+                fig.set(xlim=(18.7, 22.3), ylim=(30, 105))  # Adjust xlim to be tighter
+                plt.xticks([18.7, 19, 20, 21, 22, 22.3], ['', '19:00', '20:00', '21:00', '22:00', ''])
+                logger.info(f"Ploted Le")
 
-        fig.axes.flat[0].spines['top'].set_visible(True)
-        fig.axes.flat[0].spines['right'].set_visible(True)
+            plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
+
+            for ax in fig.axes.flat:
+                ax.spines['top'].set_visible(True)
+            
+            ax.spines['right'].set_visible(True)
+            plt.title(f"Evolución {ind}")
+            plt.ylabel('dB(A)')
+            plt.xlabel('Hora')
         
-        plt.title(f"Evolución Ld")
-        plt.ylabel('dB(A)')
-        plt.xlabel('Hora')
-
-        os.makedirs(folder_output_dir, exist_ok=True)
-        fig.savefig(os.path.join(folder_output_dir, f"{plotname}_Ld_evolution.png"), dpi=150)
-        plt.close()
-        logger.info(f"Ld period evolution plot saved to {folder_output_dir}/{plotname}_Ld_evolution.png")
-        # save csv file
-        df_ld.to_csv(os.path.join(folder_output_dir, f"{plotname}_Ld_evolution.csv"))
-        logger.info(f"Ld period evolution data saved to {folder_output_dir}/{plotname}_Ld_evolution.csv")
-
+            os.makedirs(f'{folder_output_dir}', exist_ok=True)
+            fig.savefig(f"{folder_output_dir}/{plotname}_{ind}_evolution.png",dpi=150)
+            df_temp.to_excel(f"{folder_output_dir}/{plotname}_{ind}_evolution.xlsx")
+        
+            plt.close()
+        
+        logger.info(f"Period evolution plot saved to {folder_output_dir}/{plotname}_{ind}_evolution.png")
+        logger.info(f"Period evolution data saved to {folder_output_dir}/{plotname}_{ind}_evolution.xlsx")
+    
     except Exception as e:
-        logger.error(f"Error in plot_ld_evolution: {e}")
-
-def plot_le_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
-    try:
-        
-        df_le = df[df["indicador_str"] == 'Le']
-        if df_le.empty:
-            logger.info("No Le data available")
-            return
-
-        fig = sns.relplot(
-            data=df_le,
-            x="hour",
-            y=laeq_column,
-            kind="line",
-            hue="Día",
-            estimator=leq,
-            aspect=1.3,
-            palette=C_MAP_WEEKDAY,
-        )
-        fig.set(xlim=(18.7, 22.3), ylim=(30, 105))
-        plt.xticks([18.7, 19, 20, 21, 22, 22.3], ['', '19:00', '20:00', '21:00', '22:00', ''])
-
-        fig.axes.flat[0].spines['top'].set_visible(True)
-        fig.axes.flat[0].spines['right'].set_visible(True)
-
-        plt.title(f"Evolución Le")
-        plt.ylabel('dB(A)')
-        plt.xlabel('Hora')
-
-        os.makedirs(folder_output_dir, exist_ok=True)
-        fig.savefig(os.path.join(folder_output_dir, f"{plotname}_Le_evolution.png"), dpi=150)
-        plt.close()
-        logger.info(f"Le period evolution plot saved to {folder_output_dir}/{plotname}_Le_evolution.png")
-        # save csv file
-        excel_path = os.path.join(folder_output_dir, f"{plotname}_Le_evolution.xlsx")
-        with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-            df_le.to_excel(writer)
-
-    except Exception as e:
-        logger.error(f"Error in plot_le_evolution: {e}")
+        logger.error(f"Error in plot_period_evolution: {e}")
 
 
 
-# [3]
 def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str, indicador_noche:str):
     try:
+        print(f"\n\n\n\nUsing the laeq_column: {laeq_column}")
+        print("df inside plot_night_evolution")
+        print(df)
+
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
         df['Día'] = df['night_str']
+        
         df['date'] = pd.to_datetime(df['date'])
         df.sort_values(by=['date', 'hour'], inplace=True)
 
@@ -259,9 +175,7 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
         
         # save to excel
         os.makedirs(folder_output_dir, exist_ok=True)
-        excel_path = os.path.join(folder_output_dir, f"{plotname}_{indicador_noche}_evolution.xlsx")
-        with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-            night_data.to_excel(writer)
+        night_data.to_excel(f"{folder_output_dir}/{plotname}_{indicador_noche}_evolution.xlsx")
         logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution.xlsx")
 
         fig = sns.relplot(
@@ -277,6 +191,7 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
         
         plt.xticks(range(-1, 7), ['23:00', '00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00'])
         plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
+
         plt.xlim(-1.5, 6.5)
 
         for ax in fig.axes.flat:
@@ -290,16 +205,16 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
         os.makedirs(folder_output_dir, exist_ok=True)
         fig.savefig(f"{folder_output_dir}/{plotname}_{indicador_noche}_evolution.png", dpi=150)
         logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution.png")
-
-        plt.close()
     
     except Exception as e:
         logger.error(f"Error in plot_night_evolution: {e}")
 
 
-# [4]
 def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extension, laeq_column:str, plotname:str, indicador_noche:str):
     try:
+        # print(df)
+        # print(df.columns)
+        
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
@@ -307,7 +222,9 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
         df['Día'] = df['night_str']
 
         df.index = pd.to_datetime(df.index)
+
         df_resampled = df.resample('15min')[laeq_column].mean()
+        # print(f"This is the df resampled: \n{df_resampled}")
         
         # try: 
         #      df_night_str = df.resample('15min')['Día'].agg(lambda x: x.value_counts().index[0])
@@ -315,6 +232,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
         df_night_str = df.resample('15min')['Día'].agg(lambda x: x.value_counts().index[0] if len(x) > 0 else None)
         
         df_resampled = pd.DataFrame(df_resampled).join([df_night_str])
+        
         # date and time columns
         df_resampled['date'] = df_resampled.index.date
         df_resampled['time'] = df_resampled.index.time
@@ -344,10 +262,8 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
         
         #save to excel 
         os.makedirs(folder_output_dir, exist_ok=True)
-        excel_path = os.path.join(folder_output_dir, f"{plotname}_{indicador_noche}_evolution_{name_extension}.xlsx")
-        with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-            night_data.to_excel(writer)
-        logger.info(f"Night evolution 15 min data saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.xlsx")
+        night_data.to_excel(f"{folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.xlsx")
+        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.xlsx")
         
         fig = sns.relplot(
                 data=night_data, 
@@ -380,18 +296,14 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
 
         # save the plot
         fig.savefig(os.path.join(folder_output_dir, f'{plotname}_{indicador_noche}_evolution_{name_extension}.png'))
-        logger.info(f"Night evolution 15 min plot saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.png")
-        plt.close()
-
+        logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.png")
     except Exception as e:
         logger.error(f"Error in plot_night_evolution_15_min: {e}")
 
 
-
-# [5]
 def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_column: str, agg_func: str, plotname:str):
     try:
-        sns.set_style("white")
+        sns.set_style("whitegrid")
         df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
         df['date_day'] = df['date'].astype(str) + ' ' + df['Día']
         
@@ -424,14 +336,13 @@ def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_colum
         
         os.makedirs(f'{folder_output_dir}', exist_ok=True)
         plt.savefig(f'{folder_output_dir}/{plotname}_heatmap_evolucion.png',dpi=150)
-        logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}_heatmap_evolucion.png")
-        excel_path = os.path.join(folder_output_dir, f"{plotname}_heatmap_evolucion.xlsx")
-        with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-            leq_day_hour.to_excel(writer)
-        logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_evolucion.xlsx")
-
+        
+        leq_day_hour.to_excel(f'{folder_output_dir}/{plotname}_heatmap_evolucion.xlsx')
+        
         plt.close()
-
+        
+        logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}_heatmap_evolucion.png")
+        logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_evolucion.xlsx")
     except Exception as e:
         logger.error(f"Error in plot_heatmap: {e}")
 
@@ -446,7 +357,6 @@ def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_col
         def get_15min_interval(dt):
             return f"{dt.hour:02d}:{(dt.minute // 15) * 15:02d}"
 
-        sns.set_style("white")
         df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
         df['date_day'] = df['date'].astype(str) + ' ' + df['Día']
         
@@ -479,9 +389,8 @@ def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_col
         
         os.makedirs(f'{folder_output_dir}', exist_ok=True)
         plt.savefig(f'{folder_output_dir}/{plotname}_heatmap_evolucion_15_min.png',dpi=150)
-        excel_path = os.path.join(folder_output_dir, f"{plotname}_heatmap_evolucion_15_min.xlsx")
-        with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-            leq_day_15min.to_excel(writer)
+        
+        leq_day_15min.to_excel(f'{folder_output_dir}/{plotname}_heatmap_evolucion_15_min.xlsx')
         
         plt.close()
         
@@ -494,15 +403,10 @@ def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_col
 
 def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: list):
     try:
-        # agg_funcs = {
-        #     columns_dict['LAEQ_COLUMN']: leq,
-        #     columns_dict['LAMAX_COLUMN']: 'max',
-        #     columns_dict['LAMIN_COLUMN']: 'min'
-        # }
         agg_funcs = {
-            columns_dict['LA_corrected']: leq,
-            columns_dict['LAmax_corrected']: 'max',
-            columns_dict['LAmin_corrected']: 'min'
+            columns_dict['LAEQ_COLUMN']: leq,
+            columns_dict['LAMAX_COLUMN']: 'max',
+            columns_dict['LAMIN_COLUMN']: 'min'
         }
         df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs)
         #oca = df.resample(f'{agg_period}s').agg({'oca': 'min'})
@@ -512,14 +416,14 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         ax.set_facecolor("white")
 
         x = df_LAeq.index
-        ax.plot(x, df_LAeq[columns_dict['LA_corrected']], linewidth=3, color='red', label='LAeq')
-        ax.plot(x, df_LAeq[columns_dict['LAmax_corrected']], linewidth=1, color='#FF99FF', label='Lmax')
-        ax.plot(x, df_LAeq[columns_dict['LAmin_corrected']], linewidth=1, color='#92D050', label='Lmin')
+        ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN']], linewidth=3, color='red', label='LAeq')
+        ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN']], linewidth=1, color='#FF99FF', label='Lmax')
+        ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN']], linewidth=1, color='#92D050', label='Lmin')
         # OCA
         # #ax.plot(x, oca.values, color='#00B0F0')
 
         for percentile in percentiles:
-            values = df[columns_dict['LA_corrected']].resample(f'{agg_period}s').quantile((100 - percentile) / 100)
+            values = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile((100 - percentile) / 100)
             ax.plot(
                 x, 
                 values, 
@@ -546,9 +450,7 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
 
         os.makedirs(folder_output_dir, exist_ok=True)
         plt.savefig(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.png', dpi=150)
-        excel_path = os.path.join(folder_output_dir, f"{plotname}_{agg_period}s_time_plot.xlsx")
-        with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-            df_LAeq.to_excel(writer)
+        df_LAeq.to_excel(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.xlsx')
 
         plt.close()
 
@@ -561,7 +463,6 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
 
 def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, ind_column:str):
     try:
-        sns.set_style("white")
         if "Fecha" not in df.columns and "Date hour" in df.columns:
             # df["Fecha"] = df["Date hour"]
             df["Fecha"] = pd.to_datetime(df['Date hour'], dayfirst=True)
@@ -644,9 +545,7 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         
         os.makedirs(f'{folder_output_dir}', exist_ok=True)
         plt.savefig(f"{folder_output_dir}/{plotname}_indicadores.png")
-        excel_path = os.path.join(folder_output_dir, f"{plotname}_indicadores.xlsx")
-        with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-            indicadores_table.to_excel(writer)
+        indicadores_table.to_excel(f"{folder_output_dir}/{plotname}_indicadores.xlsx")
         
         plt.close()
         
@@ -658,9 +557,7 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         general_power_averages_df = general_power_averages.to_frame().transpose()
         
         os.makedirs(f'{folder_output_dir}', exist_ok=True)
-        excel_path = os.path.join(folder_output_dir, f"{plotname}_indicadores_generales.xlsx")
-        with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-            general_power_averages_df.to_excel(writer)
+        general_power_averages_df.to_excel(f'{folder_output_dir}/{plotname}_indicadores_generales.xlsx')
         logger.info(f"Indicadores generales data saved to {folder_output_dir}/{plotname}_indicadores_generales.xlsx")
     
     except Exception as e:
@@ -670,8 +567,11 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         
 def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
     try:
+        # agg_funcs = {
+        #     columns_dict['LAEQ_COLUMN']: leq,
+        # }
         agg_funcs = {
-            columns_dict['LA_corrected']: leq,
+            columns_dict['LAEQ_COLUMN_COEFF']: leq,
         }
         df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs) # 900 seconds = 15 minutes
         
@@ -733,120 +633,14 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) por Clases')
         fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
         fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
+        # fig.show()
 
         # save
         os.makedirs(folder_output_dir, exist_ok=True)
-        fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_mean_Lx.html")
-        excel_path = os.path.join(folder_output_dir, f"{plotname}_LAeq_class_mean_Lx.xlsx")
-        with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-            grouped_df.to_excel(writer)
+        fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_mean.html")
+        grouped_df.to_excel(f"{folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
 
-        logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean_Lx.html")
-        logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean_Lx.xlsx")
-
-    except Exception as e:
-        logger.error(f"Error in plot_predic_laeq_15_min: {e}")
-
-
-
-def plot_predic_laeq_15_min_Lx(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
-    try:
-        agg_funcs = {
-            columns_dict['LA_corrected']: leq,
-        }
-        df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs) # 900 seconds = 15 minutes
-        
-        #########################################################
-        df_Pred['datetime'] = pd.to_datetime(df_Pred['datetime'])
-        # copy the datetime column to a column named 'time'
-        df_Pred['time'] = df_Pred['datetime']
-        df_Pred.set_index('datetime', inplace=True)
-               
-        start_date = max(df_LAeq.index.min(), df_Pred.index.min())
-        end_date = min(df_LAeq.index.max(), df_Pred.index.max())
-
-        df_LAeq = df_LAeq[start_date:end_date]
-        df_Pred = df_Pred[start_date:end_date]
-        df_Pred.index = df_Pred.index.round('15min')
-        
-        # merge df
-        df_aligned = df_LAeq.merge(df_Pred, how='left', left_index=True, right_index=True)
-
-        # remove rows with NaN values
-        df_aligned.dropna(inplace=True)
-        # explode by list of classes
-        df_aligned['classes'] = df_aligned['classes'].apply(ast.literal_eval)
-        df_aligned['probabilities'] = df_aligned['probabilities'].apply(ast.literal_eval)
-
-        df_exploded_classes = df_aligned.explode('classes')
-        df_exploded = df_aligned.apply(lambda x: x.explode() if x.name in ['classes', 'probabilities'] else x)
-        df_exploded['number'] = 1
-        
-        # create the df_all, merge with the audioset dataframe
-        df_exploded['display_name'] = df_exploded['classes']
-        df_all = df_exploded.merge(yamnet_csv, how='left', on='display_name')
-
-        df_all['time_of_day'] = df_all['time'].dt.hour.apply(categorize_time_of_day)
-        # remove row from the probabilities column if there are bewlow 0.3
-        df_all = df_all[df_all['probabilities'] >= 0.2]
-    
-        #########################################################
-        #### Plotting the data ####
-        # Brown_Level_2, Brown_Level_3, NoisePort
-        brown_2 = 'Brown_Level_2'
-        brown_3 = 'Brown_Level_3'
-        noiseport = 'NoisePort'
-
-        # set what detail level to use
-        original_classes = 'Class_yamnet'
-        global_category = brown_2
-        
-        display_name = 'display_name'
-        # iso_taxonomy = 'iso_taxonomy'
-        classes = 'classes'
-
-        ############
-        # order 'Ld', 'Le', 'Ln'
-        # or 'Ld_1', 'Ld_2', 'Ld_3', 'Le', 'Ln_1', 'Ln_2'
-        ############
-        if 'Ld' in df_all['time_of_day'].unique():
-            print("Perido Ld Le Ln") 
-            order_time_of_day = ['Ld', 'Le', 'Ln']
-            df_all['time_of_day'] = pd.Categorical(df_all['time_of_day'], categories=order_time_of_day, ordered=True)
-        else:
-            print("Period 4h")
-            order_time_of_day = ['Ld_1', 'Ld_2', 'Ld_3', 'Le', 'Ln_1', 'Ln_2']
-            df_all['time_of_day'] = pd.Categorical(df_all['time_of_day'], categories=order_time_of_day, ordered=True)
-
-        grouped_df = df_all.groupby([global_category, display_name,'time_of_day']).agg(
-            number=(classes, 'size'),
-            LAeq=(columns_dict['LA_corrected'], lambda x: leq(x))
-        ).reset_index()
-
-        filtered_df = grouped_df[grouped_df['number'] > 0]
-        
-        fig = px.treemap(filtered_df, 
-                        path=['time_of_day', global_category, display_name],  
-                        values='number',
-                        color='LAeq',
-                        color_continuous_scale=custom_color_scale, #global_category
-                        range_color=[30, 85],
-                        hover_data={'LAeq': True, 'number': True},
-                        custom_data=['LAeq'],                  
-                        )
-
-        fig.update_layout(title=f'{plotname} | Promedio energetico (LAeq) por franjas horarias')
-        fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
-        fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
-        fig.show()
-        exit()
-
-        # save
-        os.makedirs(folder_output_dir, exist_ok=True)
-        fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_mean_Lx.html")
-        grouped_df.to_excel(f"{folder_output_dir}/{plotname}_LAeq_class_mean_Lx.xlsx")
-
-        logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean_Lx.html")
-        logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean_Lx.xlsx")
+        logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean.html")
+        logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
     except Exception as e:
         logger.error(f"Error in plot_predic_laeq_15_min: {e}")

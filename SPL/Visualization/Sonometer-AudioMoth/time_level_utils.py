@@ -142,9 +142,22 @@ def remove_row_out_timespan(df_LAeq, df_Pred):
     
     return df_Pred_filtered
 
-def apply_db_correction(df, coefficient, laeq_column, lamax_column, lamin_column):
-    #substract 3 linear units to the LAeq, LAmax and LAmin columns
-    df['LA_corrected'] = df[laeq_column] - coefficient
-    df['LAmax_corrected'] = df[lamax_column] - coefficient
-    df['LAmin_corrected'] = df[lamin_column] - coefficient
+def apply_db_correction(df, coefficient):
+    # Subtract coefficient from the specified columns
+    print("\n\n\nEnter the correction coefficient for the data: \n\n\n")
+    print(df)
+    print(df.columns)
+
+    if 'LA' in df.columns:
+        df['LA_corrected'] = df['LA'] - coefficient
+        df['LAmax_corrected'] = df['LAmax'] - coefficient
+        df['LAmin_corrected'] = df['LAmin'] - coefficient
+    
+    elif 'LAeq' in df.columns:
+        df['LA_corrected'] = df['LAeq'] - coefficient
+        df['LAmax_corrected'] = df['LAFmax'] - coefficient
+        df['LAmin_corrected'] = df['LAFmin'] - coefficient
+
+
+    print(df)
     return df

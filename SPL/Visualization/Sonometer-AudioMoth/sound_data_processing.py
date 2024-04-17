@@ -68,21 +68,18 @@ def process_folder(folder_path, logger):
     return None, None, None 
 
 
-def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, sufix_string, folder_coefficients, logger):
+def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, sufix_string, correction_coefficient, logger):
     for folder in tqdm(folders, desc="Processing folders"):
-        correction_coefficient = folder_coefficients.get(folder, 0)
-        logger.info(f"Correction coefficient for folder {folder}: {correction_coefficient}")
-        print(f"Correction coefficient for folder {folder}: {correction_coefficient}")
-
+        logger.info(f"\nEntering folder: {folder}")
+        
+        if folder in correction_coefficient:
+            current_coefficient = correction_coefficient[folder]
+            logger.info(f"Using correction coefficient {current_coefficient} for {folder}")
+        else:
+            logger.warning(f"No correction coefficient found for {folder}. Using default of 1.")
+            current_coefficient = 0
+        
         reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
-
-        if '3-Medidas' in reg_folder and 'SONOMETRO' in reg_folder:
-                reg_folder = reg_folder.replace('3-Medidas', '5-Resultados')
-                reg_folder = reg_folder.replace('SONOMETRO', 'SPL')
-
-        if '3-Medidas' in folder and 'SONOMETRO' in folder:
-            folder = folder.replace('3-Medidas', '5-Resultados')
-            folder = folder.replace('SONOMETRO', 'SPL')
 
         folder = folder.split("\\")[:-1]
         folder = os.path.join('\\\\', *folder)
@@ -96,17 +93,19 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         
         resultados_dir = reg_folder.split("\\")[:-3]
         logger.info(f"resultados_dir: {resultados_dir}")
-        
+
         # join the path
         resultados_dir = os.path.join('\\\\', *resultados_dir, result_dir_name)
         logger.info(f"resultados_dir: {resultados_dir}") # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados
-        
+
         if not os.path.exists(resultados_dir):
             os.makedirs(resultados_dir)
             logger.info(f"Created output folder: {resultados_dir}")
         
         folder_output_dir = os.path.join(resultados_dir, folder, spl_string, graphics_string)
         logger.info(f"folder_output_dir: {folder_output_dir}")
+        if '3-Medidas' in folder_output_dir:
+            folder_output_dir = folder_output_dir.replace('3-Medidas', '5-Resultados')
 
         if not os.path.exists(folder_output_dir):
             os.makedirs(folder_output_dir)
@@ -114,6 +113,8 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             
         ##### trying to get the prediction file for each folder #####
         predictions_folder = os.path.join(resultados_dir, folder, "URBAN_Model", "Predictions")
+        if '3-Medidas' in predictions_folder:
+            predictions_folder = predictions_folder.replace('3-Medidas', '5-Resultados')
         if os.path.exists(predictions_folder):
             # list csv files in the directory
             predictions_files = glob.glob(os.path.join(predictions_folder, "*.csv"))
@@ -129,11 +130,11 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if df is None:
                 logger.info(f"df is None")
                 continue
-
+            logger.info(f"df was loaded successfully")
+            
             # applying the correction to the laeq column
-            logger.info(f"Applying correction to the laeq column with coefficient {correction_coefficient}")
-            print(f"Applying correction to the laeq column with coefficient {correction_coefficient}")
-            df = apply_db_correction(df, correction_coefficient, slm_dict["LAEQ_COLUMN"])
+            logger.info(f"Applying correction to the laeq column with coefficient {current_coefficient}")
+            df = apply_db_correction(df, current_coefficient, slm_dict["LAEQ_COLUMN"], slm_dict["LAMAX_COLUMN"], slm_dict["LAMIN_COLUMN"])
             
             # add datetime columns, sort by datetime and set datetime as index
             df = add_datetime_columns(df, date_col='datetime') 
@@ -155,14 +156,14 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"Adding nights_str column for folder {folder}")
                 
                 #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
+
+                # add corrected columns to slm_dict
+                slm_dict['LA_corrected'] = 'LA_corrected'
+                slm_dict['LAmax_corrected'] = 'LAmax_corrected'
+                slm_dict['LAmin_corrected'] = 'LAmin_corrected'
             except:
                 logger.error(f"An error occurred while trimming the dataframe")
                 continue
-
-            print(df)
-            print(df.columns)
-            print(slm_dict)
-            exit()
 
             logger.info(f"\nEntering the plotting section")
             folder = folder.split("\\")[-1]
@@ -170,13 +171,15 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             # Plotting night evolution
             if PLOT_NIGHT_EVOLUTION:
                 logger.info(f"[1] Plotting night evolution for folder {folder}")
-                plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder, indicador_noche="Ln")
+                # plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder, indicador_noche="Ln")
+                plot_night_evolution(df, folder_output_dir, logger, laeq_column=df['LA_corrected'], plotname=folder, indicador_noche="Ln")
             
+
             # Plotting night evolution 15 min
             if PLOT_NIGHT_EVOLUTION_15_MIN:
                 logger.info(f"[2] Plotting night evolution 15 min for folder {folder}")
-                plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder, indicador_noche="Ln")
-
+                plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=slm_dict["LA_corrected"], plotname=folder, indicador_noche="Ln")
+                # plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=df['LA_corrected'], plotname=folder, indicador_noche="Ln")
 
 
             # Plotting LEq power average with predictions
@@ -184,11 +187,11 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"[3] Plotting PLOT_PREDIC_LAEQ for folder {folder}")
                 plot_predic_laeq_15_min(df, yamnet_csv, prediction_csv_file, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
 
+
              # Plotting LEq power average with predictions
             if PLOT_PREDIC_LAEQ_15_MIN_Lx:
                 logger.info(f"[3] Plotting PLOT_PREDIC_LAEQ for folder {folder}")
                 plot_predic_laeq_15_min_Lx(df, yamnet_csv, prediction_csv_file, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
-
 
 
             # Plotting time plot
@@ -196,30 +199,41 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"[4] Plotting time plot for folder {folder}")
                 make_time_plot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
             
+
             # Plotting heatmap evolution hour
             if PLOT_HEATMAP_EVOLUTION_HOUR:
                 logger.info(f"[5] Plotting heatmap for folder {folder}")
-                plot_heatmap_evolution_hour(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN'], agg_func=leq,plotname=folder)
+                # plot_heatmap_evolution_hour(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN'], agg_func=leq,plotname=folder)
+                plot_heatmap_evolution_hour(df, folder_output_dir, logger, values_column=slm_dict['LA_corrected'], agg_func=leq,plotname=folder)
             
+
             # Plotting heatmap evolution 15 min
             if PLOT_HEATMAP_EVOLUTION_15_MIN:
                 logger.info(f"[6] Plotting heatmap 15 min for folder {folder}")
-                plot_heatmap_evolution_15_min(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN'], agg_func=leq,plotname=folder)
+                # plot_heatmap_evolution_15_min(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN'], agg_func=leq,plotname=folder)
+                plot_heatmap_evolution_15_min(df, folder_output_dir, logger, values_column=slm_dict['LA_corrected'], agg_func=leq,plotname=folder)
             
+
             # Plotting day evolution
             if PLOT_DAY_EVOLUTION:
                 logger.info(f"[7] Plotting day evolution for folder {folder}")
-                plot_day_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
+                # plot_day_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
+                plot_day_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LA_corrected"], plotname=folder)
             
+
             # Plotting period evolution
             if PLOT_PERIOD_EVOLUTION:
                 logger.info(f"[8] Plotting period evolution for folder {folder}")
-                plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
+                # plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
+                plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LA_corrected"], plotname=folder)
             
+
             # Plotting individual heatmap
             if PLOT_INDICADORES_HEATMAP:
                 logger.info(f"[9] Plotting indicadores heatmap for folder {folder}")
-                plot_indicadores_heatmap(df, folder_output_dir, logger, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN"])
+                # plot_indicadores_heatmap(df, folder_output_dir, logger, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN"])
+                plot_indicadores_heatmap(df, folder_output_dir, logger, plotname=folder, ind_column=slm_dict["LA_corrected"])
+
 
         except Exception as e:
             logger.error(f"An error occurred while processing folder {folder}: {e}")

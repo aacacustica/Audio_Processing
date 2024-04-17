@@ -82,7 +82,69 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
 
 
 # [2]
-def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, plotname:str):
+# def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, plotname:str):
+#     try:
+#         sns.set_style("whitegrid")
+#         sns.set_palette("tab10")
+#         # translate the day name to spanish from english in day_name
+#         df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
+#         weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+#         df['Día'] = pd.Categorical(df['Día'], categories=weekdays, ordered=True)
+        
+#         logger.info(f"Plotting period evolution (1) Ld and (2) Le")
+#         for ind in df["indicador_str"].unique():
+#             if ind == 'Ln':
+#                 continue
+            
+#             df_temp = df[df["indicador_str"] == ind]
+            
+#             fig = sns.relplot(
+#                 data=df_temp,
+#                 x="hour",
+#                 y=laeq_column,
+#                 kind="line", # kind is the type of plot to draw
+#                 hue="Día", # hue is the column to split the data
+#                 estimator=leq,  # estimator is the function to apply to the data
+#                 aspect=1.3, # aspect is the width/height ratio
+#                 palette=C_MAP_WEEKDAY,
+#             )
+            
+#             if ind == 'Ld':
+#                 fig.set(xlim=(6, 19), ylim=(30, 105))
+#                 plt.xticks(range(7, 19), [f"{hour:02d}:00" for hour in range(7, 19)])
+#                 logger.info(f"Plotted Ld")
+                
+#             elif ind == 'Le':
+#                 fig.set(xlim=(18.7, 22.3), ylim=(30, 105))  # Adjust xlim to be tighter
+#                 plt.xticks([18.7, 19, 20, 21, 22, 22.3], ['', '19:00', '20:00', '21:00', '22:00', ''])
+#                 logger.info(f"Ploted Le")
+
+#             plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
+
+#             for ax in fig.axes.flat:
+#                 ax.spines['top'].set_visible(True)
+            
+#             ax.spines['right'].set_visible(True)
+#             plt.title(f"Evolución {ind}")
+#             plt.ylabel('dB(A)')
+#             plt.xlabel('Hora')
+        
+#             os.makedirs(f'{folder_output_dir}', exist_ok=True)
+#             fig.savefig(f"{folder_output_dir}/{plotname}_{ind}_evolution.png",dpi=150)
+#             excel_path = os.path.join(folder_output_dir, f"{plotname}_{ind}_evolution.xlsx")
+#             with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
+#                 df_temp.to_excel(writer)
+        
+#             plt.close()
+        
+#         logger.info(f"Period evolution plot saved to {folder_output_dir}/{plotname}_{ind}_evolution.png")
+#         logger.info(f"Period evolution data saved to {folder_output_dir}/{plotname}_{ind}_evolution.xlsx")
+    
+#     except Exception as e:
+#         logger.error(f"Error in plot_period_evolution: {e}")
+
+
+def plot_ld_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
     try:
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
@@ -90,58 +152,84 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
         df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
         weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
         df['Día'] = pd.Categorical(df['Día'], categories=weekdays, ordered=True)
-        
-        logger.info(f"Plotting period evolution (1)Ld and (2)Le")
-        for ind in df["indicador_str"].unique():
-            if ind == 'Ln':
-                continue
-            
-            df_temp = df[df["indicador_str"] == ind]
-            
-            fig = sns.relplot(
-                data=df_temp,
-                x="hour",
-                y=laeq_column,
-                kind="line", # kind is the type of plot to draw
-                hue="Día", # hue is the column to split the data
-                estimator=leq,  # estimator is the function to apply to the data
-                aspect=1.3, # aspect is the width/height ratio
-                palette=C_MAP_WEEKDAY,
-            )
-            
-            if ind == 'Ld':
-                fig.set(xlim=(6, 19), ylim=(30, 105))
-                plt.xticks(range(7, 19), [f"{hour:02d}:00" for hour in range(7, 19)])
-                logger.info(f"Plotted Ld")
-                
-            elif ind == 'Le':
-                fig.set(xlim=(18.7, 22.3), ylim=(30, 105))  # Adjust xlim to be tighter
-                plt.xticks([18.7, 19, 20, 21, 22, 22.3], ['', '19:00', '20:00', '21:00', '22:00', ''])
-                logger.info(f"Ploted Le")
 
-            plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
+        df_ld = df[df["indicador_str"] == 'Ld']
+        if df_ld.empty:
+            logger.info("No Ld data available")
+            return
+        
+        fig = sns.relplot(
+            data=df_ld,
+            x="hour",
+            y=laeq_column,
+            kind="line",
+            hue="Día",
+            estimator=leq,
+            aspect=1.3,
+            palette=C_MAP_WEEKDAY,
+        )
+        fig.set(xlim=(6, 19), ylim=(30, 105))
+        plt.xticks(range(7, 19), [f"{hour:02d}:00" for hour in range(7, 19)])
+        plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
 
-            for ax in fig.axes.flat:
-                ax.spines['top'].set_visible(True)
-            
-            ax.spines['right'].set_visible(True)
-            plt.title(f"Evolución {ind}")
-            plt.ylabel('dB(A)')
-            plt.xlabel('Hora')
+        fig.axes.flat[0].spines['top'].set_visible(True)
+        fig.axes.flat[0].spines['right'].set_visible(True)
         
-            os.makedirs(f'{folder_output_dir}', exist_ok=True)
-            fig.savefig(f"{folder_output_dir}/{plotname}_{ind}_evolution.png",dpi=150)
-            excel_path = os.path.join(folder_output_dir, f"{plotname}_{ind}_evolution.xlsx")
-            with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-                df_temp.to_excel(writer)
-        
-            plt.close()
-        
-        logger.info(f"Period evolution plot saved to {folder_output_dir}/{plotname}_{ind}_evolution.png")
-        logger.info(f"Period evolution data saved to {folder_output_dir}/{plotname}_{ind}_evolution.xlsx")
-    
+        plt.title(f"Evolución Ld")
+        plt.ylabel('dB(A)')
+        plt.xlabel('Hora')
+
+        os.makedirs(folder_output_dir, exist_ok=True)
+        fig.savefig(os.path.join(folder_output_dir, f"{plotname}_Ld_evolution.png"), dpi=150)
+        plt.close()
+        logger.info(f"Ld period evolution plot saved to {folder_output_dir}/{plotname}_Ld_evolution.png")
+        # save csv file
+        df_ld.to_csv(os.path.join(folder_output_dir, f"{plotname}_Ld_evolution.csv"))
+        logger.info(f"Ld period evolution data saved to {folder_output_dir}/{plotname}_Ld_evolution.csv")
+
     except Exception as e:
-        logger.error(f"Error in plot_period_evolution: {e}")
+        logger.error(f"Error in plot_ld_evolution: {e}")
+
+def plot_le_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
+    try:
+        
+        df_le = df[df["indicador_str"] == 'Le']
+        if df_le.empty:
+            logger.info("No Le data available")
+            return
+
+        fig = sns.relplot(
+            data=df_le,
+            x="hour",
+            y=laeq_column,
+            kind="line",
+            hue="Día",
+            estimator=leq,
+            aspect=1.3,
+            palette=C_MAP_WEEKDAY,
+        )
+        fig.set(xlim=(18.7, 22.3), ylim=(30, 105))
+        plt.xticks([18.7, 19, 20, 21, 22, 22.3], ['', '19:00', '20:00', '21:00', '22:00', ''])
+
+        fig.axes.flat[0].spines['top'].set_visible(True)
+        fig.axes.flat[0].spines['right'].set_visible(True)
+
+        plt.title(f"Evolución Le")
+        plt.ylabel('dB(A)')
+        plt.xlabel('Hora')
+
+        os.makedirs(folder_output_dir, exist_ok=True)
+        fig.savefig(os.path.join(folder_output_dir, f"{plotname}_Le_evolution.png"), dpi=150)
+        plt.close()
+        logger.info(f"Le period evolution plot saved to {folder_output_dir}/{plotname}_Le_evolution.png")
+        # save csv file
+        excel_path = os.path.join(folder_output_dir, f"{plotname}_Le_evolution.xlsx")
+        with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
+            df_le.to_excel(writer)
+
+    except Exception as e:
+        logger.error(f"Error in plot_le_evolution: {e}")
+
 
 
 # [3]

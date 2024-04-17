@@ -143,12 +143,8 @@ def remove_row_out_timespan(df_LAeq, df_Pred):
     return df_Pred_filtered
 
 def apply_db_correction(df, coefficient, laeq_column, lamax_column, lamin_column):
-    #substract
-    df['LA_corrected'] = 10 * np.log10(10**(df[laeq_column] / 10) / 10**(coefficient / 10))
-    df['LAmax_corrected'] = 10 * np.log10(10**(df[lamax_column] / 10) / 10**(coefficient / 10))
-    df['LAmin_corrected'] = 10 * np.log10(10**(df[lamin_column] / 10) / 10**(coefficient / 10))
-    # add
-    #df['laeq_corrected'] = 10 * np.log10(10**(df[laeq_column] / 10) * 10**(coefficient / 10))
-    #df['lamax_corrected'] = 10 * np.log10(10**(df[lamax_column] / 10) * 10**(coefficient / 10))
-    #df['lamin_corrected'] = 10 * np.log10(10**(df[lamin_column] / 10) * 10**(coefficient / 10))
+    #substract 3 linear units to the LAeq, LAmax and LAmin columns
+    df['LA_corrected'] = df[laeq_column] - coefficient
+    df['LAmax_corrected'] = df[lamax_column] - coefficient
+    df['LAmin_corrected'] = df[lamin_column] - coefficient
     return df

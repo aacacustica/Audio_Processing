@@ -212,7 +212,14 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"[6] Plotting heatmap 15 min for folder {folder}")
                 # plot_heatmap_evolution_15_min(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN'], agg_func=leq,plotname=folder)
                 plot_heatmap_evolution_15_min(df, folder_output_dir, logger, values_column=slm_dict['LA_corrected'], agg_func=leq,plotname=folder)
+
             
+            # Plotting individual heatmap
+            if PLOT_INDICADORES_HEATMAP:
+                logger.info(f"[9] Plotting indicadores heatmap for folder {folder}")
+                # plot_indicadores_heatmap(df, folder_output_dir, logger, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN"])
+                plot_indicadores_heatmap(df, folder_output_dir, logger, plotname=folder, ind_column=slm_dict["LA_corrected"])
+
 
             # Plotting day evolution
             if PLOT_DAY_EVOLUTION:
@@ -222,17 +229,19 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             
 
             # Plotting period evolution
-            if PLOT_PERIOD_EVOLUTION:
-                logger.info(f"[8] Plotting period evolution for folder {folder}")
-                # plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder)
-                plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LA_corrected"], plotname=folder)
+            # if PLOT_PERIOD_EVOLUTION:
+            #     logger.info(f"[8] Plotting period evolution [Ld and Le] for folder {folder}")
+            #     plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LA_corrected"], plotname=folder)
+
+            if PLOT_LD_EVOLUTION:
+                logger.info(f"[8] Plotting period evolution [Ld] for folder {folder}")
+                plot_ld_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LA_corrected"], plotname=folder)
+            
+            if PLOT_LE_EVOLUTION:
+                logger.info(f"[9] Plotting period evolution [Le] for folder {folder}")
+                plot_le_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LA_corrected"], plotname=folder)
             
 
-            # Plotting individual heatmap
-            if PLOT_INDICADORES_HEATMAP:
-                logger.info(f"[9] Plotting indicadores heatmap for folder {folder}")
-                # plot_indicadores_heatmap(df, folder_output_dir, logger, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN"])
-                plot_indicadores_heatmap(df, folder_output_dir, logger, plotname=folder, ind_column=slm_dict["LA_corrected"])
 
 
         except Exception as e:

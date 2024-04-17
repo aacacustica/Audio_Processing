@@ -243,6 +243,5 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             
 
 
-
         except Exception as e:
             logger.error(f"An error occurred while processing folder {folder}: {e}")

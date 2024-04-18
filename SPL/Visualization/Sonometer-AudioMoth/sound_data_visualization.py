@@ -308,6 +308,7 @@ def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_colum
     try:
         logger.info(f"Using the values_column: {values_column}")
         sns.set_style("whitegrid")
+        sns.set_palette("tab10")
         
         df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
         df['date_day'] = df['date'].astype(str) + ' ' + df['Día']
@@ -363,6 +364,8 @@ def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_col
     try:      
         logger.info(f"Using the values_column: {values_column}")
         sns.set_style("whitegrid")
+        sns.set_palette("tab10")
+        
         def get_15min_interval(dt):
             return f"{dt.hour:02d}:{(dt.minute // 15) * 15:02d}"
 

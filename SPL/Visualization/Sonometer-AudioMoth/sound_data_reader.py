@@ -40,33 +40,20 @@ def get_data_824(filename: str):
 
 
 def get_data_SV307(filename: str):
-    #  Try [1]
-    # try:
-    # df = pd.read_csv(filename,header=14,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
-    
-    # if 'LAeq (Ch1, P1) [dB]' not in df.columns:
-    #     df = pd.read_csv(filename,header=14,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
-    
-    # df['datetime'] = pd.to_datetime(df['Time'],format="%d/%m/%Y %H:%M:%S")
-    
-    ########################################
-    
-    # try [2]
-    # if not, try with semicolon separator
-    # except pd.errors.ParserError:
-    df = pd.read_csv(filename,header=18,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
+    # try to read it with the 18 row, if not possible then, try with the 14 row
+    try:
+        df = pd.read_csv(filename,header=14,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
+    except Exception as e:
+        df = pd.read_csv(filename,header=18,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
 
-    # Filter out rows where the 'Time' column does not contain valid datetime strings
+    #filter out rows where the 'Time' column does not contain valid datetime strings
     df = df[pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S', errors='coerce').notnull()]
-
-    # Try converting 'Time' column to datetime
-    # try:
     
     df['datetime'] = pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S')
-    # except Exception as e:
-    #     # Log the error and continue
-    #     print(f"Error in datetime conversion: {e}")
-        
+    # rename columns
+    df.rename(columns={'LAeq (Ch1, P1) [dB]': 'LAeq',
+                       'LAFmax (Ch1, P1) [dB]': 'LAFmax',
+                       'LAFmin (Ch1, P1) [dB]': 'LAFmin'}, inplace=True)
     return df
     
     

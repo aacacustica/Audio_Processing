@@ -22,6 +22,8 @@ custom_color_scale.append([1, hex_colors[-1]])
 
 def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
     try:
+        logger.info(f"Using the laeq_column: {laeq_column}")
+
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
@@ -70,13 +72,17 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
         logger.info(f"Day evolution plot created for {plotname} Date {df['date'].iloc[0]} - {df['date'].iloc[-1]}")
         
         os.makedirs(folder_output_dir, exist_ok=True)
+
+        logger.info(f"Saving the plot {plotname}")
         fig.savefig(f"{folder_output_dir}/{plotname}_day_evolution.png", dpi=300)
-        df.to_excel(f"{folder_output_dir}/{plotname}_day_evolution.xlsx")
+        logger.info(f"Day evolution plot saved to {folder_output_dir}/{plotname}_day_evolution.png")
+
+        logger.info(f"Saving the data {plotname}")
+        df.to_csv(f"{folder_output_dir}/{plotname}_day_evolution.csv", index=False)
+        logger.info(f"Day evolution data saved to {folder_output_dir}/{plotname}_day_evolution.csv")
 
         plt.close()
 
-        logger.info(f"Day evolution plot saved to {folder_output_dir}/{plotname}_day_evolution.png")
-        logger.info(f"Day evolution data saved to {folder_output_dir}/{plotname}_day_evolution.xlsx")
     except Exception as e:
         logger.error(f"Error in plot_day_evolution: {e}")
 
@@ -84,6 +90,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
 
 def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, plotname:str):
     try:
+        logger.info(f"Using the laeq_column: {laeq_column}")
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
@@ -116,7 +123,7 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
                 logger.info(f"Plotted Ld")
                 
             elif ind == 'Le':
-                fig.set(xlim=(18.7, 22.3), ylim=(30, 105))  # Adjust xlim to be tighter
+                fig.set(xlim=(18.7, 22.3), ylim=(30, 105))
                 plt.xticks([18.7, 19, 20, 21, 22, 22.3], ['', '19:00', '20:00', '21:00', '22:00', ''])
                 logger.info(f"Ploted Le")
 
@@ -131,13 +138,17 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
             plt.xlabel('Hora')
         
             os.makedirs(f'{folder_output_dir}', exist_ok=True)
+            
+            logger.info(f"Saving the plot {plotname}_{ind}")
             fig.savefig(f"{folder_output_dir}/{plotname}_{ind}_evolution.png",dpi=150)
-            df_temp.to_excel(f"{folder_output_dir}/{plotname}_{ind}_evolution.xlsx")
+            logger.info(f"Period evolution plot saved to {folder_output_dir}/{plotname}_{ind}_evolution.png")
+
+            logger.info(f"Saving the data {plotname}_{ind}")
+            df_temp.to_csv(f"{folder_output_dir}/{plotname}_{ind}_evolution.csv", index=False)
+            logger.info(f"Period evolution data saved to {folder_output_dir}/{plotname}_{ind}_evolution.csv")
         
             plt.close()
         
-        logger.info(f"Period evolution plot saved to {folder_output_dir}/{plotname}_{ind}_evolution.png")
-        logger.info(f"Period evolution data saved to {folder_output_dir}/{plotname}_{ind}_evolution.xlsx")
     
     except Exception as e:
         logger.error(f"Error in plot_period_evolution: {e}")
@@ -146,10 +157,7 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
 
 def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str, indicador_noche:str):
     try:
-        print(f"\n\n\n\nUsing the laeq_column: {laeq_column}")
-        print("df inside plot_night_evolution")
-        print(df)
-
+        logger.info(f"Using the laeq_column: {laeq_column}")
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
@@ -175,8 +183,8 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
         
         # save to excel
         os.makedirs(folder_output_dir, exist_ok=True)
-        night_data.to_excel(f"{folder_output_dir}/{plotname}_{indicador_noche}_evolution.xlsx")
-        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution.xlsx")
+        night_data.to_csv(f"{folder_output_dir}/{plotname}_{indicador_noche}_evolution.csv", index=False)
+        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution.csv")
 
         fig = sns.relplot(
             data=night_data, 
@@ -203,6 +211,8 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
         plt.xlabel('Hora')
 
         os.makedirs(folder_output_dir, exist_ok=True)
+
+        logger.info(f"Saving the plot {plotname}_{indicador_noche}")
         fig.savefig(f"{folder_output_dir}/{plotname}_{indicador_noche}_evolution.png", dpi=150)
         logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution.png")
     
@@ -212,25 +222,15 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
 
 def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extension, laeq_column:str, plotname:str, indicador_noche:str):
     try:
-        # print(df)
-        # print(df.columns)
-        
+        logger.info(f"Using the laeq_column: {laeq_column}")        
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
-        # rename the day name to spanish from english in 'night_str'
         df['Día'] = df['night_str']
-
         df.index = pd.to_datetime(df.index)
 
         df_resampled = df.resample('15min')[laeq_column].mean()
-        # print(f"This is the df resampled: \n{df_resampled}")
-        
-        # try: 
-        #      df_night_str = df.resample('15min')['Día'].agg(lambda x: x.value_counts().index[0])
-        # except:
         df_night_str = df.resample('15min')['Día'].agg(lambda x: x.value_counts().index[0] if len(x) > 0 else None)
-        
         df_resampled = pd.DataFrame(df_resampled).join([df_night_str])
         
         # date and time columns
@@ -260,10 +260,12 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
                 # so we add it to the night data
                 night_data = pd.concat([night_data, data_slice])
         
-        #save to excel 
+        #save to csv
         os.makedirs(folder_output_dir, exist_ok=True)
-        night_data.to_excel(f"{folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.xlsx")
-        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.xlsx")
+        
+        logger.info(f"Saving the data {plotname}_{indicador_noche}")
+        night_data.to_csv(f"{folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.csv", index=False)
+        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.csv")
         
         fig = sns.relplot(
                 data=night_data, 
@@ -295,6 +297,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
         plt.xlabel('Hora')
 
         # save the plot
+        logger.info(f"Saving the plot {plotname}_{indicador_noche}")
         fig.savefig(os.path.join(folder_output_dir, f'{plotname}_{indicador_noche}_evolution_{name_extension}.png'))
         logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.png")
     except Exception as e:
@@ -303,7 +306,9 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
 
 def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_column: str, agg_func: str, plotname:str):
     try:
+        logger.info(f"Using the values_column: {values_column}")
         sns.set_style("whitegrid")
+        
         df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
         df['date_day'] = df['date'].astype(str) + ' ' + df['Día']
         
@@ -318,7 +323,6 @@ def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_colum
         leq_day_hour.columns = [f"{hour:02d}:00" for hour in leq_day_hour.columns]
         
         plt.figure(figsize=(20,5))
-        
         sns.heatmap(
             leq_day_hour, 
             vmin=30, 
@@ -335,14 +339,17 @@ def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_colum
         plt.tight_layout()
         
         os.makedirs(f'{folder_output_dir}', exist_ok=True)
-        plt.savefig(f'{folder_output_dir}/{plotname}_heatmap_evolucion.png',dpi=150)
         
-        leq_day_hour.to_excel(f'{folder_output_dir}/{plotname}_heatmap_evolucion.xlsx')
+        logger.info(f"Saving the plot {plotname}")
+        plt.savefig(f'{folder_output_dir}/{plotname}_heatmap_evolucion.png',dpi=150)
+        logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}_heatmap_evolucion.png")
+
+        logger.info(f"Saving the data {plotname}")
+        leq_day_hour.to_csv(f'{folder_output_dir}/{plotname}_heatmap_evolucion.csv', index=False)
+        logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_evolucion.csv")
         
         plt.close()
         
-        logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}_heatmap_evolucion.png")
-        logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_evolucion.xlsx")
     except Exception as e:
         logger.error(f"Error in plot_heatmap: {e}")
 
@@ -354,12 +361,13 @@ def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_col
         return
 
     try:      
+        logger.info(f"Using the values_column: {values_column}")
+        sns.set_style("whitegrid")
         def get_15min_interval(dt):
             return f"{dt.hour:02d}:{(dt.minute // 15) * 15:02d}"
 
         df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
         df['date_day'] = df['date'].astype(str) + ' ' + df['Día']
-        
         df['15min_interval'] = df.index.map(get_15min_interval)
 
         leq_day_15min = pd.pivot_table(
@@ -388,14 +396,17 @@ def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_col
         plt.tight_layout()
         
         os.makedirs(f'{folder_output_dir}', exist_ok=True)
+
+        logger.info(f"Saving the plot {plotname}")
         plt.savefig(f'{folder_output_dir}/{plotname}_heatmap_evolucion_15_min.png',dpi=150)
-        
-        leq_day_15min.to_excel(f'{folder_output_dir}/{plotname}_heatmap_evolucion_15_min.xlsx')
+        logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}_heatmap_evolucion_15_min.png")
+
+        logger.info(f"Saving the data {plotname}")
+        leq_day_15min.to_csv(f'{folder_output_dir}/{plotname}_heatmap_evolucion_15_min.csv', index=False)
+        logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_evolucion_15_min.csv")
         
         plt.close()
         
-        logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}_heatmap_evolucion_15_min.png")
-        logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_evolucion_15_min.xlsx")
     except Exception as e:
         logger.error(f"Error in plot_heatmap: {e}")
 
@@ -403,11 +414,14 @@ def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_col
 
 def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: list):
     try:
+        logger.info(f"Using the columns_dict: {columns_dict}")
         agg_funcs = {
-            columns_dict['LAEQ_COLUMN']: leq,
-            columns_dict['LAMAX_COLUMN']: 'max',
-            columns_dict['LAMIN_COLUMN']: 'min'
+            columns_dict['LAEQ_COLUMN_COEFF']: leq,
+            columns_dict['LAMAX_COLUMN_COEFF']: 'max',
+            columns_dict['LAMIN_COLUMN_COEFF']: 'min'
         }
+        logger.info(f"Using the agg_funcs: {agg_funcs}")
+
         df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs)
         #oca = df.resample(f'{agg_period}s').agg({'oca': 'min'})
 
@@ -415,15 +429,19 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         fig, ax = plt.subplots(figsize=(20, 10))
         ax.set_facecolor("white")
 
+        logger.info(f"Using the percentiles: {percentiles}")
+        logger.info(f"Using the agg_period: {agg_period}")
+        logger.info(f"Using the columns_dict: df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']]")
+        
         x = df_LAeq.index
-        ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN']], linewidth=3, color='red', label='LAeq')
-        ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN']], linewidth=1, color='#FF99FF', label='Lmax')
-        ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN']], linewidth=1, color='#92D050', label='Lmin')
+        ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=3, color='red', label='LAeq')
+        ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN_COEFF']], linewidth=1, color='#FF99FF', label='Lmax')
+        ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN_COEFF']], linewidth=1, color='#92D050', label='Lmin')
         # OCA
         # #ax.plot(x, oca.values, color='#00B0F0')
 
         for percentile in percentiles:
-            values = df[columns_dict['LAEQ_COLUMN']].resample(f'{agg_period}s').quantile((100 - percentile) / 100)
+            values = df[columns_dict['LAEQ_COLUMN_COEFF']].resample(f'{agg_period}s').quantile((100 - percentile) / 100)
             ax.plot(
                 x, 
                 values, 
@@ -449,13 +467,17 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         plt.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0.1, fancybox=True, framealpha=1, edgecolor='black')
 
         os.makedirs(folder_output_dir, exist_ok=True)
+
+        logger.info(f"Saving the plot {plotname}")
         plt.savefig(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.png', dpi=150)
-        df_LAeq.to_excel(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.xlsx')
+        logger.info(f"Timeplot saved to {folder_output_dir}/{plotname}_{agg_period}s_time_plot.png")
+
+        logger.info(f"Saving the data {plotname}")
+        df_LAeq.to_csv(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.csv', index=True)
+        logger.info(f"Timeplot data saved to {folder_output_dir}/{plotname}_{agg_period}s_time_plot.xlsx")
 
         plt.close()
 
-        logger.info(f"Timeplot saved to {folder_output_dir}/{plotname}_{agg_period}s_time_plot.png")
-        logger.info(f"Timeplot data saved to {folder_output_dir}/{plotname}_{agg_period}s_time_plot.xlsx")
     except Exception as e:
         logger.error(f"Error in make_timeplot: {e}")
 
@@ -463,6 +485,10 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
 
 def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, ind_column:str):
     try:
+        logger.info(f"Using the ind_column: {ind_column}")
+        sns.set_style("whitegrid")
+        sns.set_palette("tab10")
+
         if "Fecha" not in df.columns and "Date hour" in df.columns:
             # df["Fecha"] = df["Date hour"]
             df["Fecha"] = pd.to_datetime(df['Date hour'], dayfirst=True)
@@ -544,21 +570,27 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         plt.title(f'{plotname} Indicadores')
         
         os.makedirs(f'{folder_output_dir}', exist_ok=True)
+
+        logger.info(f"Saving the plot {plotname}")
         plt.savefig(f"{folder_output_dir}/{plotname}_indicadores.png")
-        indicadores_table.to_excel(f"{folder_output_dir}/{plotname}_indicadores.xlsx")
+        logger.info(f"Indicadores plot saved to {folder_output_dir}/{plotname}_indicadores.png")
+        
+        logger.info(f"Saving the data {plotname}")
+        indicadores_table.to_csv(f"{folder_output_dir}/{plotname}_indicadores.csv", index=True)
+        logger.info(f"Indicadores data saved to {folder_output_dir}/{plotname}_indicadores.csv")
         
         plt.close()
         
-        logger.info(f"Indicadores data saved to {folder_output_dir}/{plotname}_indicadores.xlsx")
-        logger.info(f"Indicadores plot saved to {folder_output_dir}/{plotname}_indicadores.png")
         
         # indicador power average
         general_power_averages = indicadores_table.apply(leq).round(1)
         general_power_averages_df = general_power_averages.to_frame().transpose()
         
         os.makedirs(f'{folder_output_dir}', exist_ok=True)
-        general_power_averages_df.to_excel(f'{folder_output_dir}/{plotname}_indicadores_generales.xlsx')
-        logger.info(f"Indicadores generales data saved to {folder_output_dir}/{plotname}_indicadores_generales.xlsx")
+
+        logger.info(f"Indicadores generales data {plotname}")
+        general_power_averages_df.to_csv(f'{folder_output_dir}/{plotname}_indicadores_generales.csv', index=False)
+        logger.info(f"Indicadores generales data saved to {folder_output_dir}/{plotname}_indicadores_generales.csv")
     
     except Exception as e:
         logger.error(f"Error in plot_indicadores_heatmap: {e}")
@@ -567,12 +599,12 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         
 def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
     try:
-        # agg_funcs = {
-        #     columns_dict['LAEQ_COLUMN']: leq,
-        # }
+        logger.info(f"Using the columns_dict: {columns_dict}")
+
         agg_funcs = {
             columns_dict['LAEQ_COLUMN_COEFF']: leq,
         }
+        logger.info(f"Using the agg_funcs: {agg_funcs}")
         df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs) # 900 seconds = 15 minutes
         
         #########################################################
@@ -633,14 +665,17 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) por Clases')
         fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
         fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
-        # fig.show()
 
-        # save
+
         os.makedirs(folder_output_dir, exist_ok=True)
-        fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_mean.html")
-        grouped_df.to_excel(f"{folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
 
+        logger.info(f"Saving the plot {plotname}")
+        fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_mean.html")
         logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean.html")
-        logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean.xlsx")
+
+        logger.info(f"Saving the data {plotname}")
+        grouped_df.to_csv(f"{folder_output_dir}/{plotname}_LAeq_class_mean.csv", index=False)
+        logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean.csv")
+
     except Exception as e:
         logger.error(f"Error in plot_predic_laeq_15_min: {e}")

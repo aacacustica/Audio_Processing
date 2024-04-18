@@ -133,6 +133,8 @@ def prediction_csv(path_input):
     
     return df_prediction
 
+
+
 def remove_row_out_timespan(df_LAeq, df_Pred):
     df_LAeq.index = pd.to_datetime(df_LAeq.index)
     df_Pred['datetime'] = pd.to_datetime(df_Pred['datetime'])
@@ -142,12 +144,9 @@ def remove_row_out_timespan(df_LAeq, df_Pred):
     
     return df_Pred_filtered
 
-def apply_db_correction(df, coefficient):
-    # Subtract coefficient from the specified columns
-    print("\n\n\nEnter the correction coefficient for the data: \n\n\n")
-    print(df)
-    print(df.columns)
 
+
+def apply_db_correction(df, coefficient):
     if 'LA' in df.columns:
         df['LA_corrected'] = df['LA'] - coefficient
         df['LAmax_corrected'] = df['LAmax'] - coefficient
@@ -158,6 +157,4 @@ def apply_db_correction(df, coefficient):
         df['LAmax_corrected'] = df['LAFmax'] - coefficient
         df['LAmin_corrected'] = df['LAFmin'] - coefficient
 
-
-    print(df)
     return df

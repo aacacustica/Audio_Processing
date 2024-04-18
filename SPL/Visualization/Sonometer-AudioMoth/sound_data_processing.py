@@ -143,28 +143,17 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 
                 #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
 
-                print()
-                print(f"Folder --> {folder}")
                 for key, value in folder_coefficients.items():
-                    print(f"\nKey: {key}, Value: {value}")
-
                     if '3-Medidas' in key and not 'SONOMETRO' in key:
                         key = key.replace('3-Medidas', '5-Resultados')
                     
                     key = key.split("\\")[:-1]
                     key = os.path.join('\\\\', *key)
-                    
-                    print(f"\nKey: {key}, Value: {value}")
-                    
-                    print(f"\nKey: {key}, Value: {value}")
 
                     # assign the value to the folder
-                    print("folder_to_match == key: ", folder == key)
                     if folder == key:
-                        print(f"folder: {folder} == key: {key} | value: {value}")
                         df = apply_db_correction(df, value)
-                        print(df)
-                               
+                        logger.info(f"Apply {value} correction coefficient to the folder {folder}")
             except:
                 logger.error(f"An error occurred while trimming the dataframe")
                 continue
@@ -172,14 +161,10 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             logger.info(f"\nEntering the plotting section")
             folder = folder.split("\\")[-1]
             
-            print("\n\n\n")
-            print(f"df before plotting: \n{df}")
             # add slm_dict column LAEQ_COLUMN_COEFF: with the value of LA_corrected
             slm_dict["LAEQ_COLUMN_COEFF"] = 'LA_corrected'
             slm_dict["LAMAX_COLUMN_COEFF"] = 'LAmax_corrected'
             slm_dict["LAMIN_COLUMN_COEFF"] = 'LAmin_corrected'
-            print(slm_dict)
-            # exit()
 
             # Plotting night evolution
             if PLOT_NIGHT_EVOLUTION:

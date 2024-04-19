@@ -28,7 +28,7 @@ class LeqLevel:
         self.bA, self.aA = a_weighting_coeffs_design(fs)
         self.bC, self.aC = c_weighting_coeffs_design(fs)
         self.fast_samples = int(window_size / 8)
-        logging.info(f"LeqLevel initialized with fs: {fs}, C: {calibration_constant}, window_size: {window_size} bA: {self.bA}, aA: {self.aA}, bC: {self.bC}, aC: {self.aC}")
+        logging.info(f"LeqLevel initialized with fs: {fs}, C: {calibration_constant}, window_size: {window_size}")
 
     def calculate_spl_levels(self, audio_data):
         db_levels = []
@@ -48,7 +48,6 @@ class LeqLevel:
 
             db_levels.append([LA, LC, LZ, Lmax, Lmin])
             logging.info(f"Processed frame: {fstart} - {fstart + self.window_size}")
-            logging.info(f"LA: {LA}, LC: {LC}, LZ: {LZ}, Lmax: {Lmax}, Lmin: {Lmin}")
         return np.round(db_levels, 2)
     
 
@@ -88,11 +87,14 @@ def parse_arguments():
 
 
 def main():
+    # usage:
+    #        python leq_level.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\"
+
     stable_version = get_stable_version()
     args = parse_arguments()
     base_path = args.path
     calibration_constants = read_calibration_constants('calibration_constants.ini')
-    col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin', 'Filename', 'Time']
+    col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin', 'filename', 'date']
     result_folder = folder_result(base_path)
 
     for subfolder in tqdm(os.listdir(base_path), desc='Processing subfolders'):
@@ -110,9 +112,10 @@ def main():
 
         sample_rates = []
         valid_audio_files = []
-        for file in audio_files:
+        logging.info(f"Reading metadata...")
+        print()
+        for file in tqdm(audio_files, desc='Reading metadata'):
             try:
-                logging.info(f"Reading metadata...")
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)
                 valid_audio_files.append(file)
@@ -124,14 +127,14 @@ def main():
         if not valid_audio_files:
             logging.warning(f"No valid audio files to process in {subfolder}")
             continue
-
         logging.info(f'Processing {len(valid_audio_files)} files in {subfolder}')
 
         fs_filterbanks = np.median(sample_rates)
         logging.info(f'Using sample rate: {fs_filterbanks}')
         all_data_subfolder = []
-
-        for audio_file in valid_audio_files:
+        
+        print()
+        for audio_file in tqdm(valid_audio_files, desc='Processing audio files'):
             try:
                 logging.info(f"Processsing file: {audio_file}...")
                 filepath = os.path.join(audio_path, audio_file)
@@ -158,12 +161,22 @@ def main():
                 logging.warning(f'Error processing file: {audio_file}, {e}')
 
         if all_data_subfolder:
-            df_subfolder = pd.DataFrame(all_data_subfolder, columns=col_names)
+            df = pd.DataFrame(all_data_subfolder, columns=col_names)
+            df = df.sort_values(by='date')
+
             output_filename = f'leq_levels_{subfolder}_{stable_version}.csv'
             output_folder = os.path.join(result_folder, subfolder, 'SPL')
             output_path = os.path.join(output_folder, output_filename)
-            df_subfolder.to_csv(output_path, index=False)
+
+            if not os.path.exists(output_folder):
+                os.makedirs(output_folder)
+                logging.info(f"Creating folder {output_folder}")
+            else:
+                logging.info(f"Folder {output_folder} already exists")
+            
+            df.to_csv(output_path, index=False)
             logging.info(f'Output saved to {output_path}')
+        
         else:
             logging.warning(f"No data to save for folder {subfolder}")
 

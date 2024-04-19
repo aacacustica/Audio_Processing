@@ -9,6 +9,7 @@ import tensorflow as tf
 import logging
 from utils import *
 import datetime
+import audio_metadata
 
 import params as yamnet_params
 import yamnet as yamnet_model
@@ -27,7 +28,7 @@ class AudioClassifier:
         self.yamnet.load_weights('yamnet.h5')
         self.yamnet_classes = yamnet_model.class_names('yamnet_class_map.csv')
 
-    def process_single_file(self, file_path, window_size=None):
+    def process_single_file(self, file_path, window_size=None, save_embeddings=False):
         logging.info(f"Processing file: {file_path}")
         wav_data, sr = sf.read(file_path, dtype=np.int16)
         waveform = wav_data / 32768.0  # normalize audio
@@ -40,16 +41,19 @@ class AudioClassifier:
             waveform = resampy.resample(waveform, sr, self.params.sample_rate)
             logging.warning(f"Resampling audio from {sr} to {self.params.sample_rate}")
 
+        predictions = []
+        all_embeddings = []
         if window_size is None:
             logging.info("Processing whole file without window size")
             scores, embeddings, spectrogram = self.yamnet(waveform)
             prediction = np.mean(scores, axis=0)
-            return [prediction]
+            if save_embeddings:
+                all_embeddings.append(embeddings.numpy())
+            return predictions, all_embeddings if save_embeddings else predictions
 
         else:
             logging.info(f"Processing file with window size: {window_size}")
             window_size_samples = int(window_size * sr)
-            predictions = []
             for start_idx in range(0, len(waveform), window_size_samples):
                 end_idx = start_idx + window_size_samples
                 if end_idx > len(waveform):
@@ -58,13 +62,16 @@ class AudioClassifier:
                 scores, embeddings, spectrogram = self.yamnet(window)
                 prediction = np.mean(scores, axis=0)
                 predictions.append(prediction)
-            return predictions
+                if save_embeddings:
+                    all_embeddings.append(embeddings.numpy())
+            return predictions, all_embeddings if save_embeddings else predictions
 
         
-def process_audio_files(classifier, base_path, window_size, stable_version):
+def process_audio_files(classifier, base_path, window_size, stable_version, save_embeddings):
     subfolders = [f.path for f in os.scandir(base_path) if f.is_dir()]
-    col_names = ['Filename', 'Time', 'Class', 'Probability']
+    col_names = ['filename', 'date', 'class', 'probability']
     result_folder = folder_result(base_path)
+
 
     for subfolder in tqdm.tqdm(subfolders, desc='Processing subfolders'):
         subfolder_name = os.path.basename(subfolder)
@@ -80,16 +87,40 @@ def process_audio_files(classifier, base_path, window_size, stable_version):
             logging.warning(f"No audio files found in: {audio_path}")
             continue
 
+
+        sample_rates = []
+        valid_audio_files = []
+        logging.info(f"Reading metadata...")
+        for file in tqdm.tqdm(audio_files[:5], desc='Reading metadata'):
+            try:
+                metadata = audio_metadata.load(os.path.join(audio_path, file))
+                sample_rates.append(metadata.streaminfo.sample_rate)
+                valid_audio_files.append(file)
+            except Exception as e:
+                logging.warning(f'Error reading file metadata: {file}, {e}')
+        if not sample_rates:
+            logging.warning("No valid audio files to process.")
+            continue
+        if not valid_audio_files:
+            logging.warning(f"No valid audio files to process in {subfolder}")
+            continue
+        logging.info(f'Processing {len(valid_audio_files)} files in {subfolder}')
+
+
+
         all_data_subfolder = []
-        for file_name in tqdm.tqdm(audio_files, desc='Processing audio files'):
+        for file_name in tqdm.tqdm(valid_audio_files, desc='Processing audio files'):
             try:
                 full_path = os.path.join(audio_path, file_name)
-                predictions_list = classifier.process_single_file(full_path, window_size)
+                predictions_list, embeddings = classifier.process_single_file(full_path, window_size)
+
+                if save_embeddings:
+                    save_embeddings_funct(embeddings, subfolder_name, subfolder_name, result_folder)
 
                 name_split = file_name.split(".")[0]
                 start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
 
-                #lassification threshold
+                #classification threshold
                 threshold = classifier.params.classification_threshold
                 for i, prediction in enumerate(predictions_list):
                     top_indices = np.argsort(prediction)[::-1][:5]
@@ -135,4 +166,4 @@ if __name__ == '__main__':
     
     # process audio files
     classifier = AudioClassifier()
-    process_audio_files(classifier, folder_path, window_size, stable_version)
+    process_audio_files(classifier, args.path, args.window_size, stable_version, args.embeddings)

@@ -6,6 +6,7 @@ import pandas as pd
 import time
 import numpy as np
 import subprocess
+from tensorboard.plugins import projector
 
 def setup_gpu():
     physical_devices = tf.config.list_physical_devices('GPU')
@@ -25,6 +26,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Make prediction with YAMNet model for audio files in a directory')
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
     parser.add_argument('-w', '--window_size', type=float, default=None, help='Window size in seconds for processing audio files. Default is None for processing full audio.')
+    parser.add_argument('--embeddings', action='store_true', help='Save embeddings to tensorboard')
     return parser.parse_args()
 
 
@@ -56,9 +58,39 @@ def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, resul
         os.makedirs(output_folder)
     
     output_path = os.path.join(output_folder, output_filename)
+
     df_subfolder = pd.DataFrame(all_data_subfolder, columns=col_names)
+    # order df by date
+    df_subfolder = df_subfolder.sort_values(by='date')
     df_subfolder.to_csv(output_path, index=False)
     logging.info(f'Output saved to {output_path}')
+
+
+
+def save_embeddings_funct(embeddings, folder_name, subfolder_name, result_folder):
+    logging.info(f"Saving embeddings to tensorboard...")
+    
+    log_dir = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'Embeddings')
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    embedding_var = tf.Variable(embeddings, name='yamnet_embeddings')
+    checkpoint = tf.train.Checkpoint(embedding=embedding_var)
+    checkpoint_path = checkpoint.save(os.path.join(log_dir, 'embedding.ckpt'))
+
+    metadata_file = os.path.join(log_dir, 'metadata.tsv')
+    with open(metadata_file, 'w') as metadata_writer:
+        for index in range(len(embeddings)):
+            metadata_writer.write('{}\n'.format(index))
+
+    config = projector.ProjectorConfig()
+    embedding_config = config.embeddings.add()
+    embedding_config.tensor_name = "embedding/.ATTRIBUTES/VARIABLE_VALUE"
+    embedding_config.metadata_path = 'metadata.tsv'
+    projector.visualize_embeddings(log_dir, config)
+
+    logging.info(f"Embeddings and metadata saved in {log_dir}")
+
 
 
 def print_top_predictions(file_name, predictions, class_names, top_n=5):

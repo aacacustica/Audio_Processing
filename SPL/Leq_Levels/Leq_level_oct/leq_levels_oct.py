@@ -169,7 +169,7 @@ def main():
                 logging.warning(f'Error processing file: {audio_file}, {e}')
 
         if all_data_subfolder:
-            col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin'] + [f"{freq:.2f}Hz" for freq in calculator.third_oct.center_frequencies] + ['Filename', 'Time']
+            col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin'] + [f"{freq:.2f}Hz" for freq in calculator.third_oct.center_frequencies] + ['filename', 'date']
             flat_data = [item for sublist in all_data_subfolder for item in sublist]
             df_subfolder = pd.DataFrame(flat_data, columns=col_names)
             

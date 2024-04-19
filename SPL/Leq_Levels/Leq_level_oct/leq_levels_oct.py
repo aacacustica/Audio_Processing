@@ -31,7 +31,7 @@ class LeqLevelOct:
         self.bC, self.aC = c_weighting_coeffs_design(fs)
         # 1/3 and octave filter banks
         self.third_oct, self.octave = filterbanks(fs)
-        logging.info(f"LeqLevelOct initialized with fs: {fs}, C: {calibration_constant}, window_size: {window_size} bA: {self.bA}, aA: {self.aA}, bC: {self.bC}, aC: {self.aC}")
+        logging.info(f"LeqLevelOct initialized with fs: {fs}, C: {calibration_constant}, window_size: {window_size}")
 
     def get_oct_levels(self, frame):
         y_oct, _ = self.third_oct.filter(frame)
@@ -171,7 +171,7 @@ def main():
         if all_data_subfolder:
             col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin'] + [f"{freq:.2f}Hz" for freq in calculator.third_oct.center_frequencies] + ['filename', 'date']
             flat_data = [item for sublist in all_data_subfolder for item in sublist]
-            df_subfolder = pd.DataFrame(flat_data, columns=col_names)
+            df = pd.DataFrame(flat_data, columns=col_names)
             
             output_folder = os.path.join(result_folder, subfolder, 'SPL')
             if not os.path.exists(output_folder):
@@ -182,7 +182,11 @@ def main():
 
             output_filename = f'leq_levels_oct_{subfolder}_{stable_version}.csv'
             output_path = os.path.join(output_folder, output_filename)
-            df_subfolder.to_csv(output_path, index=False)
+            
+            # order df by date
+            df = df.sort_values(by='date')
+            df.to_csv(output_path, index=False)
+            
             logging.info(f'Output saved to {output_path}')
         else:
             logging.warning(f"No valid audio files to process in {subfolder}")

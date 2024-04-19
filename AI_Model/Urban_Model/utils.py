@@ -7,6 +7,9 @@ import time
 import numpy as np
 import subprocess
 from tensorboard.plugins import projector
+import matplotlib.pyplot as plt
+import params 
+
 
 def setup_gpu():
     physical_devices = tf.config.list_physical_devices('GPU')
@@ -26,7 +29,9 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Make prediction with YAMNet model for audio files in a directory')
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
     parser.add_argument('-w', '--window_size', type=float, default=None, help='Window size in seconds for processing audio files. Default is None for processing full audio.')
+    parser.add_argument('--threshold', type=float, default=None, help='Classification threshold for predictions.')
     parser.add_argument('--embeddings', action='store_true', help='Save embeddings to tensorboard')
+    parser.add_argument('--spectrogram', action='store_true', help='Save (to plot) spectrogram')
     return parser.parse_args()
 
 
@@ -67,7 +72,7 @@ def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, resul
 
 
 
-def save_embeddings_funct(embeddings, folder_name, subfolder_name, result_folder):
+def save_embeddings_funct(embeddings, subfolder_name, result_folder):
     logging.info(f"Saving embeddings to tensorboard...")
     
     log_dir = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'Embeddings')
@@ -76,7 +81,7 @@ def save_embeddings_funct(embeddings, folder_name, subfolder_name, result_folder
 
     embedding_var = tf.Variable(embeddings, name='yamnet_embeddings')
     checkpoint = tf.train.Checkpoint(embedding=embedding_var)
-    checkpoint_path = checkpoint.save(os.path.join(log_dir, 'embedding.ckpt'))
+    checkpoint.save(os.path.join(log_dir, 'embedding.ckpt'))
 
     metadata_file = os.path.join(log_dir, 'metadata.tsv')
     with open(metadata_file, 'w') as metadata_writer:
@@ -90,6 +95,41 @@ def save_embeddings_funct(embeddings, folder_name, subfolder_name, result_folder
     projector.visualize_embeddings(log_dir, config)
 
     logging.info(f"Embeddings and metadata saved in {log_dir}")
+
+
+
+
+def save_spectogram_funct(spectrogram, scores, class_names, subfolder_name, result_folder):
+    logging.info(f"Saving spectogram to tensorboard...")
+
+    log_dir = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'Spectrogram')
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)    
+
+
+    plt.figure(figsize=(10, 8))
+    # Plot the log-mel spectrogram (returned by the model).
+    plt.subplot(2, 1, 2)
+    plt.imshow(spectrogram.T, aspect='auto', interpolation='nearest', origin='lower')
+
+    # Plot and label the model output scores for the top-scoring classes.
+    mean_scores = np.mean(scores, axis=0)
+    top_N = 10
+    top_class_indices = np.argsort(mean_scores)[::-1][:top_N]
+    plt.subplot(2, 1, 3)
+    plt.imshow(scores[:, top_class_indices].T, aspect='auto', interpolation='nearest', cmap='gray_r')
+    
+    # Compensate for the patch_window_seconds (0.96s) context window to align with spectrogram.
+    patch_padding = (params.patch_window_seconds / 2) / params.patch_hop_seconds
+    plt.xlim([-patch_padding, scores.shape[0] + patch_padding])
+    
+    # Label the top_N classes.
+    yticks = range(0, top_N, 1)
+    plt.yticks(yticks, [class_names[top_class_indices[x]] for x in yticks])
+    _ = plt.ylim(-0.5 + np.array([top_N, 0]))
+
+    # save the plot
+    plt.savefig(os.path.join(log_dir, f'spectrogram_{subfolder_name}.png'))
 
 
 

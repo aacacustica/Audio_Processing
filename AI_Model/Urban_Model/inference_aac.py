@@ -28,7 +28,7 @@ class AudioClassifier:
         self.yamnet.load_weights('yamnet.h5')
         self.yamnet_classes = yamnet_model.class_names('yamnet_class_map.csv')
 
-    def process_single_file(self, file_path, window_size=None, save_embeddings=False):
+    def process_single_file(self, file_path, window_size=None, save_embeddings=False, save_spectrogram=False):
         logging.info(f"Processing file: {file_path}")
         wav_data, sr = sf.read(file_path, dtype=np.int16)
         waveform = wav_data / 32768.0  # normalize audio
@@ -43,14 +43,23 @@ class AudioClassifier:
 
         predictions = []
         all_embeddings = []
+        all_spectrograms = []
+
+        # process whole file
         if window_size is None:
             logging.info("Processing whole file without window size")
             scores, embeddings, spectrogram = self.yamnet(waveform)
             prediction = np.mean(scores, axis=0)
+
             if save_embeddings:
                 all_embeddings.append(embeddings.numpy())
-            return predictions, all_embeddings if save_embeddings else predictions
+            if save_spectrogram:
+                spectrogram = spectrogram.numpy()
+                all_spectrograms.append(spectrogram)
+            
+            return (predictions, all_embeddings, all_spectrograms) if (save_embeddings or save_spectrogram) else predictions
 
+        # process file with window size
         else:
             logging.info(f"Processing file with window size: {window_size}")
             window_size_samples = int(window_size * sr)
@@ -62,12 +71,17 @@ class AudioClassifier:
                 scores, embeddings, spectrogram = self.yamnet(window)
                 prediction = np.mean(scores, axis=0)
                 predictions.append(prediction)
+
                 if save_embeddings:
                     all_embeddings.append(embeddings.numpy())
-            return predictions, all_embeddings if save_embeddings else predictions
+                if save_spectrogram:
+                    spectrogram = spectrogram.numpy()
+                    all_spectrograms.append(spectrogram)
+            
+            return (predictions, all_embeddings, all_spectrograms) if (save_embeddings or save_spectrogram) else predictions
 
         
-def process_audio_files(classifier, base_path, window_size, stable_version, save_embeddings):
+def process_audio_files(classifier, base_path, window_size, stable_version, save_embeddings, save_spectrogram):
     subfolders = [f.path for f in os.scandir(base_path) if f.is_dir()]
     col_names = ['filename', 'date', 'class', 'probability']
     result_folder = folder_result(base_path)
@@ -91,7 +105,8 @@ def process_audio_files(classifier, base_path, window_size, stable_version, save
         sample_rates = []
         valid_audio_files = []
         logging.info(f"Reading metadata...")
-        for file in tqdm.tqdm(audio_files[:5], desc='Reading metadata'):
+        print()
+        for file in tqdm.tqdm(audio_files, desc='Reading metadata'):
             try:
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)
@@ -109,20 +124,23 @@ def process_audio_files(classifier, base_path, window_size, stable_version, save
 
 
         all_data_subfolder = []
+        print()
         for file_name in tqdm.tqdm(valid_audio_files, desc='Processing audio files'):
             try:
                 full_path = os.path.join(audio_path, file_name)
-                predictions_list, embeddings = classifier.process_single_file(full_path, window_size)
+                scores, embeddings, spectrogram = classifier.process_single_file(full_path, window_size)
 
                 if save_embeddings:
-                    save_embeddings_funct(embeddings, subfolder_name, subfolder_name, result_folder)
+                    save_embeddings_funct(embeddings, subfolder_name, result_folder)
+                if save_spectrogram:
+                    save_spectogram_funct(spectrogram, scores, classifier.yamnet_classes, subfolder_name, result_folder)
 
                 name_split = file_name.split(".")[0]
                 start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
 
                 #classification threshold
                 threshold = classifier.params.classification_threshold
-                for i, prediction in enumerate(predictions_list):
+                for i, prediction in enumerate(scores):
                     top_indices = np.argsort(prediction)[::-1][:5]
                     
                     filtered_classes = []
@@ -166,4 +184,4 @@ if __name__ == '__main__':
     
     # process audio files
     classifier = AudioClassifier()
-    process_audio_files(classifier, args.path, args.window_size, stable_version, args.embeddings)
+    process_audio_files(classifier, args.path, args.window_size, stable_version, args.embeddings, args.spectrogram)

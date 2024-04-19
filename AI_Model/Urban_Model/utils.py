@@ -98,38 +98,31 @@ def save_embeddings_funct(embeddings, subfolder_name, result_folder):
 
 
 
-
-def save_spectogram_funct(spectrogram, scores, class_names, subfolder_name, result_folder):
-    logging.info(f"Saving spectogram to tensorboard...")
-
-    log_dir = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'Spectrogram')
+def save_spectrogram_funct(spectrogram, scores, class_names, file_name, window_index, result_folder):
+    log_dir = os.path.join(result_folder, 'AI_MODEL', 'Spectrogram')
     if not os.path.exists(log_dir):
-        os.makedirs(log_dir)    
+        os.makedirs(log_dir)
 
-
+    spectrogram_filename = f"{file_name}_window_{window_index}.png"
     plt.figure(figsize=(10, 8))
-    # Plot the log-mel spectrogram (returned by the model).
-    plt.subplot(2, 1, 2)
+    plt.subplot(2, 1, 1)
     plt.imshow(spectrogram.T, aspect='auto', interpolation='nearest', origin='lower')
+    plt.title('Spectrogram')
+    plt.xlabel('Time')
+    plt.ylabel('Frequency')
 
-    # Plot and label the model output scores for the top-scoring classes.
-    mean_scores = np.mean(scores, axis=0)
-    top_N = 10
-    top_class_indices = np.argsort(mean_scores)[::-1][:top_N]
-    plt.subplot(2, 1, 3)
+    plt.subplot(2, 1, 2)
+    top_class_indices = np.argsort(scores.mean(axis=0))[-10:][::-1]
     plt.imshow(scores[:, top_class_indices].T, aspect='auto', interpolation='nearest', cmap='gray_r')
-    
-    # Compensate for the patch_window_seconds (0.96s) context window to align with spectrogram.
-    patch_padding = (params.patch_window_seconds / 2) / params.patch_hop_seconds
-    plt.xlim([-patch_padding, scores.shape[0] + patch_padding])
-    
-    # Label the top_N classes.
-    yticks = range(0, top_N, 1)
-    plt.yticks(yticks, [class_names[top_class_indices[x]] for x in yticks])
-    _ = plt.ylim(-0.5 + np.array([top_N, 0]))
+    plt.title('Class Activation')
+    plt.yticks(ticks=np.arange(10), labels=[class_names[i] for i in top_class_indices], fontsize=8)
+    plt.xlabel('Time')
+    plt.ylabel('Classes')
 
-    # save the plot
-    plt.savefig(os.path.join(log_dir, f'spectrogram_{subfolder_name}.png'))
+    plt.tight_layout()
+    plt.savefig(os.path.join(log_dir, spectrogram_filename))
+    plt.close()
+
 
 
 

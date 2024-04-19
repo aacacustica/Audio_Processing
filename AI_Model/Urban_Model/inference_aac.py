@@ -17,16 +17,23 @@ import yamnet as yamnet_model
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s', 
-    filename='yamnet_inference.log', 
+    filename='yamnet_inference_test_threshold.log', 
     filemode='a'
     )
 
+
 class AudioClassifier:
-    def __init__(self):
+    def __init__(self, threshold=None):
         self.params = yamnet_params.Params()
         self.yamnet = yamnet_model.yamnet_frames_model(self.params)
         self.yamnet.load_weights('yamnet.h5')
         self.yamnet_classes = yamnet_model.class_names('yamnet_class_map.csv')
+
+        # custom threshold if provided
+        if threshold is not None:
+            self.params.classification_threshold = threshold
+            logging.info(f"Classification threshold set to: {threshold}")
+
 
     def process_single_file(self, file_path, window_size=None, save_embeddings=False, save_spectrogram=False):
         logging.info(f"Processing file: {file_path}")
@@ -56,7 +63,6 @@ class AudioClassifier:
             if save_spectrogram:
                 spectrogram = spectrogram.numpy()
                 all_spectrograms.append(spectrogram)
-            
             return (predictions, all_embeddings, all_spectrograms) if (save_embeddings or save_spectrogram) else predictions
 
         # process file with window size
@@ -77,15 +83,14 @@ class AudioClassifier:
                 if save_spectrogram:
                     spectrogram = spectrogram.numpy()
                     all_spectrograms.append(spectrogram)
-            
             return (predictions, all_embeddings, all_spectrograms) if (save_embeddings or save_spectrogram) else predictions
 
         
+
 def process_audio_files(classifier, base_path, window_size, stable_version, save_embeddings, save_spectrogram):
     subfolders = [f.path for f in os.scandir(base_path) if f.is_dir()]
     col_names = ['filename', 'date', 'class', 'probability']
     result_folder = folder_result(base_path)
-
 
     for subfolder in tqdm.tqdm(subfolders, desc='Processing subfolders'):
         subfolder_name = os.path.basename(subfolder)
@@ -95,18 +100,16 @@ def process_audio_files(classifier, base_path, window_size, stable_version, save
         if not os.path.exists(audio_path):
             logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
             continue
-
         audio_files = get_audiofiles(audio_path)
         if not audio_files:
             logging.warning(f"No audio files found in: {audio_path}")
             continue
 
-
+        # get sample rates and valid audio files
         sample_rates = []
         valid_audio_files = []
         logging.info(f"Reading metadata...")
-        print()
-        for file in tqdm.tqdm(audio_files, desc='Reading metadata'):
+        for file in tqdm.tqdm(audio_files[:5], desc='Reading metadata'):
             try:
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)
@@ -122,9 +125,8 @@ def process_audio_files(classifier, base_path, window_size, stable_version, save
         logging.info(f'Processing {len(valid_audio_files)} files in {subfolder}')
 
 
-
+        # process audio files
         all_data_subfolder = []
-        print()
         for file_name in tqdm.tqdm(valid_audio_files, desc='Processing audio files'):
             try:
                 full_path = os.path.join(audio_path, file_name)
@@ -147,6 +149,7 @@ def process_audio_files(classifier, base_path, window_size, stable_version, save
                     filtered_probabilities = []
                     for idx in top_indices:
                         if prediction[idx] >= threshold:
+                            logging.info(f"Actually using classification threshold: {threshold}")
                             filtered_classes.append(classifier.yamnet_classes[idx])
                             filtered_probabilities.append(f'{prediction[idx]:.4f}')
 
@@ -164,7 +167,6 @@ def process_audio_files(classifier, base_path, window_size, stable_version, save
 
             except Exception as e:
                 logging.error(f"Error processing file {file_name}: {e}")
-
         if all_data_subfolder:
             save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder, window_size, stable_version)
         else:
@@ -175,6 +177,16 @@ if __name__ == '__main__':
     """
     python .\inference_custom.py -p "\\192.168.205.117\AAC_Server\OCIO\OCIO_BILBAO\CAMPAÑA_3\3-Medidas\" -w 1
     """
+    # enable memory growth for GPU, which means that memory is allocated as needed
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
+        try:
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+                logging.info(f"Enabled memory growth for {gpu.name}")
+        except RuntimeError as e:
+            logging.error(f"Failed to set memory growth: {e}")
+
     setup_gpu()
     stable_version = get_stable_version()
     args = parse_arguments()
@@ -182,6 +194,7 @@ if __name__ == '__main__':
     folder_path = args.path
     window_size = args.window_size
     
+    # load audio classifier
+    classifier = AudioClassifier(threshold=args.threshold)
     # process audio files
-    classifier = AudioClassifier()
     process_audio_files(classifier, args.path, args.window_size, stable_version, args.embeddings, args.spectrogram)

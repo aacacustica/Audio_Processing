@@ -5,20 +5,16 @@ import pandas as pd
 
 
 def get_data_bilbo(filename: str):
-    print("Processing Bilbo file...")
     excel_file = pd.read_excel(filename, sheet_name=None, header=4)
-    print(excel_file)
-    exit()
     processed_data = {}
 
     for sheet_name, sheet_df in excel_file.items():
         sheet_df = sheet_df[["Date", "Value"]]
-        sheet_df["datetime"] = pd.to_datetime(sheet_df["Date"])
+        sheet_df["datetime"] = pd.to_datetime(sheet_df["Date"], dayfirst=True)
         sheet_df = sheet_df.sort_values(by="datetime")
         sheet_df.dropna(inplace=True)
-        print(sheet_df)
-        exit()
         processed_data[sheet_name] = sheet_df
+        print(processed_data[sheet_name])
     return processed_data
 
 

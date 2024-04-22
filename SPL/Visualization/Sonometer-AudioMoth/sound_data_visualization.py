@@ -418,13 +418,23 @@ def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_col
 def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: list):
     try:
         logger.info(f"Using the columns_dict: {columns_dict}")
-        agg_funcs = {
-            columns_dict['LAEQ_COLUMN_COEFF']: leq,
-            columns_dict['LAMAX_COLUMN_COEFF']: 'max',
-            columns_dict['LAMIN_COLUMN_COEFF']: 'min'
-        }
-        logger.info(f"Using the agg_funcs: {agg_funcs}")
 
+        # if there is just LAEQ_COLUMN_COEFF, then we use it for all the columns, otherwise use the max and min
+        if columns_dict['LAEQ_COLUMN'] == 'Value':
+            agg_funcs = {
+                columns_dict['LAEQ_COLUMN_COEFF']: leq
+            }
+            logger.info(f"Using the columns_dict: df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']]")
+        
+        else:
+            agg_funcs = {
+                columns_dict['LAEQ_COLUMN_COEFF']: leq,
+                columns_dict['LAMAX_COLUMN_COEFF']: 'max',
+                columns_dict['LAMIN_COLUMN_COEFF']: 'min'
+            }
+            logger.info(f"Using the columns_dict: df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']]")
+
+        logger.info(f"Using the agg_funcs: {agg_funcs}")
         df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs)
         #oca = df.resample(f'{agg_period}s').agg({'oca': 'min'})
 
@@ -434,24 +444,32 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
 
         logger.info(f"Using the percentiles: {percentiles}")
         logger.info(f"Using the agg_period: {agg_period}")
-        logger.info(f"Using the columns_dict: df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']]")
         
-        x = df_LAeq.index
-        ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=3, color='red', label='LAeq')
-        ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN_COEFF']], linewidth=1, color='#FF99FF', label='Lmax')
-        ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN_COEFF']], linewidth=1, color='#92D050', label='Lmin')
-        # OCA
-        # #ax.plot(x, oca.values, color='#00B0F0')
+        
+        if columns_dict['LAEQ_COLUMN'] == 'Value':
+            x = df_LAeq.index
+            ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=3, color='red', label='LAeq')
+            # OCA
+            # #ax.plot(x, oca.values, color='#00B0F0')
 
-        for percentile in percentiles:
-            values = df[columns_dict['LAEQ_COLUMN_COEFF']].resample(f'{agg_period}s').quantile((100 - percentile) / 100)
-            ax.plot(
-                x, 
-                values, 
-                linewidth=0.5, 
-                label=f'L{percentile}', 
-                color=PERCENTIL_COLOUR[percentile]
-            )
+        else:
+            x = df_LAeq.index
+            ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=3, color='red', label='LAeq')
+            ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN_COEFF']], linewidth=1, color='#FF99FF', label='Lmax')
+            ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN_COEFF']], linewidth=1, color='#92D050', label='Lmin')
+            # OCA
+            # #ax.plot(x, oca.values, color='#00B0F0')
+
+
+            for percentile in percentiles:
+                values = df[columns_dict['LAEQ_COLUMN_COEFF']].resample(f'{agg_period}s').quantile((100 - percentile) / 100)
+                ax.plot(
+                    x, 
+                    values, 
+                    linewidth=0.5, 
+                    label=f'L{percentile}', 
+                    color=PERCENTIL_COLOUR[percentile]
+                )
 
         hours = mdates.HourLocator(interval=3)
         h_fmt = mdates.DateFormatter('%d-%m-%y %H:%M')
@@ -463,7 +481,6 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         plt.ylim([20, 105])
         plt.ylabel('dB(A)')
         plt.xlabel('Hora')
-
         plt.title(f'{plotname} Nivel equivalente {agg_period}s')
 
         plt.xticks(rotation=90)

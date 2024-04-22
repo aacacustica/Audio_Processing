@@ -156,5 +156,8 @@ def apply_db_correction(df, coefficient):
         df['LA_corrected'] = df['LAeq'] - coefficient
         df['LAmax_corrected'] = df['LAFmax'] - coefficient
         df['LAmin_corrected'] = df['LAFmin'] - coefficient
-
+    elif 'Value' in df.columns:
+        df['LA_corrected'] = df['Value'] - coefficient
+    else:
+        print('No column found to apply the correction')
     return df

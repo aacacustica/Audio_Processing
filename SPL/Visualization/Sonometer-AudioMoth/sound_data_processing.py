@@ -29,6 +29,7 @@ def load_data(file_path, logger):
         try:
             logger.info(f"Loading data for SLM type {slm_type}")
             df = func(file_path)
+            logger.info(f"Data loaded for SLM type {slm_type}")
             return df, slm_type, slm_dict
         
         except Exception as e:
@@ -40,9 +41,9 @@ def load_data(file_path, logger):
 
 
 def process_folder(folder_path, logger):
+    logger.info(f"Processing folder {folder_path}")
     # folder contains a CESVA folder
     cesva_path = os.path.join(folder_path, 'CESVA')
-   
     if os.path.isdir(cesva_path):
         # load the data from the CESVA folder
         subfolders = [f for f in os.listdir(cesva_path) if os.path.isdir(os.path.join(cesva_path, f))]
@@ -55,8 +56,8 @@ def process_folder(folder_path, logger):
             # subfolder contains measurement files
             files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV', 'XLSX'))]
             if files:
+                logger.info(f"Files found: {files}")
                 return load_data(files[0], logger)  
-            
             else:
                 logger.warning(f"No measurement files found in {subfolder_path}")
 
@@ -68,11 +69,13 @@ def process_folder(folder_path, logger):
             logger.warning(f"No measurement files found in {folder_path}")
             return None, None, None
         
+        logger.info(f"Loading data from {files}")
         return load_data(files[0], logger) 
     return None, None, None 
 
 
 def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, sufix_string, folder_coefficients, logger):
+    print()
     for folder in tqdm(folders, desc="Processing folders"):
         reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
 

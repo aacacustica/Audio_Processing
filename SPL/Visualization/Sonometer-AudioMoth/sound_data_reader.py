@@ -5,17 +5,34 @@ import pandas as pd
 
 
 def get_data_bilbo(filename: str):
-    excel_file = pd.read_excel(filename, sheet_name=None, header=4)
-    processed_data = {}
-
-    for sheet_name, sheet_df in excel_file.items():
-        sheet_df = sheet_df[["Date", "Value"]]
-        sheet_df["datetime"] = pd.to_datetime(sheet_df["Date"], dayfirst=True)
-        sheet_df = sheet_df.sort_values(by="datetime")
-        sheet_df.dropna(inplace=True)
-        processed_data[sheet_name] = sheet_df
-        print(processed_data[sheet_name])
-    return processed_data
+    # Read data according to the file format
+    if filename.endswith(('.excel', '.xls', '.xlsx')):
+        excel_file = pd.read_excel(filename, sheet_name=None, header=4)
+        processed_data = {}
+        for sheet_name, sheet_df in excel_file.items():
+            if "Date" in sheet_df.columns and "Value" in sheet_df.columns:
+                sheet_df = sheet_df[["Date", "Value"]].copy()
+                try:
+                    sheet_df['Date'] = pd.to_datetime(sheet_df['Date'], dayfirst=True, errors='raise')
+                except pd.errors.OutOfBoundsDatetime:
+                    print(f"Error converting date in {sheet_name}")
+                    continue  # Skip processing this sheet if date conversion fails
+                sheet_df = sheet_df.sort_values(by="Date")
+                sheet_df.dropna(inplace=True)
+                processed_data[sheet_name] = sheet_df
+            else:
+                print(f"Missing 'Date' or 'Value' columns in sheet {sheet_name}")
+    else:
+        df = pd.read_csv(filename)
+        # Attempt to convert datetime columns if applicable
+        # Assuming the datetime column name is 'datetime' as per your typical schema
+        try:
+            df['datetime'] = pd.to_datetime(df['datetime'], errors='raise')
+        except KeyError:
+            print("No 'datetime' column found in CSV.")
+        except pd.errors.OutOfBoundsDatetime:
+            print("Error converting 'datetime' column.")
+    return df
 
 
 

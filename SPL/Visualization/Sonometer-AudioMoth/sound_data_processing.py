@@ -77,7 +77,6 @@ def process_folder(folder_path, logger):
 def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, sufix_string, folder_coefficients, logger):
     print()
     for folder in tqdm(folders, desc="Processing folders"):
-        print(folder)
         reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
 
         folder = folder.split("\\")[:-1]

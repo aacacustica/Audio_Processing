@@ -13,19 +13,19 @@ LE_SECONDS = 7200
 LN_SECONDS = 14400
 
 # Plotting Flags there are 9 flags to plot the following plots
-PLOT_NIGHT_EVOLUTION = True
-PLOT_NIGHT_EVOLUTION_15_MIN = True 
+PLOT_NIGHT_EVOLUTION = False
+PLOT_NIGHT_EVOLUTION_15_MIN = False 
 
-PLOT_PREDIC_LAEQ_15_MIN = True
+PLOT_PREDIC_LAEQ_15_MIN = False
 
 PLOT_MAKE_TIME_PLOT = True
 
-PLOT_HEATMAP_EVOLUTION_HOUR = True 
-PLOT_HEATMAP_EVOLUTION_15_MIN = True 
-PLOT_INDICADORES_HEATMAP = True  
+PLOT_HEATMAP_EVOLUTION_HOUR = False 
+PLOT_HEATMAP_EVOLUTION_15_MIN = False 
+PLOT_INDICADORES_HEATMAP = False  
 
-PLOT_DAY_EVOLUTION = True 
-PLOT_PERIOD_EVOLUTION = True 
+PLOT_DAY_EVOLUTION = False 
+PLOT_PERIOD_EVOLUTION = False 
 
 
 ######################## SLM COLUMN MAPS #####################################
@@ -61,9 +61,11 @@ cesva_dict = {'LAEQ_COLUMN': 'LA1s',
               'LAMAX_COLUMN': 'LAFmax1s',
               'LAMIN_COLUMN': 'LAFmin1s'}
 
-SV307_dict = {'LAEQ_COLUMN': 'LAeq (Ch1, P1) [dB]',
+sv307_dict = {'LAEQ_COLUMN': 'LAeq (Ch1, P1) [dB]',
               'LAMAX_COLUMN': 'LAFmax (Ch1, P1) [dB]',
               'LAMIN_COLUMN': 'LAFmin (Ch1, P1) [dB]'} 
+
+sonometer_bilbo_dict = {'LAEQ_COLUMN': 'Value'}
 
 audiopost_dict = {'LAEQ_COLUMN': 'LA',
                   'LAMAX_COLUMN': 'LAmax',

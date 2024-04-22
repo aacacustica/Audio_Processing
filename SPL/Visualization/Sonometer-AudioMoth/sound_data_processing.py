@@ -7,27 +7,30 @@ from sound_data_reader import *
 from time_level_utils import *
 from config import *
 from tqdm import tqdm
-from config import *
 import glob
 
 
 
 def load_data(file_path, logger):
+    print("Entering load_data function")
     slm_type_function_mapping = {
         "814": (get_data_814, larson814_dict),
         "824": (get_data_824, larson824_dict),
         "lx_ES": (get_data_lx_ES, larsonlx_dict),
         "lx_EN": (get_data_lx_EN, larsonlx_dict),
-        "SV307": (get_data_SV307, SV307_dict),
+        "SV307": (get_data_SV307, sv307_dict),
         "cesva": (get_data_cesva, cesva_dict),
-        "audio-post": (get_data_audio, audiopost_dict)
+        "sono-bilbo": (get_data_bilbo, sonometer_bilbo_dict),
+        "audio-post": (get_data_audio, audiopost_dict),
     } # SLM stands for Sound Level Meter
-    
+    print(f"slm_type_function_mapping: {slm_type_function_mapping}")
+
     logger.info(f"Analizing {file_path}")
     # load the data for each SLM type until one works |  for each slm_type, (func, slm_dict) in slm_type_function_mapping.items(): means that for each key and value in the dictionary, the key is slm_type and the value is a tuple with the function and the dictionary | the function is the function to load the data and the dictionary is the dictionary with the column names for the SLM type
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
         try:
             logger.info(f"Loading data for SLM type {slm_type}")
+            print(f"Loading data for SLM type {slm_type}")
             df = func(file_path)
             return df, slm_type, slm_dict
         
@@ -58,9 +61,11 @@ def process_folder(folder_path, logger):
                 return load_data(files[0], logger)  
             else:
                 logger.warning(f"No measurement files found in {subfolder_path}")
+
     else:
         files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith(('.csv', '.xlsx', '.CSV'))]
         logger.info(f"Files found: {files}")
+        print(f"Files found: {files}")
         if not files:
             logger.warning(f"No measurement files found in {folder_path}")
             return None, None, None

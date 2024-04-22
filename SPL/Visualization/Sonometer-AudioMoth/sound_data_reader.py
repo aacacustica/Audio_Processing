@@ -4,16 +4,33 @@ import pandas as pd
 
 
 
+def get_data_bilbo(filename: str):
+    print("Processing Bilbo file...")
+    excel_file = pd.read_excel(filename, sheet_name=None, header=4)
+    print(excel_file)
+    exit()
+    processed_data = {}
+
+    for sheet_name, sheet_df in excel_file.items():
+        sheet_df = sheet_df[["Date", "Value"]]
+        sheet_df["datetime"] = pd.to_datetime(sheet_df["Date"])
+        sheet_df = sheet_df.sort_values(by="datetime")
+        sheet_df.dropna(inplace=True)
+        print(sheet_df)
+        exit()
+        processed_data[sheet_name] = sheet_df
+    return processed_data
+
+
+
 def get_data_814(filename: str):
     try:
         df = pd.read_csv(filename, header=16, encoding='latin1')
-   
     except UnicodeDecodeError:
         df = pd.read_csv(filename, header=16)
    
     if "Leq" not in df.columns:
         df = pd.read_csv(filename, header=19, sep=';', encoding='latin1')
-   
     df['datetime'] = pd.to_datetime(df['Date'] + ' ' + df['Time'])
     return df
 
@@ -22,7 +39,13 @@ def get_data_814(filename: str):
 def get_data_lx_ES(filename: str):
     df = pd.read_excel(filename, sheet_name='Historia del tiempo')
     df['datetime'] = pd.to_datetime(df['Fecha'])
-    
+    return df
+
+
+
+def get_data_lx_EN(filename: str):
+    df = pd.read_excel(filename,sheet_name=4)
+    df['datetime'] = pd.to_datetime(df['Date'])
     return df
 
 
@@ -40,26 +63,17 @@ def get_data_824(filename: str):
 
 
 def get_data_SV307(filename: str):
-    # try to read it with the 18 row, if not possible then, try with the 14 row
     try:
         df = pd.read_csv(filename,header=14,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
     except Exception as e:
         df = pd.read_csv(filename,header=18,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
 
-    #filter out rows where the 'Time' column does not contain valid datetime strings
     df = df[pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S', errors='coerce').notnull()]
     
     df['datetime'] = pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S')
-    # rename columns
     df.rename(columns={'LAeq (Ch1, P1) [dB]': 'LAeq',
                        'LAFmax (Ch1, P1) [dB]': 'LAFmax',
                        'LAFmin (Ch1, P1) [dB]': 'LAFmin'}, inplace=True)
-    return df
-    
-    
-def get_data_lx_EN(filename: str):
-    df = pd.read_excel(filename,sheet_name=4)
-    df['datetime'] = pd.to_datetime(df['Date'])
     return df
 
 
@@ -75,29 +89,26 @@ def get_data_audio(filename: str):
 
 
 def get_data_cesva(measurement_folder: str):
-    # Check if the measurement folder is a file
     if os.path.isfile(measurement_folder):
         cesva_index = measurement_folder.find('CESVA')
-        # If the file is in a CESVA folder, get the folder path
         if cesva_index != -1:
             measurement_folder = measurement_folder[:cesva_index] + 'CESVA'
         else:
             raise ValueError("CESVA folder not found in the file path.")
-    # Check if the measurement folder is a directory
+
     elif 'CESVA' not in measurement_folder:
         raise ValueError("The directory does not contain 'CESVA'.")
     
     cesva_files = []
     cols_to_use = ['Date hour','Elapsed t','LA1s','LAFmax1s','LAFmin1s']
     
-    # Get all the files in the measurement folder
     for root, dirs, files in os.walk(measurement_folder, topdown=False):
         for name in files:
             if name.endswith('.csv'):
                 cesva_files.append(os.path.join(root, name))
     
     df_all = pd.DataFrame()
-    # Read all the files in the measurement folder
+
     for file_path in cesva_files:
         try:
             df = pd.read_csv(file_path,sep=';',header=11,decimal=',', usecols=cols_to_use)
@@ -110,21 +121,15 @@ def get_data_cesva(measurement_folder: str):
         except Exception as e: 
             pass
         
-        # Add the measurement location to the dataframe
         #df = df[['Date hour','Elapsed t','LA1s','LAFmax1s','LAFmin1s']]
-        # Add the measurement location to the dataframe
         df_all = pd.concat([df_all,df])
     
-    # Copy dataframe
     df = df_all.copy()
-    # Delete the original dataframe
     del df_all
-    # convert to numeric values
     for col in df.columns:
         if col not in  ["Date hour", "Elapsed t"]:
             df[col] = pd.to_numeric(df[col])
     
-    # Add the datetime column to the dataframe
     df['datetime'] = df.apply(lambda x: datetime.strptime(x['Date hour'], '%d/%m/%Y %H:%M:%S'),axis=1)
     df['datetime'] = pd.to_datetime(df['datetime'])
     return df

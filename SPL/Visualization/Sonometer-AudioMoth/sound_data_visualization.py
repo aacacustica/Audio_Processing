@@ -307,7 +307,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
 def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_column: str, agg_func: str, plotname:str):
     try:
         logger.info(f"Using the values_column: {values_column}")
-        sns.set_style("whitegrid")
+        sns.set_style("white")
         sns.set_palette("tab10")
         
         df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
@@ -363,7 +363,7 @@ def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_col
 
     try:      
         logger.info(f"Using the values_column: {values_column}")
-        sns.set_style("whitegrid")
+        sns.set_style("white")
         sns.set_palette("tab10")
         
         def get_15min_interval(dt):
@@ -506,7 +506,7 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
 def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, ind_column:str):
     try:
         logger.info(f"Using the ind_column: {ind_column}")
-        sns.set_style("whitegrid")
+        sns.set_style("white")
         sns.set_palette("tab10")
 
         if "Fecha" not in df.columns and "Date hour" in df.columns:

@@ -122,8 +122,7 @@ def save_spectrogram_funct(spectrograms, scores, yamnet_classes, subfolder_name,
     
 
     # Visualize the results.
-    plt.figure(figsize=(10, 8))
-    # set title
+    plt.figure(figsize=(12, 10))
     plt.suptitle(f"YAMNet predictions for {filename} in folder {subfolder_name}", fontsize=16)
 
     # # Plot the log-mel spectrogram (returned by the model).
@@ -145,9 +144,18 @@ def save_spectrogram_funct(spectrograms, scores, yamnet_classes, subfolder_name,
     yticks = range(0, top_N, 1)
     plt.yticks(yticks, [yamnet_classes[top_class_indices[x]] for x in yticks])
     _ = plt.ylim(-0.5 + np.array([top_N, 0]))
-    plt.show()
+    plt.tight_layout()
 
+    # plt.show()
 
+    # Save the plot
+    output_filename = filename.replace('.wav', '').replace('.WAV', '') + '_spectrogram.png'
+    output_path = os.path.join(log_dir, output_filename)
+    # 
+    plt.savefig(output_path)
+    plt.close()
+    logging.info(f'Spectrogram saved to {output_path}')
+    
 
 
 def print_top_predictions(file_name, predictions, class_names, top_n=5):

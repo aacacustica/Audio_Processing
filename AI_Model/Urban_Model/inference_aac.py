@@ -129,7 +129,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
                 if save_embeddings:
                     save_embeddings_funct(embeddings, subfolder_name, result_folder)
                 if save_spectrogram:
-                    save_spectrogram_funct(list_spectrogram, predictions_list, classifier.yamnet_classes, subfolder_name, result_folder)
+                    save_spectrogram_funct(list_spectrogram, predictions_list, classifier.yamnet_classes, subfolder_name, result_folder, file_name)
 
                 name_split = file_name.split(".")[0]
                 start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')

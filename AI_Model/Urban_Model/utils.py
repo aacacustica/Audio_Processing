@@ -90,7 +90,8 @@ def save_embeddings_funct(embeddings, subfolder_name, result_folder):
     logging.info(f"Embeddings and metadata saved in {log_dir}")
 
 
-def save_spectrogram_funct(spectrograms, scores, yamnet_classes, subfolder_name, result_folder):
+
+def save_spectrogram_funct(spectrograms, scores, yamnet_classes, subfolder_name, result_folder, filename):
     logging.info("Saving spectrogram...")
     params = Params()
     # Check and prepare the directory
@@ -119,8 +120,11 @@ def save_spectrogram_funct(spectrograms, scores, yamnet_classes, subfolder_name,
         spectrogram = spectrograms.numpy()
         logging.info(f"Spectrogram shape: {spectrogram.shape} \nSpectrogram type: {type(spectrogram)}")
     
+
     # Visualize the results.
     plt.figure(figsize=(10, 8))
+    # set title
+    plt.suptitle(f"YAMNet predictions for {filename} in folder {subfolder_name}", fontsize=16)
 
     # # Plot the log-mel spectrogram (returned by the model).
     plt.subplot(2, 1, 1)
@@ -142,7 +146,7 @@ def save_spectrogram_funct(spectrograms, scores, yamnet_classes, subfolder_name,
     plt.yticks(yticks, [yamnet_classes[top_class_indices[x]] for x in yticks])
     _ = plt.ylim(-0.5 + np.array([top_N, 0]))
     plt.show()
-    
+
 
 
 

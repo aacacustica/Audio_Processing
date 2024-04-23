@@ -1,14 +1,13 @@
 import tensorflow as tf
 import os
 import logging
-import argparse
 import pandas as pd
 import time
 import numpy as np
 import subprocess
 from tensorboard.plugins import projector
 import matplotlib.pyplot as plt
-import params 
+from params import Params
 
 
 def setup_gpu():
@@ -23,16 +22,6 @@ def setup_gpu():
         except RuntimeError as e:
             print(e)
             print()
-
-
-def parse_arguments():
-    parser = argparse.ArgumentParser(description='Make prediction with YAMNet model for audio files in a directory')
-    parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
-    parser.add_argument('-w', '--window_size', type=float, default=None, help='Window size in seconds for processing audio files. Default is None for processing full audio.')
-    parser.add_argument('--threshold', type=float, default=None, help='Classification threshold for predictions.')
-    parser.add_argument('--embeddings', action='store_true', help='Save embeddings to tensorboard')
-    parser.add_argument('--spectrogram', action='store_true', help='Save (to plot) spectrogram')
-    return parser.parse_args()
 
 
 def folder_result(path):
@@ -54,9 +43,9 @@ def folder_result(path):
 
 def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder, window_size=None, stable_version=None):
     if window_size is not None:
-        output_filename = f'predictions_{subfolder_name}_w_{window_size}s_{stable_version}.csv'
+        output_filename = f'{subfolder_name}_w_{window_size}s_{stable_version}.csv'
     else:
-        output_filename = f'predictions_{subfolder_name}_{stable_version}.csv'
+        output_filename = f'{subfolder_name}_{stable_version}.csv'
     
     output_folder = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'Predictions')
     if not os.path.exists(output_folder):
@@ -73,56 +62,87 @@ def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, resul
 
 
 def save_embeddings_funct(embeddings, subfolder_name, result_folder):
-    logging.info(f"Saving embeddings to tensorboard...")
+    logging.info("Saving embeddings to tensorboard...")
     
     log_dir = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'Embeddings')
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+    os.makedirs(log_dir, exist_ok=True)  # Ensure the directory exists
 
+    # Save the embeddings as a variable in a TensorFlow checkpoint
     embedding_var = tf.Variable(embeddings, name='yamnet_embeddings')
     checkpoint = tf.train.Checkpoint(embedding=embedding_var)
-    checkpoint.save(os.path.join(log_dir, 'embedding.ckpt'))
+    checkpoint_path = checkpoint.save(os.path.join(log_dir, 'embedding.ckpt'))
 
+    # Prepare metadata file for TensorBoard embeddings projector
     metadata_file = os.path.join(log_dir, 'metadata.tsv')
     with open(metadata_file, 'w') as metadata_writer:
         for index in range(len(embeddings)):
-            metadata_writer.write('{}\n'.format(index))
+            metadata_writer.write(f"{index}\n")
 
+    # Setup the projector config for visualizing embeddings in TensorBoard
     config = projector.ProjectorConfig()
     embedding_config = config.embeddings.add()
-    embedding_config.tensor_name = "embedding/.ATTRIBUTES/VARIABLE_VALUE"
+    embedding_config.tensor_name = embedding_var.name
     embedding_config.metadata_path = 'metadata.tsv'
+    
+    # Save the config file in the log directory
     projector.visualize_embeddings(log_dir, config)
 
     logging.info(f"Embeddings and metadata saved in {log_dir}")
 
 
+def save_spectrogram_funct(spectrograms, scores, yamnet_classes, subfolder_name, result_folder):
+    logging.info("Saving spectrogram...")
+    params = Params()
+    # Check and prepare the directory
+    log_dir = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'Spectrograms')
+    os.makedirs(log_dir, exist_ok=True)
 
-def save_spectrogram_funct(spectrogram, scores, class_names, file_name, window_index, result_folder):
-    log_dir = os.path.join(result_folder, 'AI_MODEL', 'Spectrogram')
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+    # Convert lists of tensors or arrays to a single array
+    if isinstance(scores, list):
+        scores = np.concatenate([score.numpy() if hasattr(score, 'numpy') else np.array(score) for score in scores], axis=0)
+        logging.info(f"Concatenated Scores shape: {scores.shape}")
+    elif hasattr(scores, 'numpy'):
+        scores = scores.numpy()
 
-    spectrogram_filename = f"{file_name}_window_{window_index}.png"
+    logging.info(f"Final Scores shape: {scores.shape}")
+
+    # Check if scores are one-dimensional and adjust
+    if scores.ndim == 1:
+        scores = scores[np.newaxis, :]  # Add a new axis to make it two-dimensional
+        logging.info(f"Adjusted Scores shape for plotting: {scores.shape}")
+
+
+    if isinstance(spectrograms, list):
+        spectrogram = np.concatenate([spec.numpy() if hasattr(spec, 'numpy') else np.array(spec) for spec in spectrograms], axis=1)
+        logging.info(f"Spectrogram shape: {spectrogram.shape} \nSpectrogram type: {type(spectrogram)}")
+    elif hasattr(spectrograms, 'numpy'):
+        spectrogram = spectrograms.numpy()
+        logging.info(f"Spectrogram shape: {spectrogram.shape} \nSpectrogram type: {type(spectrogram)}")
+    
+    # Visualize the results.
     plt.figure(figsize=(10, 8))
+
+    # # Plot the log-mel spectrogram (returned by the model).
     plt.subplot(2, 1, 1)
     plt.imshow(spectrogram.T, aspect='auto', interpolation='nearest', origin='lower')
-    plt.title('Spectrogram')
-    plt.xlabel('Time')
-    plt.ylabel('Frequency')
 
+    # Plot and label the model output scores for the top-scoring classes.
+    mean_scores = np.mean(scores, axis=0)
+    top_N = 10
+    top_class_indices = np.argsort(mean_scores)[::-1][:top_N]
     plt.subplot(2, 1, 2)
-    top_class_indices = np.argsort(scores.mean(axis=0))[-10:][::-1]
     plt.imshow(scores[:, top_class_indices].T, aspect='auto', interpolation='nearest', cmap='gray_r')
-    plt.title('Class Activation')
-    plt.yticks(ticks=np.arange(10), labels=[class_names[i] for i in top_class_indices], fontsize=8)
-    plt.xlabel('Time')
-    plt.ylabel('Classes')
-
-    plt.tight_layout()
-    plt.savefig(os.path.join(log_dir, spectrogram_filename))
-    plt.close()
-
+    
+    # Compensate for the patch_window_seconds (0.96s) context window to align with spectrogram.
+    patch_padding = (params.patch_window_seconds / 2) / params.patch_hop_seconds
+    plt.xlim([-patch_padding, scores.shape[0] + patch_padding])
+   
+    # Label the top_N classes.
+    yticks = range(0, top_N, 1)
+    plt.yticks(yticks, [yamnet_classes[top_class_indices[x]] for x in yticks])
+    _ = plt.ylim(-0.5 + np.array([top_N, 0]))
+    plt.show()
+    
 
 
 

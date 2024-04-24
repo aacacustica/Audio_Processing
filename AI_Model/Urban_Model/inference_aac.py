@@ -24,6 +24,7 @@ logging.basicConfig(
     )
 
 
+
 class AudioClassifier:
     def __init__(self):
         self.params = yamnet_params.Params()
@@ -51,11 +52,11 @@ class AudioClassifier:
             logging.info("Processing whole file without window size")
             logging.info(f"Waveform shape: {waveform.shape}")
             scores, embeddings, spectrogram = self.yamnet(waveform)
-            
+
             if save_spectrogram:
                 scores = scores.numpy()
                 spectrogram = spectrogram.numpy()
-                save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path)
+                save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate)
 
             prediction = np.mean(scores, axis=0)
             predictions.append(prediction)
@@ -79,7 +80,7 @@ class AudioClassifier:
                 if save_spectrogram:
                     scores = scores.numpy()
                     spectrogram = spectrogram.numpy()
-                    save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, start_idx, end_idx)
+                    save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate, start_idx, end_idx, window_size)
 
                 prediction = np.mean(scores, axis=0)
                 predictions.append(prediction)
@@ -89,7 +90,6 @@ class AudioClassifier:
             return predictions, all_embeddings
 
 
-        
 
 def process_audio_files(classifier, base_path, window_size, threshold, stable_version, save_embeddings, save_spectrogram):
     subfolders = [f.path for f in os.scandir(base_path) if f.is_dir()]
@@ -128,7 +128,6 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
             logging.warning(f"No valid audio files to process in {subfolder}")
             continue
         logging.info(f'Processing {len(valid_audio_files)} files in {subfolder}')
-
 
 
         all_data_subfolder = []
@@ -181,7 +180,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Make prediction with YAMNet model for audio files in a directory')
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
-    parser.add_argument('-w', '--window_size', type=float, default=None, help='Window size in seconds for processing audio files. Default is None for processing full audio.')
+    parser.add_argument('-w', '--window', type=float, default=None, help='Window size in seconds for processing audio files. Default is None for processing full audio.')
     parser.add_argument('-t', '--threshold', type=float, default=None, help='Classification threshold for predictions.')
     parser.add_argument('--embeddings', action='store_true', help='Save embeddings to tensorboard')
     parser.add_argument('--spectrogram', action='store_true', help='Save spectrogram images')
@@ -198,8 +197,8 @@ if __name__ == '__main__':
     args = parse_arguments()
     
     folder_path = args.path
-    window_size = args.window_size
+    window_size = args.window
     
     # process audio files
     classifier = AudioClassifier()
-    process_audio_files(classifier, args.path, args.window_size, args.threshold, stable_version, args.embeddings, args.spectrogram)
+    process_audio_files(classifier, args.path, args.window, args.threshold, stable_version, args.embeddings, args.spectrogram)

@@ -93,12 +93,13 @@ def save_embeddings_funct(embeddings, subfolder_name, result_folder):
 
 def save_spectrogram_funct(spectrograms, scores, yamnet_classes, subfolder_name, result_folder, filename):
     logging.info("Saving spectrogram...")
+    print(filename)
     params = Params()
-    # Check and prepare the directory
+    
     log_dir = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'Spectrograms')
     os.makedirs(log_dir, exist_ok=True)
 
-    # Convert lists of tensors or arrays to a single array
+    # convert lists of tensors or arrays to a single array
     if isinstance(scores, list):
         scores = np.concatenate([score.numpy() if hasattr(score, 'numpy') else np.array(score) for score in scores], axis=0)
         logging.info(f"Concatenated Scores shape: {scores.shape}")
@@ -107,11 +108,10 @@ def save_spectrogram_funct(spectrograms, scores, yamnet_classes, subfolder_name,
 
     logging.info(f"Final Scores shape: {scores.shape}")
 
-    # Check if scores are one-dimensional and adjust
+    # check if scores are one-dimensional and adjust
     if scores.ndim == 1:
-        scores = scores[np.newaxis, :]  # Add a new axis to make it two-dimensional
+        scores = scores[np.newaxis, :]  # ad a new axis to make it two-dimensional
         logging.info(f"Adjusted Scores shape for plotting: {scores.shape}")
-
 
     if isinstance(spectrograms, list):
         spectrogram = np.concatenate([spec.numpy() if hasattr(spec, 'numpy') else np.array(spec) for spec in spectrograms], axis=1)
@@ -124,38 +124,105 @@ def save_spectrogram_funct(spectrograms, scores, yamnet_classes, subfolder_name,
     # Visualize the results.
     plt.figure(figsize=(12, 10))
     plt.suptitle(f"YAMNet predictions for {filename} in folder {subfolder_name}", fontsize=16)
-
     # # Plot the log-mel spectrogram (returned by the model).
     plt.subplot(2, 1, 1)
     plt.imshow(spectrogram.T, aspect='auto', interpolation='nearest', origin='lower')
-
     # Plot and label the model output scores for the top-scoring classes.
     mean_scores = np.mean(scores, axis=0)
     top_N = 10
     top_class_indices = np.argsort(mean_scores)[::-1][:top_N]
     plt.subplot(2, 1, 2)
     plt.imshow(scores[:, top_class_indices].T, aspect='auto', interpolation='nearest', cmap='gray_r')
-    
     # Compensate for the patch_window_seconds (0.96s) context window to align with spectrogram.
     patch_padding = (params.patch_window_seconds / 2) / params.patch_hop_seconds
     plt.xlim([-patch_padding, scores.shape[0] + patch_padding])
-   
     # Label the top_N classes.
     yticks = range(0, top_N, 1)
     plt.yticks(yticks, [yamnet_classes[top_class_indices[x]] for x in yticks])
     _ = plt.ylim(-0.5 + np.array([top_N, 0]))
     plt.tight_layout()
+    plt.show()
+    exit()
+    
+    # Save the plot
+    # output_filename = filename.replace('.wav', '').replace('.WAV', '') + '_spectrogram.png'
+    # output_path = os.path.join(log_dir, output_filename)
+    # plt.savefig(output_path)
+    # plt.close()
+    # logging.info(f'Spectrogram saved to {output_path}')
 
-    # plt.show()
+
+
+
+def save_spectrogram_w_funct(spectrogram, scores, yamnet_classes, file_name, start_idx=None, end_idx=None):
+    logging.info("Saving spectrogram for window size...")
+    
+    filename = file_name.split('\\')[-1]
+    folder_resultados = file_name.replace('3-Medidas', '5-Resultados')
+    folder_resultados = '\\'.join(folder_resultados.split('\\')[:-2])
+    folder_resultados = os.path.join(folder_resultados, 'AI_MODEL', 'Spectrograms')
+
+    params = Params()
+
+    # # Handle different formats of scores
+    # if isinstance(scores, list):
+    #     scores = np.concatenate([score.numpy() if hasattr(score, 'numpy') else np.array(score) for score in scores], axis=0)
+    # elif hasattr(scores, 'numpy'):
+    #     scores = scores.numpy()
+
+    # # Ensure scores are two-dimensional
+    # if scores.ndim == 1:
+    #     scores = scores[np.newaxis, :]  # Add a new axis if it's 1D
+
+    # # Handle different formats of spectrograms
+    # if isinstance(spectrograms, list):
+    #     spectrogram = np.concatenate([spec.numpy() if hasattr(spec, 'numpy') else np.array(spec) for spec in spectrograms], axis=1)
+    # elif hasattr(spectrograms, 'numpy'):
+    #     spectrogram = spectrograms.numpy()
+    # elif isinstance(spectrograms, np.ndarray):
+    #     spectrogram = spectrograms  #take this if directly if already an ndarray
+    # else:
+    #     raise ValueError("Invalid spectrogram format")
+
+    logging.info(f"Spectrogram shape: {spectrogram.shape}")
+
+    # Visualization
+    plt.figure(figsize=(12, 10))
+    if start_idx is not None and end_idx is not None:
+        plt.suptitle(f"YAMNet predictions for {filename} from {start_idx} to {end_idx}", fontsize=16)
+    else:
+        plt.suptitle(f"YAMNet predictions for {filename}", fontsize=16)
+
+    # Plot the log-mel spectrogram
+    plt.subplot(2, 1, 1)
+    plt.imshow(spectrogram.T, aspect='auto', interpolation='nearest', origin='lower')
+    plt.colorbar(label='Intensity (dB)')
+    plt.ylabel('Frequency (Hz)')
+    plt.xlabel('Time (seconds)')
+
+    # Plot scores for top-scoring classes
+    mean_scores = np.mean(scores, axis=0)
+    top_N = 10
+    top_class_indices = np.argsort(mean_scores)[::-1][:top_N]
+    plt.subplot(2, 1, 2)
+    plt.imshow(scores[:, top_class_indices].T, aspect='auto', interpolation='nearest', cmap='gray_r')
+    patch_padding = (params.patch_window_seconds / 2) / params.patch_hop_seconds
+    plt.xlim([-patch_padding, scores.shape[0] + patch_padding])
+
+    yticks = range(0, top_N, 1)
+    plt.yticks(yticks, [yamnet_classes[i] for i in yticks])
+    plt.ylim(-0.5 + np.array([top_N, 0]))
+    plt.tight_layout()
+    plt.show()
+    exit()
 
     # Save the plot
-    output_filename = filename.replace('.wav', '').replace('.WAV', '') + '_spectrogram.png'
-    output_path = os.path.join(log_dir, output_filename)
-    # 
+    output_filename = filename.replace('.wav', '').replace('.WAV', '') + f'_spectrogram_{start_idx}_{end_idx}.png'
+    output_path = os.path.join(folder_resultados, output_filename)
     plt.savefig(output_path)
     plt.close()
     logging.info(f'Spectrogram saved to {output_path}')
-    
+
 
 
 def print_top_predictions(file_name, predictions, class_names, top_n=5):

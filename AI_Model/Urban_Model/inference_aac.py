@@ -31,6 +31,7 @@ class AudioClassifier:
         self.yamnet.load_weights('yamnet.h5')
         self.yamnet_classes = yamnet_model.class_names('yamnet_class_map.csv')
 
+
     def process_single_file(self, file_path, window_size=None, save_embeddings=False, save_spectrogram=False):
         logging.info(f"Processing file: {file_path}")
         wav_data, sr = sf.read(file_path, dtype=np.int16)
@@ -46,20 +47,22 @@ class AudioClassifier:
 
         predictions = []
         all_embeddings = []
-        all_spectrograms = []
         if window_size is None:
             logging.info("Processing whole file without window size")
             logging.info(f"Waveform shape: {waveform.shape}")
             scores, embeddings, spectrogram = self.yamnet(waveform)
+            
+            if save_spectrogram:
+                scores = scores.numpy()
+                spectrogram = spectrogram.numpy()
+                save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path)
+
             prediction = np.mean(scores, axis=0)
             predictions.append(prediction)
 
             if save_embeddings:
                 all_embeddings.append(embeddings.numpy())
-            if save_spectrogram:
-                all_spectrograms.append(spectrogram.numpy())
-            # return the all_spectrogram as well
-            return predictions, all_embeddings, all_spectrograms
+            return predictions, all_embeddings
 
         else:
             logging.info(f"Processing file with window size: {window_size}")
@@ -68,16 +71,23 @@ class AudioClassifier:
             for start_idx in range(0, len(waveform), window_size_samples):
                 end_idx = start_idx + window_size_samples
                 if end_idx > len(waveform):
-                    break
-            
+                    end_idx = len(waveform)  # include the last segment
+
                 window = waveform[start_idx:end_idx]
                 scores, embeddings, spectrogram = self.yamnet(window)
+
+                if save_spectrogram:
+                    scores = scores.numpy()
+                    spectrogram = spectrogram.numpy()
+                    save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, start_idx, end_idx)
+
                 prediction = np.mean(scores, axis=0)
                 predictions.append(prediction)
-            
+
                 if save_embeddings:
                     all_embeddings.append(embeddings.numpy())
-            return predictions, all_embeddings, all_spectrograms
+            return predictions, all_embeddings
+
 
         
 
@@ -125,12 +135,10 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
         for file_name in tqdm.tqdm(valid_audio_files, desc='Processing audio files'):
             try:
                 full_path = os.path.join(audio_path, file_name)
-                predictions_list, embeddings, list_spectrogram = classifier.process_single_file(full_path, window_size, save_embeddings, save_spectrogram)
+                predictions_list, embeddings = classifier.process_single_file(full_path, window_size, save_embeddings, save_spectrogram)
 
                 if save_embeddings:
                     save_embeddings_funct(embeddings, subfolder_name, result_folder)
-                if save_spectrogram:
-                    save_spectrogram_funct(list_spectrogram, predictions_list, classifier.yamnet_classes, subfolder_name, result_folder, file_name)
 
                 name_split = file_name.split(".")[0]
                 start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')

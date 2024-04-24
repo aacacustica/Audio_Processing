@@ -33,7 +33,7 @@ def get_data_lx_ES(filename: str):
     df = pd.read_excel(filename, sheet_name='Historia del tiempo')
     df['datetime'] = pd.to_datetime(df['Fecha'])
     # add a day beacuse there is a bug in the data
-    # df['datetime'] = df['datetime'] + pd.DateOffset(days=1)
+    df['datetime'] = df['datetime'] + pd.DateOffset(days=1)
     return df
 
 

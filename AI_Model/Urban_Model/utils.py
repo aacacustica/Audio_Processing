@@ -123,7 +123,7 @@ def save_spectrogram_w_funct(spectrogram, scores, yamnet_classes, file_name, sr,
         plt.imshow(spectrogram.T, aspect='auto', interpolation='nearest', origin='lower')
         plt.colorbar(label='Intensity (dB)')
         plt.ylabel('Frequency (Hz)')
-        plt.xlabel('Time (seconds)')
+        plt.xlabel('Time (microseconds)')
         if window_size is not None:
             plt.xlim([0, window_size * 200])
             logging.info(f"Window size: {window_size}")
@@ -132,8 +132,6 @@ def save_spectrogram_w_funct(spectrogram, scores, yamnet_classes, file_name, sr,
 
         #calculate real time x-axis for scores plot
         num_frames = scores.shape[0]
-        if start_time is not None and end_time is not None:
-            frame_times = np.linspace(start_time, end_time, num=num_frames)
 
         # scores for top-scoring classes
         mean_scores = np.mean(scores, axis=0)

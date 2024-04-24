@@ -66,6 +66,13 @@ class AudioClassifier:
             return predictions, all_embeddings
 
         else:
+            if save_spectrogram:
+                logging.info("Entering the window size analysis. But we run the whole audio file to save the complteted spectrogram.")
+                scores, embeddings, spectrogram = self.yamnet(waveform)
+                scores = scores.numpy()
+                spectrogram = spectrogram.numpy()
+                save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate)
+
             logging.info(f"Processing file with window size: {window_size}")
             window_size_samples = int(window_size * sr)
             
@@ -184,6 +191,7 @@ def parse_arguments():
     parser.add_argument('-t', '--threshold', type=float, default=None, help='Classification threshold for predictions.')
     parser.add_argument('--embeddings', action='store_true', help='Save embeddings to tensorboard')
     parser.add_argument('--spectrogram', action='store_true', help='Save spectrogram images')
+    parser.add_argument('--clips', action='store_true', help='Save audio clips')
     return parser.parse_args()
 
 
@@ -201,4 +209,4 @@ if __name__ == '__main__':
     
     # process audio files
     classifier = AudioClassifier()
-    process_audio_files(classifier, args.path, args.window, args.threshold, stable_version, args.embeddings, args.spectrogram)
+    process_audio_files(classifier, args.path, args.window, args.threshold, stable_version, args.embeddings, args.spectrogram, args.clips)

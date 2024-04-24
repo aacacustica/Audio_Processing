@@ -33,7 +33,7 @@ class AudioClassifier:
         self.yamnet_classes = yamnet_model.class_names('yamnet_class_map.csv')
 
 
-    def process_single_file(self, file_path, window_size=None, save_embeddings=False, save_spectrogram=False):
+    def process_single_file(self, file_path, window_size=None, save_embeddings=False, save_spectrogram=False, save_clips=False):
         logging.info(f"Processing file: {file_path}")
         wav_data, sr = sf.read(file_path, dtype=np.int16)
         waveform = wav_data / 32768.0  # Convert to [-1.0, +1.0]
@@ -46,9 +46,11 @@ class AudioClassifier:
             waveform = resampy.resample(waveform, sr, self.params.sample_rate)
             logging.warning(f"Resampling audio from {sr} to {self.params.sample_rate}")
 
+
+        # process audio file
         predictions = []
         all_embeddings = []
-        if window_size is None:
+        if window_size is None and save_clips is False:
             logging.info("Processing whole file without window size")
             logging.info(f"Waveform shape: {waveform.shape}")
             scores, embeddings, spectrogram = self.yamnet(waveform)
@@ -65,6 +67,8 @@ class AudioClassifier:
                 all_embeddings.append(embeddings.numpy())
             return predictions, all_embeddings
 
+
+        # process audio file with window size
         else:
             if save_spectrogram:
                 logging.info("Entering the window size analysis. But we run the whole audio file to save the complteted spectrogram.")
@@ -73,17 +77,19 @@ class AudioClassifier:
                 spectrogram = spectrogram.numpy()
                 save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate)
 
+            if save_clips:
+                window_size =  2.5
             logging.info(f"Processing file with window size: {window_size}")
             window_size_samples = int(window_size * sr)
-            
+
             for start_idx in range(0, len(waveform), window_size_samples):
                 end_idx = start_idx + window_size_samples
                 if end_idx > len(waveform):
                     end_idx = len(waveform)  # include the last segment
-
+            
                 window = waveform[start_idx:end_idx]
                 scores, embeddings, spectrogram = self.yamnet(window)
-
+                
                 if save_spectrogram:
                     scores = scores.numpy()
                     spectrogram = spectrogram.numpy()
@@ -94,11 +100,14 @@ class AudioClassifier:
 
                 if save_embeddings:
                     all_embeddings.append(embeddings.numpy())
+
+                if save_clips:
+                    extrac_clips(prediction, window, start_idx, self.params.sample_rate,  self.yamnet_classes, file_path)
             return predictions, all_embeddings
 
 
 
-def process_audio_files(classifier, base_path, window_size, threshold, stable_version, save_embeddings, save_spectrogram):
+def process_audio_files(classifier, base_path, window_size, threshold, stable_version, save_embeddings, save_spectrogram, save_clips):
     subfolders = [f.path for f in os.scandir(base_path) if f.is_dir()]
     col_names = ['filename', 'date', 'class', 'probability']
     result_folder = folder_result(base_path)
@@ -121,7 +130,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
         sample_rates = []
         valid_audio_files = []
         logging.info(f"Reading metadata...")
-        for file in tqdm.tqdm(audio_files[:1], desc='Reading metadata'):
+        for file in tqdm.tqdm(audio_files[:10], desc='Reading metadata'):
             try:
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)
@@ -141,7 +150,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
         for file_name in tqdm.tqdm(valid_audio_files, desc='Processing audio files'):
             try:
                 full_path = os.path.join(audio_path, file_name)
-                predictions_list, embeddings = classifier.process_single_file(full_path, window_size, save_embeddings, save_spectrogram)
+                predictions_list, embeddings = classifier.process_single_file(full_path, window_size, save_embeddings, save_spectrogram, save_clips)
 
                 if save_embeddings:
                     save_embeddings_funct(embeddings, subfolder_name, result_folder)

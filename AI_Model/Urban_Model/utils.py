@@ -8,6 +8,7 @@ import subprocess
 from tensorboard.plugins import projector
 import matplotlib.pyplot as plt
 from params import Params
+import soundfile as sf
 
 
 def setup_gpu():
@@ -215,3 +216,64 @@ def get_stable_version():
     tag_selected = tag_selected.replace(".", "_")
     logging.info(f"Latest stable version string: {tag_selected}")
     return tag_selected
+
+
+def extrac_clips(prediction, waveform, start_idx, sr, yamnet_classes, file_name):
+    try:
+        logging.info("Extracting clips...")
+        
+        filename = file_name.split('\\')[-1]
+        folder_resultados = file_name.replace('3-Medidas', '5-Resultados')
+        folder_resultados = '\\'.join(folder_resultados.split('\\')[:-2])
+        folder_resultados = os.path.join(folder_resultados, 'AI_MODEL', 'Clips')
+        if not os.path.exists(folder_resultados):
+            os.makedirs(folder_resultados)
+            logging.info(f"Creating folder {folder_resultados}")
+
+        threshold = 0.3
+        
+        # print the top 10 classes with their probabilities
+        top_N = 10
+        top_indices = np.argsort(prediction)[::-1][:top_N]
+        for i in top_indices:
+            # if it is above the threshold, print it
+            if prediction[i] >= threshold:
+                logging.info(f"{yamnet_classes[i]}: {prediction[i]}")
+        logging.info(f"\n")
+
+        # instead of taking the max index, first check how many classes have a probability higher than the threshold
+        # for i, prob in enumerate(prediction):
+        #     if prob >= threshold:
+        #         logging.info(f"Class: {yamnet_classes[i]}, {prob}")
+        #     else:
+        #         logging.info(f"No threshold passed")
+ 
+        # max_index = np.argmax(prediction)
+        # logging.info(f"Max index: {max_index}, class: {yamnet_classes[max_index]}, probability: {prediction[max_index]}")
+
+        # if prediction[max_index] >= threshold:
+        #     logging.info(f"Saving clip {filename} with class {yamnet_classes[max_index]}")
+        #     filename = filename.replace('.wav', '').replace('.WAV', '')
+            
+        #     class_name = yamnet_classes[max_index]
+        #     logging.info(f"Class name: {class_name}")
+            
+        #     filename = f"{class_name}_{filename}_{start_idx}.wav"
+        #     filepath = os.path.join(folder_resultados, filename)
+
+        #     # convert to int to save the clip
+        #     sr = int(sr)
+        #     waveform = (waveform * 32767).astype(np.int16)
+        #     duration = len(waveform) / sr
+
+        #     # if clips is less or more than 5 seconds ling, discard it
+        #     if duration < 5 or duration > 5:
+        #         logging.warning(f"Clip duration is {duration:.2f} seconds, discarding clip...")
+        #         return
+        #     else:
+        #         sf.write(filepath, waveform, sr)
+        #         logging.info(f"Duration: {duration:.2f} seconds")
+        #         logging.info(f"Clip saved to {filepath}")
+    
+    except Exception as e:
+        logging.warning(f"Error saving clip: {e}")

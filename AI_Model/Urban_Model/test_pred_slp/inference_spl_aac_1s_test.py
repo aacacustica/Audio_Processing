@@ -163,7 +163,6 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
             logging.warning(f"No audio files found in: {audio_path}")
             continue
 
-
         # read metadata
         sample_rates = []
         valid_audio_files = []

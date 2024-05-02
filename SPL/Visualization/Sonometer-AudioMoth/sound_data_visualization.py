@@ -509,8 +509,6 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         sns.set_style("white")
         sns.set_palette("tab10")
 
-        print(df)
-
         if "Fecha" not in df.columns and "Date hour" in df.columns:
             # df["Fecha"] = df["Date hour"]
             df["Fecha"] = pd.to_datetime(df['Date hour'], dayfirst=True)
@@ -525,9 +523,7 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
                 df["Fecha"] = pd.to_datetime(df['datetime'], dayfirst=True)
         
         # add a day to the date
-        df['Fecha'] = df['Fecha'] + pd.DateOffset(days=1)
-        print(df)
-        # exit()
+        # df['Fecha'] = df['Fecha'] + pd.DateOffset(days=1)
 
         df_indicadores = (df.groupby(['date','indicador_str'])['Fecha'].agg(['first','last']))
         df_indicadores['duration'] = df_indicadores.apply(lambda row: calculate_duration(row['first'], row['last']), axis=1)
@@ -600,11 +596,11 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
 
         logger.info(f"Saving the plot {plotname}")
         plt.savefig(f"{folder_output_dir}/{plotname}_indicadores.png")
-        logger.info(f"Indicadores plot saved to {folder_output_dir}/{plotname}_indicadores.png")
+        logger.info(f"Indicadores plot saved to {folder_output_dir}\{plotname}_indicadores.png")
         
         logger.info(f"Saving the data {plotname}")
         indicadores_table.to_csv(f"{folder_output_dir}/{plotname}_indicadores.csv", index=True)
-        logger.info(f"Indicadores data saved to {folder_output_dir}/{plotname}_indicadores.csv")
+        logger.info(f"Indicadores data saved to {folder_output_dir}\{plotname}_indicadores.csv")
         
         plt.close()
         

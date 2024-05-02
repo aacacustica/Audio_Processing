@@ -138,138 +138,6 @@ class AudioClassifier:
                 if save_clips:
                     extrac_clips(prediction, window, start_idx, self.params.sample_rate,  self.yamnet_classes, file_path)
             return predictions, all_embeddings
-    
-
-# def process_audio_files(classifier, base_path, window_size, threshold, stable_version, save_embeddings, save_spectrogram, save_clips):
-#     subfolders = [f.path for f in os.scandir(base_path) if f.is_dir()]
-#     result_folder = folder_result(base_path)
-    
-#     # predictions columns
-#     col_names = ['filename', 'date', 'class', 'probability']
-
-#     # spl columns
-#     calibration_constants = read_calibration_constants('calibration_constants.ini')
-#     col_names_spl = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin', 'filename', 'date']
-
-
-#     for subfolder in tqdm.tqdm(subfolders, desc='Processing subfolders'):
-#         subfolder_name = os.path.basename(subfolder)
-#         audio_path = os.path.join(subfolder, "AUDIOMOTH")
-#         logging.info(f"Processing subfolder: {subfolder}...")
-
-#         if not os.path.exists(audio_path):
-#             logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
-#             continue
-#         audio_files = get_audiofiles(audio_path)
-#         if not audio_files:
-#             logging.warning(f"No audio files found in: {audio_path}")
-#             continue
-
-
-#         # read metadata
-#         sample_rates = []
-#         valid_audio_files = []
-#         logging.info(f"Reading metadata...")
-#         for file in tqdm.tqdm(audio_files[:1], desc='Reading metadata'):
-#             try:
-#                 metadata = audio_metadata.load(os.path.join(audio_path, file))
-#                 sample_rates.append(metadata.streaminfo.sample_rate)
-#                 valid_audio_files.append(file)
-#             except Exception as e:
-#                 logging.warning(f'Error reading file metadata: {file}, {e}')
-#         if not sample_rates:
-#             logging.warning("No valid audio files to process.")
-#             continue
-#         if not valid_audio_files:
-#             logging.warning(f"No valid audio files to process in {subfolder}")
-#             continue
-#         logging.info(f'Processing {len(valid_audio_files)} files in {subfolder}')
-
-#         fs_filterbanks = np.median(sample_rates)
-#         logging.info(f'Using sample rate: {fs_filterbanks}')
-
-
-#         all_data_subfolder_spl = []
-#         all_data_subfolder_pred = []
-#         for file_name in tqdm.tqdm(valid_audio_files, desc='Processing audio files'):
-#             try:
-#                 # [1] process SPL levels
-#                 logging.info(f"Processsing file: {file_name}...")
-#                 filepath = os.path.join(audio_path, file_name)
-#                 metadata = audio_metadata.load(filepath)
-#                 device_id = get_device_id(metadata)
-#                 C = calibration_constants.get(device_id, -10.16)
-#                 calculator = LeqLevel(fs_filterbanks, C, int(fs_filterbanks))
-#                 logging.info(f'Processing file: {file_name} with calibration constant: {C} and sample rate: {fs_filterbanks} Hz')
-
-#                 audio_data, _ = sf.read(filepath)
-#                 db_levels = calculator.calculate_spl_levels(audio_data)
-
-#                 if db_levels.shape[1] != 5:
-#                     logging.warning(f'Unexpected shape for db_levels: {db_levels.shape} for file {file_name}')
-#                     continue
-
-#                 name_split = file_name.split(".")[0]
-#                 start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
-#                 timestamps = [start_timestamp + datetime.timedelta(seconds=i) for i in range(db_levels.shape[0])]
-
-#                 for row, timestamp in zip(db_levels, timestamps):
-#                     all_data_subfolder_spl.append(list(row) + [file_name, timestamp.strftime('%Y-%m-%d %H:%M:%S')])
-
-#                 # save SPL data
-#                 if all_data_subfolder_spl:
-#                     df_spl = save_spl_to_csv(all_data_subfolder_spl, col_names_spl, subfolder_name, result_folder, stable_version)
-#                     print(df_spl)
-#                 else:
-#                     logging.warning(f"No SPL data to save for folder {subfolder}")
-
-
-#                 # [2] making predictions
-#                 full_path = os.path.join(audio_path, file_name)
-#                 predictions_list, embeddings = classifier.process_single_file(full_path, window_size, save_embeddings, save_spectrogram, save_clips)
-
-#                 if save_embeddings:
-#                     save_embeddings_funct(embeddings, subfolder_name, result_folder)
-
-#                 name_split = file_name.split(".")[0]
-#                 start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
-
-#                 threshold = classifier.params.classification_threshold if args.threshold is None else args.threshold
-#                 logging.info(f"Classification threshold: {threshold}")
-
-#                 for i, prediction in enumerate(predictions_list):
-#                     top_indices = np.argsort(prediction)[::-1][:5]
-                    
-#                     filtered_classes = []
-#                     filtered_probabilities = []
-#                     for idx in top_indices:
-#                         if prediction[idx] >= threshold:
-#                             filtered_classes.append(classifier.yamnet_classes[idx])
-#                             filtered_probabilities.append(f'{prediction[idx]:.4f}')
-
-#                     filtered_classes_str = ', '.join(filtered_classes)
-#                     filtered_probabilities_str = ', '.join(filtered_probabilities)
-#                     # adjust timestamp based on window size
-#                     adjusted_timestamp = start_timestamp if window_size is None else start_timestamp + datetime.timedelta(seconds=i*window_size)
-
-#                     all_data_subfolder_pred.append([
-#                         file_name, 
-#                         adjusted_timestamp.strftime('%Y-%m-%d %H:%M:%S'), 
-#                         filtered_classes_str, 
-#                         filtered_probabilities_str
-#                     ])
-
-#             except Exception as e:
-#                 logging.error(f"Error processing file {file_name}: {e}")
-
-#         # save Predictions data
-#         if all_data_subfolder_pred:
-#             df_pred = save_predictions_to_csv(all_data_subfolder_pred, col_names, subfolder_name, result_folder, window_size, stable_version)
-#             print(df_pred)
-#         else:
-#             logging.warning(f"No Prediction data to save for folder {subfolder}")
-
-
 
 
 
@@ -374,12 +242,16 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
         #save all data to CSV
         if all_data_subfolder:
             df = pd.DataFrame(all_data_subfolder, columns=col_names)
-            output_filename = f'combined_data_{subfolder_name}_{stable_version}.csv'
-            output_path = os.path.join(result_folder, output_filename)
+            output_filename = f'{subfolder_name}_{stable_version}.csv'
+            output_path = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'SPL_PREDICTIONS', output_filename)
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+            # make sure the df is ordered by date in ascending order
+            df['timestamp'] = pd.to_datetime(df['timestamp'])
+            df = df.sort_values(by='timestamp')
             df.to_csv(output_path, index=False)
             logging.info(f'Combined data saved to {output_path}')
-            print(df)
-            print(output_path)
+
         else:
             logging.warning(f"No data to save for folder {subfolder}")
 
@@ -406,4 +278,4 @@ if __name__ == '__main__':
     classifier = AudioClassifier()
     process_audio_files(classifier, args.path, args.window, args.threshold, stable_version, args.embeddings, args.spectrogram, args.clips)
 
-    logging.info("Inference completed with success!!!")
+    logging.info("Inference completed!")

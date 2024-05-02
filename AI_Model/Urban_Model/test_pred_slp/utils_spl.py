@@ -7,6 +7,7 @@ from pyfilterbank.octbank import frequencies_fractional_octaves
 from scipy.signal import lfilter
 import subprocess
 import logging
+import configparser
 
 
 # Constantes de inicializacion
@@ -188,32 +189,39 @@ def get_audiofiles(path):
     audio_files = [file for file in os.listdir(path) if file.lower().endswith('.wav')]
     return audio_files
 
+
+# [11]
 def list_git_tags():
     try:
         tags = tags = subprocess.check_output(["git", "tag"]).strip().decode()
         return tags.split('\n')
     except subprocess.CalledProcessError:
         return None
-    
+
+# [12]
 def select_tag(tags):
     for i, tag in enumerate(tags):
         logging.info(f"{i}: {tag}")
     choice = int(input("Select the tag to use: "))
     tag_selected = tags[choice]
-    # replace "." with "_" to be able to use it as a file name
     tag_selected = tag_selected.replace(".", "_")
     return tag_selected
 
+# [13]
 def get_stable_version():
     tags = list_git_tags()
     # get the latest stable version
     tag_selected = tags[-1]
     logging.info(f"Latest stable version: {tag_selected}")
-    # replace "." with "_" to be able to use it as a file name
     tag_selected = tag_selected.replace(".", "_")
     logging.info(f"Latest stable version string: {tag_selected}")
     return tag_selected
 
+def read_calibration_constants(ini_file):
+    config = configparser.ConfigParser()
+    config.read(ini_file)
+    logging.info(f"Reading calibration constants from {ini_file}")
+    return {key: float(value) for key, value in config['CalibrationConstants'].items()}
 
 def get_device_id(metadata):
         artist_tags = metadata.tags.get("artist", ["songmeter"])
@@ -221,3 +229,19 @@ def get_device_id(metadata):
             return "songmeter"
         logging.info(f"Device ID: {artist_tags[0].split(' ')[1].lower()}")
         return artist_tags[0].split(" ")[1].lower()
+
+def folder_result(path):
+    result_folder = '\\5-Resultados'
+    path = path.split('\\')[2:-2]
+    path = '\\\\' + '\\'.join(path)
+    if not os.path.exists(path):
+        logging.warning(f"Skipping {path}, AUDIOMOTH folder not found.")
+        return False
+    else:
+        if not os.path.exists(path + result_folder):
+            os.makedirs(path + result_folder)
+            logging.info(f"Creating folder {path + result_folder}")
+        else:
+            result_folder = path + result_folder
+            logging.info(f"Folder {result_folder} already exists")
+    return result_folder

@@ -87,8 +87,7 @@ def parse_arguments():
 
 
 def main():
-    # usage:
-    #        python leq_level.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\"
+    # python leq_level.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\"
 
     stable_version = get_stable_version()
     args = parse_arguments()
@@ -97,6 +96,7 @@ def main():
     col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin', 'filename', 'date']
     result_folder = folder_result(base_path)
 
+
     for subfolder in tqdm(os.listdir(base_path), desc='Processing subfolders'):
         logging.info(f"Processing audio files: {subfolder}...")
         audio_path = os.path.join(base_path, subfolder, "AUDIOMOTH")
@@ -104,12 +104,13 @@ def main():
         if not os.path.exists(audio_path):
             logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
             continue
-
         audio_files = get_audiofiles(audio_path)
         if not audio_files:
             logging.warning(f"No audio files found in: {audio_path}")
             continue
 
+
+        # read metadata
         sample_rates = []
         valid_audio_files = []
         logging.info(f"Reading metadata...")
@@ -133,6 +134,8 @@ def main():
         logging.info(f'Using sample rate: {fs_filterbanks}')
         all_data_subfolder = []
         
+
+        # Process audio files
         print()
         for audio_file in tqdm(valid_audio_files, desc='Processing audio files'):
             try:
@@ -160,6 +163,8 @@ def main():
             except Exception as e:
                 logging.warning(f'Error processing file: {audio_file}, {e}')
 
+
+        # Save output to CSV
         if all_data_subfolder:
             df = pd.DataFrame(all_data_subfolder, columns=col_names)
             df = df.sort_values(by='date')

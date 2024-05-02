@@ -188,28 +188,30 @@ def get_audiofiles(path):
     audio_files = [file for file in os.listdir(path) if file.lower().endswith('.wav')]
     return audio_files
 
+
+# [11]
 def list_git_tags():
     try:
         tags = tags = subprocess.check_output(["git", "tag"]).strip().decode()
         return tags.split('\n')
     except subprocess.CalledProcessError:
         return None
-    
+
+# [12]
 def select_tag(tags):
     for i, tag in enumerate(tags):
         logging.info(f"{i}: {tag}")
     choice = int(input("Select the tag to use: "))
     tag_selected = tags[choice]
-    # replace "." with "_" to be able to use it as a file name
     tag_selected = tag_selected.replace(".", "_")
     return tag_selected
 
+# [13]
 def get_stable_version():
     tags = list_git_tags()
     # get the latest stable version
     tag_selected = tags[-1]
     logging.info(f"Latest stable version: {tag_selected}")
-    # replace "." with "_" to be able to use it as a file name
     tag_selected = tag_selected.replace(".", "_")
     logging.info(f"Latest stable version string: {tag_selected}")
     return tag_selected

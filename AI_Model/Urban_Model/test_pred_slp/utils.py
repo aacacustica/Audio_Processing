@@ -11,6 +11,7 @@ from params import Params
 import soundfile as sf
 
 
+
 def setup_gpu():
     physical_devices = tf.config.list_physical_devices('GPU')
     print("\nNum GPUs Available: ", len(physical_devices))
@@ -23,6 +24,7 @@ def setup_gpu():
         except RuntimeError as e:
             print(e)
             print()
+
 
 
 def folder_result(path):
@@ -42,6 +44,7 @@ def folder_result(path):
     return result_folder
 
 
+
 def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder, window_size=None, stable_version=None):
     if window_size is not None:
         output_filename = f'{subfolder_name}_w_{window_size}s_{stable_version}.csv'
@@ -52,13 +55,42 @@ def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, resul
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     
+    if '.' in output_filename:
+        output_filename = output_filename.replace('.', '_')
     output_path = os.path.join(output_folder, output_filename)
 
     df_subfolder = pd.DataFrame(all_data_subfolder, columns=col_names)
     # order df by date
     df_subfolder = df_subfolder.sort_values(by='date')
     df_subfolder.to_csv(output_path, index=False)
+    # replace . with _
     logging.info(f'Output saved to {output_path}')
+    # return df
+    return df_subfolder
+
+
+
+def save_spl_to_csv(all_data_subfolder_spl, col_names_spl, subfolder_name, result_folder, stable_version):
+    df = pd.DataFrame(all_data_subfolder_spl, columns=col_names_spl)
+    df = df.sort_values(by='date')
+
+    output_filename = f'leq_levels_{subfolder_name}_{stable_version}.csv'
+    output_folder = os.path.join(result_folder, subfolder_name, 'SPL')
+    output_path = os.path.join(output_folder, output_filename)
+    if '3-Medidas' in output_path:
+        output_path = output_path.replace('3-Medidas', '5-Resultados')
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+        logging.info(f"Creating folder {output_folder}")
+    else:
+        logging.info(f"Folder {output_folder} already exists")
+    
+    df.to_csv(output_path, index=False)
+    df = df.sort_values(by='date')
+    logging.info(f'Output saved to {output_path}')
+    return df
+
 
 
 
@@ -93,6 +125,8 @@ def save_embeddings_funct(embeddings, subfolder_name, result_folder):
     
     except Exception as e:
         logging.warning(f"Error saving embeddings: {e}")
+
+
 
 
 def save_spectrogram_w_funct(spectrogram, scores, yamnet_classes, file_name, sr, start_idx=None, end_idx=None, window_size=None):
@@ -173,6 +207,7 @@ def save_spectrogram_w_funct(spectrogram, scores, yamnet_classes, file_name, sr,
         logging.warning(f"Error saving spectrogram: {e}")
 
 
+
 def print_top_predictions(file_name, predictions, class_names, top_n=5):
     print(f"\nTop {top_n} predictions for {file_name}:")
     top_indices = np.argsort(predictions)[::-1][:top_n] 
@@ -184,9 +219,11 @@ def print_top_predictions(file_name, predictions, class_names, top_n=5):
         time.sleep(1)  
 
 
+
 def get_audiofiles(path):
     audio_files = [file for file in os.listdir(path) if file.lower().endswith('.wav')]
     return audio_files
+
 
 
 def list_git_tags():
@@ -196,6 +233,7 @@ def list_git_tags():
     except subprocess.CalledProcessError:
         return None
     
+
 
 def select_tag(tags):
     for i, tag in enumerate(tags):
@@ -207,6 +245,7 @@ def select_tag(tags):
     return tag_selected
 
 
+
 def get_stable_version():
     tags = list_git_tags()
     # get the latest stable version
@@ -216,6 +255,7 @@ def get_stable_version():
     tag_selected = tag_selected.replace(".", "_")
     logging.info(f"Latest stable version string: {tag_selected}")
     return tag_selected
+
 
 
 def extrac_clips(prediction, waveform, start_idx, sr, yamnet_classes, file_name):

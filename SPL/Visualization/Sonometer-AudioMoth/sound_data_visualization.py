@@ -485,6 +485,7 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
 
         plt.xticks(rotation=90)
         plt.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0.1, fancybox=True, framealpha=1, edgecolor='black')
+        plt.tight_layout()
 
         os.makedirs(folder_output_dir, exist_ok=True)
 
@@ -591,6 +592,7 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         plt.ylabel('Día')
         plt.xlabel('Indicador')
         plt.title(f'{plotname} Indicadores')
+        plt.tight_layout()
         
         os.makedirs(f'{folder_output_dir}', exist_ok=True)
 

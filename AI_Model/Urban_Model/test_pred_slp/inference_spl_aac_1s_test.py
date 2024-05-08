@@ -242,7 +242,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
         #save all data to CSV
         if all_data_subfolder:
             df = pd.DataFrame(all_data_subfolder, columns=col_names)
-            output_filename = f'{subfolder_name}_{stable_version}.csv'
+            output_filename = f'{subfolder_name}_{window_size}s_{stable_version}.csv'
             output_path = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'SPL_PREDICTIONS', output_filename)
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
 

@@ -258,6 +258,13 @@ def get_stable_version():
 
 
 
+def find_audiomoth_folders(base_path):
+    """Recursively find all subdirectories containing an 'AUDIOMOTH' folder."""
+    for root, dirs, files in os.walk(base_path):
+        if 'AUDIOMOTH' in dirs:
+            yield root
+
+
 def extrac_clips(prediction, waveform, start_idx, sr, yamnet_classes, file_name):
     try:
         logging.info("Extracting clips...")

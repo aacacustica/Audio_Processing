@@ -80,6 +80,15 @@ def folder_result(path):
             logging.info(f"Folder {result_folder} already exists")
     return result_folder
 
+
+
+def find_audiomoth_folders(base_path):
+    """Recursively find all subdirectories containing an 'AUDIOMOTH' folder."""
+    for root, dirs, files in os.walk(base_path):
+        if 'AUDIOMOTH' in dirs:
+            yield root
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Calculate SPL levels for audio files in a directory')
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
@@ -96,10 +105,10 @@ def main():
     col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin', 'filename', 'date']
     result_folder = folder_result(base_path)
 
-
-    for subfolder in tqdm(os.listdir(base_path), desc='Processing subfolders'):
+    for subfolder in tqdm(find_audiomoth_folders(base_path), desc='Processing subfolders'):
         logging.info(f"Processing audio files: {subfolder}...")
-        audio_path = os.path.join(base_path, subfolder, "AUDIOMOTH")
+        audio_path = os.path.join(subfolder, "AUDIOMOTH")
+
         
         if not os.path.exists(audio_path):
             logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
@@ -115,7 +124,7 @@ def main():
         valid_audio_files = []
         logging.info(f"Reading metadata...")
         print()
-        for file in tqdm(audio_files, desc='Reading metadata'):
+        for file in tqdm(audio_files[:2], desc='Reading metadata'):
             try:
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)
@@ -168,11 +177,14 @@ def main():
         if all_data_subfolder:
             df = pd.DataFrame(all_data_subfolder, columns=col_names)
             df = df.sort_values(by='date')
+            subfolder = subfolder.split('\\')[-1]
+            output_filename = f'leq_{subfolder}_{stable_version}.csv'
 
-            output_filename = f'leq_levels_{subfolder}_{stable_version}.csv'
             output_folder = os.path.join(result_folder, subfolder, 'SPL')
-            output_path = os.path.join(output_folder, output_filename)
 
+            output_path = os.path.join(output_folder, output_filename)
+            # print(f"\n\n{output_path}\n\n")
+            # exit()
             if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
                 logging.info(f"Creating folder {output_folder}")

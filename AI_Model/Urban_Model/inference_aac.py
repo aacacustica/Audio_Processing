@@ -107,14 +107,6 @@ class AudioClassifier:
 
 
 
-def find_audiomoth_folders(base_path):
-    """Recursively find all subdirectories containing an 'AUDIOMOTH' folder."""
-    for root, dirs, files in os.walk(base_path):
-        if 'AUDIOMOTH' in dirs:
-            yield root
-
-
-
 def process_audio_files(classifier, base_path, window_size, threshold, stable_version, save_embeddings, save_spectrogram, save_clips):
     col_names = ['filename', 'date', 'class', 'probability']
     result_folder = folder_result(base_path)

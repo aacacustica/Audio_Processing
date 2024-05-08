@@ -107,16 +107,29 @@ class AudioClassifier:
 
 
 
+def find_audiomoth_folders(base_path):
+    """Recursively find all subdirectories containing an 'AUDIOMOTH' folder."""
+    for root, dirs, files in os.walk(base_path):
+        if 'AUDIOMOTH' in dirs:
+            yield root
+
+
+
 def process_audio_files(classifier, base_path, window_size, threshold, stable_version, save_embeddings, save_spectrogram, save_clips):
-    subfolders = [f.path for f in os.scandir(base_path) if f.is_dir()]
+    # subfolders = [f.path for f in os.scandir(base_path) if f.is_dir()]
     col_names = ['filename', 'date', 'class', 'probability']
     result_folder = folder_result(base_path)
 
 
-    for subfolder in tqdm.tqdm(subfolders, desc='Processing subfolders'):
+    for subfolder in tqdm.tqdm(find_audiomoth_folders(base_path), desc='Processing subfolders'):
         subfolder_name = os.path.basename(subfolder)
         audio_path = os.path.join(subfolder, "AUDIOMOTH")
         logging.info(f"Processing subfolder: {subfolder}...")
+
+    # for subfolder in tqdm.tqdm(subfolders, desc='Processing subfolders'):
+    #     subfolder_name = os.path.basename(subfolder)
+    #     audio_path = os.path.join(subfolder, "AUDIOMOTH")
+    #     logging.info(f"Processing subfolder: {subfolder}...")
 
         if not os.path.exists(audio_path):
             logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")

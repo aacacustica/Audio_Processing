@@ -183,8 +183,6 @@ def main():
             output_folder = os.path.join(result_folder, subfolder, 'SPL')
 
             output_path = os.path.join(output_folder, output_filename)
-            # print(f"\n\n{output_path}\n\n")
-            # exit()
             if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
                 logging.info(f"Creating folder {output_folder}")

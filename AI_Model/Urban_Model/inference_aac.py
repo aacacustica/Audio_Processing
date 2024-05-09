@@ -24,7 +24,6 @@ logging.basicConfig(
     )
 
 
-
 class AudioClassifier:
     def __init__(self):
         self.params = yamnet_params.Params()
@@ -39,6 +38,7 @@ class AudioClassifier:
         waveform = wav_data / 32768.0  # Convert to [-1.0, +1.0]
         waveform = waveform.astype('float32')
 
+        # convert to mono and resemple if needed (different from 16kHz)
         if len(waveform.shape) > 1:
             waveform = np.mean(waveform, axis=1)
             logging.warning(f"Audio file has more than 1 channel. Taking the mean of all channels.")
@@ -111,7 +111,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
     col_names = ['filename', 'date', 'class', 'probability']
     result_folder = folder_result(base_path)
 
-
+    # looking for subfolders
     for subfolder in tqdm.tqdm(find_audiomoth_folders(base_path), desc='Processing subfolders'):
         subfolder_name = os.path.basename(subfolder)
         audio_path = os.path.join(subfolder, "AUDIOMOTH")
@@ -126,6 +126,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
             continue
 
 
+        # reading metadata
         sample_rates = []
         valid_audio_files = []
         logging.info(f"Reading metadata...")
@@ -145,6 +146,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
         logging.info(f'Processing {len(valid_audio_files)} files in {subfolder}')
 
 
+        # processing audio files
         all_data_subfolder = []
         for file_name in tqdm.tqdm(valid_audio_files, desc='Processing audio files'):
             try:
@@ -211,9 +213,6 @@ if __name__ == '__main__':
     setup_gpu()
     stable_version = get_stable_version()
     args = parse_arguments()
-    
-    folder_path = args.path
-    window_size = args.window
     
     # process audio files
     classifier = AudioClassifier()

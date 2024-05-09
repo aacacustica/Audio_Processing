@@ -2,9 +2,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 plt.style.use("bmh")
-from sound_data_visualization import *
-from sound_data_reader import *
-from time_level_utils import *
+from visualization import *
+from reading import *
+from utils import *
 from config import *
 from tqdm import tqdm
 import glob

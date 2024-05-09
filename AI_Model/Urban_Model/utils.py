@@ -44,9 +44,9 @@ def folder_result(path):
 
 def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder, window_size=None, stable_version=None):
     if window_size is not None:
-        output_filename = f'{subfolder_name}_w_{window_size}s_{stable_version}.csv'
+        output_filename = f'Urban_Model_{subfolder_name}_w_{window_size}s_{stable_version}.csv'
     else:
-        output_filename = f'{subfolder_name}_{stable_version}.csv'
+        output_filename = f'Urban_Model_{subfolder_name}_{stable_version}.csv'
     
     output_folder = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'Predictions')
     if not os.path.exists(output_folder):

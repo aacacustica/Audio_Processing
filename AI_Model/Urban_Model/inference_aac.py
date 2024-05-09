@@ -187,6 +187,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
             except Exception as e:
                 logging.error(f"Error processing file {file_name}: {e}")
 
+        # save predictions to csv
         if all_data_subfolder:
             save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder, window_size, stable_version)
         else:

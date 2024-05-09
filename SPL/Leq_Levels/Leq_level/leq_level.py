@@ -30,6 +30,7 @@ class LeqLevel:
         self.fast_samples = int(window_size / 8)
         logging.info(f"LeqLevel initialized with fs: {fs}, C: {calibration_constant}, window_size: {window_size}")
 
+
     def calculate_spl_levels(self, audio_data):
         db_levels = []
         for fstart in range(0, len(audio_data) - self.window_size + 1, self.window_size):
@@ -51,11 +52,14 @@ class LeqLevel:
         return np.round(db_levels, 2)
     
 
+
 def read_calibration_constants(ini_file):
     config = configparser.ConfigParser()
     config.read(ini_file)
     logging.info(f"Reading calibration constants from {ini_file}")
     return {key: float(value) for key, value in config['CalibrationConstants'].items()}
+
+
 
 def get_device_id(metadata):
         artist_tags = metadata.tags.get("artist", ["songmeter"])
@@ -64,9 +68,11 @@ def get_device_id(metadata):
         logging.info(f"Device ID: {artist_tags[0].split(' ')[1].lower()}")
         return artist_tags[0].split(" ")[1].lower()
 
+
+
 def folder_result(path):
     result_folder = '\\5-Resultados'
-    path = path.split('\\')[2:-2]
+    path = path.split('\\')[2:-1]
     path = '\\\\' + '\\'.join(path)
     if not os.path.exists(path):
         logging.warning(f"Skipping {path}, AUDIOMOTH folder not found.")
@@ -96,7 +102,7 @@ def parse_arguments():
 
 
 def main():
-    # python leq_level.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\"
+    # python leq_level.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\"
 
     stable_version = get_stable_version()
     args = parse_arguments()
@@ -108,8 +114,6 @@ def main():
     for subfolder in tqdm(find_audiomoth_folders(base_path), desc='Processing subfolders'):
         logging.info(f"Processing audio files: {subfolder}...")
         audio_path = os.path.join(subfolder, "AUDIOMOTH")
-
-        
         if not os.path.exists(audio_path):
             logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
             continue
@@ -124,7 +128,7 @@ def main():
         valid_audio_files = []
         logging.info(f"Reading metadata...")
         print()
-        for file in tqdm(audio_files[:2], desc='Reading metadata'):
+        for file in tqdm(audio_files, desc='Reading metadata'):
             try:
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)
@@ -141,10 +145,11 @@ def main():
 
         fs_filterbanks = np.median(sample_rates)
         logging.info(f'Using sample rate: {fs_filterbanks}')
-        all_data_subfolder = []
         
-
-        # Process audio files
+        
+        
+        # process audio files
+        all_data_subfolder = []
         print()
         for audio_file in tqdm(valid_audio_files, desc='Processing audio files'):
             try:
@@ -173,15 +178,15 @@ def main():
                 logging.warning(f'Error processing file: {audio_file}, {e}')
 
 
-        # Save output to CSV
+        # save output to CSV
         if all_data_subfolder:
+            
             df = pd.DataFrame(all_data_subfolder, columns=col_names)
             df = df.sort_values(by='date')
+
             subfolder = subfolder.split('\\')[-1]
             output_filename = f'leq_{subfolder}_{stable_version}.csv'
-
             output_folder = os.path.join(result_folder, subfolder, 'SPL')
-
             output_path = os.path.join(output_folder, output_filename)
             if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
@@ -191,9 +196,9 @@ def main():
             
             df.to_csv(output_path, index=False)
             logging.info(f'Output saved to {output_path}')
-        
         else:
             logging.warning(f"No data to save for folder {subfolder}")
+
 
 if __name__ == '__main__':
     main()

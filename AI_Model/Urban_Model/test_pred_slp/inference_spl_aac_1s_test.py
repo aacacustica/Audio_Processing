@@ -26,6 +26,7 @@ logging.basicConfig(
     )
 
 
+
 class LeqLevel:
     def __init__(self, fs, calibration_constant, window_size):
         self.fs = fs
@@ -55,6 +56,7 @@ class LeqLevel:
             db_levels.append([LA, LC, LZ, Lmax, Lmin])
             logging.info(f"Processed frame: {fstart} - {fstart + self.window_size}")
         return np.round(db_levels, 2)
+
 
 
 class AudioClassifier:
@@ -146,7 +148,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
     calibration_constants = read_calibration_constants('calibration_constants.ini')
     
     # columns for both SPL and predictions
-    col_names = ['filename', 'timestamp', 'LA', 'LC', 'LZ', 'LAmax', 'LAmin', 'class', 'probability']
+    col_names = ['filename', 'date', 'LA', 'LC', 'LZ', 'LAmax', 'LAmin', 'class', 'probability']
 
     for subfolder in tqdm.tqdm(subfolders, desc='Processing subfolders'):
         subfolder_name = os.path.basename(subfolder)
@@ -253,6 +255,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
             logging.warning(f"No data to save for folder {subfolder}")
 
 
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Make prediction with YAMNet model for audio files in a directory')
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
@@ -262,6 +265,9 @@ def parse_arguments():
     parser.add_argument('--spectrogram', action='store_true', help='Save spectrogram images')
     parser.add_argument('--clips', action='store_true', help='Save audio clips')
     return parser.parse_args()
+
+
+
 
 if __name__ == '__main__':
     """

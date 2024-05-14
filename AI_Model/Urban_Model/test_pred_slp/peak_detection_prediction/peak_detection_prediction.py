@@ -3,6 +3,7 @@ import numpy as np
 from scipy.signal import find_peaks
 import os
 from pydub import AudioSegment
+import matplotlib.pyplot as plt
 
 from utils import *
 import logging
@@ -10,9 +11,10 @@ import logging
 import tensorflow as tf
 import warnings
 
+
+# warning messages disabled
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="Couldn't find ffmpeg or avconv")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
 
 logging.basicConfig(
     level=logging.INFO, 
@@ -31,6 +33,8 @@ if gpus:
             print(f"{len(gpus)} Physical GPUs, {len(logical_gpus)} Logical GPUs")
     except RuntimeError as e:
         print(e)
+
+
 
 def main():
     # open csv file
@@ -61,42 +65,66 @@ def main():
     duration = (df['date'].iloc[-1] - df['date'].iloc[0]).total_seconds()
     logging.info(f"Duration: {duration} seconds, {duration/60} minutes, {duration/3600} hours, {duration/3600/24} days")
 
+
+
     logging.info("Calculating the median")
     df['LA_median'] = df['LA'].rolling(window=WINDOW_SIZE, min_periods=1).quantile(0.5) + 10
+    # dynamic threshold by filtering data points
+    above_threshold = df[df['LA'] > df['LA_median']]
+    
 
-    # go through each day
-    start_date = df['date'].dt.normalize().iloc[0]
-    end_date = df['date'].dt.normalize().iloc[-1]
-    current_date = start_date
-
-    peaks_num = []
-    while current_date <= end_date:
-        daily_data = df[(df['date'] >= current_date) & (df['date'] < current_date + pd.Timedelta(days=1))]
-        # dynamic threshold by filtering data points
-        above_threshold = daily_data[daily_data['LA'] > daily_data['LA_median']]
+    # find peaks in the filtered data
+    if not above_threshold.empty:
+        peaks, properties = find_peaks(above_threshold['LA'], prominence=PROMINENCE, width=WIDTH)
+        peak_filenames = above_threshold.iloc[peaks]['filename'].values
+        start_times = np.round(properties['left_ips'], 2)
+        end_times = np.round(properties['right_ips'], 2)
+        duration = np.round(end_times - start_times, 2)
         
-        # find peaks in the filtered data
-        if not above_threshold.empty:
-            peaks, properties = find_peaks(above_threshold['LA'], prominence=PROMINENCE, width=WIDTH)
-            peaks_num.append(len(peaks))
-            peak_filenames = above_threshold.iloc[peaks]['filename'].values
-            start_times = np.round(properties['left_ips'], 2)
-            end_times = np.round(properties['right_ips'], 2)
-            
-            # df for each peak
-            peaks_df = pd.DataFrame({
-                'filename': peak_filenames,
-                'start_time': start_times,
-                'end_time': end_times
-            })
+        # df for each peak
+        peaks_df = pd.DataFrame({
+            'filename': peak_filenames,
+            'start_time': start_times,
+            'end_time': end_times,
+            'duration': duration
+        })
+        
+        # save csv file
+        # peaks_df.to_csv(os.path.join(output_folder, f"peaks_raw_{title}.csv"), index=False)
 
-            # take the sr from the first audio file
+        print(peaks_df)
+
+        # print the average of the duration
+        print(f"Average duration: {np.mean(duration)} seconds")
+        print(f"Max duration: {np.max(duration)} seconds")
+        print(f"Min duration: {np.min(duration)} seconds")
+
+        # Create the histogram
+        plt.hist(duration, bins=50)
+
+        # Set labels and title
+        plt.xlabel("Duration (seconds)")
+        plt.ylabel("Frequency")
+        plt.title("Duration of peaks")
+
+        # Set zoomed-in limits for x and y axes (example values)
+        plt.xlim(0, 50)  # Adjust these values to zoom in on the desired range
+        plt.ylim(0, 50)   # Adjust these values to zoom in on the desired range
+
+        # Show the plot
+        plt.show()
+
+        exit()
+
+        # take the sr from the first audio file
+        if len(peak_filenames) > 0:
             audio_file = peak_filenames[0]
             audio = AudioSegment.from_file(audio_file)
             sampling_rate = audio.frame_rate
             
             # SAVING CLIPS FROM PEAKS
             save_clips_from_peaks(peaks_df, output_folder, sampling_rate, title, logging)
+
 
 
 if __name__ == "__main__":

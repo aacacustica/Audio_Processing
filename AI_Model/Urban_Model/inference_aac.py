@@ -15,6 +15,10 @@ import argparse
 import params as yamnet_params
 import yamnet as yamnet_model
 
+import warnings
+
+warnings.filterwarnings("ignore", category=RuntimeWarning, message="Couldn't find ffmpeg or avconv")
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 logging.basicConfig(
     level=logging.INFO, 

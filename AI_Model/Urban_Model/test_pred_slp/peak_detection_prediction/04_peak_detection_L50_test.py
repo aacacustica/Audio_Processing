@@ -19,7 +19,6 @@ import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="Couldn't find ffmpeg or avconv")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-
 WINDOW_SIZE = 30  # seconds
 PROMINENCE = 1
 WIDTH = 1
@@ -31,23 +30,23 @@ def extract_audio_clips(df, output_folder, clip_duration_sec):
     output_folder = os.path.join(output_folder, "peak_clips")
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
+    
     clips_num = 0
     first_5_rows = df.head(5)
-
     for index, row in tqdm(first_5_rows.iterrows(), total=first_5_rows.shape[0], desc="Extracting clips"):
         peak_date = row['date']
         filename = row['filename']
         start_time_str = os.path.basename(filename).split('.')[0]
         start_time = datetime.strptime(start_time_str, "%Y%m%d_%H%M%S")
 
+        # take the offset in milliseconds which is the difference between the peak date and the start time
         peak_offset_ms = int((peak_date - pd.Timestamp(start_time)).total_seconds() * 1000)
         start_extract_ms = max(0, peak_offset_ms - int(clip_duration_sec * 1000 / 2))
         end_extract_ms = start_extract_ms + int(clip_duration_sec * 1000)
 
+        # extract the audio clip
         audio = AudioSegment.from_file(filename)
         clip = audio[start_extract_ms:end_extract_ms]
-        clip_name = f"clip_{peak_date.strftime('%Y%m%d_%H%M%S')}.wav"
-        clip_path = os.path.join(output_folder, clip_name)
 
         # convertion audiosegment to np-array
         samples = np.array(clip.get_array_of_samples())
@@ -58,14 +57,30 @@ def extract_audio_clips(df, output_folder, clip_duration_sec):
         else:
             print(f"Clip {clip_name} has {clip.channels} channels. Skipping")
             continue
-        
-        # np array to a wav 
-        sf.write(clip_path, samples, clip.frame_rate)
-        make_clip_predictions(clip_path, clip_name)
 
-        print(f"[{clips_num}] Extracted clip saved to {clip_name} in {output_folder}")
+        # np array to a wav
+        clip_name = f"clip_{peak_date.strftime('%Y%m%d_%H%M%S')}.wav"
+        clip_path = os.path.join(output_folder, clip_name)
+        sf.write(clip_path, samples, clip.frame_rate)
+
+        # make predictions and update clip name
+        classes, probabilities = make_clip_predictions(clip_path, clip_name)
+        new_clip_name = f"clip_{peak_date.strftime('%Y%m%d_%H%M%S')}_{classes[0]}.wav"
+        new_clip_path = os.path.join(output_folder, new_clip_name)
+        
+        # check if new_clip_path exists
+        if os.path.exists(new_clip_path):
+            print(f"Clip {new_clip_name} already exists. Skipping...")
+            os.remove(clip_path)  # Remove the initially saved clip if the new name already exists
+            continue
+        
+        # rename to include the class
+        os.rename(clip_path, new_clip_path)
+
+        print(f"[{clips_num}] Extracted clip saved to {new_clip_name} in {output_folder}")
         clips_num += 1
     print(f"Extracted {clips_num} clips")
+
 
 
 
@@ -94,8 +109,25 @@ def make_clip_predictions(clip, clip_name):
     prediction = np.mean(scores, axis=0)
     # Report the highest-scoring classes and their scores.
     top3_i = np.argsort(prediction)[::-1][:3]
+    print(f"Top 3 classes: {top3_i}")
     # return the top 3 classes and their probabilities
     return [yamnet_classes[i] for i in top3_i], [prediction[i] for i in top3_i]
+
+
+
+def plot_peak_detection(df, df_peaks):
+    plt.figure(figsize=(25, 8))
+    plt.plot(df['date'], df['LA'], label='LA values')
+    plt.plot(df['date'], df['LA_median'], color='cyan', linestyle='-', linewidth=2, label=f'Dynamic Threshold ({WINDOW_SIZE} seconds)')
+    plt.scatter(df_peaks['date'], df_peaks['LA'], color='red', s=10, label='Peaks')
+    plt.legend()
+    plt.xlim(df['date'].iloc[0], df['date'].iloc[-1])
+    plt.title(f'Peak Detection in Environmental Noise Data')
+    plt.xlabel('Time')
+    plt.ylabel('LA (dB)')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
 
 
 
@@ -128,18 +160,8 @@ def main():
     else:
         print("No peaks detected")
 
-    plt.figure(figsize=(25, 8))
-    plt.plot(df['date'], df['LA'], label='LA values')
-    plt.plot(df['date'], df['LA_median'], color='cyan', linestyle='-', linewidth=2, label=f'Dynamic Threshold ({WINDOW_SIZE} seconds)')
-    plt.scatter(df_peaks['date'], df_peaks['LA'], color='red', s=10, label='Peaks')
-    plt.legend()
-    plt.xlim(df['date'].iloc[0], df['date'].iloc[-1])
-    plt.title(f'Peak Detection in Environmental Noise Data')
-    plt.xlabel('Time')
-    plt.ylabel('LA (dB)')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
+    plot_peak_detection(df, df_peaks)
+
 
 if __name__ == "__main__":
     main()

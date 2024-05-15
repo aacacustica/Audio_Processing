@@ -53,6 +53,11 @@ def extract_audio_clips(df, output_folder, clip_duration_sec):
         samples = np.array(clip.get_array_of_samples())
         if clip.channels == 2:
             samples = samples.reshape((-1, 2))
+        elif clip.channels == 1:
+            samples = np.expand_dims(samples, axis=1)
+        else:
+            print(f"Clip {clip_name} has {clip.channels} channels. Skipping")
+            continue
         
         # np array to a wav 
         sf.write(clip_path, samples, clip.frame_rate)

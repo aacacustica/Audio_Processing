@@ -65,56 +65,47 @@ def main():
     duration = (df['date'].iloc[-1] - df['date'].iloc[0]).total_seconds()
     logging.info(f"Duration: {duration} seconds, {duration/60} minutes, {duration/3600} hours, {duration/3600/24} days")
 
-
-
     logging.info("Calculating the median")
+    WINDOW_SIZE = 5
+    PROMINENCE = 1
+    WIDTH = 1
+
     df['LA_median'] = df['LA'].rolling(window=WINDOW_SIZE, min_periods=1).quantile(0.5) + 10
     # dynamic threshold by filtering data points
     above_threshold = df[df['LA'] > df['LA_median']]
-    
 
     # find peaks in the filtered data
     if not above_threshold.empty:
         peaks, properties = find_peaks(above_threshold['LA'], prominence=PROMINENCE, width=WIDTH)
-        peak_filenames = above_threshold.iloc[peaks]['filename'].values
-        start_times = np.round(properties['left_ips'], 2)
-        end_times = np.round(properties['right_ips'], 2)
-        duration = np.round(end_times - start_times, 2)
-        
-        # df for each peak
+        peak_indices = above_threshold.iloc[peaks].index
+
         peaks_df = pd.DataFrame({
-            'filename': peak_filenames,
-            'start_time': start_times,
-            'end_time': end_times,
-            'duration': duration
+            'filename': df.loc[peak_indices, 'filename'].values,
+            'start_time': np.round(properties['left_ips'], 2),
+            'end_time': np.round(properties['right_ips'], 2),
+            'duration': np.round(properties['right_ips'] - properties['left_ips'], 2)
         })
         
         # save csv file
-        # peaks_df.to_csv(os.path.join(output_folder, f"peaks_raw_{title}.csv"), index=False)
+        peaks_df.to_csv(os.path.join(output_folder, f"peaks_raw_{title}.csv"), index=False)
 
         print(peaks_df)
 
+        exit()
         # print the average of the duration
         print(f"Average duration: {np.mean(duration)} seconds")
         print(f"Max duration: {np.max(duration)} seconds")
         print(f"Min duration: {np.min(duration)} seconds")
 
-        # Create the histogram
+        # histogram
         plt.hist(duration, bins=50)
-
-        # Set labels and title
         plt.xlabel("Duration (seconds)")
         plt.ylabel("Frequency")
         plt.title("Duration of peaks")
-
-        # Set zoomed-in limits for x and y axes (example values)
-        plt.xlim(0, 50)  # Adjust these values to zoom in on the desired range
-        plt.ylim(0, 50)   # Adjust these values to zoom in on the desired range
-
-        # Show the plot
+        plt.xlim(0, 50)  
+        plt.ylim(0, 50)   
         plt.show()
 
-        exit()
 
         # take the sr from the first audio file
         if len(peak_filenames) > 0:

@@ -22,25 +22,30 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 WINDOW_SIZE = 30  # seconds
 PROMINENCE = 1
 WIDTH = 1
-CLIP_DURATION = 3  # seconds
+CLIP_DURATION = 2  # seconds
+NUM_POINTS = 10
 
 
 
-def extract_audio_clips(df, output_folder, clip_duration_sec):
+def extract_audio_clips(df, output_folder, clip_duration_sec, title):
     output_folder = os.path.join(output_folder, "peak_clips")
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     
+    clips_info = []
     clips_num = 0
-    first_5_rows = df.head(5)
-    for index, row in tqdm(first_5_rows.iterrows(), total=first_5_rows.shape[0], desc="Extracting clips"):
+    first_5_rows = df.head(NUM_POINTS)
+    # for index, row in tqdm(first_5_rows.iterrows(), total=first_5_rows.shape[0], desc="Extracting clips"):
+    for index, row in first_5_rows.iterrows():
         peak_date = row['date']
         filename = row['filename']
         start_time_str = os.path.basename(filename).split('.')[0]
         start_time = datetime.strptime(start_time_str, "%Y%m%d_%H%M%S")
 
         # take the offset in milliseconds which is the difference between the peak date and the start time
-        peak_offset_ms = int((peak_date - pd.Timestamp(start_time)).total_seconds() * 1000)
+        # peak_offset is where the peak is located in the audio file
+        peak_offset_ms = int((peak_date - pd.Timestamp(start_time)).total_seconds() * 1000) 
+        # take the start and end of the audio clip according to the peak offset
         start_extract_ms = max(0, peak_offset_ms - int(clip_duration_sec * 1000 / 2))
         end_extract_ms = start_extract_ms + int(clip_duration_sec * 1000)
 
@@ -58,29 +63,45 @@ def extract_audio_clips(df, output_folder, clip_duration_sec):
             print(f"Clip {clip_name} has {clip.channels} channels. Skipping")
             continue
 
+
         # np array to a wav
         clip_name = f"clip_{peak_date.strftime('%Y%m%d_%H%M%S')}.wav"
         clip_path = os.path.join(output_folder, clip_name)
         sf.write(clip_path, samples, clip.frame_rate)
 
+
         # make predictions and update clip name
         classes, probabilities = make_clip_predictions(clip_path, clip_name)
-        new_clip_name = f"clip_{peak_date.strftime('%Y%m%d_%H%M%S')}_{classes[0]}.wav"
+        print(f"Classes: {classes}, Probabilities: {probabilities}")
+        new_clip_name = f"clip_{peak_date.strftime('%Y%m%d_%H%M%S')}_{classes[0]}_{CLIP_DURATION}s.wav"
+        new_clip_name = new_clip_name.replace(" ", "_").replace(",", "_")
         new_clip_path = os.path.join(output_folder, new_clip_name)
         
         # check if new_clip_path exists
         if os.path.exists(new_clip_path):
             print(f"Clip {new_clip_name} already exists. Skipping...")
-            os.remove(clip_path)  # Remove the initially saved clip if the new name already exists
+            os.remove(clip_path)
             continue
         
         # rename to include the class
         os.rename(clip_path, new_clip_path)
+        # append info to clips_info
+        clips_info.append({
+            'filename': new_clip_path,
+            'start_audio_peak': start_extract_ms,
+            'end_audio_peak': end_extract_ms,
+            'duration': clip_duration_sec,
+            'classes': classes,
+            'probabilities': probabilities
+        })
 
         print(f"[{clips_num}] Extracted clip saved to {new_clip_name} in {output_folder}")
         clips_num += 1
-    print(f"Extracted {clips_num} clips")
-
+    
+    # save info to a datafram
+    clips_df = pd.DataFrame(clips_info)
+    clips_df.to_csv(os.path.join(output_folder, f'peak_prediction_L50_{title}_{CLIP_DURATION}s.csv'), index=False)
+    print(f"Extracted {clips_num} clips and saved information to clips_info.csv")
 
 
 
@@ -133,6 +154,7 @@ def plot_peak_detection(df, df_peaks):
 
 def main():
     csv_file = r"\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\5-Resultados\P1_CONTENEDORES\SPL\leq_levels_P1_CONTENEDORES_v1_1_test.csv"
+    title = csv_file.split("\\")[-3]
     audiomoth_folder = csv_file.replace("5-Resultados", "3-Medidas").replace("SPL", "AUDIOMOTH")
     audiomoth_folder = "\\".join(audiomoth_folder.split("\\")[:-1])
     output_folder = "\\".join(csv_file.split("\\")[:-1])
@@ -156,11 +178,11 @@ def main():
         peaks, _ = find_peaks(above_threshold['LA'], prominence=PROMINENCE, width=WIDTH)
         df_peaks = above_threshold.iloc[peaks]
         print(f"Detected {len(df_peaks)} peaks")
-        extract_audio_clips(df_peaks, output_folder, CLIP_DURATION)
+        extract_audio_clips(df_peaks, output_folder, CLIP_DURATION, title)
     else:
         print("No peaks detected")
 
-    plot_peak_detection(df, df_peaks)
+    # plot_peak_detection(df, df_peaks)
 
 
 if __name__ == "__main__":

@@ -20,15 +20,20 @@ custom_color_scale.append([1, hex_colors[-1]])
     
 
 
-def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str):
+def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column: str, plotname: str):
     try:
+        df = df.reset_index(drop=True)
+        df = df.drop_duplicates()
         logger.info(f"Using the laeq_column: {laeq_column}")
 
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
-        # translate the day name to spanish from english in day_name
-        df['Día'] = df['day_name'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
+        # Translate the day name to Spanish from English in day_name
+        df['Día'] = df['day_name'].replace(
+            ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+            ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+        )
         
         weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
         df['Día'] = pd.Categorical(df['Día'], categories=weekdays, ordered=True)
@@ -90,7 +95,10 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column:str, plot
 
 def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, plotname:str):
     try:
+        df = df.reset_index(drop=True)
+        df = df.drop_duplicates()
         logger.info(f"Using the laeq_column: {laeq_column}")
+        
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         

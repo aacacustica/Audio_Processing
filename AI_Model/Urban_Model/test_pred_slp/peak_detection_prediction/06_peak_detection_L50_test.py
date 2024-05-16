@@ -42,68 +42,55 @@ def make_clip_predictions(waveform, sr):
     prediction = np.mean(scores, axis=0)
     # top 3 classes
     top3_i = np.argsort(prediction)[::-1][:3]
-    print(f"Top 3 classes: {top3_i}")
+    # print the na,e of the class
+    print(f"Top 3 classes: {[yamnet_classes[i] for i in top3_i]}")
     return [yamnet_classes[i] for i in top3_i], [prediction[i] for i in top3_i]
 
 
 
-def extract_and_predict(filename, start_time, end_time, duration):
-    print(f"Extracting segment from {filename}")
-    # read the entire audio file
-    wav_data, sr = sf.read(filename, dtype=np.int16)
-    
-    # calculate the start and end indices relative to the start of the recording
+def extract_and_predict(filename, start_time, end_time, expected_duration):
+    print(f"Extracting segment from {filename}\n")
+    try:
+        # Read the entire audio file
+        wav_data, sr = sf.read(filename, dtype=np.int16)
+    except Exception as e:
+        print(f"Failed to read file {filename}. Error: {e}")
+        return None
+
+    # Parse recording start time from filename
     datetime_string = filename.split('\\')[-1].split('_')
-    date_part = datetime_string[0]  # '20231211'
-    time_part = datetime_string[1].split('.')[0]  # '140420'
+    date_part, time_part = datetime_string[0], datetime_string[1].split('.')[0]
     recording_start_time = datetime.strptime(date_part + time_part, '%Y%m%d%H%M%S')
-    
     print(f"Recording start time: {recording_start_time}")
+
+    # Compute start and end times in seconds relative to the file start
     start_seconds = (start_time - recording_start_time).total_seconds()
     end_seconds = (end_time - recording_start_time).total_seconds()
 
-    # math.ceil to ensure you cover the entire duration
+    # Calculate start and end indices for the audio data
     start_index = int(start_seconds * sr)
     end_index = int(math.ceil(end_seconds * sr))
-    
-    # Additional diagnostic outputs
-    print(f"File sample rate: {sr}, Total samples: {len(wav_data)}")
-    print(f"Calculated start seconds: {start_seconds}, end seconds: {end_seconds}")
-    print(f"Expected segment duration: {end_seconds - start_seconds} seconds")
-    print(f"Start index: {start_index}, End index: {end_index}")
-    print(f"Start index in seconds {start_index / sr} End index in seconds: {end_index / sr}")
-    print(f"Duration of seconds {end_index / sr - start_index / sr}")
-    print(f"Original Duration: {duration} seconds")
-    
-    # indices are within valid range
-    if start_index < 0 or end_index <= start_index or start_index >= len(wav_data) or end_index > len(wav_data):
-        print(f"Invalid indices or out of bounds: Start index: {start_index}, End index: {end_index}")
-        return None, None
 
-    # extract the actual segment
+    # Ensure the indices are within the bounds of the data
+    if start_index < 0 or end_index <= start_index or end_index > len(wav_data):
+        print(f"Invalid indices or out of bounds. Start index: {start_index}, End index: {end_index}")
+        return None
+
+    # Extract the segment
     segment = wav_data[start_index:end_index]
     actual_segment_duration = len(segment) / sr
-    print(f"Segment duration: {actual_segment_duration} seconds")
 
+    # Log details about the extraction
+    print(f"File sample rate: {sr}, Total samples: {len(wav_data)}")
+    print(f"Start index: {start_index}, End index: {end_index}")
+    print(f"Start seconds: {start_seconds}, End seconds: {end_seconds}")
+    print(f"Segment duration: {end_seconds - start_seconds} seconds")
+    print(f"Actual Duration from DF: {expected_duration} seconds")
+    print(f"Actual Segment duration: {actual_segment_duration} seconds\n\n")
+
+    # Convert segment to normalized float32
     wave_form = segment / 32768.0  # Convert to [-1.0, +1.0]
     wave_form = wave_form.astype('float32')
-    print(f"Duration: {len(wave_form) / sr} seconds\n")
-
-    # check if segment is valid
-    # if len(segment) > 0:
-    #     # normalize the segment to float32 for the prediction model
-    #     waveform = segment / 32768.0  # Convert to [-1.0, +1.0]
-    #     waveform = waveform.astype('float32')
-        # exit()
-
-        # make predictions
-        # classes, probabilities = make_clip_predictions(waveform, sr)
-
-        # segment_filename = filename.replace(".WAV", f"_{start_time.strftime('%H%M%S')}_{classes[0]}.WAV")
-        # sf.write(segment_filename, segment, sr)
-    
-    # else:
-    #     print("Invalid segment")
 
 
 def main():
@@ -143,23 +130,78 @@ def main():
             'end': above_threshold.iloc[end_points]['date'].values,
             'duration': durations
         })
-        print(peaks_df)
+        # print(peaks_df)
 
         mean = np.mean(durations)
         mean_rounded = np.round(mean, 2)
         print(f"\nAverage duration: {mean_rounded} seconds")
         print(f"Max duration: {np.max(durations)} seconds")
         print(f"Min duration: {np.min(durations)} seconds\n")
+        
 
-        # peaks_df.to_csv(os.path.join(output_folder, f"peaks_{title}_test.csv"), index=False)
-        # print(f"Save the peaks to a csv file in {os.path.join(output_folder, f'peaks_{title}_test.csv')}")
-
+        num_peaks_processed = 0
+        peaks_df = peaks_df.head(50)
         for idx, row in peaks_df.iterrows():
-            extract_and_predict(row['filename'], row['start'], row['end'], row['duration'])
+            print(f"\nExtracting segment from {row['filename']}\n")
+            try:
+                # Read the entire audio file
+                wav_data, sr = sf.read(row['filename'], dtype=np.int16)
+                print(f"Sample rate: {sr}")
+            except Exception as e:
+                print(f"Failed to read file {row['filename']}. Error: {e}")
+                return None
+            
+            # start time of the audio file
+            start_time_audio = row['filename']
+            start_time_audio = start_time_audio.split('\\')[-1].split('_')
+            start_time_audio = start_time_audio[0] + start_time_audio[1].split('.')[0]
+            start_time_audio = datetime.strptime(start_time_audio, '%Y%m%d%H%M%S')
+            print(f"Start time of the audio file: {start_time_audio}")
 
+
+            # get start and end time of the peak
+            start_time = row['start']
+            end_time = row['end']
+            duration = row['duration']
+            print(f"Start time: {start_time}, End time: {end_time}, Duration: {duration}")
+
+            ##### SLICE AUDIO #####
+            start_time = (row['start'] - pd.Timestamp(start_time_audio)).total_seconds()
+            end_time = (row['end'] - pd.Timestamp(start_time_audio)).total_seconds()
+
+            # samples indices, add a secondto the start and the end time
+            start_index = int((start_time - 0.25) * sr)
+            end_index = int((end_time + 0.25) * sr)
+            # start_index = int((start_time) * sr)
+            # end_index = int((end_time) * sr)
+
+            # extract segment
+            segment = wav_data[start_index:end_index]
+            actual_segment_duration = len(segment) / sr
+            # if actual_segment_duration == 0, skip the peak and the segment
+            if actual_segment_duration == 0:
+                print(f"Segment duration {actual_segment_duration}")
+                print("Segment duration is 0, skipping the peak, it beloong to two different audio files\n\n")
+                continue
+            elif actual_segment_duration > duration + 20:
+                print(f"Segment duration {actual_segment_duration}")
+                print("Segment duration is more than 10s, skipping the peak, it beloong to two different audio files\n\n")
+                continue                
+            else:
+                print(f"Actual Segment duration: {actual_segment_duration} seconds\n\n")
+            
+            # START PREDICTION
+            wave_form = segment / 32768.0  # Convert to [-1.0, +1.0]
+            wave_form = wave_form.astype('float32')
+            
+            # make predictions
+            make_clip_predictions(wave_form, sr)
+            num_peaks_processed += 1
+
+        print(f"Actual Processed {num_peaks_processed} peaks")
+    
     else:
         print("No peaks detected")
-
 
 if __name__ == "__main__":
     main()

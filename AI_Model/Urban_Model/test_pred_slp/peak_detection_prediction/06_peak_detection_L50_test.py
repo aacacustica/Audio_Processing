@@ -21,9 +21,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 WINDOW_SIZE = 30  # seconds
 PROMINENCE = 1
 WIDTH = 1
-NUM_POINTS = 5
-CLIP_DURATION = 5  # seconds
-
 
 def make_clip_predictions(waveform, sr):
     params = yamnet_params.Params()
@@ -47,52 +44,6 @@ def make_clip_predictions(waveform, sr):
     return [yamnet_classes[i] for i in top3_i], [prediction[i] for i in top3_i]
 
 
-
-def extract_and_predict(filename, start_time, end_time, expected_duration):
-    print(f"Extracting segment from {filename}\n")
-    try:
-        # Read the entire audio file
-        wav_data, sr = sf.read(filename, dtype=np.int16)
-    except Exception as e:
-        print(f"Failed to read file {filename}. Error: {e}")
-        return None
-
-    # Parse recording start time from filename
-    datetime_string = filename.split('\\')[-1].split('_')
-    date_part, time_part = datetime_string[0], datetime_string[1].split('.')[0]
-    recording_start_time = datetime.strptime(date_part + time_part, '%Y%m%d%H%M%S')
-    print(f"Recording start time: {recording_start_time}")
-
-    # Compute start and end times in seconds relative to the file start
-    start_seconds = (start_time - recording_start_time).total_seconds()
-    end_seconds = (end_time - recording_start_time).total_seconds()
-
-    # Calculate start and end indices for the audio data
-    start_index = int(start_seconds * sr)
-    end_index = int(math.ceil(end_seconds * sr))
-
-    # Ensure the indices are within the bounds of the data
-    if start_index < 0 or end_index <= start_index or end_index > len(wav_data):
-        print(f"Invalid indices or out of bounds. Start index: {start_index}, End index: {end_index}")
-        return None
-
-    # Extract the segment
-    segment = wav_data[start_index:end_index]
-    actual_segment_duration = len(segment) / sr
-
-    # Log details about the extraction
-    print(f"File sample rate: {sr}, Total samples: {len(wav_data)}")
-    print(f"Start index: {start_index}, End index: {end_index}")
-    print(f"Start seconds: {start_seconds}, End seconds: {end_seconds}")
-    print(f"Segment duration: {end_seconds - start_seconds} seconds")
-    print(f"Actual Duration from DF: {expected_duration} seconds")
-    print(f"Actual Segment duration: {actual_segment_duration} seconds\n\n")
-
-    # Convert segment to normalized float32
-    wave_form = segment / 32768.0  # Convert to [-1.0, +1.0]
-    wave_form = wave_form.astype('float32')
-
-
 def main():
     csv_file = r"\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\5-Resultados\P1_CONTENEDORES\SPL\leq_levels_P1_CONTENEDORES_v1_1_test.csv"
     title = csv_file.split("\\")[-3]
@@ -111,6 +62,7 @@ def main():
     above_threshold = df[df['LA'] > df['LA_median']]
 
     if not above_threshold.empty:
+        clip_info = []
         peaks, properties = find_peaks(above_threshold['LA'], prominence=PROMINENCE, width=WIDTH)
         df_peaks = above_threshold.iloc[peaks]
         print(f"Detected {len(df_peaks)} peaks")
@@ -130,7 +82,6 @@ def main():
             'end': above_threshold.iloc[end_points]['date'].values,
             'duration': durations
         })
-        # print(peaks_df)
 
         mean = np.mean(durations)
         mean_rounded = np.round(mean, 2)
@@ -138,7 +89,6 @@ def main():
         print(f"Max duration: {np.max(durations)} seconds")
         print(f"Min duration: {np.min(durations)} seconds\n")
         
-
         num_peaks_processed = 0
         peaks_df = peaks_df.head(50)
         for idx, row in peaks_df.iterrows():
@@ -172,8 +122,6 @@ def main():
             # samples indices, add a secondto the start and the end time
             start_index = int((start_time - 0.25) * sr)
             end_index = int((end_time + 0.25) * sr)
-            # start_index = int((start_time) * sr)
-            # end_index = int((end_time) * sr)
 
             # extract segment
             segment = wav_data[start_index:end_index]
@@ -195,9 +143,33 @@ def main():
             wave_form = wave_form.astype('float32')
             
             # make predictions
-            make_clip_predictions(wave_form, sr)
+            classes, predictions = make_clip_predictions(wave_form, sr)
             num_peaks_processed += 1
 
+            #### MAKE A CLIP AND SAVE IT ####
+            peak_date_str = row['start'].strftime('%Y%m%d_%H%M%S')
+            clip_filename = f"{peak_date_str}_{classes[0]}.wav"
+            print(f"Clip filename: {clip_filename}")
+            os.makedirs(os.path.join(output_folder, 'peak_clips'), exist_ok=True)
+            clip_path = os.path.join(output_folder, 'peak_clips', clip_filename)
+            sf.write(clip_path, segment, sr)
+            print(f"Segment {clip_filename} saved to {clip_path}")
+
+            #### SAVE INFO IN A CSV ####
+            clip_info.append({
+                'filename': clip_path,
+                'start_time': row['start'],
+                'end_time': row['end'],
+                'duration': actual_segment_duration,
+                'classes': classes,
+                'predictions': predictions
+            })
+            print(f"Clip info: \n{clip_info[-1]}")
+
+        # save the info in a csv
+        clips_df = pd.DataFrame(clip_info)
+        clips_df.to_csv(os.path.join(output_folder, f'peak_prediction_L50_{title}.csv'), index=False)
+        print(f"Extracted {num_peaks_processed} clips and saved information at {output_folder}")
         print(f"Actual Processed {num_peaks_processed} peaks")
     
     else:

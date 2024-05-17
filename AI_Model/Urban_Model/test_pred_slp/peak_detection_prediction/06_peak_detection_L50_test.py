@@ -10,9 +10,17 @@ import soundfile as sf
 import resampy
 import warnings
 import math
+import logging
 
 import params as yamnet_params
 import yamnet as yamnet_model
+
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - %(levelname)s - %(message)s', 
+    filename='peak_detection.log', 
+    filemode='a'
+    )
 
 # warning messages disabled
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="Couldn't find ffmpeg or avconv")
@@ -39,8 +47,8 @@ def make_clip_predictions(waveform, sr):
     prediction = np.mean(scores, axis=0)
     # top 3 classes
     top3_i = np.argsort(prediction)[::-1][:3]
-    # print the na,e of the class
-    print(f"Top 3 classes: {[yamnet_classes[i] for i in top3_i]}")
+    # logging.info the na,e of the class
+    logging.info(f"Top 3 classes: {[yamnet_classes[i] for i in top3_i]}")
     return [yamnet_classes[i] for i in top3_i], [prediction[i] for i in top3_i]
 
 
@@ -56,7 +64,6 @@ def main():
 
     df = pd.read_csv(csv_file)
     df['filename'] = df['filename'].apply(lambda x: os.path.join(audiomoth_folder, x))
-    print(df['filename'][0])
     df['date'] = pd.to_datetime(df['date'])
     df['LA_median'] = df['LA'].rolling(window=WINDOW_SIZE, min_periods=1).quantile(0.5) + 10
     above_threshold = df[df['LA'] > df['LA_median']]
@@ -65,7 +72,7 @@ def main():
         clip_info = []
         peaks, properties = find_peaks(above_threshold['LA'], prominence=PROMINENCE, width=WIDTH)
         df_peaks = above_threshold.iloc[peaks]
-        print(f"Detected {len(df_peaks)} peaks")
+        logging.info(f"Detected {len(df_peaks)} peaks")
 
         start_points = properties['left_ips']
         end_points = properties['right_ips']
@@ -76,7 +83,6 @@ def main():
         prominences = np.round(prominences, 2)
 
         peaks_df = pd.DataFrame({
-            # add filename 
             'filename': df_peaks['filename'].values,
             'start': above_threshold.iloc[start_points]['date'].values,
             'end': above_threshold.iloc[end_points]['date'].values,
@@ -85,20 +91,20 @@ def main():
 
         mean = np.mean(durations)
         mean_rounded = np.round(mean, 2)
-        print(f"\nAverage duration: {mean_rounded} seconds")
-        print(f"Max duration: {np.max(durations)} seconds")
-        print(f"Min duration: {np.min(durations)} seconds\n")
+        logging.info(f"\nAverage duration: {mean_rounded} seconds")
+        logging.info(f"Max duration: {np.max(durations)} seconds")
+        logging.info(f"Min duration: {np.min(durations)} seconds\n")
         
         num_peaks_processed = 0
         peaks_df = peaks_df.head(50)
         for idx, row in peaks_df.iterrows():
-            print(f"\nExtracting segment from {row['filename']}\n")
+            logging.info(f"\nExtracting segment from {row['filename']}\n")
             try:
                 # Read the entire audio file
                 wav_data, sr = sf.read(row['filename'], dtype=np.int16)
-                print(f"Sample rate: {sr}")
+                logging.info(f"Sample rate: {sr}")
             except Exception as e:
-                print(f"Failed to read file {row['filename']}. Error: {e}")
+                logging.warning(f"Failed to read file {row['filename']}. Error: {e}")
                 return None
             
             # start time of the audio file
@@ -106,14 +112,14 @@ def main():
             start_time_audio = start_time_audio.split('\\')[-1].split('_')
             start_time_audio = start_time_audio[0] + start_time_audio[1].split('.')[0]
             start_time_audio = datetime.strptime(start_time_audio, '%Y%m%d%H%M%S')
-            print(f"Start time of the audio file: {start_time_audio}")
+            logging.info(f"Start time of the audio file: {start_time_audio}")
 
 
             # get start and end time of the peak
             start_time = row['start']
             end_time = row['end']
             duration = row['duration']
-            print(f"Start time: {start_time}, End time: {end_time}, Duration: {duration}")
+            logging.info(f"Start time: {start_time}, End time: {end_time}, Duration: {duration}")
 
             ##### SLICE AUDIO #####
             start_time = (row['start'] - pd.Timestamp(start_time_audio)).total_seconds()
@@ -128,15 +134,15 @@ def main():
             actual_segment_duration = len(segment) / sr
             # if actual_segment_duration == 0, skip the peak and the segment
             if actual_segment_duration == 0:
-                print(f"Segment duration {actual_segment_duration}")
-                print("Segment duration is 0, skipping the peak, it beloong to two different audio files\n\n")
+                logging.warning(f"Segment duration {actual_segment_duration}")
+                logging.warning("Segment duration is 0, skipping the peak, it beloong to two different audio files\n\n")
                 continue
             elif actual_segment_duration > duration + 20:
-                print(f"Segment duration {actual_segment_duration}")
-                print("Segment duration is more than 10s, skipping the peak, it beloong to two different audio files\n\n")
+                logging.warning(f"Segment duration {actual_segment_duration}")
+                logging.warning("Segment duration is more than 10s, skipping the peak, it beloong to two different audio files\n\n")
                 continue                
             else:
-                print(f"Actual Segment duration: {actual_segment_duration} seconds\n\n")
+                logging.info(f"Actual Segment duration: {actual_segment_duration} seconds\n\n")
             
             # START PREDICTION
             wave_form = segment / 32768.0  # Convert to [-1.0, +1.0]
@@ -149,11 +155,11 @@ def main():
             #### MAKE A CLIP AND SAVE IT ####
             peak_date_str = row['start'].strftime('%Y%m%d_%H%M%S')
             clip_filename = f"{peak_date_str}_{classes[0]}.wav"
-            print(f"Clip filename: {clip_filename}")
+            logging.info(f"Clip filename: {clip_filename}")
             os.makedirs(os.path.join(output_folder, 'peak_clips'), exist_ok=True)
             clip_path = os.path.join(output_folder, 'peak_clips', clip_filename)
             sf.write(clip_path, segment, sr)
-            print(f"Segment {clip_filename} saved to {clip_path}")
+            logging.info(f"Segment {clip_filename} saved to {clip_path}")
 
             #### SAVE INFO IN A CSV ####
             clip_info.append({
@@ -164,16 +170,16 @@ def main():
                 'classes': classes,
                 'predictions': predictions
             })
-            print(f"Clip info: \n{clip_info[-1]}")
+            logging.info(f"Clip info: \n{clip_info[-1]}")
 
         # save the info in a csv
         clips_df = pd.DataFrame(clip_info)
         clips_df.to_csv(os.path.join(output_folder, f'peak_prediction_L50_{title}.csv'), index=False)
-        print(f"Extracted {num_peaks_processed} clips and saved information at {output_folder}")
-        print(f"Actual Processed {num_peaks_processed} peaks")
+        logging.info(f"Extracted {num_peaks_processed} clips and saved information at {output_folder}")
+        logging.info(f"Actual Processed {num_peaks_processed} peaks")
     
     else:
-        print("No peaks detected")
+        logging.error("No peaks detected")
 
 if __name__ == "__main__":
     main()

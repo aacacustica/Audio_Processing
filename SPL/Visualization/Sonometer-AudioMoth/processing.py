@@ -19,8 +19,8 @@ def load_data(file_path, logger):
         "lx_EN": (get_data_lx_EN, larsonlx_dict),
         "SV307": (get_data_SV307, sv307_dict),
         "cesva": (get_data_cesva, cesva_dict),
-        "sono-bilbo": (get_data_bilbo, sonometer_bilbo_dict),
         "audio-post": (get_data_audio, audiopost_dict),
+        "sono-bilbo": (get_data_bilbo, sonometer_bilbo_dict),
     } # SLM stands for Sound Level Meter
     logger.info(f"Analizing {file_path}")
 

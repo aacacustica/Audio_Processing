@@ -26,8 +26,10 @@ def setup_gpu():
 
 
 def folder_result(path):
-    path = path.split('\\')[2:-2]
+    path = path.split('\\')[2:-1]
     path = '\\\\' + '\\'.join(path)
+    print(f"Folder results: {path}")
+    # exit()
 
     if not os.path.exists(path):
         print(f"Path {path} does not exist.")
@@ -42,7 +44,8 @@ def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, resul
     else:
         output_filename = f'Urban_Model_{subfolder_name}_{stable_version}.csv'
     
-    output_folder = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'Predictions')
+    output_folder = os.path.join(result_folder, '5-Resultados', subfolder_name, 'AI_MODEL', 'Predictions')
+    print(f"Output folder: {output_folder}")
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     

@@ -29,16 +29,15 @@ def folder_result(path):
     result_folder = '\\5-Resultados'
     path = path.split('\\')[2:-2]
     path = '\\\\' + '\\'.join(path)
-    if not os.path.exists(path):
-        logging.warning(f"Skipping {path}, AUDIOMOTH folder not found.")
-        return False
+
+    result_folder = path + result_folder
+    if not os.path.exists(result_folder):
+        os.makedirs(result_folder)
+        print(f"Creating folder {result_folder}")
+        logging.info(f"Creating folder {result_folder}")
     else:
-        if not os.path.exists(path + result_folder):
-            os.makedirs(path + result_folder)
-            logging.info(f"Creating folder {path + result_folder}")
-        else:
-            result_folder = path + result_folder
-            logging.info(f"Folder {result_folder} already exists")
+        print(f"Results will be saved in: {result_folder}")
+        logging.info(f"Results will be saved in: {result_folder}")
     return result_folder
 
 

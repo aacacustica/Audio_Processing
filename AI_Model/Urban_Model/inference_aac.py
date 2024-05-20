@@ -176,16 +176,14 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
                             filtered_classes.append(classifier.yamnet_classes[idx])
                             filtered_probabilities.append(f'{prediction[idx]:.4f}')
 
-                    filtered_classes_str = ', '.join(filtered_classes)
-                    filtered_probabilities_str = ', '.join(filtered_probabilities)
                     # adjust timestamp based on window size
                     adjusted_timestamp = start_timestamp if window_size is None else start_timestamp + datetime.timedelta(seconds=i*window_size)
 
                     all_data_subfolder.append([
                         file_name, 
                         adjusted_timestamp.strftime('%Y-%m-%d %H:%M:%S'), 
-                        filtered_classes_str, 
-                        filtered_probabilities_str
+                        filtered_classes,
+                        filtered_probabilities
                     ])
 
             except Exception as e:

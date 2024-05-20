@@ -669,17 +669,17 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         
         # merge df
         df_aligned = df_LAeq.merge(df_Pred, how='left', left_index=True, right_index=True)
-        print(df_aligned)
-        exit()
         # remove rows with NaN values
         df_aligned.dropna(inplace=True)
-        # explode by list of classes
-        df_aligned['class'] = df_aligned['class'].apply(ast.literal_eval)
-        df_aligned['probabilities'] = df_aligned['probabilities'].apply(ast.literal_eval)
 
-        df_exploded_classes = df_aligned.explode('classes')
-        df_exploded = df_aligned.apply(lambda x: x.explode() if x.name in ['class', 'probabilities'] else x)
-        
+        # explode by list of classes
+        # df_aligned['class'] = df_aligned['class'].apply(ast.literal_eval)
+        # df_aligned['probability'] = df_aligned['probability'].apply(ast.literal_eval)
+
+        df_exploded_classes = df_aligned.explode('class')
+        df_exploded = df_aligned.apply(lambda x: x.explode() if x.name in ['class', 'probability'] else x)
+        print(df_exploded)
+        exit()
         # create the df_all, merge with the audioset dataframe
         df_exploded['display_name'] = df_exploded['class']
         df_all = df_exploded.merge(yamnet_csv, how='left', on='display_name')

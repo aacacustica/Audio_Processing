@@ -37,36 +37,36 @@ def main():
     if args.percentiles:
         PERCENTILES = args.percentiles
     
-    yamnet_csv = yamnet_class_map_csv()
-    
-    input_folder_audiomoth = os.path.join(input_folder, "5-Resultados")
-    input_folder_sonometer = os.path.join(input_folder, "3-Medidas")
+    yamnet_csv = yamnet_class_map_csv()    
+    medidas_folder = os.path.join(input_folder, "3-Medidas")
 
     try:
         folder_coefficients = {}
         
         # audiomoth
         if args.audiomoth:
+            logger.info("Processing audiomoth data")
             # get the folders in the input folder
-            parent_audiomoth_folders = [folder for folder in os.listdir(input_folder_audiomoth) if os.path.isdir(os.path.join(input_folder_audiomoth, folder))]
+            parent_audiomoth_folders = [folder for folder in os.listdir(medidas_folder) if os.path.isdir(os.path.join(medidas_folder, folder))]
             # look for the SPL folder inside the folders
             spl_audiomoth_folders = []
             for folder in parent_audiomoth_folders:
-                spl_audiomoth_folder = os.path.join(input_folder_audiomoth, folder, "SPL")
+                spl_audiomoth_folder = os.path.join(medidas_folder, folder, "AUDIOMOTH")
                 if os.path.exists(spl_audiomoth_folder):
                     coeff = float(input(f"Enter correction coefficient for {spl_audiomoth_folder}: "))
                     folder_coefficients[spl_audiomoth_folder] = coeff
                     spl_audiomoth_folders.append(spl_audiomoth_folder)
             process_all_folders(input_folder, spl_audiomoth_folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, 'AUDIOMOTH', folder_coefficients, logger)
-
+        
         # sonometro
         if args.sonometer:
+            logger.info("Processing sonometer data")
             # get the folders in the input folder
-            parent_sonometer_folders = [folder for folder in os.listdir(input_folder_sonometer) if os.path.isdir(os.path.join(input_folder_sonometer, folder))]
+            parent_sonometer_folders = [folder for folder in os.listdir(medidas_folder) if os.path.isdir(os.path.join(medidas_folder, folder))]
             # look for the SPL folder inside the folders
             spl_sonometer_folders = []
             for folder in parent_sonometer_folders:
-                spl_sonometer_folder = os.path.join(input_folder_sonometer, folder, "SONOMETRO")
+                spl_sonometer_folder = os.path.join(medidas_folder, folder, "SONOMETRO")
                 if os.path.exists(spl_sonometer_folder):
                     coeff = float(input(f"Enter correction coefficient for {spl_sonometer_folder}: "))
                     folder_coefficients[spl_sonometer_folder] = coeff

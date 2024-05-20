@@ -167,7 +167,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
                 logging.info(f"Classification threshold: {threshold}")
 
                 for i, prediction in enumerate(predictions_list):
-                    top_indices = np.argsort(prediction)[::-1][:5]
+                    top_indices = np.argsort(prediction)[::-1][:3]
                     
                     filtered_classes = []
                     filtered_probabilities = []
@@ -213,7 +213,7 @@ def parse_arguments():
 
 if __name__ == '__main__':
     """
-    python .\inference_custom.py -p "\\192.168.205.117\AAC_Server\OCIO\OCIO_BILBAO\CAMPAÑA_3\3-Medidas\" -w 1
+    python .\inference_aac.py -p "\\192.168.205.117\AAC_Server\OCIO\OCIO_BILBAO\CAMPAÑA_5"
     """
     setup_gpu()
     stable_version = get_stable_version()

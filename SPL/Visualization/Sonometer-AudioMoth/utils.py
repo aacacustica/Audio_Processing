@@ -130,7 +130,7 @@ def prediction_csv(path_input):
     for i in range(len(columns_to_rename)):
         if columns_to_rename[i] in df_prediction.columns:
             df_prediction = df_prediction.rename(columns={columns_to_rename[i]: new_columns[i]})
-    
+
     return df_prediction
 
 

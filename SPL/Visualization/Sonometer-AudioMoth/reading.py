@@ -73,7 +73,7 @@ def get_data_SV307(filename: str):
 
 
 
-def get_data_audio(filename: str):
+def get_data_audiomoth(filename: str):
     df = pd.read_csv(filename)
     if 'Time' in df.columns:
         df['datetime'] = pd.to_datetime(df['Time'], format='%Y-%m-%d_%H:%M:%S')

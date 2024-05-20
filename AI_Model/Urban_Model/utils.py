@@ -52,13 +52,13 @@ def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, resul
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     
-    output_path = os.path.join(output_folder, output_filename)
+    output_full_path = os.path.join(output_folder, output_filename)
 
     df_subfolder = pd.DataFrame(all_data_subfolder, columns=col_names)
     # order df by date
     df_subfolder = df_subfolder.sort_values(by='date')
-    df_subfolder.to_csv(output_path, index=False)
-    logging.info(f'Output saved to {output_path}')
+    df_subfolder.to_csv(output_full_path, index=False)
+    logging.info(f'Output saved to {output_full_path}')
 
 
 

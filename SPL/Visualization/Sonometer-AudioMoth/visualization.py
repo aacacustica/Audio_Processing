@@ -22,6 +22,8 @@ custom_color_scale.append([1, hex_colors[-1]])
 
 def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column: str, plotname: str):
     try:
+        # remove nan values
+        df = df.dropna(subset=[laeq_column])
         df = df.reset_index(drop=True)
         df = df.drop_duplicates()
         logger.info(f"Using the laeq_column: {laeq_column}")
@@ -95,6 +97,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column: str, plo
 
 def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, plotname:str):
     try:
+        df = df.dropna(subset=[laeq_column])
         df = df.reset_index(drop=True)
         df = df.drop_duplicates()
         logger.info(f"Using the laeq_column: {laeq_column}")
@@ -165,6 +168,7 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
 
 def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str, indicador_noche:str):
     try:
+        df = df.dropna(subset=[laeq_column])
         logger.info(f"Using the laeq_column: {laeq_column}")
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
@@ -230,6 +234,7 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
 
 def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extension, laeq_column:str, plotname:str, indicador_noche:str):
     try:
+        df = df.dropna(subset=[laeq_column])
         logger.info(f"Using the laeq_column: {laeq_column}")        
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
@@ -314,6 +319,8 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
 
 def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_column: str, agg_func: str, plotname:str):
     try:
+        # remove nan values
+        df = df.dropna(subset=[values_column])
         logger.info(f"Using the values_column: {values_column}")
         sns.set_style("white")
         sns.set_palette("tab10")
@@ -369,7 +376,9 @@ def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_col
         logger.error("DataFrame index is not a datetime index.")
         return
 
-    try:      
+    try:
+        # remove nan values
+        df = df.dropna(subset=[values_column])
         logger.info(f"Using the values_column: {values_column}")
         sns.set_style("white")
         sns.set_palette("tab10")
@@ -426,7 +435,8 @@ def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_col
 def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: list):
     try:
         logger.info(f"Using the columns_dict: {columns_dict}")
-
+        df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
+        
         # if there is just LAEQ_COLUMN_COEFF, then we use it for all the columns, otherwise use the max and min
         if columns_dict['LAEQ_COLUMN'] == 'Value':
             agg_funcs = {
@@ -481,7 +491,8 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
 
         hours = mdates.HourLocator(interval=3)
         h_fmt = mdates.DateFormatter('%d-%m-%y %H:%M')
-
+        # debugg time of the plot
+        
         ax.xaxis.set_major_locator(hours)
         ax.xaxis.set_major_formatter(h_fmt)
 
@@ -514,6 +525,8 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
 
 def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, ind_column:str):
     try:
+        # remove nan values
+        df = df.dropna(subset=[ind_column])
         logger.info(f"Using the ind_column: {ind_column}")
         sns.set_style("white")
         sns.set_palette("tab10")
@@ -632,6 +645,8 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         
 def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
     try:
+        # remove nan values
+        df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
         logger.info(f"Using the columns_dict: {columns_dict}")
 
         agg_funcs = {
@@ -639,10 +654,11 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         }
         logger.info(f"Using the agg_funcs: {agg_funcs}")
         df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs) # 900 seconds = 15 minutes
-        
+
         #########################################################
-        df_Pred['datetime'] = pd.to_datetime(df_Pred['datetime'])
-        df_Pred.set_index('datetime', inplace=True)
+        df_Pred['datetime'] = pd.to_datetime(df_Pred['date'])
+        df_Pred.set_index('datetime', inplace=True, drop=False)
+
                
         start_date = max(df_LAeq.index.min(), df_Pred.index.min())
         end_date = min(df_LAeq.index.max(), df_Pred.index.max())
@@ -653,26 +669,28 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         
         # merge df
         df_aligned = df_LAeq.merge(df_Pred, how='left', left_index=True, right_index=True)
-
+        print(df_aligned)
+        exit()
         # remove rows with NaN values
         df_aligned.dropna(inplace=True)
         # explode by list of classes
-        df_aligned['classes'] = df_aligned['classes'].apply(ast.literal_eval)
+        df_aligned['class'] = df_aligned['class'].apply(ast.literal_eval)
         df_aligned['probabilities'] = df_aligned['probabilities'].apply(ast.literal_eval)
 
         df_exploded_classes = df_aligned.explode('classes')
-        df_exploded = df_aligned.apply(lambda x: x.explode() if x.name in ['classes', 'probabilities'] else x)
+        df_exploded = df_aligned.apply(lambda x: x.explode() if x.name in ['class', 'probabilities'] else x)
         
         # create the df_all, merge with the audioset dataframe
-        df_exploded['display_name'] = df_exploded['classes']
+        df_exploded['display_name'] = df_exploded['class']
         df_all = df_exploded.merge(yamnet_csv, how='left', on='display_name')
-    
+        df_all = df_all.dropna(subset=['display_name'])
+        exit()
         #########################################################
         #### Plotting the data ####
         
         display_name = 'display_name'
         iso_taxonomy = 'iso_taxonomy'
-        classes = 'classes'
+        classes = 'class'
 
         brown_1 = 'Brown_Level_1'
         brown_2 = 'Brown_Level_2'
@@ -684,6 +702,9 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
             number=(classes, 'size'),
             LAeq=('LA_corrected', lambda x: leq(x))
         ).reset_index()
+
+        print(grouped_df)
+        exit()
 
         fig = px.treemap(grouped_df, 
                         path=[class_to_plot],  

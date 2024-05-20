@@ -19,16 +19,15 @@ def load_data(file_path, logger):
         "lx_EN": (get_data_lx_EN, larsonlx_dict),
         "SV307": (get_data_SV307, sv307_dict),
         "cesva": (get_data_cesva, cesva_dict),
-        "audio-post": (get_data_audio, audiopost_dict),
+        "audiomoth": (get_data_audiomoth, audiopost_dict),
         "sono-bilbo": (get_data_bilbo, sonometer_bilbo_dict),
     } # SLM stands for Sound Level Meter
-    logger.info(f"Analizing {file_path}")
-
     # load the data for each SLM type until one works |  for each slm_type, (func, slm_dict) in slm_type_function_mapping.items(): means that for each key and value in the dictionary, the key is slm_type and the value is a tuple with the function and the dictionary | the function is the function to load the data and the dictionary is the dictionary with the column names for the SLM type
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
         try:
             logger.info(f"Loading data for SLM type {slm_type}")
             df = func(file_path)
+            logger.info("\n")
             logger.info(f"Data loaded for SLM type {slm_type}")
             return df, slm_type, slm_dict
         
@@ -41,7 +40,6 @@ def load_data(file_path, logger):
 
 
 def process_folder(folder_path, logger):
-    logger.info(f"Processing folder {folder_path}")
     # folder contains a CESVA folder
     cesva_path = os.path.join(folder_path, 'CESVA')
     if os.path.isdir(cesva_path):
@@ -69,32 +67,23 @@ def process_folder(folder_path, logger):
             logger.warning(f"No measurement files found in {folder_path}")
             return None, None, None
         
-        logger.info(f"Loading data from {files}")
         return load_data(files[0], logger) 
     return None, None, None 
+
 
 
 def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, sufix_string, folder_coefficients, logger):
     print()
     for folder in tqdm(folders, desc="Processing folders"):
         reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
-
         folder = folder.split("\\")[:-1]
         folder = os.path.join('\\\\', *folder)
-        logger.info(f"\nEntering folder: {folder}")
-        
+        logger.info(f"Entering folder: {folder}")
         spl_string = "SPL"
         graphics_string = f"Graphics_{sufix_string}"
-
-        logger.info(f"folder {folder}")
         result_dir_name = "5-Resultados"
-        
         resultados_dir = reg_folder.split("\\")[:-3]
-        logger.info(f"resultados_dir: {resultados_dir}")
-
-        # join the path
         resultados_dir = os.path.join('\\\\', *resultados_dir, result_dir_name)
-        logger.info(f"resultados_dir: {resultados_dir}") # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados
 
         if not os.path.exists(resultados_dir):
             os.makedirs(resultados_dir)
@@ -110,9 +99,9 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             logger.info(f"Created output folder: {folder_output_dir}")
             
         ##### trying to get the prediction file for each folder #####
-        predictions_folder = os.path.join(resultados_dir, folder, "URBAN_Model", "Predictions")
-        if '3-Medidas' in predictions_folder:
-            predictions_folder = predictions_folder.replace('3-Medidas', '5-Resultados')
+        predictions_folder = os.path.join(folder.replace('3-Medidas', '5-Resultados'), "AI_MODEL", "Predictions")
+        if not os.path.exists(predictions_folder):
+            logger.error(f"Predictions folder not found: {predictions_folder}")
         if os.path.exists(predictions_folder):
             # list csv files in the directory
             predictions_files = glob.glob(os.path.join(predictions_folder, "*.csv"))
@@ -121,9 +110,11 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 prediction_csv_file = prediction_csv(prediction_file)
             else:
                 logger.info("No CSV files found in the predictions folder.")
-
+        ##############################################################
+            
         try:
-            logger.info(f"\nProcessing folder {folder}") 
+            logger.info("\n")
+            logger.info(f"Processing folder {folder}") 
             df, slm_type, slm_dict = process_folder(reg_folder, logger)
             if df is None:
                 logger.info(f"df is None")
@@ -146,14 +137,12 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 df['indicador_str'] = df.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
                 # add nights column
                 df['night_str'] = df.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
-                logger.info(f"Adding nights_str column for folder {folder}")
+                logger.info(f"Adding nights_str column")
                 
                 #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
 
+                logger.info(f"Applying db correction")
                 for key, value in folder_coefficients.items():
-                    if '3-Medidas' in key and not 'SONOMETRO' in key:
-                        key = key.replace('3-Medidas', '5-Resultados')
-                    
                     key = key.split("\\")[:-1]
                     key = os.path.join('\\\\', *key)
 
@@ -164,14 +153,16 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             except:
                 logger.error(f"An error occurred while trimming the dataframe")
                 continue
-
-            logger.info(f"\nEntering the plotting section")
+            
+            logger.info("")        
+            logger.info(f"PLOTTING SECTION")
             folder = folder.split("\\")[-1]
             
             # add slm_dict column LAEQ_COLUMN_COEFF: with the value of LA_corrected
             slm_dict["LAEQ_COLUMN_COEFF"] = 'LA_corrected'
             slm_dict["LAMAX_COLUMN_COEFF"] = 'LAmax_corrected'
             slm_dict["LAMIN_COLUMN_COEFF"] = 'LAmin_corrected'
+
 
             # Plotting night evolution
             if PLOT_NIGHT_EVOLUTION:

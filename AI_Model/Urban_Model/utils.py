@@ -28,13 +28,11 @@ def setup_gpu():
 def folder_result(path):
     path = path.split('\\')[2:-1]
     path = '\\\\' + '\\'.join(path)
-    print(f"Folder results: {path}")
-    # exit()
-
+    
     if not os.path.exists(path):
-        print(f"Path {path} does not exist.")
+        logging.info(f"Path {path} does not exist.")
     else:
-        print(f"Folder results: {path}")
+        logging.info(f"Folder results: {path}")
     return path
 
 

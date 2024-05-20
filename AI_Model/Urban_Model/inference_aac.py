@@ -134,7 +134,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
         sample_rates = []
         valid_audio_files = []
         logging.info(f"Reading metadata...")
-        for file in tqdm.tqdm(audio_files[:1], desc='Reading metadata'):
+        for file in tqdm.tqdm(audio_files[:100], desc='Reading metadata'):
             try:
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)
@@ -167,7 +167,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
                 logging.info(f"Classification threshold: {threshold}")
 
                 for i, prediction in enumerate(predictions_list):
-                    top_indices = np.argsort(prediction)[::-1][:3]
+                    top_indices = np.argsort(prediction)[::-1][:2]
                     
                     filtered_classes = []
                     filtered_probabilities = []

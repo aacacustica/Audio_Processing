@@ -26,19 +26,14 @@ def setup_gpu():
 
 
 def folder_result(path):
-    result_folder = '\\5-Resultados'
     path = path.split('\\')[2:-2]
     path = '\\\\' + '\\'.join(path)
 
-    result_folder = path + result_folder
-    if not os.path.exists(result_folder):
-        os.makedirs(result_folder)
-        print(f"Creating folder {result_folder}")
-        logging.info(f"Creating folder {result_folder}")
+    if not os.path.exists(path):
+        print(f"Path {path} does not exist.")
     else:
-        print(f"Results will be saved in: {result_folder}")
-        logging.info(f"Results will be saved in: {result_folder}")
-    return result_folder
+        print(f"Folder results: {path}")
+    return path
 
 
 def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder, window_size=None, stable_version=None):
@@ -66,26 +61,26 @@ def save_embeddings_funct(embeddings, subfolder_name, result_folder):
         logging.info("Saving embeddings to tensorboard...")
         
         log_dir = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'Embeddings')
-        os.makedirs(log_dir, exist_ok=True)  # Ensure the directory exists
+        os.makedirs(log_dir, exist_ok=True)
 
-        # Save the embeddings as a variable in a TensorFlow checkpoint
+        # save the embeddings as a variable in a TensorFlow checkpoint
         embedding_var = tf.Variable(embeddings, name='yamnet_embeddings')
         checkpoint = tf.train.Checkpoint(embedding=embedding_var)
         checkpoint_path = checkpoint.save(os.path.join(log_dir, 'embedding.ckpt'))
 
-        # Prepare metadata file for TensorBoard embeddings projector
+        # prepare metadata file for TensorBoard embeddings projector
         metadata_file = os.path.join(log_dir, 'metadata.tsv')
         with open(metadata_file, 'w') as metadata_writer:
             for index in range(len(embeddings)):
                 metadata_writer.write(f"{index}\n")
 
-        # Setup the projector config for visualizing embeddings in TensorBoard
+        # setup the projector config for visualizing embeddings in TensorBoard
         config = projector.ProjectorConfig()
         embedding_config = config.embeddings.add()
         embedding_config.tensor_name = embedding_var.name
         embedding_config.metadata_path = 'metadata.tsv'
         
-        # Save the config file in the log directory
+        # save the config file in the log directory
         projector.visualize_embeddings(log_dir, config)
 
         logging.info(f"Embeddings and metadata saved in {log_dir}")

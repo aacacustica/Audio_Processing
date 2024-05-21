@@ -12,12 +12,14 @@ LD_SECONDS = 21600
 LE_SECONDS = 7200
 LN_SECONDS = 14400
 
+
 # Plotting Flags there are 9 flags to plot the following plots
 PLOT_NIGHT_EVOLUTION = False
 PLOT_NIGHT_EVOLUTION_15_MIN = False 
 
 PLOT_PREDIC_LAEQ_15_MIN = False
 PLOT_PREDICTION_STACK_BAR = True
+PLOT_PREDICTION_MAP = True
 
 PLOT_MAKE_TIME_PLOT = False
 
@@ -50,23 +52,29 @@ larsonlx_dict = {'LAEQ_COLUMN': 'LAeq',
                  'LAMAX_COLUMN': 'LAFmax',
                  'LAMIN_COLUMN': 'LAFmin'}
 
+
 larson824_dict = {'LAEQ_COLUMN': 'Leq',
                   'LAMAX_COLUMN': 'Max',
                   'LAMIN_COLUMN': 'Min'}
+
 
 larson814_dict = {'LAEQ_COLUMN': 'Leq',
                   'LAMAX_COLUMN': 'Max',
                   'LAMIN_COLUMN': 'Min'}
 
+
 cesva_dict = {'LAEQ_COLUMN': 'LA1s',
               'LAMAX_COLUMN': 'LAFmax1s',
               'LAMIN_COLUMN': 'LAFmin1s'}
+
 
 sv307_dict = {'LAEQ_COLUMN': 'LAeq (Ch1, P1) [dB]',
               'LAMAX_COLUMN': 'LAFmax (Ch1, P1) [dB]',
               'LAMIN_COLUMN': 'LAFmin (Ch1, P1) [dB]'} 
 
+
 sonometer_bilbo_dict = {'LAEQ_COLUMN': 'Value'}
+
 
 audiopost_dict = {'LAEQ_COLUMN': 'LA',
                   'LAMAX_COLUMN': 'LAmax',

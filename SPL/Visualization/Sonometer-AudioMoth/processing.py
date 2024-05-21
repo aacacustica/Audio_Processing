@@ -189,8 +189,14 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
             # Plotting LEq power average with predictions
             if PLOT_PREDICTION_STACK_BAR:
-                logger.info(f"[4] Plotting PLOT_PREDICTION_MAP for folder {folder}")
+                logger.info(f"[4] Plotting PLOT_PREDICTION_STACK_BAR for folder {folder}")
                 plot_prediction_stack_bar(df, yamnet_csv, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
+            
+
+            # Plotting LEq power average with predictions
+            if PLOT_PREDICTION_MAP:
+                logger.info(f"[4] Plotting PLOT_PREDICTION_STACK_BAR for folder {folder}")
+                plot_prediction_map(df, yamnet_csv, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
 
             
             # Plotting time plot

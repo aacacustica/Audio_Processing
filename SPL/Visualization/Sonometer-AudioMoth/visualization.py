@@ -9,6 +9,7 @@ import ast
 # impor px
 import plotly.express as px
 import matplotlib.colors as mcolors
+from matplotlib.patches import Patch
 
 
 
@@ -741,16 +742,21 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
 
 def plot_prediction_stack_bar(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
     try:
-        df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
+        sns.set_style("white")
+        sns.set_palette("tab10")
+        
+        # process the prediction dataframe
         df_Pred['date'] = pd.to_datetime(df_Pred['date'])
         df_Pred = df_Pred.sort_values(by='date')
         # set date as index without drop the column itself
         df_Pred.set_index('date', inplace=True, drop=False)
+
+        # make duration to make the resample to 15 minutes
         start_date = df_Pred['date'].iloc[0]
         end_date = df_Pred['date'].iloc[-1]
         difference_between_first_days = df_Pred['date'].iloc[1] - df_Pred['date'].iloc[0]
-        print(f"Start date {start_date} and End date {end_date}")
-        print(f"Difference between first and second date: {difference_between_first_days}")
+        logger.info(f"Start date {start_date} and End date {end_date}")
+        logger.info(f"Difference between first and second date: {difference_between_first_days}")
 
         # explode
         df_exploded = df_Pred.explode('class')
@@ -759,6 +765,7 @@ def plot_prediction_stack_bar(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred
 
         #~insert date
         df_exploded = insert_dates(df_exploded)
+        # get the urban_taxonomy_map
         urban_taxonomy_map = pd.read_json(r"C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Urban_Model\Visualization\urban_taxonomy_map_v1_0.json", typ='series').to_dict()
         df_exploded['mapped_class'] = df_exploded['class'].map(urban_taxonomy_map)
 
@@ -776,16 +783,13 @@ def plot_prediction_stack_bar(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred
 
         # remove Unnamed columns
         df_exploded = df_exploded.loc[:, ~df_exploded.columns.str.contains('^Unnamed')]
-
         # rename columns
         df_exploded.rename(columns={"fullday": "Día", "hour": "Hora", "mid": "Distribución de clases"}, inplace=True)
         unique_día_weekday = df_exploded['Día'].unique()
-
+        #set to categorical
         df_exploded['Día'] = pd.Categorical(df_exploded['Día'], categories=unique_día_weekday, ordered=True)
-        df_exploded.columns
 
         dfg = df_exploded.groupby(['Brown_Level_2','Día']).count().reset_index()
-
         fig = px.bar(
             dfg, 
             x='Día',
@@ -797,15 +801,143 @@ def plot_prediction_stack_bar(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred
             height=900,
             width=2000
         )
+        #show the plot
+        fig.show()
 
-        print(f"{folder_output_dir}/{plotname}_prediction_map.html")
+        logger.info(f"{folder_output_dir}/{plotname}_prediction_map.html")
         fig.write_html(f"{folder_output_dir}/{plotname}_prediction_map.html")
-
-
 
     except Exception as e:
         logger.error(f"Error in plot_predic_laeq_15_min: {e}")
 
 
+def plot_prediction_map(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
+    try:
+        sns.set_style("white")
+        sns.set_palette("tab10")
 
-# def plot_
+        df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
+        
+        # process the prediction dataframe
+        df_Pred['date'] = pd.to_datetime(df_Pred['date'])
+        df_Pred = df_Pred.sort_values(by='date')
+        # set date as index without drop the column itself
+        df_Pred.set_index('date', inplace=True, drop=False)
+
+        # make duration to make the resample to 15 minutes
+        start_date = df_Pred['date'].iloc[0]
+        end_date = df_Pred['date'].iloc[-1]
+        difference_between_first_days = df_Pred['date'].iloc[1] - df_Pred['date'].iloc[0]
+        logger.info(f"Start date {start_date} and End date {end_date}")
+        logger.info(f"Difference between first and second date: {difference_between_first_days}")
+
+        # explode
+        df_exploded = df_Pred.explode('class')
+        df_exploded['display_name'] = df_exploded['class']
+        df_exploded['number'] = 1
+
+        #~insert date
+        df_exploded = insert_dates(df_exploded)
+        # get the urban_taxonomy_map
+        urban_taxonomy_map = pd.read_json(r"C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Urban_Model\Visualization\urban_taxonomy_map_v1_0.json", typ='series').to_dict()
+        df_exploded['mapped_class'] = df_exploded['class'].map(urban_taxonomy_map)
+
+
+        ################################ PLOT ################################
+        # if plot_prediction_stack_bar is greater than 1 second
+        if difference_between_first_days == pd.Timedelta(seconds=1):
+            logger.info(f"Plotting the prediction map for {plotname} equal to 1 second")
+            resampled_df = df_exploded.resample('15min').agg({
+                'filename': 'first',  # taking the first filename in each bin
+                'class': 'first',
+                'probability': 'first', 
+                'display_name': 'first', 
+                'number': 'sum',  # summing up the numbers in each bin
+                'year': 'first',
+                'month': 'first',
+                'day': 'first',
+                'hour': 'first',
+                'minute': 'first',
+                'second': 'first',
+                'weekday': 'first',
+                'fullday': 'first',
+                'mapped_class': 'first'
+            })
+
+            ###################### PLOTTING ######################
+            df_resampled = resampled_df.sort_values(by=["year", "month", "fullday"])
+
+            # map class to number
+            class_to_num = {class_name: index+1 for index, class_name in enumerate(df_resampled['mapped_class'].unique())}
+            df_resampled['class_num'] = df_resampled['mapped_class'].map(class_to_num)
+            # inverting the dictionary to get the name of the class for the legend
+            name_class = {v: k for k, v in class_to_num.items()}
+            # mapping from classes numbers to colors
+            num_to_color = {num: COLOR_PALLET_URBAN[class_name] for class_name, num in class_to_num.items()}
+            cmap = [num_to_color[cls_num] for cls_num in name_class.keys()]
+            # leggend elements colors
+            legend_elements = [Patch(facecolor=num_to_color[cls_num], label=f"Clase {cls_num} - {name_class.get(cls_num, '')}") for cls_num in name_class.keys()]
+            day_class = pd.pivot_table(data=df_resampled, columns=df_resampled.index.time, index=["year", "month", "fullday"], values="class_num", aggfunc='mean')
+
+            plt.figure(figsize=(45, 35))
+
+            if day_class.isna().all().all() or day_class.empty:
+                logger.warning("No valid data. Skipping...")
+                
+            else:
+                ax = sns.heatmap(day_class, annot=False, cmap=cmap, linewidth=0.5, cbar=False)
+                
+                ax.set_xticks(range(len(day_class.columns)))
+                ax.set_xticklabels([t.strftime('%H:%M:%S') for t in day_class.columns], rotation=90)
+                
+                yticklabels = [f"{idx[0]}-{idx[1]}-{idx[2]}" for idx in day_class.index]
+                ax.set_yticklabels(yticklabels, rotation=0)
+                
+                plt.legend(handles=legend_elements, title="Clases", loc='center left', bbox_to_anchor=(1, 0.5))
+                plt.title(f"{plotname} | Clases por día y hora")
+                plt.plot()
+
+                plt.savefig(f"{folder_output_dir}/{plotname}_prediction_map.png", bbox_inches='tight')
+                logger.info(f"Saved image at {folder_output_dir}/{plotname}_prediction_map.png")
+
+            plt.show()
+        
+        else:
+            ###################### PLOTTING ######################
+            df_exploded = df_exploded.sort_values(by=["year", "month", "fullday"])
+
+            # map class to number
+            class_to_num = {class_name: index+1 for index, class_name in enumerate(df_exploded['mapped_class'].unique())}
+            df_exploded['class_num'] = df_exploded['mapped_class'].map(class_to_num)
+            # inverting the dictionary to get the name of the class for the legend
+            name_class = {v: k for k, v in class_to_num.items()}
+            # mapping from classes numbers to colors
+            num_to_color = {num: COLOR_PALLET_URBAN[class_name] for class_name, num in class_to_num.items()}
+            cmap = [num_to_color[cls_num] for cls_num in name_class.keys()]
+            # leggend elements colors
+            legend_elements = [Patch(facecolor=num_to_color[cls_num], label=f"Clase {cls_num} - {name_class.get(cls_num, '')}") for cls_num in name_class.keys()]
+            day_class = pd.pivot_table(data=df_exploded, columns=df_exploded.index.time, index=["year", "month", "fullday"], values="class_num", aggfunc='mean')
+
+            plt.figure(figsize=(45, 35))
+
+            if day_class.isna().all().all() or day_class.empty:
+                logger.warning("No valid data. Skipping...")
+                
+            else:
+                ax = sns.heatmap(day_class, annot=False, cmap=cmap, linewidth=0.5, cbar=False)
+                
+                ax.set_xticks(range(len(day_class.columns)))
+                ax.set_xticklabels([t.strftime('%H:%M:%S') for t in day_class.columns], rotation=90)
+                
+                yticklabels = [f"{idx[0]}-{idx[1]}-{idx[2]}" for idx in day_class.index]
+                ax.set_yticklabels(yticklabels, rotation=0)
+                
+                plt.legend(handles=legend_elements, title="Clases", loc='center left', bbox_to_anchor=(1, 0.5))
+                plt.title(f"{plotname} | Clases por día y hora")
+                plt.plot()
+
+                plt.savefig(f"{folder_output_dir}/{plotname}_prediction_map.png", bbox_inches='tight')
+                logger.info(f"Saved image at {folder_output_dir}/{plotname}_prediction_map.png")
+          
+    except Exception as e:
+        logger.error(f"Error in plot_predic_laeq_15_min: {e}")

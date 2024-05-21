@@ -32,7 +32,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column: str, plo
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
         
-        # Translate the day name to Spanish from English in day_name
+        # translate the day name to Spanish
         df['Día'] = df['day_name'].replace(
             ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
             ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
@@ -804,8 +804,8 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, folder_output_dir: str, logg
         #show the plot
         fig.show()
 
-        logger.info(f"{folder_output_dir}/{plotname}_prediction_map.html")
-        fig.write_html(f"{folder_output_dir}/{plotname}_prediction_map.html")
+        fig.write_html(f"{folder_output_dir}/{plotname}_prediction_stack_map.html")
+        logger.info(f"Prediccion stack bar saved at: {folder_output_dir}/{plotname}_prediction_stack_map.html")
 
     except Exception as e:
         logger.error(f"Error in plot_prediction_stack_bar: {e}")
@@ -901,6 +901,7 @@ def plot_prediction_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, pl
             plt.show()
         
         else:
+            logger.info(f"Plotting the prediction map for {plotname} greater than 1 second")
             ###################### PLOTTING ######################
             df_exploded = df_exploded.sort_values(by=["year", "month", "fullday"])
 
@@ -992,9 +993,9 @@ def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname
                 )
 
         fig.update_layout(title=f'{plotname} | Clases por día')
-        # fig.show()
+        fig.show()
 
-        # fig.write_html(f"{folder_output_dir}/{plotname}_prediction_map.html")
+        fig.write_html(f"{folder_output_dir}/{plotname}_prediction_map.html")
         logger.info(f"{folder_output_dir}/{plotname}_prediction_map.html")
 
         #####################################      
@@ -1008,6 +1009,9 @@ def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname
                     )
             fig.update_layout(title=f'{plotname} | {day_df["year"].iloc[0]}-{day_df["month"].iloc[0]}-{day}')
             fig.show()
+
+            fig.write_html(f"{folder_output_dir}/{plotname}_prediction_map_{day}.html")
+            logger.info(f"{folder_output_dir}/{plotname}_prediction_map_{day}.html")
 
     except Exception as e:
         logger.error(f"Error in plot_tree_map: {e}")

@@ -143,7 +143,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 # add nights column
                 df['night_str'] = df.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
                 logger.info(f"Adding nights_str column")
-                
                 #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
 
                 logger.info(f"Applying db correction")
@@ -201,43 +200,43 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             
             # Plotting LEq power average with predictions
             if PLOT_TREE_MAP:
-                logger.info(f"[5] Plotting PLOT_TREE_MAP for folder {folder}")
+                logger.info(f"[6] Plotting PLOT_TREE_MAP for folder {folder}")
                 plot_tree_map(prediction_csv_file,predictions_visualization_folder, logger, plotname=folder)
 
             
             # Plotting time plot
             if PLOT_MAKE_TIME_PLOT:
-                logger.info(f"[6] Plotting time plot for folder {folder}")
+                logger.info(f"[7] Plotting time plot for folder {folder}")
                 make_time_plot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
             
 
             # Plotting heatmap evolution hour
             if PLOT_HEATMAP_EVOLUTION_HOUR:
-                logger.info(f"[7] Plotting heatmap for folder {folder}")
+                logger.info(f"[8] Plotting heatmap for folder {folder}")
                 plot_heatmap_evolution_hour(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN_COEFF'], agg_func=leq,plotname=folder)
             
             
             # Plotting heatmap evolution 15 min
             if PLOT_HEATMAP_EVOLUTION_15_MIN:
-                logger.info(f"[8] Plotting heatmap 15 min for folder {folder}")
+                logger.info(f"[9] Plotting heatmap 15 min for folder {folder}")
                 plot_heatmap_evolution_15_min(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN_COEFF'], agg_func=leq,plotname=folder)
             
 
             # Plotting individual heatmap
             if PLOT_INDICADORES_HEATMAP:
-                logger.info(f"[9] Plotting indicadores heatmap for folder {folder}")
+                logger.info(f"[10] Plotting indicadores heatmap for folder {folder}")
                 plot_indicadores_heatmap(df, folder_output_dir, logger, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN_COEFF"])
 
 
             # Plotting day evolution
             if PLOT_DAY_EVOLUTION:
-                logger.info(f"[10] Plotting day evolution for folder {folder}")
+                logger.info(f"[11] Plotting day evolution for folder {folder}")
                 plot_day_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder)
             
 
             # Plotting period evolution
             if PLOT_PERIOD_EVOLUTION:
-                logger.info(f"[11] Plotting period evolution (1) Ld (2) Le for folder {folder}")
+                logger.info(f"[12] Plotting period evolution (1) Ld (2) Le for folder {folder}")
                 plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder)
             
 

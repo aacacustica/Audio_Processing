@@ -110,8 +110,13 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 prediction_csv_file = prediction_csv(prediction_file)
             else:
                 logger.info("No CSV files found in the predictions folder.")
+        
+        predictions_visualization_folder = predictions_folder.replace("Predictions", "Visualizations")
+        if not os.path.exists(predictions_visualization_folder):
+            os.makedirs(predictions_visualization_folder)
+            logger.info(f"Created output folder: {predictions_visualization_folder}")
         ##############################################################
-            
+
         try:
             logger.info("\n")
             logger.info(f"Processing folder {folder}") 
@@ -167,22 +172,25 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             # Plotting night evolution
             if PLOT_NIGHT_EVOLUTION:
                 logger.info(f"[1] Plotting night evolution for folder {folder}")
-                # plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder, indicador_noche="Ln")
                 plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder, indicador_noche="Ln")
             
             
             # Plotting night evolution 15 min
             if PLOT_NIGHT_EVOLUTION_15_MIN:
                 logger.info(f"[2] Plotting night evolution 15 min for folder {folder}")
-                # plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=slm_dict["LAEQ_COLUMN"], plotname=folder, indicador_noche="Ln")
                 plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder, indicador_noche="Ln")
 
 
             # Plotting LEq power average with predictions
             if PLOT_PREDIC_LAEQ_15_MIN:
                 logger.info(f"[3] Plotting PLOT_PREDIC_LAEQ for folder {folder}")
-                # plot_predic_laeq_15_min(df, yamnet_csv, prediction_csv_file, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
                 plot_predic_laeq_15_min(df, yamnet_csv, prediction_csv_file, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
+
+
+            # Plotting LEq power average with predictions
+            if PLOT_PREDICTION_STACK_BAR:
+                logger.info(f"[4] Plotting PLOT_PREDICTION_MAP for folder {folder}")
+                plot_prediction_stack_bar(df, yamnet_csv, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
 
             
             # Plotting time plot

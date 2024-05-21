@@ -116,7 +116,8 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
     result_folder = folder_result(base_path)
 
     # looking for subfolders
-    for subfolder in tqdm.tqdm(find_audiomoth_folders(base_path), desc='Processing subfolders'):
+    audiomoth_folders = list(find_audiomoth_folders(base_path))
+    for subfolder in tqdm.tqdm(audiomoth_folders, desc='Processing subfolders'):
         subfolder_name = os.path.basename(subfolder)
         audio_path = os.path.join(subfolder, "AUDIOMOTH")
         logging.info(f"Processing subfolder: {subfolder}...")

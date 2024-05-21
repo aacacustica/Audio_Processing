@@ -653,12 +653,13 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
             columns_dict['LAEQ_COLUMN_COEFF']: leq,
         }
         logger.info(f"Using the agg_funcs: {agg_funcs}")
-        df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs) # 900 seconds = 15 minutes
+        # df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs) # 900 seconds = 15 minutes
+        print(df_LAeq)
 
         #########################################################
         df_Pred['datetime'] = pd.to_datetime(df_Pred['date'])
         df_Pred.set_index('datetime', inplace=True, drop=False)
-
+        print(df_Pred)
                
         start_date = max(df_LAeq.index.min(), df_Pred.index.min())
         end_date = min(df_LAeq.index.max(), df_Pred.index.max())
@@ -667,14 +668,16 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         df_Pred = df_Pred[start_date:end_date]
         df_Pred.index = df_Pred.index.round('15min')
         
+        print(df_Pred)
+        exit()
         # merge df
         df_aligned = df_LAeq.merge(df_Pred, how='left', left_index=True, right_index=True)
         # remove rows with NaN values
         df_aligned.dropna(inplace=True)
 
         # explode by list of classes
-        # df_aligned['class'] = df_aligned['class'].apply(ast.literal_eval)
-        # df_aligned['probability'] = df_aligned['probability'].apply(ast.literal_eval)
+        df_aligned['class'] = df_aligned['class'].apply(ast.literal_eval)
+        df_aligned['probability'] = df_aligned['probability'].apply(ast.literal_eval)
 
         df_exploded_classes = df_aligned.explode('class')
         df_exploded = df_aligned.apply(lambda x: x.explode() if x.name in ['class', 'probability'] else x)
@@ -733,3 +736,76 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
 
     except Exception as e:
         logger.error(f"Error in plot_predic_laeq_15_min: {e}")
+
+
+
+def plot_prediction_stack_bar(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
+    try:
+        df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
+        df_Pred['date'] = pd.to_datetime(df_Pred['date'])
+        df_Pred = df_Pred.sort_values(by='date')
+        # set date as index without drop the column itself
+        df_Pred.set_index('date', inplace=True, drop=False)
+        start_date = df_Pred['date'].iloc[0]
+        end_date = df_Pred['date'].iloc[-1]
+        difference_between_first_days = df_Pred['date'].iloc[1] - df_Pred['date'].iloc[0]
+        print(f"Start date {start_date} and End date {end_date}")
+        print(f"Difference between first and second date: {difference_between_first_days}")
+
+        # explode
+        df_exploded = df_Pred.explode('class')
+        df_exploded['display_name'] = df_exploded['class']
+        df_exploded['number'] = 1
+
+        #~insert date
+        df_exploded = insert_dates(df_exploded)
+        urban_taxonomy_map = pd.read_json(r"C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Urban_Model\Visualization\urban_taxonomy_map_v1_0.json", typ='series').to_dict()
+        df_exploded['mapped_class'] = df_exploded['class'].map(urban_taxonomy_map)
+
+
+        #################################
+        # stack bar plotting
+        union = pd.read_csv(r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Urbano\Taxonomia\yamnet_class_AAC_301123.csv",sep=';')
+
+        # merge classes with ontology
+        df_exploded = df_exploded.merge(
+            union,
+            how='left',
+            on='display_name'
+            )
+
+        # remove Unnamed columns
+        df_exploded = df_exploded.loc[:, ~df_exploded.columns.str.contains('^Unnamed')]
+
+        # rename columns
+        df_exploded.rename(columns={"fullday": "Día", "hour": "Hora", "mid": "Distribución de clases"}, inplace=True)
+        unique_día_weekday = df_exploded['Día'].unique()
+
+        df_exploded['Día'] = pd.Categorical(df_exploded['Día'], categories=unique_día_weekday, ordered=True)
+        df_exploded.columns
+
+        dfg = df_exploded.groupby(['Brown_Level_2','Día']).count().reset_index()
+
+        fig = px.bar(
+            dfg, 
+            x='Día',
+            y='Distribución de clases',
+            color='Brown_Level_2',
+            title=f'{plotname} | Clases por día',
+            color_discrete_sequence=px.colors.qualitative.Alphabet, 
+            color_discrete_map=COLOR_PALLET_URBAN,
+            height=900,
+            width=2000
+        )
+
+        print(f"{folder_output_dir}/{plotname}_prediction_map.html")
+        fig.write_html(f"{folder_output_dir}/{plotname}_prediction_map.html")
+
+
+
+    except Exception as e:
+        logger.error(f"Error in plot_predic_laeq_15_min: {e}")
+
+
+
+# def plot_

@@ -101,6 +101,8 @@ def get_day_levels_valencia(df,laeq_column):
     return indicadores
 
 
+
+
 def remove_unnamed_columns(df_preds):
     df_preds = df_preds.loc[:, ~df_preds.columns.str.contains('^Unnamed')]
     df_preds = df_preds.drop(columns=['Brown_Level_1'])
@@ -116,7 +118,7 @@ def yamnet_class_map_csv():
 
 
 def prediction_csv(path_input):
-    df_prediction = pd.read_csv(path_input)
+    df_prediction = pd.read_csv(path_input, converters={'class': eval, 'probability': eval})
     columns_to_check = ["classes_custom", "probabilities_custom", "sum_probs_custom", "sum_probs_original"]
     
     for col in columns_to_check:
@@ -133,6 +135,30 @@ def prediction_csv(path_input):
 
     return df_prediction
 
+
+def insert_dates(df):
+    df["year"] = df.index.year
+    df["month"] = df.index.month
+    df["day"] = df.index.day
+    df["hour"] = df.index.hour
+    df["minute"] = df.index.minute
+    df["second"] = df.index.second
+    df["weekday"] = df.index.day_name()
+
+    weekday_translation = {
+        "Monday": " Lunes",
+        "Tuesday": " Martes",
+        "Wednesday": " Miércoles",
+        "Thursday": " Jueves",
+        "Friday": " Viernes",
+        "Saturday": " Sábado",
+        "Sunday": " Domingo"
+    }
+    df["weekday"] = df["weekday"].replace(weekday_translation)
+    df["weekday"] = df["weekday"].astype(str)
+    df["day"] = df["day"].astype(str).str.zfill(2)
+    df["fullday"] = df["day"] + df["weekday"]
+    return df
 
 
 def remove_row_out_timespan(df_LAeq, df_Pred):

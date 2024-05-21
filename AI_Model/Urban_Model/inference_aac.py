@@ -134,7 +134,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
         sample_rates = []
         valid_audio_files = []
         logging.info(f"Reading metadata...")
-        for file in tqdm.tqdm(audio_files[:100], desc='Reading metadata'):
+        for file in tqdm.tqdm(audio_files, desc='Reading metadata'):
             try:
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)

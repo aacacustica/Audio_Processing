@@ -740,7 +740,7 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
 
 
 
-def plot_prediction_stack_bar(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
+def plot_prediction_stack_bar(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname: str):
     try:
         sns.set_style("white")
         sns.set_palette("tab10")
@@ -808,15 +808,13 @@ def plot_prediction_stack_bar(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred
         fig.write_html(f"{folder_output_dir}/{plotname}_prediction_map.html")
 
     except Exception as e:
-        logger.error(f"Error in plot_predic_laeq_15_min: {e}")
+        logger.error(f"Error in plot_prediction_stack_bar: {e}")
 
 
-def plot_prediction_map(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
+def plot_prediction_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname: str):
     try:
         sns.set_style("white")
         sns.set_palette("tab10")
-
-        df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
         
         # process the prediction dataframe
         df_Pred['date'] = pd.to_datetime(df_Pred['date'])
@@ -940,4 +938,76 @@ def plot_prediction_map(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.Da
                 logger.info(f"Saved image at {folder_output_dir}/{plotname}_prediction_map.png")
           
     except Exception as e:
-        logger.error(f"Error in plot_predic_laeq_15_min: {e}")
+        logger.error(f"Error in plot_prediction_map: {e}")
+
+
+def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname: str):
+    try:
+        sns.set_style("white")
+        sns.set_palette("tab10")
+        
+        # process the prediction dataframe
+        df_Pred['date'] = pd.to_datetime(df_Pred['date'])
+        df_Pred = df_Pred.sort_values(by='date')
+        # set date as index without drop the column itself
+        df_Pred.set_index('date', inplace=True, drop=False)
+
+        # make duration to make the resample to 15 minutes
+        start_date = df_Pred['date'].iloc[0]
+        end_date = df_Pred['date'].iloc[-1]
+        difference_between_first_days = df_Pred['date'].iloc[1] - df_Pred['date'].iloc[0]
+        logger.info(f"Start date {start_date} and End date {end_date}")
+        logger.info(f"Difference between first and second date: {difference_between_first_days}")
+
+        # explode
+        df_exploded = df_Pred.explode('class')
+        df_exploded['display_name'] = df_exploded['class']
+        df_exploded['number'] = 1
+
+        #~insert date
+        df_exploded = insert_dates(df_exploded)
+        # get the urban_taxonomy_map
+        urban_taxonomy_map = pd.read_json(r"C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Urban_Model\Visualization\urban_taxonomy_map_v1_0.json", typ='series').to_dict()
+        df_exploded['mapped_class'] = df_exploded['class'].map(urban_taxonomy_map)
+
+
+        #################################
+        union = pd.read_csv(r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Urbano\Taxonomia\yamnet_class_AAC_301123.csv",sep=';')
+
+        # merge classes with ontology
+        df_exploded = df_exploded.merge(
+            union,
+            how='left',
+            on='display_name'
+            )
+
+        # remove Unnamed columns
+        df_exploded = df_exploded.loc[:, ~df_exploded.columns.str.contains('^Unnamed')]
+
+        fig = px.treemap(df_exploded, 
+                 path=['Brown_Level_2', 'class'], 
+                 values='number',
+                 color='Brown_Level_2',  #for coloring
+                 color_discrete_map=COLOR_PALLET_URBAN
+                )
+
+        fig.update_layout(title=f'{plotname} | Clases por día')
+        # fig.show()
+
+        # fig.write_html(f"{folder_output_dir}/{plotname}_prediction_map.html")
+        logger.info(f"{folder_output_dir}/{plotname}_prediction_map.html")
+
+        #####################################      
+        for day in df_exploded['day'].unique():
+            day_df = df_exploded[df_exploded['day'] == day]
+            fig = px.treemap(day_df, 
+                     path=['Brown_Level_2', 'class'], 
+                     values='number',
+                     color='Brown_Level_2',  #for coloring
+                     color_discrete_map=COLOR_PALLET_URBAN
+                    )
+            fig.update_layout(title=f'{plotname} | {day_df["year"].iloc[0]}-{day_df["month"].iloc[0]}-{day}')
+            fig.show()
+
+    except Exception as e:
+        logger.error(f"Error in plot_tree_map: {e}")

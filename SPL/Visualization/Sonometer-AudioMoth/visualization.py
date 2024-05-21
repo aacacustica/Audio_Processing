@@ -754,7 +754,7 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, folder_output_dir: str, logg
         # make duration to make the resample to 15 minutes
         start_date = df_Pred['date'].iloc[0]
         end_date = df_Pred['date'].iloc[-1]
-        difference_between_first_days = df_Pred['date'].iloc[1] - df_Pred['date'].iloc[0]
+        difference_between_first_days = df_Pred['date'].iloc[10] - df_Pred['date'].iloc[9]
         logger.info(f"Start date {start_date} and End date {end_date}")
         logger.info(f"Difference between first and second date: {difference_between_first_days}")
 
@@ -769,17 +769,11 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, folder_output_dir: str, logg
         urban_taxonomy_map = pd.read_json(r"C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Urban_Model\Visualization\urban_taxonomy_map_v1_0.json", typ='series').to_dict()
         df_exploded['mapped_class'] = df_exploded['class'].map(urban_taxonomy_map)
 
-
         #################################
         # stack bar plotting
         union = pd.read_csv(r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Urbano\Taxonomia\yamnet_class_AAC_301123.csv",sep=';')
-
         # merge classes with ontology
-        df_exploded = df_exploded.merge(
-            union,
-            how='left',
-            on='display_name'
-            )
+        df_exploded = df_exploded.merge(union,how='left',on='display_name')
 
         # remove Unnamed columns
         df_exploded = df_exploded.loc[:, ~df_exploded.columns.str.contains('^Unnamed')]
@@ -795,17 +789,19 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, folder_output_dir: str, logg
             x='Día',
             y='Distribución de clases',
             color='Brown_Level_2',
-            title=f'{plotname} | Clases por día',
+            title=f'{plotname} | Clases por día desde {start_date} hasta {end_date}',
             color_discrete_sequence=px.colors.qualitative.Alphabet, 
             color_discrete_map=COLOR_PALLET_URBAN,
             height=900,
             width=2000
         )
-        #show the plot
-        fig.show()
 
         fig.write_html(f"{folder_output_dir}/{plotname}_prediction_stack_map.html")
         logger.info(f"Prediccion stack bar saved at: {folder_output_dir}/{plotname}_prediction_stack_map.html")
+
+        # save csv with the data
+        dfg.to_csv(f"{folder_output_dir}/{plotname}_prediction_stack_map.csv")
+        logger.info(f"Saved csv at {folder_output_dir}/{plotname}_prediction_stack_map.csv")
 
     except Exception as e:
         logger.error(f"Error in plot_prediction_stack_bar: {e}")
@@ -825,7 +821,7 @@ def plot_prediction_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, pl
         # make duration to make the resample to 15 minutes
         start_date = df_Pred['date'].iloc[0]
         end_date = df_Pred['date'].iloc[-1]
-        difference_between_first_days = df_Pred['date'].iloc[1] - df_Pred['date'].iloc[0]
+        difference_between_first_days = df_Pred['date'].iloc[10] - df_Pred['date'].iloc[9]
         logger.info(f"Start date {start_date} and End date {end_date}")
         logger.info(f"Difference between first and second date: {difference_between_first_days}")
 
@@ -878,10 +874,8 @@ def plot_prediction_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, pl
             day_class = pd.pivot_table(data=df_resampled, columns=df_resampled.index.time, index=["year", "month", "fullday"], values="class_num", aggfunc='mean')
 
             plt.figure(figsize=(45, 35))
-
             if day_class.isna().all().all() or day_class.empty:
                 logger.warning("No valid data. Skipping...")
-                
             else:
                 ax = sns.heatmap(day_class, annot=False, cmap=cmap, linewidth=0.5, cbar=False)
                 
@@ -892,13 +886,15 @@ def plot_prediction_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, pl
                 ax.set_yticklabels(yticklabels, rotation=0)
                 
                 plt.legend(handles=legend_elements, title="Clases", loc='center left', bbox_to_anchor=(1, 0.5))
-                plt.title(f"{plotname} | Clases por día y hora")
-                plt.plot()
+                plt.title(f"{plotname} | Clases por día y hora desde {start_date} hasta {end_date}")
 
                 plt.savefig(f"{folder_output_dir}/{plotname}_prediction_map.png", bbox_inches='tight')
                 logger.info(f"Saved image at {folder_output_dir}/{plotname}_prediction_map.png")
 
-            plt.show()
+                # save csv with the data
+                day_class.to_csv(f"{folder_output_dir}/{plotname}_prediction_map.csv")
+                logger.info(f"Saved csv at {folder_output_dir}/{plotname}_prediction_map.csv")
+
         
         else:
             logger.info(f"Plotting the prediction map for {plotname} greater than 1 second")
@@ -921,7 +917,6 @@ def plot_prediction_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, pl
 
             if day_class.isna().all().all() or day_class.empty:
                 logger.warning("No valid data. Skipping...")
-                
             else:
                 ax = sns.heatmap(day_class, annot=False, cmap=cmap, linewidth=0.5, cbar=False)
                 
@@ -932,11 +927,14 @@ def plot_prediction_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, pl
                 ax.set_yticklabels(yticklabels, rotation=0)
                 
                 plt.legend(handles=legend_elements, title="Clases", loc='center left', bbox_to_anchor=(1, 0.5))
-                plt.title(f"{plotname} | Clases por día y hora")
-                plt.plot()
+                plt.title(f"{plotname} | Clases por día y hora desde {start_date} hasta {end_date}")
 
                 plt.savefig(f"{folder_output_dir}/{plotname}_prediction_map.png", bbox_inches='tight')
                 logger.info(f"Saved image at {folder_output_dir}/{plotname}_prediction_map.png")
+
+                # save csv with the data
+                day_class.to_csv(f"{folder_output_dir}/{plotname}_prediction_map.csv")
+                logger.info(f"Saved csv at {folder_output_dir}/{plotname}_prediction_map.csv")
           
     except Exception as e:
         logger.error(f"Error in plot_prediction_map: {e}")
@@ -956,7 +954,7 @@ def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname
         # make duration to make the resample to 15 minutes
         start_date = df_Pred['date'].iloc[0]
         end_date = df_Pred['date'].iloc[-1]
-        difference_between_first_days = df_Pred['date'].iloc[1] - df_Pred['date'].iloc[0]
+        difference_between_first_days = df_Pred['date'].iloc[10] - df_Pred['date'].iloc[9]
         logger.info(f"Start date {start_date} and End date {end_date}")
         logger.info(f"Difference between first and second date: {difference_between_first_days}")
 
@@ -971,17 +969,11 @@ def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname
         urban_taxonomy_map = pd.read_json(r"C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Urban_Model\Visualization\urban_taxonomy_map_v1_0.json", typ='series').to_dict()
         df_exploded['mapped_class'] = df_exploded['class'].map(urban_taxonomy_map)
 
-
         #################################
         union = pd.read_csv(r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Urbano\Taxonomia\yamnet_class_AAC_301123.csv",sep=';')
 
         # merge classes with ontology
-        df_exploded = df_exploded.merge(
-            union,
-            how='left',
-            on='display_name'
-            )
-
+        df_exploded = df_exploded.merge(union, how='left', on='display_name')
         # remove Unnamed columns
         df_exploded = df_exploded.loc[:, ~df_exploded.columns.str.contains('^Unnamed')]
 
@@ -992,11 +984,14 @@ def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname
                  color_discrete_map=COLOR_PALLET_URBAN
                 )
 
-        fig.update_layout(title=f'{plotname} | Clases por día')
-        fig.show()
+        fig.update_layout(title=f'{plotname} | Clases por día desde {start_date} hasta {end_date}')
 
         fig.write_html(f"{folder_output_dir}/{plotname}_prediction_map.html")
         logger.info(f"{folder_output_dir}/{plotname}_prediction_map.html")
+
+        # save csv with the data
+        df_exploded.to_csv(f"{folder_output_dir}/{plotname}_prediction_map.csv")
+        logger.info(f"Saved csv at {folder_output_dir}/{plotname}_prediction_map.csv")
 
         #####################################      
         for day in df_exploded['day'].unique():
@@ -1007,11 +1002,15 @@ def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname
                      color='Brown_Level_2',  #for coloring
                      color_discrete_map=COLOR_PALLET_URBAN
                     )
+            
             fig.update_layout(title=f'{plotname} | {day_df["year"].iloc[0]}-{day_df["month"].iloc[0]}-{day}')
-            fig.show()
 
             fig.write_html(f"{folder_output_dir}/{plotname}_prediction_map_{day}.html")
             logger.info(f"{folder_output_dir}/{plotname}_prediction_map_{day}.html")
+
+            # save csv with the data
+            day_df.to_csv(f"{folder_output_dir}/{plotname}_prediction_map_{day}.csv")
+            logger.info(f"Saved csv at {folder_output_dir}/{plotname}_prediction_map_{day}.csv")
 
     except Exception as e:
         logger.error(f"Error in plot_tree_map: {e}")

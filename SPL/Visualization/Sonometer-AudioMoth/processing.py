@@ -98,7 +98,9 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             os.makedirs(folder_output_dir)
             logger.info(f"Created output folder: {folder_output_dir}")
             
-        ##### trying to get the prediction file for each folder #####
+
+        ##############################################################
+        ########## GETTING PREDICTION FILE FOR EACH FOLDER ###########
         predictions_folder = os.path.join(folder.replace('3-Medidas', '5-Resultados'), "AI_MODEL", "Predictions")
         if not os.path.exists(predictions_folder):
             logger.error(f"Predictions folder not found: {predictions_folder}")
@@ -117,6 +119,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             logger.info(f"Created output folder: {predictions_visualization_folder}")
         ##############################################################
 
+
         try:
             logger.info("\n")
             logger.info(f"Processing folder {folder}") 
@@ -124,26 +127,45 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if df is None:
                 logger.info(f"df is None")
                 continue
-            
+
+
             # add datetime columns, sort by datetime and set datetime as index
-            df = add_datetime_columns(df, date_col='datetime') 
+            logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
+            df = add_datetime_columns(df,logger, date_col='datetime') 
             df = df.sort_values('datetime')
-            df.set_index('datetime', inplace=True)
+            df.set_index('datetime', inplace=True, drop=False)
             start_date = df.index[0]
             end_date = df.index[-1]
+            logger.info(f"Start date {start_date} and end date {end_date}")
+            logger.info(f"df was sorted by datetime and datetime was set as index")
+
+            # the same for the prediction file
+            logger.info(f"FOR PREDICTION FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
+            prediction_csv_file = add_datetime_columns_pred(prediction_csv_file, logger, date_col='date')
+            prediction_csv_file = prediction_csv_file.sort_values('date')
+            prediction_csv_file.set_index('date', inplace=True, drop=False)
+            pred_start_date = prediction_csv_file.index[0]
+            pred_end_date = prediction_csv_file.index[-1]
+            logger.info(f"Start date {pred_start_date} and end date {pred_end_date}")
             logger.info(f"df was sorted by datetime and datetime was set as index")
             
             try:
                 # drop the beginning and ending of the measurement (15min)
                 df = df.loc[start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')]
-                logger.info(f"df was trimmed, {REMOVE_START_TIME} secs from the beggining and {REMOVE_END_TIME} secs from the end")
+                logger.info(f"SPL df was trimmed, {REMOVE_START_TIME} secs from the beggining and {REMOVE_END_TIME} secs from the end")
+                prediction_csv_file = prediction_csv_file.loc[pred_start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):pred_end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')]
+                logger.info(f"Prediction df was trimmed, {REMOVE_START_TIME} secs from the beggining and {REMOVE_END_TIME} secs from the end")
 
                 # add indicators column
+                logger.info(f"Adding indicators column")
                 df['indicador_str'] = df.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
+                prediction_csv_file['indicador_str'] = prediction_csv_file.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
                 # add nights column
+                logger.info(f"Adding nights column")
                 df['night_str'] = df.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
-                logger.info(f"Adding nights_str column")
+                prediction_csv_file['night_str'] = prediction_csv_file.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
                 #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
+
 
                 logger.info(f"Applying db correction")
                 for key, value in folder_coefficients.items():
@@ -154,8 +176,9 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                     if folder == key:
                         df = apply_db_correction(df, value)
                         logger.info(f"Apply {value} correction coefficient to the folder {folder}")
-            except:
-                logger.error(f"An error occurred while trimming the dataframe")
+
+            except Exception as e:
+                logger.error(f"An error occurred while trimming the dataframe {e}")
                 continue
             
             logger.info("")        

@@ -37,16 +37,36 @@ def add_night_column(hour_column, day_col):
     return night
 
 
-def add_datetime_columns(df,date_col):
+def add_datetime_columns(df,logging, date_col):
+    df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
+
     #df['day_hour'] = df.apply(lambda x: str(x[date_col].day) + '-' + str(x[date_col].hour),axis=1)
-    df['date'] = df[date_col].dt.date
-    df['day'] = df[date_col].dt.day
-    df['hour'] = df[date_col].dt.hour
-    df['weekday'] = df[date_col].dt.weekday
-    df['day_name'] = df[date_col].dt.day_name()
-    
+    if df[date_col].dtype == 'datetime64[ns]':
+        df['date'] = df[date_col].dt.date
+        df['day'] = df[date_col].dt.day
+        df['hour'] = df[date_col].dt.hour
+        df['weekday'] = df[date_col].dt.weekday
+        df['day_name'] = df[date_col].dt.day_name()
+    else:
+        logging.error(f"Failed to convert {date_col} to datetime in some rows.")
     #df['min_sec_str'] = df.apply(lambda x: datetime.datetime.strftime(x[date_col],'%M:%S'),axis=1)
     #df['min_sec_15_str'] = df.apply(lambda x: str(x[date_col].minute % 15) + '-'+str(x[date_col].second),axis=1)
+    return df
+
+
+def add_datetime_columns_pred(df,logging, date_col):
+    logging.info(f"Adding datetime columns to {date_col}...")
+    df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
+
+    if df[date_col].dtype == 'datetime64[ns]':
+        df['datetime'] = df[date_col].dt.date
+        df['day'] = df[date_col].dt.day
+        df['hour'] = df[date_col].dt.hour
+        df['weekday'] = df[date_col].dt.weekday
+        df['day_name'] = df[date_col].dt.day_name()
+    else:
+        logging.error(f"Failed to convert {date_col} to datetime in some rows.")
+
     return df
 
 

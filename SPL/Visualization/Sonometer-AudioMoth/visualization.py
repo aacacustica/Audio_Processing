@@ -643,103 +643,6 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         logger.error(f"Error in plot_indicadores_heatmap: {e}")
 
 
-        
-# def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
-#     try:
-#         # remove nan values
-#         df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
-#         logger.info(f"Using the columns_dict: {columns_dict}")
-
-#         agg_funcs = {
-#             columns_dict['LAEQ_COLUMN_COEFF']: leq,
-#         }
-#         logger.info(f"Using the agg_funcs: {agg_funcs}")
-#         df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs) # 900 seconds = 15 minutes
-#         print(df_LAeq)
-
-#         #########################################################
-#         df_Pred['datetime'] = pd.to_datetime(df_Pred['date'])
-#         df_Pred.set_index('datetime', inplace=True, drop=False)
-#         print(df_Pred)
-               
-#         start_date = max(df_LAeq.index.min(), df_Pred.index.min())
-#         end_date = min(df_LAeq.index.max(), df_Pred.index.max())
-
-#         df_LAeq = df_LAeq[start_date:end_date]
-#         df_Pred = df_Pred[start_date:end_date]
-#         df_Pred.index = df_Pred.index.round('15min')
-        
-#         print(df_Pred)
-#         exit()
-#         # merge df
-#         df_aligned = df_LAeq.merge(df_Pred, how='left', left_index=True, right_index=True)
-#         # remove rows with NaN values
-#         df_aligned.dropna(inplace=True)
-
-#         # explode by list of classes
-#         df_aligned['class'] = df_aligned['class'].apply(ast.literal_eval)
-#         df_aligned['probability'] = df_aligned['probability'].apply(ast.literal_eval)
-
-#         df_exploded_classes = df_aligned.explode('class')
-#         df_exploded = df_aligned.apply(lambda x: x.explode() if x.name in ['class', 'probability'] else x)
-#         print(df_exploded)
-#         exit()
-#         # create the df_all, merge with the audioset dataframe
-#         df_exploded['display_name'] = df_exploded['class']
-#         df_all = df_exploded.merge(yamnet_csv, how='left', on='display_name')
-#         df_all = df_all.dropna(subset=['display_name'])
-#         exit()
-#         #########################################################
-#         #### Plotting the data ####
-        
-#         display_name = 'display_name'
-#         iso_taxonomy = 'iso_taxonomy'
-#         classes = 'class'
-
-#         brown_1 = 'Brown_Level_1'
-#         brown_2 = 'Brown_Level_2'
-#         brown_3 = 'Brown_Level_3'
-
-#         class_to_plot = brown_2
-
-#         grouped_df = df_all.groupby(class_to_plot).agg(
-#             number=(classes, 'size'),
-#             LAeq=('LA_corrected', lambda x: leq(x))
-#         ).reset_index()
-
-#         print(grouped_df)
-#         exit()
-
-#         fig = px.treemap(grouped_df, 
-#                         path=[class_to_plot],  
-#                         values='number',
-#                         color='LAeq',
-#                         color_continuous_scale=custom_color_scale,
-#                         range_color=[30, 85],
-#                         hover_data={'LAeq': True, 'number': True},
-#                         custom_data=['LAeq'],                  
-#                         )
-
-#         fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) por Clases')
-#         fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
-#         fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
-
-
-#         os.makedirs(folder_output_dir, exist_ok=True)
-
-#         logger.info(f"Saving the plot {plotname}")
-#         fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_mean.html")
-#         logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean.html")
-
-#         logger.info(f"Saving the data {plotname}")
-#         grouped_df.to_csv(f"{folder_output_dir}/{plotname}_LAeq_class_mean.csv", index=False)
-#         logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean.csv")
-
-#     except Exception as e:
-#         logger.error(f"Error in plot_predic_laeq_15_min: {e}")
-
-
-
 def plot_prediction_stack_bar(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname: str):
     try:
         sns.set_style("white")
@@ -986,72 +889,70 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
         logger.info(f"Using the columns_dict: {columns_dict}")
 
-        print(df)
         # # check
         spl_start_date = df['datetime'].iloc[0]
         spl_end_date = df['datetime'].iloc[-1]
         spl_difference_between_first_days = df['datetime'].iloc[10] - df['datetime'].iloc[9]
-        print(f"SPL file: Start date {spl_start_date} and End date {spl_end_date}")
-        print(f"SPL file: Difference between first and second date: {spl_difference_between_first_days}")
+        logger.info(f"SPL file: Start date {spl_start_date} and End date {spl_end_date}")
+        logger.info(f"SPL file: Difference between first and second date: {spl_difference_between_first_days}")
 
-
-
-        print(df_Pred)
-        # check
-        print()
         pred_start_date = df_Pred['date'].iloc[0]
         pred_end_date = df_Pred['date'].iloc[-1]
-        print(f"Pred file: Start date {pred_start_date} and End date {pred_end_date}")
+        logger.info(f"Pred file: Start date {pred_start_date} and End date {pred_end_date}")
         pred_difference_between_first_days = df_Pred['date'].iloc[10] - df_Pred['date'].iloc[9]
-        print(f"Pred file: Difference between first and second date: {pred_difference_between_first_days}")
-
-
-
-        exit()
-
-
-
-        ####################################################################
+        logger.info(f"Pred file: Difference between first and second date: {pred_difference_between_first_days}")
 
         agg_funcs = {
             columns_dict['LAEQ_COLUMN_COEFF']: leq,
         }
-        logger.info(f"Using the agg_funcs: {agg_funcs}")
-        df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs) # 900 seconds = 15 minutes
-        print(df_LAeq)
 
-        #########################################################
-        df_Pred['datetime'] = pd.to_datetime(df_Pred['date'])
-        df_Pred.set_index('datetime', inplace=True, drop=False)
-        print(df_Pred)
-               
+        if pred_difference_between_first_days >= pd.Timedelta(minutes=15):
+            logger.info(f"Resampling the SPL file to 15 minutes")
+            df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs)
+        else:
+            logger.info(f"No Resampling the SPL file")
+            df_LAeq = df
+
+
         start_date = max(df_LAeq.index.min(), df_Pred.index.min())
         end_date = min(df_LAeq.index.max(), df_Pred.index.max())
 
         df_LAeq = df_LAeq[start_date:end_date]
         df_Pred = df_Pred[start_date:end_date]
         df_Pred.index = df_Pred.index.round('15min')
-        
-        print(df_Pred)
-        exit()
+
+        # check if the first date for lae and pred is the same
+        check_dilay = df_LAeq.index[0] - df_Pred.index[0]
+        if check_dilay != pd.Timedelta(seconds=0):
+            logger.info(f"The mismatch for LAeq and Pred date is {check_dilay}")
+
+            # check which is earlier, and apply the shift
+            if df_LAeq.index[0] < df_Pred.index[0]:
+                df_LAeq = df_LAeq.shift(periods=abs(check_dilay.seconds), freq='s')
+            else:
+                df_Pred = df_Pred.shift(periods=abs(check_dilay.seconds), freq='s')
+            logger.info(f"Shifted the data to match the dates")
+
+
         # merge df
         df_aligned = df_LAeq.merge(df_Pred, how='left', left_index=True, right_index=True)
         # remove rows with NaN values
         df_aligned.dropna(inplace=True)
 
-        # explode by list of classes
-        df_aligned['class'] = df_aligned['class'].apply(ast.literal_eval)
-        df_aligned['probability'] = df_aligned['probability'].apply(ast.literal_eval)
+        ####################################################################
+        df_aligned['class_probability'] = df_aligned.apply(lambda x: list(zip(x['class'], x['probability'])), axis=1)
+        df_exploded = df_aligned.explode('class_probability')
+        df_exploded['class'] = df_exploded['class_probability'].apply(lambda x: x[0])
+        df_exploded['probability'] = df_exploded['class_probability'].apply(lambda x: x[1])
+        df_exploded = df_exploded.drop(columns=['class_probability'])
 
-        df_exploded_classes = df_aligned.explode('class')
-        df_exploded = df_aligned.apply(lambda x: x.explode() if x.name in ['class', 'probability'] else x)
-        print(df_exploded)
-        exit()
+        ####################################################################
+
         # create the df_all, merge with the audioset dataframe
         df_exploded['display_name'] = df_exploded['class']
         df_all = df_exploded.merge(yamnet_csv, how='left', on='display_name')
         df_all = df_all.dropna(subset=['display_name'])
-        exit()
+    
         #########################################################
         #### Plotting the data ####
         
@@ -1062,6 +963,7 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         brown_1 = 'Brown_Level_1'
         brown_2 = 'Brown_Level_2'
         brown_3 = 'Brown_Level_3'
+        noiseport = 'NoisePort'
 
         class_to_plot = brown_2
 
@@ -1069,9 +971,6 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
             number=(classes, 'size'),
             LAeq=('LA_corrected', lambda x: leq(x))
         ).reset_index()
-
-        print(grouped_df)
-        exit()
 
         fig = px.treemap(grouped_df, 
                         path=[class_to_plot],  
@@ -1086,7 +985,6 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) por Clases')
         fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
         fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
-
 
         os.makedirs(folder_output_dir, exist_ok=True)
 

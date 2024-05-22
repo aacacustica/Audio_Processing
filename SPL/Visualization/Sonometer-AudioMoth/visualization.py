@@ -533,20 +533,27 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         sns.set_palette("tab10")
 
         if "Fecha" not in df.columns and "Date hour" in df.columns:
+            logger.info(f"Date hour column found, using it as Fecha")
             # df["Fecha"] = df["Date hour"]
             df["Fecha"] = pd.to_datetime(df['Date hour'], dayfirst=True)
+            logger.info(f"Date hour column found, using it as Fecha")
         
         if "Fecha" not in df.columns and "Time" in df.columns:
+            logger.info(f"Time column found, using it as Fecha")
             df["Fecha"] = pd.to_datetime(df['Time'], dayfirst=True)
+            logger.info(f"Time column found, using it as Fecha")
             
-        if "Fecha" not in df.columns:
+        if "Fecha" not in df.columns and "marcadores" in df.columns:
+            logger.info("No Fecha column found")
             # reindex datetime index column
             if isinstance(df.index, pd.DatetimeIndex):
                 df.reset_index(inplace=True)
                 df["Fecha"] = pd.to_datetime(df['datetime'], dayfirst=True)
-        
-        # add a day to the date
-        # df['Fecha'] = df['Fecha'] + pd.DateOffset(days=1)
+                logger.info(f"Using the datetime index as Fecha")
+
+        if "Fecha" not in df.columns and 'OVLD' not in df.columns:
+            # copy 'date' colimn and named it as 'Fecha'
+            df['Fecha'] = df['datetime']
 
         df_indicadores = (df.groupby(['date','indicador_str'])['Fecha'].agg(['first','last']))
         df_indicadores['duration'] = df_indicadores.apply(lambda row: calculate_duration(row['first'], row['last']), axis=1)
@@ -647,12 +654,6 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, folder_output_dir: str, logg
     try:
         sns.set_style("white")
         sns.set_palette("tab10")
-        
-        # process the prediction dataframe
-        df_Pred['date'] = pd.to_datetime(df_Pred['date'])
-        df_Pred = df_Pred.sort_values(by='date')
-        # set date as index without drop the column itself
-        df_Pred.set_index('date', inplace=True, drop=False)
 
         # make duration to make the resample to 15 minutes
         start_date = df_Pred['date'].iloc[0]
@@ -714,12 +715,6 @@ def plot_prediction_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, pl
     try:
         sns.set_style("white")
         sns.set_palette("tab10")
-        
-        # process the prediction dataframe
-        df_Pred['date'] = pd.to_datetime(df_Pred['date'])
-        df_Pred = df_Pred.sort_values(by='date')
-        # set date as index without drop the column itself
-        df_Pred.set_index('date', inplace=True, drop=False)
 
         # make duration to make the resample to 15 minutes
         start_date = df_Pred['date'].iloc[0]
@@ -810,12 +805,6 @@ def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname
     try:
         sns.set_style("white")
         sns.set_palette("tab10")
-        
-        # process the prediction dataframe
-        df_Pred['date'] = pd.to_datetime(df_Pred['date'])
-        df_Pred = df_Pred.sort_values(by='date')
-        # set date as index without drop the column itself
-        df_Pred.set_index('date', inplace=True, drop=False)
 
         # make duration to make the resample to 15 minutes
         start_date = df_Pred['date'].iloc[0]

@@ -209,19 +209,19 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 plot_predic_laeq_15_min(df, yamnet_csv, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
 
 
-            # Plotting LEq power average with predictions
+            # Plotting stack bar with predictions class
             if PLOT_PREDICTION_STACK_BAR:
                 logger.info(f"[4] Plotting PLOT_PREDICTION_STACK_BAR for folder {folder}")
                 plot_prediction_stack_bar(prediction_csv_file, predictions_visualization_folder, logger, plotname=folder)
             
 
-            # Plotting LEq power average with predictions
+            # Plotting prediction map
             if PLOT_PREDICTION_MAP:
                 logger.info(f"[5] Plotting PLOT_PREDICTION_MAP for folder {folder}")
                 plot_prediction_map(prediction_csv_file, predictions_visualization_folder, logger, plotname=folder)
 
             
-            # Plotting LEq power average with predictions
+            # Plotting tree map
             if PLOT_TREE_MAP:
                 logger.info(f"[6] Plotting PLOT_TREE_MAP for folder {folder}")
                 plot_tree_map(prediction_csv_file,predictions_visualization_folder, logger, plotname=folder)

@@ -113,7 +113,6 @@ class AudioClassifier:
 
 def process_audio_files(classifier, base_path, window_size, threshold, stable_version, save_embeddings, save_spectrogram, save_clips):
     col_names = ['filename', 'date', 'class', 'probability']
-    result_folder = folder_result(base_path)
 
     # looking for subfolders
     audiomoth_folders = list(find_audiomoth_folders(base_path))
@@ -135,7 +134,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
         sample_rates = []
         valid_audio_files = []
         logging.info(f"Reading metadata...")
-        for file in tqdm.tqdm(audio_files, desc='Reading metadata'):
+        for file in tqdm.tqdm(audio_files[:1], desc='Reading metadata'):
             try:
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)
@@ -159,7 +158,9 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
                 predictions_list, embeddings = classifier.process_single_file(full_path, window_size, save_embeddings, save_spectrogram, save_clips)
 
                 if save_embeddings:
-                    save_embeddings_funct(embeddings, subfolder_name, result_folder)
+                    # to save properly
+                    # save_embeddings_funct(embeddings, subfolder_name, result_folder)
+                    pass
 
                 name_split = file_name.split(".")[0]
                 start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
@@ -192,7 +193,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
 
         # save predictions to csv
         if all_data_subfolder:
-            save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder, window_size, stable_version)
+            save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, window_size, stable_version)
         else:
             logging.warning(f"No data to save for folder {subfolder}")
 

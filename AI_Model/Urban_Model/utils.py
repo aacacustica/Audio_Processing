@@ -51,7 +51,8 @@ def save_embeddings_funct(embeddings, subfolder_name, result_folder):
     try:
         logging.info("Saving embeddings to tensorboard...")
         
-        log_dir = os.path.join(result_folder, subfolder_name, 'AI_MODEL', 'Embeddings')
+        log_dir = result_folder.replace('3-Medidas', '5-Resultados')
+        log_dir = os.path.join(result_folder, 'AI_MODEL', 'Embeddings')
         os.makedirs(log_dir, exist_ok=True)
 
         # save the embeddings as a variable in a TensorFlow checkpoint

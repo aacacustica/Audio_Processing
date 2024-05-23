@@ -159,7 +159,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
 
                 if save_embeddings:
                     # to save properly
-                    # save_embeddings_funct(embeddings, subfolder_name, result_folder)
+                    save_embeddings_funct(embeddings, subfolder_name, subfolder)
                     pass
 
                 name_split = file_name.split(".")[0]

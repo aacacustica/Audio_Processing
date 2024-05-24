@@ -21,7 +21,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s', 
-    filename='yamnet_inference.log', 
+    filename='clip_extraction.log', 
     filemode='a'
     )
 
@@ -32,6 +32,7 @@ class AudioClassifier:
         self.yamnet = yamnet_model.yamnet_frames_model(self.params)
         self.yamnet.load_weights('yamnet.h5')
         self.yamnet_classes = yamnet_model.class_names('yamnet_class_map.csv')
+        # self.params.classification_threshold = 0.7
 
 
     def process_single_file(self, file_path, window_size=5, save_embeddings=False, save_spectrogram=False):
@@ -48,19 +49,11 @@ class AudioClassifier:
             waveform = resampy.resample(waveform, sr, self.params.sample_rate)
             logging.warning(f"Resampling audio from {sr} to {self.params.sample_rate}")
 
-
         # process audio file
         predictions = []
         all_embeddings = []
 
-        if save_spectrogram:
-            logging.info("Entering the window size analysis. But we run the whole audio file to save the complteted spectrogram.")
-            scores, embeddings, spectrogram = self.yamnet(waveform)
-            scores = scores.numpy()
-            spectrogram = spectrogram.numpy()
-            save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate)
-
-        logging.info(f"Processing file with window size: {window_size}")
+        logging.info(f"Processing file with window size: {window_size} seconds")
         window_size_samples = int(window_size * sr)
 
         for start_idx in range(0, len(waveform), window_size_samples):
@@ -71,8 +64,8 @@ class AudioClassifier:
             window = waveform[start_idx:end_idx]
             scores, embeddings, spectrogram = self.yamnet(window)
             # print length of window in seconds
+            print()
             print(f"Window size: {len(window)/sr:.2f} seconds")
-            exit()
             
             if save_spectrogram:
                 scores = scores.numpy()
@@ -80,6 +73,19 @@ class AudioClassifier:
                 save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate, start_idx, end_idx, window_size)
 
             prediction = np.mean(scores, axis=0)
+            # print the name of the class with the highest probability
+            top_classes = np.argsort(prediction)[::-1]
+            print(f"Top class: {self.yamnet_classes[top_classes[0]]} with probability: {prediction[top_classes[0]]:.2f}")
+
+            # print(f"Top class: {self.yamnet_classes[top_classes]} with probability: {prediction[top_classes]:.2f}")
+            threshold = self.params.classification_threshold
+            print(f"Threshold: {threshold}")
+
+            # if the probabilities is equal or higher than the threshold, save the clip
+            # if prediction[top_classes] >= threshold:
+            #     save_clip(window, sr, start_idx, end_idx, file_path, top_classes, prediction[top_classes], self.yamnet_classes, window_size)
+
+            exit()
             predictions.append(prediction)
 
             if save_embeddings:
@@ -135,46 +141,15 @@ def process_audio_files(classifier, base_path, stable_version, save_embeddings, 
                 full_path = os.path.join(audio_path, file_name)
                 predictions_list, embeddings = classifier.process_single_file(full_path, window_size, save_embeddings, save_spectrogram)
 
-                if save_embeddings:
-                    # to save properly
-                    save_embeddings_funct(embeddings, subfolder_name, subfolder)
-                    pass
-
-                name_split = file_name.split(".")[0]
-                start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
-
-                threshold = classifier.params.classification_threshold if args.threshold is None else args.threshold
-                logging.info(f"Classification threshold: {threshold}")
-
-                for i, prediction in enumerate(predictions_list):
-                    top_indices = np.argsort(prediction)[::-1][:2]
-                    
-                    filtered_classes = []
-                    filtered_probabilities = []
-                    for idx in top_indices:
-                        if prediction[idx] >= threshold:
-                            filtered_classes.append(classifier.yamnet_classes[idx])
-                            filtered_probabilities.append(f'{prediction[idx]:.4f}')
-
-                    # adjust timestamp based on window size
-                    adjusted_timestamp = start_timestamp if window_size is None else start_timestamp + datetime.timedelta(seconds=i*window_size)
-
-                    all_data_subfolder.append([
-                        file_name, 
-                        adjusted_timestamp.strftime('%Y-%m-%d %H:%M:%S'), 
-                        filtered_classes,
-                        filtered_probabilities
-                    ])
-
             except Exception as e:
                 logging.error(f"Error processing file {file_name}: {e}")
 
         # save predictions to csv
         if all_data_subfolder:
             save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, window_size, stable_version)
+        
         else:
             logging.warning(f"No data to save for folder {subfolder}")
-
 
 
 def parse_arguments():
@@ -183,7 +158,6 @@ def parse_arguments():
     parser.add_argument('--embeddings', action='store_true', help='Save embeddings to tensorboard')
     parser.add_argument('--spectrogram', action='store_true', help='Save spectrogram images')
     return parser.parse_args()
-
 
 
 if __name__ == '__main__':

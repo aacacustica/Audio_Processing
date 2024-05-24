@@ -7,8 +7,6 @@ import numpy as np
 import subprocess
 from tensorboard.plugins import projector
 import matplotlib.pyplot as plt
-from params import Params
-import soundfile as sf
 
 
 def setup_gpu():
@@ -25,14 +23,14 @@ def setup_gpu():
             print()
 
 
-def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, result_folder, window_size=None, stable_version=None):
+def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, window_size=None, stable_version=None):
     if window_size is not None:
         output_filename = f'Urban_Model_{subfolder_name}_w_{window_size}s_{stable_version}.csv'
     else:
         output_filename = f'Urban_Model_{subfolder_name}_{stable_version}.csv'
     
-    result_folder = result_folder.replace('3-Medidas', '5-Resultados')
-    output_folder = os.path.join(result_folder, 'AI_MODEL', 'Predictions')
+    subfolder = subfolder.replace('3-Medidas', '5-Resultados')
+    output_folder = os.path.join(subfolder, 'AI_MODEL', 'Predictions')
 
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -47,12 +45,15 @@ def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, resul
 
 
 
-def save_embeddings_funct(embeddings, subfolder_name, result_folder):
+def save_embeddings_funct(embeddings, subfolder_name, subfolder):
     try:
         logging.info("Saving embeddings to tensorboard...")
+
+        print()
+        print(subfolder)
         
-        log_dir = result_folder.replace('3-Medidas', '5-Resultados')
-        log_dir = os.path.join(result_folder, 'AI_MODEL', 'Embeddings')
+        subfolder = subfolder.replace('3-Medidas', '5-Resultados')
+        log_dir = os.path.join(subfolder, 'AI_MODEL', 'Embeddings')
         os.makedirs(log_dir, exist_ok=True)
 
         # save the embeddings as a variable in a TensorFlow checkpoint
@@ -85,10 +86,15 @@ def save_spectrogram_w_funct(spectrogram, scores, yamnet_classes, file_name, sr,
     try:
         logging.info("Saving spectrogram for window size...")
         
-        filename = file_name.split('\\')[-1]
         folder_resultados = file_name.replace('3-Medidas', '5-Resultados')
+        filename = file_name.split('\\')[-1]
         folder_resultados = '\\'.join(folder_resultados.split('\\')[:-2])
         folder_resultados = os.path.join(folder_resultados, 'AI_MODEL', 'Spectrograms')
+        os.makedirs(folder_resultados, exist_ok=True)
+        if not os.path.exists(folder_resultados):
+            logging.info(f"Creating folder {folder_resultados}")
+        else:
+            logging.info(f"Folder {folder_resultados} already exists")
 
         # convert start_idx and end_idx from samples to seconds for accurate plotting
         start_time = start_idx / sr if start_idx is not None else None
@@ -159,6 +165,7 @@ def save_spectrogram_w_funct(spectrogram, scores, yamnet_classes, file_name, sr,
         logging.warning(f"Error saving spectrogram: {e}")
 
 
+
 def print_top_predictions(file_name, predictions, class_names, top_n=5):
     print(f"\nTop {top_n} predictions for {file_name}:")
     top_indices = np.argsort(predictions)[::-1][:top_n] 
@@ -173,6 +180,12 @@ def print_top_predictions(file_name, predictions, class_names, top_n=5):
 def get_audiofiles(path):
     audio_files = [file for file in os.listdir(path) if file.lower().endswith('.wav')]
     return audio_files
+
+
+def find_audiomoth_folders(base_path):
+    for root, dirs, files in os.walk(base_path):
+        if 'AUDIOMOTH' in dirs:
+            yield root
 
 
 def list_git_tags():
@@ -202,71 +215,3 @@ def get_stable_version():
     tag_selected = tag_selected.replace(".", "_")
     logging.info(f"Latest stable version string: {tag_selected}")
     return tag_selected
-
-
-def find_audiomoth_folders(base_path):
-    """Recursively find all subdirectories containing an 'AUDIOMOTH' folder."""
-    for root, dirs, files in os.walk(base_path):
-        if 'AUDIOMOTH' in dirs:
-            yield root
-
-
-def extrac_clips(prediction, waveform, start_idx, sr, yamnet_classes, file_name):
-    try:
-        logging.info("Extracting clips...")
-        
-        filename = file_name.split('\\')[-1]
-        folder_resultados = file_name.replace('3-Medidas', '5-Resultados')
-        folder_resultados = '\\'.join(folder_resultados.split('\\')[:-2])
-        folder_resultados = os.path.join(folder_resultados, 'AI_MODEL', 'Clips')
-        if not os.path.exists(folder_resultados):
-            os.makedirs(folder_resultados)
-            logging.info(f"Creating folder {folder_resultados}")
-
-        threshold = 0.3
-        
-        # print the top 10 classes with their probabilities
-        top_N = 10
-        top_indices = np.argsort(prediction)[::-1][:top_N]
-        for i in top_indices:
-            # if it is above the threshold, print it
-            if prediction[i] >= threshold:
-                logging.info(f"{yamnet_classes[i]}: {prediction[i]}")
-        logging.info(f"\n")
-
-        # instead of taking the max index, first check how many classes have a probability higher than the threshold
-        # for i, prob in enumerate(prediction):
-        #     if prob >= threshold:
-        #         logging.info(f"Class: {yamnet_classes[i]}, {prob}")
-        #     else:
-        #         logging.info(f"No threshold passed")
- 
-        # max_index = np.argmax(prediction)
-        # logging.info(f"Max index: {max_index}, class: {yamnet_classes[max_index]}, probability: {prediction[max_index]}")
-
-        # if prediction[max_index] >= threshold:
-        #     logging.info(f"Saving clip {filename} with class {yamnet_classes[max_index]}")
-        #     filename = filename.replace('.wav', '').replace('.WAV', '')
-            
-        #     class_name = yamnet_classes[max_index]
-        #     logging.info(f"Class name: {class_name}")
-            
-        #     filename = f"{class_name}_{filename}_{start_idx}.wav"
-        #     filepath = os.path.join(folder_resultados, filename)
-
-        #     # convert to int to save the clip
-        #     sr = int(sr)
-        #     waveform = (waveform * 32767).astype(np.int16)
-        #     duration = len(waveform) / sr
-
-        #     # if clips is less or more than 5 seconds ling, discard it
-        #     if duration < 5 or duration > 5:
-        #         logging.warning(f"Clip duration is {duration:.2f} seconds, discarding clip...")
-        #         return
-        #     else:
-        #         sf.write(filepath, waveform, sr)
-        #         logging.info(f"Duration: {duration:.2f} seconds")
-        #         logging.info(f"Clip saved to {filepath}")
-    
-    except Exception as e:
-        logging.warning(f"Error saving clip: {e}")

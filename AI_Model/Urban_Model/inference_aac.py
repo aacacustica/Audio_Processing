@@ -5,7 +5,6 @@ import numpy as np
 import tqdm
 import resampy
 import soundfile as sf
-import tensorflow as tf
 import logging
 from utils import *
 import datetime
@@ -14,7 +13,6 @@ import argparse
 
 import params as yamnet_params
 import yamnet as yamnet_model
-
 import warnings
 
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="Couldn't find ffmpeg or avconv")
@@ -36,7 +34,7 @@ class AudioClassifier:
         self.yamnet_classes = yamnet_model.class_names('yamnet_class_map.csv')
 
 
-    def process_single_file(self, file_path, window_size=None, save_embeddings=False, save_spectrogram=False, save_clips=False):
+    def process_single_file(self, file_path, window_size=None, save_embeddings=False, save_spectrogram=False):
         logging.info(f"Processing file: {file_path}")
         wav_data, sr = sf.read(file_path, dtype=np.int16)
         waveform = wav_data / 32768.0  # Convert to [-1.0, +1.0]
@@ -54,7 +52,7 @@ class AudioClassifier:
         # process audio file
         predictions = []
         all_embeddings = []
-        if window_size is None and save_clips is False:
+        if window_size is None:
             logging.info("Processing whole file without window size")
             logging.info(f"Waveform shape: {waveform.shape}")
             scores, embeddings, spectrogram = self.yamnet(waveform)
@@ -81,8 +79,6 @@ class AudioClassifier:
                 spectrogram = spectrogram.numpy()
                 save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate)
 
-            if save_clips:
-                window_size =  2.5
             logging.info(f"Processing file with window size: {window_size}")
             window_size_samples = int(window_size * sr)
 
@@ -104,14 +100,11 @@ class AudioClassifier:
 
                 if save_embeddings:
                     all_embeddings.append(embeddings.numpy())
-
-                if save_clips:
-                    extrac_clips(prediction, window, start_idx, self.params.sample_rate,  self.yamnet_classes, file_path)
             return predictions, all_embeddings
 
 
 
-def process_audio_files(classifier, base_path, window_size, threshold, stable_version, save_embeddings, save_spectrogram, save_clips):
+def process_audio_files(classifier, base_path, window_size, threshold, stable_version, save_embeddings, save_spectrogram):
     col_names = ['filename', 'date', 'class', 'probability']
 
     # looking for subfolders
@@ -155,7 +148,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
         for file_name in tqdm.tqdm(valid_audio_files, desc='Processing audio files'):
             try:
                 full_path = os.path.join(audio_path, file_name)
-                predictions_list, embeddings = classifier.process_single_file(full_path, window_size, save_embeddings, save_spectrogram, save_clips)
+                predictions_list, embeddings = classifier.process_single_file(full_path, window_size, save_embeddings, save_spectrogram)
 
                 if save_embeddings:
                     # to save properly
@@ -206,7 +199,6 @@ def parse_arguments():
     parser.add_argument('-t', '--threshold', type=float, default=None, help='Classification threshold for predictions.')
     parser.add_argument('--embeddings', action='store_true', help='Save embeddings to tensorboard')
     parser.add_argument('--spectrogram', action='store_true', help='Save spectrogram images')
-    parser.add_argument('--clips', action='store_true', help='Save audio clips')
     return parser.parse_args()
 
 
@@ -221,4 +213,4 @@ if __name__ == '__main__':
     
     # process audio files
     classifier = AudioClassifier()
-    process_audio_files(classifier, args.path, args.window, args.threshold, stable_version, args.embeddings, args.spectrogram, args.clips)
+    process_audio_files(classifier, args.path, args.window, args.threshold, stable_version, args.embeddings, args.spectrogram)

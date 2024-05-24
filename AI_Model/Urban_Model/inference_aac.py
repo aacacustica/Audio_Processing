@@ -126,6 +126,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
         # reading metadata
         sample_rates = []
         valid_audio_files = []
+        logging.info("")
         logging.info(f"Reading metadata...")
         for file in tqdm.tqdm(audio_files[:1], desc='Reading metadata'):
             try:
@@ -214,3 +215,5 @@ if __name__ == '__main__':
     # process audio files
     classifier = AudioClassifier()
     process_audio_files(classifier, args.path, args.window, args.threshold, stable_version, args.embeddings, args.spectrogram)
+
+    logging.info("Inference finished.")

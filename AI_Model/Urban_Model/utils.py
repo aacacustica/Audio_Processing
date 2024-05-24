@@ -24,6 +24,7 @@ def setup_gpu():
 
 
 def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, window_size=None, stable_version=None):
+    logging.info("")
     if window_size is not None:
         output_filename = f'Urban_Model_{subfolder_name}_w_{window_size}s_{stable_version}.csv'
     else:
@@ -47,10 +48,8 @@ def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfo
 
 def save_embeddings_funct(embeddings, subfolder_name, subfolder):
     try:
+        logging.info("")
         logging.info("Saving embeddings to tensorboard...")
-
-        print()
-        print(subfolder)
         
         subfolder = subfolder.replace('3-Medidas', '5-Resultados')
         log_dir = os.path.join(subfolder, 'AI_MODEL', 'Embeddings')
@@ -84,6 +83,7 @@ def save_embeddings_funct(embeddings, subfolder_name, subfolder):
 
 def save_spectrogram_w_funct(spectrogram, scores, yamnet_classes, file_name, sr, start_idx=None, end_idx=None, window_size=None):
     try:
+        logging.info("")
         logging.info("Saving spectrogram for window size...")
         
         folder_resultados = file_name.replace('3-Medidas', '5-Resultados')

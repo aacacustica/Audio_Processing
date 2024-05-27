@@ -10,6 +10,8 @@ from utils import *
 import datetime
 import audio_metadata
 import argparse
+import hashlib
+import time
 
 import params as yamnet_params
 import yamnet as yamnet_model
@@ -41,7 +43,7 @@ class AudioClassifier:
         waveform = wav_data / 32768.0  # Convert to [-1.0, +1.0]
         waveform = waveform.astype('float32')
 
-        # convert to mono and resemple if needed (different from 16kHz)
+        # convert to mono and resample if needed (different from 16kHz)
         if len(waveform.shape) > 1:
             waveform = np.mean(waveform, axis=1)
             logging.warning(f"Audio file has more than 1 channel. Taking the mean of all channels.")
@@ -60,33 +62,46 @@ class AudioClassifier:
             end_idx = start_idx + window_size_samples
             if end_idx > len(waveform):
                 end_idx = len(waveform)  # include the last segment
-        
+
             window = waveform[start_idx:end_idx]
             scores, embeddings, spectrogram = self.yamnet(window)
-            # print length of window in seconds
-            print()
-            print(f"Window size: {len(window)/sr:.2f} seconds")
             
+            # hash
+            unique_id = hashlib.sha256(f"{file_path}{time.time()}".encode()).hexdigest()[:8]  # Short hash
+
             if save_spectrogram:
                 scores = scores.numpy()
                 spectrogram = spectrogram.numpy()
                 save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate, start_idx, end_idx, window_size)
 
             prediction = np.mean(scores, axis=0)
-            # print the name of the class with the highest probability
-            top_classes = np.argsort(prediction)[::-1]
-            print(f"Top class: {self.yamnet_classes[top_classes[0]]} with probability: {prediction[top_classes[0]]:.2f}")
+            top_classes = np.argsort(prediction)[::-1][:2]
+            print(f"Top classes: {[self.yamnet_classes[i] for i in top_classes]}")
+            # print the score of the top class
+            print(f"Top class score: {prediction[top_classes[0]]}")
 
-            # print(f"Top class: {self.yamnet_classes[top_classes]} with probability: {prediction[top_classes]:.2f}")
             threshold = self.params.classification_threshold
-            print(f"Threshold: {threshold}")
+            if prediction[top_classes[0]] >= threshold:
+                save_path = file_path.replace("3-Medidas", "5-Resultados")
+                if "AUDIOMOTH" in save_path:
+                    save_path = save_path.split("AUDIOMOTH")[0]
+                    save_path = os.path.join(save_path, "Training_clips")
+                    os.makedirs(save_path, exist_ok=True)
 
-            # if the probabilities is equal or higher than the threshold, save the clip
-            # if prediction[top_classes] >= threshold:
-            #     save_clip(window, sr, start_idx, end_idx, file_path, top_classes, prediction[top_classes], self.yamnet_classes, window_size)
+                first_class = self.yamnet_classes[top_classes[0]]
+                second_class = self.yamnet_classes[top_classes[1]]
+                filename = f"{unique_id}_{first_class}.wav"
+                clip_path = os.path.join(save_path, filename)
 
-            exit()
-            predictions.append(prediction)
+                print()
+                print(f"Clip saved to: {clip_path}")
+                exit()
+                sf.write(save_path, window * 32768, self.params.sample_rate, 'PCM_16')
+                save_clip(window, file_path, save_path)
+
+
+                exit()
+                predictions.append(prediction)
 
             if save_embeddings:
                 all_embeddings.append(embeddings.numpy())

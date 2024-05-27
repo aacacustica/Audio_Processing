@@ -7,7 +7,7 @@ import numpy as np
 import subprocess
 from tensorboard.plugins import projector
 import matplotlib.pyplot as plt
-
+import soundfile as sf
 
 def setup_gpu():
     physical_devices = tf.config.list_physical_devices('GPU')
@@ -163,6 +163,19 @@ def save_spectrogram_w_funct(spectrogram, scores, yamnet_classes, file_name, sr,
     
     except Exception as e:
         logging.warning(f"Error saving spectrogram: {e}")
+
+
+
+def save_clip(window, file_path, save_path):
+    try:
+        logging.info("")
+        logging.info("Saving clip...")
+        logging.info(f"Clip saved to: {save_path}")
+        sf.write(save_path, window * 32768, 'PCM_16')
+    
+    except Exception as e:
+        logging.warning(f"Error saving clip: {e}")
+
 
 
 

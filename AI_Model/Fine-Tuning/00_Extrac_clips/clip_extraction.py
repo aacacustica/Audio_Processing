@@ -34,7 +34,6 @@ class AudioClassifier:
         self.yamnet = yamnet_model.yamnet_frames_model(self.params)
         self.yamnet.load_weights('yamnet.h5')
         self.yamnet_classes = yamnet_model.class_names('yamnet_class_map.csv')
-        # self.params.classification_threshold = 0.7
 
 
     def process_single_file(self, file_path, window_size=5, save_embeddings=False, save_spectrogram=False):
@@ -76,13 +75,8 @@ class AudioClassifier:
 
             prediction = np.mean(scores, axis=0)
             top_classes = np.argsort(prediction)[::-1][:2]
-            print(f"Top classes: {[self.yamnet_classes[i] for i in top_classes]}")
-            # print the score of the top class
-            print(f"Top class score: {prediction[top_classes[0]]}")
 
             threshold = self.params.classification_threshold
-            print(f"Threshold: {threshold}")
-
             threshold = self.params.classification_threshold
             filtered_classes = [i for i in top_classes if prediction[i] > threshold]
 
@@ -91,9 +85,6 @@ class AudioClassifier:
                 print("No classes above threshold.")
                 continue 
             
-            print(f"Top classes above threshold: {[self.yamnet_classes[i] for i in filtered_classes]}")
-            print(f"Scores for top classes above threshold: {prediction[filtered_classes]}")
-                
             save_path = file_path.replace("3-Medidas", "5-Resultados")
             if "AUDIOMOTH" in save_path:
                 save_path = save_path.split("AUDIOMOTH")[0]

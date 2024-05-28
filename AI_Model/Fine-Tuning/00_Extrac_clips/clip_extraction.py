@@ -67,54 +67,7 @@ class AudioClassifier:
             scores, embeddings, spectrogram = self.yamnet(window)
             
             # hash
-            unique_id = hashlib.sha256(f"{file_path}{time.time()}".encode()).hexdigest()[:8]  # Short hash
-
-            if save_spectrogram:
-                scores = scores.numpy()
-                spectrogram = spectrogram.numpy()
-                save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate, start_idx, end_idx, window_size)
-
-            prediction = np.mean(scores, axis=0)
-            top_classes = np.argsort(prediction)[::-1][:3]
-            print(f"Top classes: {[self.yamnet_classes[i] for i in top_classes]}")
-            # print the score of the top class
-            print(f"Top class score: {prediction[top_classes[0]]}")
-
-            threshold = self.params.classification_threshold
-            print(f"Threshold: {threshold}")
-
-            # filter out the prediction if the score is below the threshold
-            if prediction[top_classes[0]] > threshold:def process_single_file(self, file_path, window_size=5, save_embeddings=False, save_spectrogram=False):
-        logging.info(f"Processing file: {file_path}")
-        wav_data, sr = sf.read(file_path, dtype=np.int16)
-        waveform = wav_data / 32768.0  # Convert to [-1.0, +1.0]
-        waveform = waveform.astype('float32')
-
-        # convert to mono and resample if needed (different from 16kHz)
-        if len(waveform.shape) > 1:
-            waveform = np.mean(waveform, axis=1)
-            logging.warning(f"Audio file has more than 1 channel. Taking the mean of all channels.")
-        if sr != self.params.sample_rate:
-            waveform = resampy.resample(waveform, sr, self.params.sample_rate)
-            logging.warning(f"Resampling audio from {sr} to {self.params.sample_rate}")
-
-        # process audio file
-        predictions = []
-        all_embeddings = []
-
-        logging.info(f"Processing file with window size: {window_size} seconds")
-        window_size_samples = int(window_size * sr)
-
-        for start_idx in range(0, len(waveform), window_size_samples):
-            end_idx = start_idx + window_size_samples
-            if end_idx > len(waveform):
-                end_idx = len(waveform)  # include the last segment
-
-            window = waveform[start_idx:end_idx]
-            scores, embeddings, spectrogram = self.yamnet(window)
-            
-            # hash
-            unique_id = hashlib.sha256(f"{file_path}{time.time()}".encode()).hexdigest()[:8]  # Short hash
+            unique_id = hashlib.sha256(f"{file_path}{time.time()}".encode()).hexdigest()[:10]  # short hash
 
             if save_spectrogram:
                 scores = scores.numpy()
@@ -130,45 +83,34 @@ class AudioClassifier:
             threshold = self.params.classification_threshold
             print(f"Threshold: {threshold}")
 
+            threshold = self.params.classification_threshold
+            filtered_classes = [i for i in top_classes if prediction[i] > threshold]
 
-            classes_above_threshold = [self.yamnet_classes[idx] for idx, score in enumerate(prediction) if score > threshold]
-            if classes_above_threshold:
-                print(f"Classes above threshold: {classes_above_threshold}")
-                pass
-            exit()
-            # check if any prediction is above threshold, not just the first one
-            if prediction[top_classes[0]] > threshold:
-                print()
-                # print prediction after threshold
-                print(f"Prediction after threshold: {prediction[top_classes]}")
-                print()
-                # print prediction after threshold
-                print(f"Prediction after threshold: {prediction[top_classes]}")
-                exit()
-                save_path = file_path.replace("3-Medidas", "5-Resultados")
-                if "AUDIOMOTH" in save_path:
-                    save_path = save_path.split("AUDIOMOTH")[0]
-                    save_path = os.path.join(save_path, "Training_clips")
-                    os.makedirs(save_path, exist_ok=True)
-
-                first_class = self.yamnet_classes[top_classes[0]]
-                second_class = self.yamnet_classes[top_classes[1]]
-                filename = f"{unique_id}_{first_class}.wav"
-                clip_path = os.path.join(save_path, filename)
+            # apply the threshold
+            if not filtered_classes:
+                print("No classes above threshold.")
+                continue 
+            
+            print(f"Top classes above threshold: {[self.yamnet_classes[i] for i in filtered_classes]}")
+            print(f"Scores for top classes above threshold: {prediction[filtered_classes]}")
                 
-                print()
-                print(f"clip path: {clip_path}")
+            save_path = file_path.replace("3-Medidas", "5-Resultados")
+            if "AUDIOMOTH" in save_path:
+                save_path = save_path.split("AUDIOMOTH")[0]
+                save_path = os.path.join(save_path, "AI_MODEL", "Training_clips")
+                os.makedirs(save_path, exist_ok=True)
 
-                print()
-                sf.write(clip_path, window * 32768, self.params.sample_rate, 'PCM_16')
-                print(f"Clip saved to: {clip_path}")
-                
-                exit()
-                save_clip(window, file_path, save_path)
+            first_class = self.yamnet_classes[filtered_classes[0]]
+            filename = f"{unique_id}_{first_class}.wav"
+            # removing blank spaces
+            filename = filename.replace(" ", "_")
+            if len(filtered_classes) > 1:
+                second_class = self.yamnet_classes[filtered_classes[1]]
+                filename = f"{unique_id}_{first_class}_{second_class}.wav"
 
-
-                exit()
-                predictions.append(prediction)
+            clip_path = os.path.join(save_path, filename)
+            sf.write(file=clip_path, data=window, samplerate=sr)
+            print(f"Saved clip path: {clip_path}")
 
             if save_embeddings:
                 all_embeddings.append(embeddings.numpy())

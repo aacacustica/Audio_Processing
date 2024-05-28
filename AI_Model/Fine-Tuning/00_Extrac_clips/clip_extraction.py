@@ -107,6 +107,8 @@ class AudioClassifier:
             if len(filtered_classes) > 1:
                 second_class = self.yamnet_classes[filtered_classes[1]]
                 filename = f"{unique_id}_{first_class}_{second_class}.wav"
+                # removing blank spaces
+                filename = filename.replace(" ", "_")
 
             clip_path = os.path.join(save_path, filename)
             sf.write(file=clip_path, data=window, samplerate=sr)

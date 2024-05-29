@@ -108,7 +108,7 @@ def main():
         sample_rates = []
         valid_audio_files = []
         logging.info(f"Reading metadata...")
-        for file in audio_files:
+        for file in tqdm(audio_files, desc='Reading metadata'):
             try:
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)
@@ -129,7 +129,7 @@ def main():
         
         # process audio files
         all_data_subfolder = []
-        for audio_file in valid_audio_files:
+        for audio_file in tqdm(valid_audio_files, desc='Processing audio files'):
             try:
                 logging.info(f"Processsing file: {audio_file}...")
                 filepath = os.path.join(audio_path, audio_file)

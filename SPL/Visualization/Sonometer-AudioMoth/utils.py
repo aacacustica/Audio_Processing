@@ -131,10 +131,16 @@ def remove_unnamed_columns(df_preds):
 
 
 def yamnet_class_map_csv():
-    yammnet_class_map = r"C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Port_Model\taxonomy_mapping\yamnet_class_AAC_v2_0.csv"
+    yammnet_class_map = "yamnet_class_AAC_v2_0.csv"
     df_audioset = pd.read_csv(yammnet_class_map,sep=';')
     df_audioset = remove_unnamed_columns(df_audioset)
     return df_audioset
+
+
+def taxonomy_json():
+    urban_taxonomy_map = pd.read_json("urban_taxonomy_map_v1_0.json", typ='series').to_dict()
+    port_taxonomy_map = pd.read_json("port_taxonomy_map_v1.0.json", typ='series').to_dict()
+    return urban_taxonomy_map, port_taxonomy_map
 
 
 def prediction_csv(path_input):

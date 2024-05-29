@@ -72,7 +72,7 @@ def process_folder(folder_path, logger):
 
 
 
-def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, yamnet_csv, sufix_string, folder_coefficients, logger):
+def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, TAXONOMY_MAP, yamnet_csv, sufix_string, folder_coefficients, logger):
     print()
     for folder in tqdm(folders, desc="Processing folders"):
         reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
@@ -138,6 +138,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             end_date = df.index[-1]
             logger.info(f"Start date {start_date} and end date {end_date}")
             logger.info(f"df was sorted by datetime and datetime was set as index")
+
 
             # the same for the prediction file
             logger.info(f"FOR PREDICTION FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
@@ -212,7 +213,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             # Plotting stack bar with predictions class
             if PLOT_PREDICTION_STACK_BAR:
                 logger.info(f"[4] Plotting PLOT_PREDICTION_STACK_BAR for folder {folder}")
-                plot_prediction_stack_bar(prediction_csv_file, predictions_visualization_folder, logger, plotname=folder)
+                plot_prediction_stack_bar(prediction_csv_file, yamnet_csv, TAXONOMY_MAP, predictions_visualization_folder, logger, plotname=folder)
             
 
             # Plotting prediction map

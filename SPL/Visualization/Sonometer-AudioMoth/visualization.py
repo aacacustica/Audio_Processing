@@ -650,7 +650,7 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         logger.error(f"Error in plot_indicadores_heatmap: {e}")
 
 
-def plot_prediction_stack_bar(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname: str):
+def plot_prediction_stack_bar(df_Pred:pd.DataFrame, yamnet_csv, taxonomy_map, folder_output_dir: str, logger, plotname: str):
     try:
         sns.set_style("white")
         sns.set_palette("tab10")

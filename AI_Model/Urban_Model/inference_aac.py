@@ -118,12 +118,14 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
             logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
             continue
         audio_files = get_audiofiles(audio_path)
+        logging.info(f"Found {len(audio_files)}")
         if not audio_files:
             logging.warning(f"No audio files found in: {audio_path}")
             continue
 
 
         # reading metadata
+        print()
         sample_rates = []
         valid_audio_files = []
         logging.info("")
@@ -145,6 +147,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
 
 
         # processing audio files
+        print()
         all_data_subfolder = []
         for file_name in tqdm.tqdm(valid_audio_files, desc='Processing audio files'):
             try:

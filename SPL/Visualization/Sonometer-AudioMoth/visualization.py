@@ -806,6 +806,10 @@ def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname
         sns.set_style("white")
         sns.set_palette("tab10")
 
+        # prediction map foñder
+        folder_output_dir = os.path.join(folder_output_dir, 'Prediction_Tree_Map')
+        os.makedirs(folder_output_dir, exist_ok=True)
+
         # make duration to make the resample to 15 minutes
         start_date = df_Pred['date'].iloc[0]
         end_date = df_Pred['date'].iloc[-1]
@@ -841,12 +845,12 @@ def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname
 
         fig.update_layout(title=f'{plotname} | Clases por día desde {start_date} hasta {end_date}')
 
-        fig.write_html(f"{folder_output_dir}/{plotname}_prediction_map.html")
-        logger.info(f"{folder_output_dir}/{plotname}_prediction_map.html")
+        fig.write_html(f"{folder_output_dir}/{plotname}_prediction_tree_map.html")
+        logger.info(f"{folder_output_dir}/{plotname}_prediction_tree_map.html")
 
         # save csv with the data
-        df_exploded.to_csv(f"{folder_output_dir}/{plotname}_prediction_map.csv")
-        logger.info(f"Saved csv at {folder_output_dir}/{plotname}_prediction_map.csv")
+        df_exploded.to_csv(f"{folder_output_dir}/{plotname}_prediction_tree_map.csv")
+        logger.info(f"Saved csv at {folder_output_dir}/{plotname}_prediction_tree_map.csv")
 
         #####################################      
         for day in df_exploded['day'].unique():
@@ -860,12 +864,12 @@ def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname
             
             fig.update_layout(title=f'{plotname} | {day_df["year"].iloc[0]}-{day_df["month"].iloc[0]}-{day}')
 
-            fig.write_html(f"{folder_output_dir}/{plotname}_prediction_map_{day}.html")
-            logger.info(f"{folder_output_dir}/{plotname}_prediction_map_{day}.html")
+            fig.write_html(f"{folder_output_dir}/{plotname}_prediction_tree_map{day}.html")
+            logger.info(f"{folder_output_dir}/{plotname}_prediction_tree_map{day}.html")
 
             # save csv with the data
-            day_df.to_csv(f"{folder_output_dir}/{plotname}_prediction_map_{day}.csv")
-            logger.info(f"Saved csv at {folder_output_dir}/{plotname}_prediction_map_{day}.csv")
+            day_df.to_csv(f"{folder_output_dir}/{plotname}_prediction_tree_map{day}.csv")
+            logger.info(f"Saved csv at {folder_output_dir}/{plotname}_prediction_tree_map{day}.csv")
 
     except Exception as e:
         logger.error(f"Error in plot_tree_map: {e}")

@@ -7,6 +7,17 @@ import pandas as pd
 import json
 import subprocess
 
+# CONSTANTS
+# column to be the VALUE in the dictionary
+brown_2 = 'Brown_Level_2'
+brown_3 = 'Brown_Level_3'
+
+noise_1 = 'NoisePort_Level_1'
+noise_2 = 'NoisePort_Level_2'
+
+VALUE_COLUMN = noise_2
+
+
 # get the last git tag version
 def list_git_tags():
     try:
@@ -26,15 +37,17 @@ def select_tag(tags):
 
 version_tag = select_tag(tags)
 
+
+
 # [1] Open the csv file and read the data
-file_path = 'yamnet_class_AAC_301123.csv'
+file_path = 'yamnet_class_AAC_v3_0.csv'
 yamnet_classes = pd.read_csv(file_path, sep=';')
 print(yamnet_classes.head())
 
 # [2] Create a dictionary with the original classes name (display_name) as keys and the AAC classes (Brown_Level_1) as values
 yamnet_classes_dict = {}
 for i in range(len(yamnet_classes)):
-    yamnet_classes_dict[yamnet_classes['display_name'][i]] = yamnet_classes['Brown_Level_2'][i]
+    yamnet_classes_dict[yamnet_classes['display_name'][i]] = yamnet_classes[VALUE_COLUMN][i]
 
 
 print(f"\nThis is the taxonomy mapping:\n{yamnet_classes_dict}")

@@ -38,86 +38,79 @@ class AudioClassifier:
 
     def process_single_file(self, file_path, window_size=5, save_embeddings=False, save_spectrogram=False):
         logging.info(f"Processing file: {file_path}")
+        logging.info(f"Classification threshold: {self.params.classification_threshold}")
+        
         wav_data, sr = sf.read(file_path, dtype=np.int16)
-        waveform = wav_data / 32768.0  # Convert to [-1.0, +1.0]
+        waveform = wav_data / 32768.0
         waveform = waveform.astype('float32')
 
-        # convert to mono and resample if needed (different from 16kHz)
         if len(waveform.shape) > 1:
             waveform = np.mean(waveform, axis=1)
-            logging.warning(f"Audio file has more than 1 channel. Taking the mean of all channels.")
         if sr != self.params.sample_rate:
             waveform = resampy.resample(waveform, sr, self.params.sample_rate)
-            logging.warning(f"Resampling audio from {sr} to {self.params.sample_rate}")
 
-        # process audio file
-        predictions = []
         all_embeddings = []
+        all_data = []
 
-        logging.info(f"Processing file with window size: {window_size} seconds")
-        window_size_samples = int(window_size * sr)
-
+        window_size_samples = int(window_size * self.params.sample_rate)
         for start_idx in range(0, len(waveform), window_size_samples):
-            end_idx = start_idx + window_size_samples
-            if end_idx > len(waveform):
-                end_idx = len(waveform)  # include the last segment
+            # get end index of window
+            end_idx = min(start_idx + window_size_samples, len(waveform))
 
+            # make prediction for each window
             window = waveform[start_idx:end_idx]
             scores, embeddings, spectrogram = self.yamnet(window)
-            
-            # hash
-            unique_id = hashlib.sha256(f"{file_path}{time.time()}".encode()).hexdigest()[:10]  # short hash
 
+            # save spectrograms
             if save_spectrogram:
-                scores = scores.numpy()
-                spectrogram = spectrogram.numpy()
-                save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate, start_idx, end_idx, window_size)
+                    scores = scores.numpy()
+                    spectrogram = spectrogram.numpy()
+                    save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate, start_idx, end_idx, window_size)
 
+            # filter predictions
             prediction = np.mean(scores, axis=0)
             top_classes = np.argsort(prediction)[::-1][:2]
-
-            threshold = self.params.classification_threshold
-            threshold = self.params.classification_threshold
-            filtered_classes = [i for i in top_classes if prediction[i] > threshold]
-
-            # apply the threshold
+            filtered_classes = [i for i in top_classes if prediction[i] > self.params.classification_threshold]
             if not filtered_classes:
-                print("No classes above threshold.")
-                continue 
-            
+                logging.info(f"No classes above threshold in window")
+                continue
+
+            # making predictions folder
             save_path = file_path.replace("3-Medidas", "5-Resultados")
             if "AUDIOMOTH" in save_path:
                 save_path = save_path.split("AUDIOMOTH")[0]
+
+                folder_name = save_path.split("\\")
+                if folder_name[-1] == "":
+                    folder_name = folder_name[-2]
+
                 save_path = os.path.join(save_path, "AI_MODEL", "Training_clips")
-                os.makedirs(save_path, exist_ok=True)
+            os.makedirs(save_path, exist_ok=True)
 
-            first_class = self.yamnet_classes[filtered_classes[0]]
-            filename = f"{unique_id}_{first_class}.wav"
-            # removing blank spaces
-            filename = filename.replace(" ", "_")
-            if len(filtered_classes) > 1:
-                second_class = self.yamnet_classes[filtered_classes[1]]
-                filename = f"{unique_id}_{first_class}_{second_class}.wav"
-                # removing blank spaces
-                filename = filename.replace(" ", "_")
-
-            clip_path = os.path.join(save_path, filename)
-            sf.write(file=clip_path, data=window, samplerate=sr)
-            print(f"Saved clip path: {clip_path}")
+            # save clips
+            for i in filtered_classes:
+                class_name = self.yamnet_classes[i].replace(" ", "_")
+                # using a hash to generate a unique id for the clip
+                unique_id = hashlib.sha256(f"{file_path}{time.time()}".encode()).hexdigest()[:10]
+                # setting filename
+                filename = f"{unique_id}_{class_name}.wav"
+                clip_path = os.path.join(save_path, filename)
+                # saving clip
+                sf.write(file=clip_path, data=window, samplerate=sr)
+                # saving csv data
+                all_data.append([filename, self.yamnet_classes[i], prediction[i]])
 
             if save_embeddings:
                 all_embeddings.append(embeddings.numpy())
-        return predictions, all_embeddings
+
+        return all_data, save_path, folder_name
 
 
 
 def process_audio_files(classifier, base_path, stable_version, save_embeddings, save_spectrogram, window_size):
-    col_names = ['filename', 'date', 'class', 'probability']
-
     # looking for subfolders
     audiomoth_folders = list(find_audiomoth_folders(base_path))
     for subfolder in tqdm.tqdm(audiomoth_folders, desc='Processing subfolders'):
-        subfolder_name = os.path.basename(subfolder)
         audio_path = os.path.join(subfolder, "AUDIOMOTH")
         logging.info(f"Processing subfolder: {subfolder}...")
 
@@ -135,7 +128,7 @@ def process_audio_files(classifier, base_path, stable_version, save_embeddings, 
         valid_audio_files = []
         logging.info("")
         logging.info(f"Reading metadata...")
-        for file in tqdm.tqdm(audio_files[:1], desc='Reading metadata'):
+        for file in tqdm.tqdm(audio_files[:2], desc='Reading metadata'):
             try:
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)
@@ -152,21 +145,12 @@ def process_audio_files(classifier, base_path, stable_version, save_embeddings, 
 
 
         # processing audio files
-        all_data_subfolder = []
         for file_name in tqdm.tqdm(valid_audio_files, desc='Processing audio files'):
+            full_path = os.path.join(audio_path, file_name)
             try:
-                full_path = os.path.join(audio_path, file_name)
-                predictions_list, embeddings = classifier.process_single_file(full_path, window_size, save_embeddings, save_spectrogram)
-
+                classifier.process_single_file(full_path, window_size, save_embeddings, save_spectrogram)
             except Exception as e:
                 logging.error(f"Error processing file {file_name}: {e}")
-
-        # save predictions to csv
-        if all_data_subfolder:
-            save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, window_size, stable_version)
-        
-        else:
-            logging.warning(f"No data to save for folder {subfolder}")
 
 
 def parse_arguments():

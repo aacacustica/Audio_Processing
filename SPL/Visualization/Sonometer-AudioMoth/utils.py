@@ -82,13 +82,15 @@ def db_limit(hour_column,ld_limit,le_limit,ln_limit):
 
 
 def categorize_time_of_day(hour):
-    # if 7 <= hour < 19:
-    #     return 'Ld'
-    # elif 19 <= hour < 23:
-    #     return 'Le'
-    # else:
-    #     return 'Ln'
+    if 7 <= hour < 19:
+        return 'Ld'
+    elif 19 <= hour < 23:
+        return 'Le'
+    else:
+        return 'Ln'
     
+
+def categorize_time_of_day_4(hour):
     if 7 <= hour < 11:
         return 'Ld_1'
     elif 11 <= hour < 15:

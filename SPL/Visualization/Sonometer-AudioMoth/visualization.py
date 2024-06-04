@@ -10,6 +10,8 @@ import ast
 import plotly.express as px
 import matplotlib.colors as mcolors
 from matplotlib.patches import Patch
+from matplotlib.backends.backend_pdf import PdfPages
+from fpdf import FPDF
 
 
 
@@ -1076,8 +1078,10 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         logger.error(f"Error in plot_predic_laeq_15_min: {e}")
 
 
+
 def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
     try:
+        folder_output_dir = os.path.join(folder_output_dir, 'Prediction_LAeq_15_min_Period')
         # remove nan values
         df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
         logger.info(f"Using the columns_dict: {columns_dict}")
@@ -1176,39 +1180,61 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df
         df_all['time_of_day'] = pd.Categorical(df_all['time_of_day'], categories=order_time_of_day, ordered=True)
         df_all['order_index'] = df_all['time_of_day'].cat.codes
 
-        # convert time_of_day for object type DataFrame
-        df_all['time_of_day'] = df_all['time_of_day'].astype(str)
-
         grouped_df = df_all.groupby([class_to_plot, df_all['time_of_day']]).agg(
             number=(classes, 'size'),
             LAeq=('LA_corrected', lambda x: leq(x)),
             order_index=('order_index', 'first')
         ).reset_index()
 
-        fig = px.treemap(grouped_df, 
-                        path=['time_of_day',class_to_plot],  
-                        values='number',
-                        color='LAeq',
-                        color_continuous_scale=custom_color_scale,
-                        range_color=[30, 85],
-                        hover_data={'LAeq': True, 'number': True},
-                        custom_data=['LAeq'],                  
-                        )
 
-        fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) distribución por Periodo Ld, Le, Ln por Clases')
-        fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
-        fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
-        fig.show()
+        # iterate for each period and save it individually
+        for period in order_time_of_day:
+            period_df = grouped_df[grouped_df['time_of_day'] == period]
 
-        os.makedirs(folder_output_dir, exist_ok=True)
+            fig = px.treemap(period_df, 
+                            path=[px.Constant(period),class_to_plot],  
+                            values='number',
+                            color='LAeq',
+                            color_continuous_scale=custom_color_scale,
+                            range_color=[30, 85],
+                            hover_data={'LAeq': True, 'number': True},
+                            custom_data=['LAeq'],                  
+                            )
 
-        logger.info(f"Saving the plot {plotname}")
-        fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_period_mean.html")
-        logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_period_mean.html")
+            fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) distribución por Periodo {period} por Clases')
+            fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
+            fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
 
-        logger.info(f"Saving the data {plotname}")
-        grouped_df.to_csv(f"{folder_output_dir}/{plotname}_LAeq_class_period_mean.csv", index=False)
-        logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_period_mean.csv")
+            os.makedirs(folder_output_dir, exist_ok=True)
+
+            logger.info(f"Saving the plot {plotname}")
+            fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_period_{period}.html")
+            logger.info(f"LAeq class period plot saved to {folder_output_dir}/{plotname}_LAeq_class_period_{period}.html")
+
+            logger.info(f"Saving the data {plotname}")
+            period_df.to_csv(f"{folder_output_dir}/{plotname}_LAeq_class_period_{period}.csv", index=False)
+            logger.info(f"LAeq class period data saved to {folder_output_dir}/{plotname}_LAeq_class_period_{period}.csv")
+
+
+            # save all these images in a single pdf
+            # pdf = FPDF()
+            # pdf.add_page()
+            # pdf.set_margins(10, 10, 10)
+            # # list directory to get all the files (html file)
+            # files = os.listdir(folder_output_dir)
+            # print(files)
+            # html_imgages = [f for f in files if f.endswith('.html')]
+            # print(html_imgages)
+
+            # for img in html_imgages:
+            #     pdf.add_page()
+            #     pdf.set_font("Arial", size=12)
+            #     pdf.cell(200, 10, txt=img, ln=True)
+            #     pdf.image(f"{folder_output_dir}/{img}", x=10, y=20, w=190)
+
+            # pdf.output(f"{folder_output_dir}/{plotname}_LAeq_class_period_all.pdf")
+            # logger.info(f"LAeq class period all pdf saved to {folder_output_dir}/{plotname}_LAeq_class_period_all.pdf")
+            # print(f"{folder_output_dir}/{plotname}_LAeq_class_period_all.pdf")
 
     except Exception as e:
         logger.error(f"Error in plot_predic_laeq_15_min_period: {e}")
@@ -1218,6 +1244,7 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df
 
 def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
     try:
+        folder_output_dir = os.path.join(folder_output_dir, 'Prediction_LAeq_15_min_4h')
         # remove nan values
         df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
         logger.info(f"Using the columns_dict: {columns_dict}")
@@ -1266,7 +1293,6 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pre
                 df_Pred = df_Pred.shift(periods=abs(check_dilay.seconds), freq='s')
             logger.info(f"Shifted the data to match the dates")
 
-
         # merge df
         df_aligned = df_LAeq.merge(df_Pred, how='left', left_index=True, right_index=True)
         # remove rows with NaN values
@@ -1274,8 +1300,7 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pre
 
         # set date_y as index
         if "date_y" in df_aligned.columns:
-            df_aligned.set_index('date_y', inplace=True, drop=False)
-        
+            df_aligned.set_index('date_y', inplace=True, drop=False)        
 
         ####################################################################
         df_aligned['class_probability'] = df_aligned.apply(
@@ -1316,8 +1341,6 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pre
         df_all['time_of_day'] = pd.Categorical(df_all['time_of_day'], categories=order_time_of_day, ordered=True)
         df_all['order_index'] = df_all['time_of_day'].cat.codes
 
-        # convert time_of_day for object type DataFrame
-        df_all['time_of_day'] = df_all['time_of_day'].astype(str)
 
         grouped_df = df_all.groupby([class_to_plot, df_all['time_of_day']]).agg(
             number=(classes, 'size'),
@@ -1325,30 +1348,33 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pre
             order_index=('order_index', 'first')
         ).reset_index()
 
-        fig = px.treemap(grouped_df, 
-                        path=['time_of_day',class_to_plot],  
-                        values='number',
-                        color='LAeq',
-                        color_continuous_scale=custom_color_scale,
-                        range_color=[30, 85],
-                        hover_data={'LAeq': True, 'number': True},
-                        custom_data=['LAeq'],                  
-                        )
+        for period in order_time_of_day:
+            period_df = grouped_df[grouped_df['time_of_day'] == period]
 
-        fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) distribución por Periodo Ld, Le, Ln por Clases')
-        fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
-        fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
-        fig.show()
+            fig = px.treemap(period_df, 
+                            path=[px.Constant(period),class_to_plot],  
+                            values='number',
+                            color='LAeq',
+                            color_continuous_scale=custom_color_scale,
+                            range_color=[30, 85],
+                            hover_data={'LAeq': True, 'number': True},
+                            custom_data=['LAeq'],                  
+                            )
 
-        os.makedirs(folder_output_dir, exist_ok=True)
+            fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) distribución por Periodo {period} por Clases')
+            fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
+            fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
 
-        logger.info(f"Saving the plot {plotname}")
-        fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_period_4h_mean.html")
-        logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_period_4h_mean.html")
+            os.makedirs(folder_output_dir, exist_ok=True)
 
-        logger.info(f"Saving the data {plotname}")
-        grouped_df.to_csv(f"{folder_output_dir}/{plotname}_LAeq_class_period_4h_mean.csv", index=False)
-        logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_period_4h_mean.csv")
+            logger.info(f"Saving the plot {plotname}")
+            fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_period_{period}.html")
+            logger.info(f"LAeq class period plot saved to {folder_output_dir}/{plotname}_LAeq_class_period_{period}.html")
+
+            logger.info(f"Saving the data {plotname}")
+            period_df.to_csv(f"{folder_output_dir}/{plotname}_LAeq_class_period_{period}.csv", index=False)
+            logger.info(f"LAeq class period data saved to {folder_output_dir}/{plotname}_LAeq_class_period_{period}.csv")
+
 
     except Exception as e:
         logger.error(f"Error in plot_predic_laeq_15_min_period: {e}")

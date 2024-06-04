@@ -1200,15 +1200,15 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df
         fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
         fig.show()
 
-        # os.makedirs(folder_output_dir, exist_ok=True)
+        os.makedirs(folder_output_dir, exist_ok=True)
 
-        # logger.info(f"Saving the plot {plotname}")
-        # fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_period_mean.html")
-        # logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_period_mean.html")
+        logger.info(f"Saving the plot {plotname}")
+        fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_period_mean.html")
+        logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_period_mean.html")
 
-        # logger.info(f"Saving the data {plotname}")
-        # grouped_df.to_csv(f"{folder_output_dir}/{plotname}_LAeq_class_period_mean.csv", index=False)
-        # logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_period_mean.csv")
+        logger.info(f"Saving the data {plotname}")
+        grouped_df.to_csv(f"{folder_output_dir}/{plotname}_LAeq_class_period_mean.csv", index=False)
+        logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_period_mean.csv")
 
     except Exception as e:
         logger.error(f"Error in plot_predic_laeq_15_min_period: {e}")

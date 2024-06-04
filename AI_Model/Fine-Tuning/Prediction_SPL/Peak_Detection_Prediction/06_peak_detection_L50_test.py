@@ -12,6 +12,9 @@ import warnings
 import math
 import logging
 
+from visualization import *
+import argparse
+
 import params as yamnet_params
 import yamnet as yamnet_model
 
@@ -30,6 +33,7 @@ WINDOW_SIZE = 30  # seconds
 PROMINENCE = 1
 WIDTH = 1
 
+
 def make_clip_predictions(waveform, sr):
     params = yamnet_params.Params()
     yamnet = yamnet_model.yamnet_frames_model(params)
@@ -46,27 +50,49 @@ def make_clip_predictions(waveform, sr):
     scores, embeddings, spectrogram = yamnet(waveform)
     prediction = np.mean(scores, axis=0)
     # top 3 classes
-    top3_i = np.argsort(prediction)[::-1][:3]
+    top3_i = np.argsort(prediction)[::-1][:2]
     # logging.info the na,e of the class
     logging.info(f"Top 3 classes: {[yamnet_classes[i] for i in top3_i]}")
     return [yamnet_classes[i] for i in top3_i], [prediction[i] for i in top3_i]
 
 
+def argument_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--csv_file", type=str, required=False, help="Path to the csv file")
+    return parser.parse_args()
+
+
 def main():
-    csv_file = r"\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\5-Resultados\P1_CONTENEDORES\SPL\leq_levels_P1_CONTENEDORES_v1_1_test.csv"
+    args = argument_parser()
+    if args.csv_file:
+        csv_file = args.csv_file
+    else:
+        csv_file = r"\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\P1_CONTENEDORES\AUDIOMOTH\leq_P1_CONTENEDORES_v2_0.csv"
+    df = pd.read_csv(csv_file)
+    
+
     title = csv_file.split("\\")[-3]
     audiomoth_folder = csv_file.replace("5-Resultados", "3-Medidas").replace("SPL", "AUDIOMOTH")
     audiomoth_folder = "\\".join(audiomoth_folder.split("\\")[:-1])
     output_folder = "\\".join(csv_file.split("\\")[:-1])
+    output_folder = output_folder.replace("3-Medidas", "5-Resultados").replace("AUDIOMOTH", "SPL")
 
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    df = pd.read_csv(csv_file)
+
+    ############# PLOT THE DATA #############
+    # plot the LA values
+    # plot_LA(df)
+    # plot_LA_night(df)
+    # plot_global_values(df)
+    # plot_some_values(df)
+
     df['filename'] = df['filename'].apply(lambda x: os.path.join(audiomoth_folder, x))
     df['date'] = pd.to_datetime(df['date'])
     df['LA_median'] = df['LA'].rolling(window=WINDOW_SIZE, min_periods=1).quantile(0.5) + 10
     above_threshold = df[df['LA'] > df['LA_median']]
+
 
     if not above_threshold.empty:
         clip_info = []
@@ -89,15 +115,19 @@ def main():
             'duration': durations
         })
 
+
         mean = np.mean(durations)
         mean_rounded = np.round(mean, 2)
-        logging.info(f"\nAverage duration: {mean_rounded} seconds")
+        logging.info("")
+        logging.info(f"Average duration: {mean_rounded} seconds")
         logging.info(f"Max duration: {np.max(durations)} seconds")
         logging.info(f"Min duration: {np.min(durations)} seconds\n")
         
         num_peaks_processed = 0
-        peaks_df = peaks_df.head(50)
-        for idx, row in peaks_df.iterrows():
+        # uncomment the line below to process only the first 50 peaks
+        # peaks_df = peaks_df.head(50)
+        # adding a tqdm progress bar
+        for index, row in tqdm(peaks_df.iterrows(), total=len(peaks_df)):
             logging.info(f"\nExtracting segment from {row['filename']}\n")
             try:
                 # Read the entire audio file
@@ -144,6 +174,7 @@ def main():
             else:
                 logging.info(f"Actual Segment duration: {actual_segment_duration} seconds\n\n")
             
+
             # START PREDICTION
             wave_form = segment / 32768.0  # Convert to [-1.0, +1.0]
             wave_form = wave_form.astype('float32')
@@ -151,6 +182,7 @@ def main():
             # make predictions
             classes, predictions = make_clip_predictions(wave_form, sr)
             num_peaks_processed += 1
+
 
             #### MAKE A CLIP AND SAVE IT ####
             peak_date_str = row['start'].strftime('%Y%m%d_%H%M%S')
@@ -160,6 +192,7 @@ def main():
             clip_path = os.path.join(output_folder, 'peak_clips', clip_filename)
             sf.write(clip_path, segment, sr)
             logging.info(f"Segment {clip_filename} saved to {clip_path}")
+
 
             #### SAVE INFO IN A CSV ####
             clip_info.append({
@@ -172,14 +205,18 @@ def main():
             })
             logging.info(f"Clip info: \n{clip_info[-1]}")
 
+
         # save the info in a csv
         clips_df = pd.DataFrame(clip_info)
-        clips_df.to_csv(os.path.join(output_folder, f'peak_prediction_L50_{title}.csv'), index=False)
+        # save the csv into the peak_clips folder
+        clips_df.to_csv(os.path.join(output_folder, 'peak_clips', f"{title}_peak_clips.csv"), index=False)
         logging.info(f"Extracted {num_peaks_processed} clips and saved information at {output_folder}")
         logging.info(f"Actual Processed {num_peaks_processed} peaks")
     
     else:
         logging.error("No peaks detected")
+
+
 
 if __name__ == "__main__":
     main()

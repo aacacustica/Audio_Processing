@@ -53,6 +53,10 @@ def argument_parser():
 
 
 def main():
+    """
+    python .\generate_tax_mapping.py -n port_2
+    """
+    
     args = argument_parser()
     tags = list_git_tags()
     version_tag = get_latest_tag(tags)

@@ -670,12 +670,16 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, yamnet_csv, taxonomy_map, fo
         #~insert date
         df_exploded = insert_dates(df_exploded)
         # get the urban_taxonomy_map
-        urban_taxonomy_map = pd.read_json(r"C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Urban_Model\Visualization\urban_taxonomy_map_v1_0.json", typ='series').to_dict()
+        # urban_taxonomy_map = pd.read_json(r"C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Urban_Model\Visualization\urban_taxonomy_map_v1_0.json", typ='series').to_dict()
+        # print(urban_taxonomy_map)
+        urban_taxonomy_map = pd.read_json("port_1_taxonomy_mapping_v2.0.json", typ='series').to_dict()
+        # print(port_taxonomy_map)
         df_exploded['mapped_class'] = df_exploded['class'].map(urban_taxonomy_map)
 
         #################################
         # stack bar plotting
-        union = pd.read_csv(r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Urbano\Taxonomia\yamnet_class_AAC_301123.csv",sep=';')
+        # union = pd.read_csv(r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Urbano\Taxonomia\yamnet_class_AAC_301123.csv",sep=';')
+        union = pd.read_csv(r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Puerto\yamnet_class_AAC_v3_0.csv",sep=';')
         # merge classes with ontology
         df_exploded = df_exploded.merge(union,how='left',on='display_name')
 
@@ -687,12 +691,25 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, yamnet_csv, taxonomy_map, fo
         #set to categorical
         df_exploded['Día'] = pd.Categorical(df_exploded['Día'], categories=unique_día_weekday, ordered=True)
 
-        dfg = df_exploded.groupby(['Brown_Level_2','Día']).count().reset_index()
+
+        display_name = 'display_name'
+        iso_taxonomy = 'iso_taxonomy'
+        classes = 'class'
+
+        brown_1 = 'Brown_Level_1'
+        brown_2 = 'Brown_Level_2'
+        brown_3 = 'Brown_Level_3'
+        noiseport_1 = 'NoisePort_Level_1'
+        noiseport_2 = 'NoisePort_Level_2'
+
+        class_to_plot = noiseport_1        
+
+        dfg = df_exploded.groupby([class_to_plot,'Día']).count().reset_index()
         fig = px.bar(
             dfg, 
             x='Día',
             y='Distribución de clases',
-            color='Brown_Level_2',
+            color=class_to_plot,
             title=f'{plotname} | Clases por día desde {start_date} hasta {end_date}',
             color_discrete_sequence=px.colors.qualitative.Alphabet, 
             color_discrete_map=COLOR_PALLET_URBAN,
@@ -716,6 +733,11 @@ def plot_prediction_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, pl
         sns.set_style("white")
         sns.set_palette("tab10")
 
+        # remove empty entries in class column
+        df_Pred = df_Pred.dropna(subset=['class'])
+        #check if the class column is empty
+        print(df_Pred)
+
         # make duration to make the resample to 15 minutes
         start_date = df_Pred['date'].iloc[0]
         end_date = df_Pred['date'].iloc[-1]
@@ -730,9 +752,19 @@ def plot_prediction_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, pl
 
         #~insert date
         df_exploded = insert_dates(df_exploded)
+        print(df_exploded)
+        df_exploded = df_exploded.dropna(subset=['class'])
+        print(df_exploded['class'].unique())
+        # print if there is nan values
+        if df_exploded['class'].isnull().values.any():
+            logger.error("There are nan values in the class column")
+
         # get the urban_taxonomy_map
-        urban_taxonomy_map = pd.read_json(r"C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Urban_Model\Visualization\urban_taxonomy_map_v1_0.json", typ='series').to_dict()
+        # urban_taxonomy_map = pd.read_json(r"C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Urban_Model\Visualization\urban_taxonomy_map_v1_0.json", typ='series').to_dict()
+        urban_taxonomy_map = pd.read_json("port_1_taxonomy_mapping_v2.0.json", typ='series').to_dict()
         df_exploded['mapped_class'] = df_exploded['class'].map(urban_taxonomy_map)
+        print(df_exploded['mapped_class'].unique())
+        df_exploded = df_exploded.dropna(subset=['mapped_class'])
 
 
         ################################ PLOT ################################
@@ -763,17 +795,34 @@ def plot_prediction_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, pl
             ###################### PLOTTING ######################
             df_resampled = df_exploded.sort_values(by=["year", "month", "fullday"])
 
+
+
+        print(df_resampled['mapped_class'].unique())
+        # drop None values
+        df_resampled = df_resampled.dropna(subset=['mapped_class'])
+        print(df_resampled['mapped_class'].unique())
         # map class to number
         class_to_num = {class_name: index+1 for index, class_name in enumerate(df_resampled['mapped_class'].unique())}
+        print(class_to_num)
+
         df_resampled['class_num'] = df_resampled['mapped_class'].map(class_to_num)
+        # drop nan values
+        df_resampled = df_resampled.dropna(subset=['class_num'])
+        print(df_resampled['class_num'].unique())
+        
         # inverting the dictionary to get the name of the class for the legend
         name_class = {v: k for k, v in class_to_num.items()}
+        
         # mapping from classes numbers to colors
-        num_to_color = {num: COLOR_PALLET_URBAN[class_name] for class_name, num in class_to_num.items()}
+        # num_to_color = {num: COLOR_PALLET_URBAN[class_name] for class_name, num in class_to_num.items()}
+        num_to_color = {num: COLOR_PALLET_PORT_L1[class_name] for class_name, num in class_to_num.items()}
         cmap = [num_to_color[cls_num] for cls_num in name_class.keys()]
+        
         # leggend elements colors
         legend_elements = [Patch(facecolor=num_to_color[cls_num], label=f"Clase {cls_num} - {name_class.get(cls_num, '')}") for cls_num in name_class.keys()]
         day_class = pd.pivot_table(data=df_resampled, columns=df_resampled.index.time, index=["year", "month", "fullday"], values="class_num", aggfunc='mean')
+
+
 
         plt.figure(figsize=(45, 35))
         if day_class.isna().all().all() or day_class.empty:
@@ -825,22 +874,41 @@ def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname
         #~insert date
         df_exploded = insert_dates(df_exploded)
         # get the urban_taxonomy_map
-        urban_taxonomy_map = pd.read_json(r"C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Urban_Model\Visualization\urban_taxonomy_map_v1_0.json", typ='series').to_dict()
+        # urban_taxonomy_map = pd.read_json(r"C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Urban_Model\Visualization\urban_taxonomy_map_v1_0.json", typ='series').to_dict()
+        urban_taxonomy_map = pd.read_json("port_1_taxonomy_mapping_v2.0.json", typ='series').to_dict()
         df_exploded['mapped_class'] = df_exploded['class'].map(urban_taxonomy_map)
 
         #################################
-        union = pd.read_csv(r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Urbano\Taxonomia\yamnet_class_AAC_301123.csv",sep=';')
+        # union = pd.read_csv(r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Urbano\Taxonomia\yamnet_class_AAC_301123.csv",sep=';')
+        union = pd.read_csv(r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Puerto\yamnet_class_AAC_v3_0.csv",sep=';')
 
         # merge classes with ontology
         df_exploded = df_exploded.merge(union, how='left', on='display_name')
         # remove Unnamed columns
         df_exploded = df_exploded.loc[:, ~df_exploded.columns.str.contains('^Unnamed')]
 
+
+        display_name = 'display_name'
+        iso_taxonomy = 'iso_taxonomy'
+        classes = 'class'
+
+        brown_1 = 'Brown_Level_1'
+        brown_2 = 'Brown_Level_2'
+        brown_3 = 'Brown_Level_3'
+        noiseport_1 = 'NoisePort_Level_1'
+        noiseport_2 = 'NoisePort_Level_2'
+
+        class_to_plot = noiseport_1   
+
+        df_exploded = df_exploded.dropna(subset=[class_to_plot, 'class'])
+        # exit()
+
         fig = px.treemap(df_exploded, 
-                 path=['Brown_Level_2', 'class'], 
+                 path=[class_to_plot, 'class'], 
                  values='number',
-                 color='Brown_Level_2',  #for coloring
-                 color_discrete_map=COLOR_PALLET_URBAN
+                 color=class_to_plot,  #for coloring
+                #  color_discrete_map=COLOR_PALLET_URBAN
+                color_discrete_map=COLOR_PALLET_PORT_L1
                 )
 
         fig.update_layout(title=f'{plotname} | Clases por día desde {start_date} hasta {end_date}')
@@ -856,10 +924,11 @@ def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname
         for day in df_exploded['day'].unique():
             day_df = df_exploded[df_exploded['day'] == day]
             fig = px.treemap(day_df, 
-                     path=['Brown_Level_2', 'class'], 
+                     path=[class_to_plot, 'class'], 
                      values='number',
-                     color='Brown_Level_2',  #for coloring
-                     color_discrete_map=COLOR_PALLET_URBAN
+                     color=class_to_plot,  #for coloring
+                    #  color_discrete_map=COLOR_PALLET_URBAN
+                    color_discrete_map=COLOR_PALLET_PORT_L1
                     )
             
             fig.update_layout(title=f'{plotname} | {day_df["year"].iloc[0]}-{day_df["month"].iloc[0]}-{day}')
@@ -932,13 +1001,26 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         # remove rows with NaN values
         df_aligned.dropna(inplace=True)
 
-        ####################################################################
-        df_aligned['class_probability'] = df_aligned.apply(lambda x: list(zip(x['class'], x['probability'])), axis=1)
-        df_exploded = df_aligned.explode('class_probability')
-        df_exploded['class'] = df_exploded['class_probability'].apply(lambda x: x[0])
-        df_exploded['probability'] = df_exploded['class_probability'].apply(lambda x: x[1])
-        df_exploded = df_exploded.drop(columns=['class_probability'])
+        # print(df_aligned)
+        # set date_y as index
+        if "date_y" in df_aligned.columns:
+            df_aligned.set_index('date_y', inplace=True, drop=False)
 
+
+        ####################################################################
+        # df_aligned['class_probability'] = df_aligned.apply(lambda x: list(zip(x['class'], x['probability'])), axis=1)
+        # df_exploded = df_aligned.explode('class_probability')
+        # df_exploded['class'] = df_exploded['class_probability'].apply(lambda x: x[0])
+        # df_exploded['probability'] = df_exploded['class_probability'].apply(lambda x: x[1])
+        # df_exploded = df_exploded.drop(columns=['class_probability'])
+        # After creating class_probability
+        df_aligned['class_probability'] = df_aligned.apply(
+            lambda x: (x['class'], x['probability']) if isinstance(x['class'], float) else list(zip(x['class'], x['probability'])),
+            axis=1
+        )
+        df_exploded = df_aligned.explode('class_probability')
+        df_exploded['class'] = df_exploded['class_probability'].apply(lambda x: x[0] if isinstance(x, tuple) else x)
+        df_exploded['probability'] = df_exploded['class_probability'].apply(lambda x: x[1] if isinstance(x, tuple) else None)
         ####################################################################
 
         # create the df_all, merge with the audioset dataframe
@@ -956,9 +1038,10 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         brown_1 = 'Brown_Level_1'
         brown_2 = 'Brown_Level_2'
         brown_3 = 'Brown_Level_3'
-        noiseport = 'NoisePort'
+        noiseport_1 = 'NoisePort_Level_1'
+        noiseport_2 = 'NoisePort_Level_2'
 
-        class_to_plot = brown_2
+        class_to_plot = noiseport_1
 
         grouped_df = df_all.groupby(class_to_plot).agg(
             number=(classes, 'size'),

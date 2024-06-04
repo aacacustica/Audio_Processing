@@ -39,6 +39,19 @@ class AudioClassifier:
     def process_single_file(self, file_path, window_size=5, save_embeddings=False, save_spectrogram=False):
         logging.info(f"Processing file: {file_path}")
         logging.info(f"Classification threshold: {self.params.classification_threshold}")
+
+        # making predictions folder
+        save_path = file_path.replace("3-Medidas", "5-Resultados")
+        if "AUDIOMOTH" in save_path:
+            save_path = save_path.split("AUDIOMOTH")[0]
+
+            folder_name = save_path.split("\\")
+            if folder_name[-1] == "":
+                folder_name = folder_name[-2]
+
+            save_path = os.path.join(save_path, "AI_MODEL", "Training_clips")
+        os.makedirs(save_path, exist_ok=True)
+        
         
         wav_data, sr = sf.read(file_path, dtype=np.int16)
         waveform = wav_data / 32768.0
@@ -51,6 +64,7 @@ class AudioClassifier:
 
         all_embeddings = []
         all_data = []
+
 
         window_size_samples = int(window_size * self.params.sample_rate)
         for start_idx in range(0, len(waveform), window_size_samples):
@@ -75,17 +89,6 @@ class AudioClassifier:
                 logging.info(f"No classes above threshold in window")
                 continue
 
-            # making predictions folder
-            save_path = file_path.replace("3-Medidas", "5-Resultados")
-            if "AUDIOMOTH" in save_path:
-                save_path = save_path.split("AUDIOMOTH")[0]
-
-                folder_name = save_path.split("\\")
-                if folder_name[-1] == "":
-                    folder_name = folder_name[-2]
-
-                save_path = os.path.join(save_path, "AI_MODEL", "Training_clips")
-            os.makedirs(save_path, exist_ok=True)
 
             # save clips
             for i in filtered_classes:
@@ -128,7 +131,7 @@ def process_audio_files(classifier, base_path, stable_version, save_embeddings, 
         valid_audio_files = []
         logging.info("")
         logging.info(f"Reading metadata...")
-        for file in tqdm.tqdm(audio_files[:2], desc='Reading metadata'):
+        for file in tqdm.tqdm(audio_files, desc='Reading metadata'):
             try:
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)

@@ -165,6 +165,12 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"Adding nights column")
                 df['night_str'] = df.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
                 prediction_csv_file['night_str'] = prediction_csv_file.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
+                # removing nan values
+                prediction_csv_file = prediction_csv_file.dropna()
+                logger.info(f"Removing nan values")
+                # check if there is nan values
+                if df.isnull().values.any():
+                    logger.warning(f"There are nan values in the dataframe")
                 #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
 
 

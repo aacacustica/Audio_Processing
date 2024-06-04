@@ -14,22 +14,22 @@ LN_SECONDS = 14400
 
 
 # Plotting Flags there are 9 flags to plot the following plots
-PLOT_NIGHT_EVOLUTION = True
-PLOT_NIGHT_EVOLUTION_15_MIN = True 
+PLOT_NIGHT_EVOLUTION = False
+PLOT_NIGHT_EVOLUTION_15_MIN = False 
 
-PLOT_PREDIC_LAEQ_15_MIN = True
-PLOT_PREDICTION_STACK_BAR = True
+PLOT_PREDIC_LAEQ_15_MIN = False
+PLOT_PREDICTION_STACK_BAR = False
 PLOT_PREDICTION_MAP = True
-PLOT_TREE_MAP = True
+PLOT_TREE_MAP = False
 
-PLOT_MAKE_TIME_PLOT = True
+PLOT_MAKE_TIME_PLOT = False
 
-PLOT_HEATMAP_EVOLUTION_HOUR = True 
-PLOT_HEATMAP_EVOLUTION_15_MIN = True 
-PLOT_INDICADORES_HEATMAP = True
+PLOT_HEATMAP_EVOLUTION_HOUR = False 
+PLOT_HEATMAP_EVOLUTION_15_MIN = False 
+PLOT_INDICADORES_HEATMAP = False
 
-PLOT_DAY_EVOLUTION = True 
-PLOT_PERIOD_EVOLUTION = True 
+PLOT_DAY_EVOLUTION = False 
+PLOT_PERIOD_EVOLUTION = False 
 
 
 ######################## SLM COLUMN MAPS #####################################
@@ -126,6 +126,19 @@ COLOR_PALLET_URBAN = {
             'Other Sounds': '#c9d631', # yellow
             'Social/communal': '#d8cbf8', # Light purple
             'Human movement': '#40b674', # light green 40b674
+        }
+
+
+
+COLOR_PALLET_PORT_L1 = {
+            'Siren': '#2986cc', # BLUE
+            'Sound Event': '#cc0000', # RED
+            'Transport': '#6aa84f', #  green 6aa84f
+            'Human': '#ffa500', # orange
+            'Nature': '#8e7cc3', # PURPLE
+            'Animal': '#9b5f00', # BROWN
+            'Music': '#d172a4', # PINK
+            'Engine': '#000000', # BLACK
         }
 
 

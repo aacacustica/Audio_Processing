@@ -131,7 +131,7 @@ def remove_unnamed_columns(df_preds):
 
 
 def yamnet_class_map_csv():
-    yammnet_class_map = "yamnet_class_AAC_v2_0.csv"
+    yammnet_class_map = "yamnet_class_AAC_v3_0.csv" 
     df_audioset = pd.read_csv(yammnet_class_map,sep=';')
     df_audioset = remove_unnamed_columns(df_audioset)
     return df_audioset

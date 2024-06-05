@@ -130,6 +130,8 @@ def main():
         
         # process each peak
         num_peaks_processed = 0
+        # comment this line to process all the peaks
+        # peaks_df = peaks_df.head(10)
         for index, row in tqdm(peaks_df.iterrows(), total=len(peaks_df)):
             logging.info(f"\nExtracting segment from {row['filename']}\n")
             try:
@@ -149,15 +151,15 @@ def main():
 
 
             # get start and end time of the peak
-            start_time = row['start']
-            end_time = row['end']
+            start_time = row['start_time']
+            end_time = row['end_time']
             duration = row['duration']
             logging.info(f"Start time: {start_time}, End time: {end_time}, Duration: {duration}")
 
 
             ##### SLICE AUDIO #####
-            start_time = (row['start'] - pd.Timestamp(start_time_audio)).total_seconds()
-            end_time = (row['end'] - pd.Timestamp(start_time_audio)).total_seconds()
+            start_time = (row['start_time'] - pd.Timestamp(start_time_audio)).total_seconds()
+            end_time = (row['end_time'] - pd.Timestamp(start_time_audio)).total_seconds()
 
             # samples indices, add a secondto the start and the end time
             start_index = int((start_time - 0.25) * sr)
@@ -189,7 +191,7 @@ def main():
 
 
             #### MAKE A CLIP AND SAVE IT ####
-            peak_date_str = row['start'].strftime('%Y%m%d_%H%M%S')
+            peak_date_str = row['start_time'].strftime('%Y%m%d_%H%M%S')
             clip_filename = f"{peak_date_str}_{classes[0]}.wav"
             logging.info(f"Clip filename: {clip_filename}")
             os.makedirs(os.path.join(output_folder, 'peak_clips'), exist_ok=True)
@@ -201,8 +203,8 @@ def main():
             #### SAVE INFO IN A CSV ####
             clip_info.append({
                 'filename': clip_path,
-                'start_time': row['start'],
-                'end_time': row['end'],
+                'start_time': row['start_time'],
+                'end_time': row['end_time'],
                 'duration': actual_segment_duration,
                 'classes': classes,
                 'predictions': predictions,

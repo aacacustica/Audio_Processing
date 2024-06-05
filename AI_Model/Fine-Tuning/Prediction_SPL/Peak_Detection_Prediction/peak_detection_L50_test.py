@@ -164,7 +164,7 @@ def main():
                         logging.info(f"Sample rate: {sr}")
                     except Exception as e:
                         logging.warning(f"Failed to read file {row['filename']}. Error: {e}")
-                        return None
+                        continue
                     
                     # start time of the audio file
                     start_time_audio = row['filename']

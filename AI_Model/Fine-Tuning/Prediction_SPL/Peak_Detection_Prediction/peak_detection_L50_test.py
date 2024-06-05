@@ -1,15 +1,12 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 import os
 from datetime import datetime
-from pydub import AudioSegment
 from tqdm import tqdm
 import numpy as np
 import soundfile as sf
 import resampy
 import warnings
-import math
 import logging
 
 from visualization import *
@@ -79,9 +76,12 @@ def main():
     base_path = args.path
 
     audiomoth_folders = list(find_audiomoth_folders(base_path))
+    logging.info(f"Found {len(audiomoth_folders)} folders to process")
+
     for subfolder in tqdm(audiomoth_folders, desc='Processing folders'):
         logging.info(f"Processing audio files in: {subfolder}")
         audio_path = os.path.join(subfolder, "AUDIOMOTH")
+        logging.info(f"Audio path: {audio_path}")
         if not os.path.exists(audio_path):
             logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
             continue
@@ -91,16 +91,23 @@ def main():
 
         for csv_file in csv_files:
             csv_path = os.path.join(audio_path, csv_file)
+            logging.info(f"Processing csv file: {csv_path}")
             df = pd.read_csv(csv_path)
 
-            title = base_path.split("\\")[-3]
-            audiomoth_folder = base_path.replace("5-Resultados", "3-Medidas").replace("SPL", "AUDIOMOTH")
+            title = audio_path.split("\\")[-3]
+            
+            audiomoth_folder = audio_path.replace("5-Resultados", "3-Medidas").replace("SPL", "AUDIOMOTH")
             audiomoth_folder = "\\".join(audiomoth_folder.split("\\")[:-1])
-            output_folder = "\\".join(base_path.split("\\")[:-1])
+            logging.info(f"Audiomoth folder: {audiomoth_folder}")
+
+            output_folder = "\\".join(audio_path.split("\\")[:-1])
             output_folder = output_folder.replace("3-Medidas", "5-Resultados").replace("AUDIOMOTH", "SPL")
             output_folder = os.path.join(output_folder, "Peaks")
+            logging.info(f"Output folder: {output_folder}")
+                        
             if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
+                logging.info(f"Created output folder: {output_folder}")
 
 
             df['filename'] = df['filename'].apply(lambda x: os.path.join(audiomoth_folder, x))
@@ -143,14 +150,14 @@ def main():
                 logging.info("")
                 logging.info(f"Average duration: {mean_rounded} seconds")
                 logging.info(f"Max duration: {np.max(durations)} seconds")
-                logging.info(f"Min duration: {np.min(durations)} seconds\n")
+                logging.info(f"Min duration: {np.min(durations)} seconds")
                 
                 # process each peak
                 num_peaks_processed = 0
                 # comment this line to process all the peaks
                 # peaks_df = peaks_df.head(10)
                 for index, row in tqdm(peaks_df.iterrows(), total=len(peaks_df)):
-                    logging.info(f"\nExtracting segment from {row['filename']}\n")
+                    logging.info(f"\nExtracting segment from {row['filename']}")
                     try:
                         #read the whole audiofile
                         wav_data, sr = sf.read(row['filename'], dtype=np.int16)
@@ -188,14 +195,14 @@ def main():
                     # if actual_segment_duration == 0, skip the peak and the segment
                     if actual_segment_duration == 0:
                         logging.warning(f"Segment duration {actual_segment_duration}")
-                        logging.warning("Segment duration is 0, skipping the peak, it beloong to two different audio files\n\n")
+                        logging.warning("Segment duration is 0, skipping the peak, it beloong to two different audio files")
                         continue
                     elif actual_segment_duration > duration + 20:
                         logging.warning(f"Segment duration {actual_segment_duration}")
-                        logging.warning("Segment duration is more than 10s, skipping the peak, it beloong to two different audio files\n\n")
+                        logging.warning("Segment duration is more than 10s, skipping the peak, it beloong to two different audio files")
                         continue                
                     else:
-                        logging.info(f"Actual Segment duration: {actual_segment_duration} seconds\n\n")
+                        logging.info(f"Actual Segment duration: {actual_segment_duration} seconds")
                     
 
                     # START PREDICTION

@@ -338,7 +338,7 @@ def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_colum
             columns=['hour'], 
             aggfunc=agg_func
         ).round(1)
-        
+  
         leq_day_hour.columns = [f"{hour:02d}:00" for hour in leq_day_hour.columns]
         
         plt.figure(figsize=(20,5))

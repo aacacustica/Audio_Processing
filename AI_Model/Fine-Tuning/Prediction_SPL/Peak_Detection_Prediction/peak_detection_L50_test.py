@@ -56,6 +56,12 @@ def make_clip_predictions(waveform, sr):
     return [yamnet_classes[i] for i in top3_i], [prediction[i] for i in top3_i]
 
 
+def leq(levels):
+    levels = levels[~np.isnan(levels)]
+    l = np.array(levels)
+    return 10 * np.log10(np.mean(np.power(10, l / 10)))
+
+
 def argument_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv_file", type=str, required=False, help="Path to the csv file")
@@ -68,25 +74,17 @@ def main():
         csv_file = args.csv_file
     else:
         csv_file = r"\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\P1_CONTENEDORES\AUDIOMOTH\leq_P1_CONTENEDORES_v2_0.csv"
-    df = pd.read_csv(csv_file)
-    
+    df = pd.read_csv(csv_file)   
 
     title = csv_file.split("\\")[-3]
     audiomoth_folder = csv_file.replace("5-Resultados", "3-Medidas").replace("SPL", "AUDIOMOTH")
     audiomoth_folder = "\\".join(audiomoth_folder.split("\\")[:-1])
     output_folder = "\\".join(csv_file.split("\\")[:-1])
     output_folder = output_folder.replace("3-Medidas", "5-Resultados").replace("AUDIOMOTH", "SPL")
-
+    output_folder = os.path.join(output_folder, "Peaks")
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-
-    ############# PLOT THE DATA #############
-    # plot the LA values
-    # plot_LA(df)
-    # plot_LA_night(df)
-    # plot_global_values(df)
-    # plot_some_values(df)
 
     df['filename'] = df['filename'].apply(lambda x: os.path.join(audiomoth_folder, x))
     df['date'] = pd.to_datetime(df['date'])
@@ -100,20 +98,27 @@ def main():
         df_peaks = above_threshold.iloc[peaks]
         logging.info(f"Detected {len(df_peaks)} peaks")
 
-        start_points = properties['left_ips']
-        end_points = properties['right_ips']
+        start_points = properties['left_ips'].astype(int)
+        end_points = properties['right_ips'].astype(int)
         durations = end_points - start_points
-        # round the durations to 2 decimal places
-        durations = np.round(durations, 2)
-        prominences = properties['prominences']
-        prominences = np.round(prominences, 2)
+        
+        # save the peaks in a csv
+        peak_data = []
+        for start, end in zip(start_points, end_points):
+            peak_LA_values = above_threshold['LA'].iloc[start:end+1].values
+            leq_value = leq(peak_LA_values)
+            peak_data.append({
+                'filename': above_threshold['filename'].iloc[start],
+                'start_time': above_threshold['date'].iloc[start],
+                'end_time': above_threshold['date'].iloc[end],
+                'duration': end - start,
+                'leq': leq_value.round(2),
+                'LA_values': peak_LA_values.tolist()
+            })
 
-        peaks_df = pd.DataFrame({
-            'filename': df_peaks['filename'].values,
-            'start': above_threshold.iloc[start_points]['date'].values,
-            'end': above_threshold.iloc[end_points]['date'].values,
-            'duration': durations
-        })
+        peaks_df = pd.DataFrame(peak_data)
+        peaks_df.to_csv(os.path.join(output_folder, f"peaks_detection_{title}.csv"), index=False)
+        logging.info(f"Peaks saved at {output_folder} as peaks_detection_{title}.csv")
 
 
         mean = np.mean(durations)
@@ -123,14 +128,12 @@ def main():
         logging.info(f"Max duration: {np.max(durations)} seconds")
         logging.info(f"Min duration: {np.min(durations)} seconds\n")
         
+        # process each peak
         num_peaks_processed = 0
-        # uncomment the line below to process only the first 50 peaks
-        # peaks_df = peaks_df.head(50)
-        # adding a tqdm progress bar
         for index, row in tqdm(peaks_df.iterrows(), total=len(peaks_df)):
             logging.info(f"\nExtracting segment from {row['filename']}\n")
             try:
-                # Read the entire audio file
+                #read the whole audiofile
                 wav_data, sr = sf.read(row['filename'], dtype=np.int16)
                 logging.info(f"Sample rate: {sr}")
             except Exception as e:
@@ -150,6 +153,7 @@ def main():
             end_time = row['end']
             duration = row['duration']
             logging.info(f"Start time: {start_time}, End time: {end_time}, Duration: {duration}")
+
 
             ##### SLICE AUDIO #####
             start_time = (row['start'] - pd.Timestamp(start_time_audio)).total_seconds()
@@ -201,18 +205,21 @@ def main():
                 'end_time': row['end'],
                 'duration': actual_segment_duration,
                 'classes': classes,
-                'predictions': predictions
+                'predictions': predictions,
+                # adding the peak leq value
+                'leq': row['leq'],  # leq value
+                'LA_values': row['LA_values']  # LA_values
             })
             logging.info(f"Clip info: \n{clip_info[-1]}")
 
 
         # save the info in a csv
         clips_df = pd.DataFrame(clip_info)
-        # save the csv into the peak_clips folder
-        clips_df.to_csv(os.path.join(output_folder, 'peak_clips', f"{title}_peak_clips.csv"), index=False)
+        clips_df.to_csv(os.path.join(output_folder, f"peak_prediction_{title}.csv"), index=False)
         logging.info(f"Extracted {num_peaks_processed} clips and saved information at {output_folder}")
         logging.info(f"Actual Processed {num_peaks_processed} peaks")
     
+
     else:
         logging.error("No peaks detected")
 

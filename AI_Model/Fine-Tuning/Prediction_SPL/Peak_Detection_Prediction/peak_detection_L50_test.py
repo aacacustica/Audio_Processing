@@ -64,167 +64,183 @@ def leq(levels):
 
 def argument_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--csv_file", type=str, required=False, help="Path to the csv file")
+    parser.add_argument("-p" ,"--path", type=str, required=False, help="Path to the csv file")
     return parser.parse_args()
+
+
+def find_audiomoth_folders(base_path):
+    for root, dirs, files in os.walk(base_path):
+        if 'AUDIOMOTH' in dirs:
+            yield root
 
 
 def main():
     args = argument_parser()
-    if args.csv_file:
-        csv_file = args.csv_file
-    else:
-        csv_file = r"\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\P1_CONTENEDORES\AUDIOMOTH\leq_P1_CONTENEDORES_v2_0.csv"
-    df = pd.read_csv(csv_file)   
+    base_path = args.path
 
-    title = csv_file.split("\\")[-3]
-    audiomoth_folder = csv_file.replace("5-Resultados", "3-Medidas").replace("SPL", "AUDIOMOTH")
-    audiomoth_folder = "\\".join(audiomoth_folder.split("\\")[:-1])
-    output_folder = "\\".join(csv_file.split("\\")[:-1])
-    output_folder = output_folder.replace("3-Medidas", "5-Resultados").replace("AUDIOMOTH", "SPL")
-    output_folder = os.path.join(output_folder, "Peaks")
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
+    audiomoth_folders = list(find_audiomoth_folders(base_path))
+    for subfolder in tqdm(audiomoth_folders, desc='Processing folders'):
+        logging.info(f"Processing audio files in: {subfolder}")
+        audio_path = os.path.join(subfolder, "AUDIOMOTH")
+        if not os.path.exists(audio_path):
+            logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
+            continue
 
+        csv_files_list = os.listdir(audio_path)
+        csv_files = [file for file in csv_files_list if file.endswith('.csv')]
 
-    df['filename'] = df['filename'].apply(lambda x: os.path.join(audiomoth_folder, x))
-    df['date'] = pd.to_datetime(df['date'])
-    df['LA_median'] = df['LA'].rolling(window=WINDOW_SIZE, min_periods=1).quantile(0.5) + 10
-    above_threshold = df[df['LA'] > df['LA_median']]
+        for csv_file in csv_files:
+            csv_path = os.path.join(audio_path, csv_file)
+            df = pd.read_csv(csv_path)
 
-
-    if not above_threshold.empty:
-        clip_info = []
-        peaks, properties = find_peaks(above_threshold['LA'], prominence=PROMINENCE, width=WIDTH)
-        df_peaks = above_threshold.iloc[peaks]
-        logging.info(f"Detected {len(df_peaks)} peaks")
-
-        start_points = properties['left_ips'].astype(int)
-        end_points = properties['right_ips'].astype(int)
-        durations = end_points - start_points
-        
-        # save the peaks in a csv
-        peak_data = []
-        for start, end in zip(start_points, end_points):
-            peak_LA_values = above_threshold['LA'].iloc[start:end+1].values
-            leq_value = leq(peak_LA_values)
-            peak_data.append({
-                'filename': above_threshold['filename'].iloc[start],
-                'start_time': above_threshold['date'].iloc[start],
-                'end_time': above_threshold['date'].iloc[end],
-                'duration': end - start,
-                'leq': leq_value.round(2),
-                'LA_values': peak_LA_values.tolist()
-            })
-
-        peaks_df = pd.DataFrame(peak_data)
-        peaks_df.to_csv(os.path.join(output_folder, f"peaks_detection_{title}.csv"), index=False)
-        logging.info(f"Peaks saved at {output_folder} as peaks_detection_{title}.csv")
+            title = base_path.split("\\")[-3]
+            audiomoth_folder = base_path.replace("5-Resultados", "3-Medidas").replace("SPL", "AUDIOMOTH")
+            audiomoth_folder = "\\".join(audiomoth_folder.split("\\")[:-1])
+            output_folder = "\\".join(base_path.split("\\")[:-1])
+            output_folder = output_folder.replace("3-Medidas", "5-Resultados").replace("AUDIOMOTH", "SPL")
+            output_folder = os.path.join(output_folder, "Peaks")
+            if not os.path.exists(output_folder):
+                os.makedirs(output_folder)
 
 
-        mean = np.mean(durations)
-        mean_rounded = np.round(mean, 2)
-        logging.info("")
-        logging.info(f"Average duration: {mean_rounded} seconds")
-        logging.info(f"Max duration: {np.max(durations)} seconds")
-        logging.info(f"Min duration: {np.min(durations)} seconds\n")
-        
-        # process each peak
-        num_peaks_processed = 0
-        # comment this line to process all the peaks
-        # peaks_df = peaks_df.head(10)
-        for index, row in tqdm(peaks_df.iterrows(), total=len(peaks_df)):
-            logging.info(f"\nExtracting segment from {row['filename']}\n")
-            try:
-                #read the whole audiofile
-                wav_data, sr = sf.read(row['filename'], dtype=np.int16)
-                logging.info(f"Sample rate: {sr}")
-            except Exception as e:
-                logging.warning(f"Failed to read file {row['filename']}. Error: {e}")
-                return None
+            df['filename'] = df['filename'].apply(lambda x: os.path.join(audiomoth_folder, x))
+            df['date'] = pd.to_datetime(df['date'])
+            df['LA_median'] = df['LA'].rolling(window=WINDOW_SIZE, min_periods=1).quantile(0.5) + 10
+            above_threshold = df[df['LA'] > df['LA_median']]
+
+
+            if not above_threshold.empty:
+                clip_info = []
+                peaks, properties = find_peaks(above_threshold['LA'], prominence=PROMINENCE, width=WIDTH)
+                df_peaks = above_threshold.iloc[peaks]
+                logging.info(f"Detected {len(df_peaks)} peaks")
+
+                start_points = properties['left_ips'].astype(int)
+                end_points = properties['right_ips'].astype(int)
+                durations = end_points - start_points
+                
+                # save the peaks in a csv
+                peak_data = []
+                for start, end in zip(start_points, end_points):
+                    peak_LA_values = above_threshold['LA'].iloc[start:end+1].values
+                    leq_value = leq(peak_LA_values)
+                    peak_data.append({
+                        'filename': above_threshold['filename'].iloc[start],
+                        'start_time': above_threshold['date'].iloc[start],
+                        'end_time': above_threshold['date'].iloc[end],
+                        'duration': end - start,
+                        'leq': leq_value.round(2),
+                        'LA_values': peak_LA_values.tolist()
+                    })
+
+                peaks_df = pd.DataFrame(peak_data)
+                peaks_df.to_csv(os.path.join(output_folder, f"peaks_detection_{title}.csv"), index=False)
+                logging.info(f"Peaks saved at {output_folder} as peaks_detection_{title}.csv")
+
+
+                mean = np.mean(durations)
+                mean_rounded = np.round(mean, 2)
+                logging.info("")
+                logging.info(f"Average duration: {mean_rounded} seconds")
+                logging.info(f"Max duration: {np.max(durations)} seconds")
+                logging.info(f"Min duration: {np.min(durations)} seconds\n")
+                
+                # process each peak
+                num_peaks_processed = 0
+                # comment this line to process all the peaks
+                # peaks_df = peaks_df.head(10)
+                for index, row in tqdm(peaks_df.iterrows(), total=len(peaks_df)):
+                    logging.info(f"\nExtracting segment from {row['filename']}\n")
+                    try:
+                        #read the whole audiofile
+                        wav_data, sr = sf.read(row['filename'], dtype=np.int16)
+                        logging.info(f"Sample rate: {sr}")
+                    except Exception as e:
+                        logging.warning(f"Failed to read file {row['filename']}. Error: {e}")
+                        return None
+                    
+                    # start time of the audio file
+                    start_time_audio = row['filename']
+                    start_time_audio = start_time_audio.split('\\')[-1].split('_')
+                    start_time_audio = start_time_audio[0] + start_time_audio[1].split('.')[0]
+                    start_time_audio = datetime.strptime(start_time_audio, '%Y%m%d%H%M%S')
+                    logging.info(f"Start time of the audio file: {start_time_audio}")
+
+
+                    # get start and end time of the peak
+                    start_time = row['start_time']
+                    end_time = row['end_time']
+                    duration = row['duration']
+                    logging.info(f"Start time: {start_time}, End time: {end_time}, Duration: {duration}")
+
+
+                    ##### SLICE AUDIO #####
+                    start_time = (row['start_time'] - pd.Timestamp(start_time_audio)).total_seconds()
+                    end_time = (row['end_time'] - pd.Timestamp(start_time_audio)).total_seconds()
+
+                    # samples indices, add a secondto the start and the end time
+                    start_index = int((start_time - 0.25) * sr)
+                    end_index = int((end_time + 0.25) * sr)
+
+                    # extract segment
+                    segment = wav_data[start_index:end_index]
+                    actual_segment_duration = len(segment) / sr
+                    # if actual_segment_duration == 0, skip the peak and the segment
+                    if actual_segment_duration == 0:
+                        logging.warning(f"Segment duration {actual_segment_duration}")
+                        logging.warning("Segment duration is 0, skipping the peak, it beloong to two different audio files\n\n")
+                        continue
+                    elif actual_segment_duration > duration + 20:
+                        logging.warning(f"Segment duration {actual_segment_duration}")
+                        logging.warning("Segment duration is more than 10s, skipping the peak, it beloong to two different audio files\n\n")
+                        continue                
+                    else:
+                        logging.info(f"Actual Segment duration: {actual_segment_duration} seconds\n\n")
+                    
+
+                    # START PREDICTION
+                    wave_form = segment / 32768.0  # Convert to [-1.0, +1.0]
+                    wave_form = wave_form.astype('float32')
+                    
+                    # make predictions
+                    classes, predictions = make_clip_predictions(wave_form, sr)
+                    num_peaks_processed += 1
+
+
+                    #### MAKE A CLIP AND SAVE IT ####
+                    peak_date_str = row['start_time'].strftime('%Y%m%d_%H%M%S')
+                    clip_filename = f"{peak_date_str}_{classes[0]}.wav"
+                    logging.info(f"Clip filename: {clip_filename}")
+                    os.makedirs(os.path.join(output_folder, 'peak_clips'), exist_ok=True)
+                    clip_path = os.path.join(output_folder, 'peak_clips', clip_filename)
+                    sf.write(clip_path, segment, sr)
+                    logging.info(f"Segment {clip_filename} saved to {clip_path}")
+
+
+                    #### SAVE INFO IN A CSV ####
+                    clip_info.append({
+                        'filename': clip_path,
+                        'start_time': row['start_time'],
+                        'end_time': row['end_time'],
+                        'duration': actual_segment_duration,
+                        'classes': classes,
+                        'predictions': predictions,
+                        # adding the peak leq value
+                        'leq': row['leq'],  # leq value
+                        'LA_values': row['LA_values']  # LA_values
+                    })
+                    logging.info(f"Clip info: \n{clip_info[-1]}")
+
+
+                # save the info in a csv
+                clips_df = pd.DataFrame(clip_info)
+                clips_df.to_csv(os.path.join(output_folder, f"peak_prediction_{title}.csv"), index=False)
+                logging.info(f"Extracted {num_peaks_processed} clips and saved information at {output_folder}")
+                logging.info(f"Actual Processed {num_peaks_processed} peaks")
             
-            # start time of the audio file
-            start_time_audio = row['filename']
-            start_time_audio = start_time_audio.split('\\')[-1].split('_')
-            start_time_audio = start_time_audio[0] + start_time_audio[1].split('.')[0]
-            start_time_audio = datetime.strptime(start_time_audio, '%Y%m%d%H%M%S')
-            logging.info(f"Start time of the audio file: {start_time_audio}")
 
-
-            # get start and end time of the peak
-            start_time = row['start_time']
-            end_time = row['end_time']
-            duration = row['duration']
-            logging.info(f"Start time: {start_time}, End time: {end_time}, Duration: {duration}")
-
-
-            ##### SLICE AUDIO #####
-            start_time = (row['start_time'] - pd.Timestamp(start_time_audio)).total_seconds()
-            end_time = (row['end_time'] - pd.Timestamp(start_time_audio)).total_seconds()
-
-            # samples indices, add a secondto the start and the end time
-            start_index = int((start_time - 0.25) * sr)
-            end_index = int((end_time + 0.25) * sr)
-
-            # extract segment
-            segment = wav_data[start_index:end_index]
-            actual_segment_duration = len(segment) / sr
-            # if actual_segment_duration == 0, skip the peak and the segment
-            if actual_segment_duration == 0:
-                logging.warning(f"Segment duration {actual_segment_duration}")
-                logging.warning("Segment duration is 0, skipping the peak, it beloong to two different audio files\n\n")
-                continue
-            elif actual_segment_duration > duration + 20:
-                logging.warning(f"Segment duration {actual_segment_duration}")
-                logging.warning("Segment duration is more than 10s, skipping the peak, it beloong to two different audio files\n\n")
-                continue                
             else:
-                logging.info(f"Actual Segment duration: {actual_segment_duration} seconds\n\n")
-            
-
-            # START PREDICTION
-            wave_form = segment / 32768.0  # Convert to [-1.0, +1.0]
-            wave_form = wave_form.astype('float32')
-            
-            # make predictions
-            classes, predictions = make_clip_predictions(wave_form, sr)
-            num_peaks_processed += 1
-
-
-            #### MAKE A CLIP AND SAVE IT ####
-            peak_date_str = row['start_time'].strftime('%Y%m%d_%H%M%S')
-            clip_filename = f"{peak_date_str}_{classes[0]}.wav"
-            logging.info(f"Clip filename: {clip_filename}")
-            os.makedirs(os.path.join(output_folder, 'peak_clips'), exist_ok=True)
-            clip_path = os.path.join(output_folder, 'peak_clips', clip_filename)
-            sf.write(clip_path, segment, sr)
-            logging.info(f"Segment {clip_filename} saved to {clip_path}")
-
-
-            #### SAVE INFO IN A CSV ####
-            clip_info.append({
-                'filename': clip_path,
-                'start_time': row['start_time'],
-                'end_time': row['end_time'],
-                'duration': actual_segment_duration,
-                'classes': classes,
-                'predictions': predictions,
-                # adding the peak leq value
-                'leq': row['leq'],  # leq value
-                'LA_values': row['LA_values']  # LA_values
-            })
-            logging.info(f"Clip info: \n{clip_info[-1]}")
-
-
-        # save the info in a csv
-        clips_df = pd.DataFrame(clip_info)
-        clips_df.to_csv(os.path.join(output_folder, f"peak_prediction_{title}.csv"), index=False)
-        logging.info(f"Extracted {num_peaks_processed} clips and saved information at {output_folder}")
-        logging.info(f"Actual Processed {num_peaks_processed} peaks")
-    
-
-    else:
-        logging.error("No peaks detected")
-
+                logging.error("No peaks detected")
 
 
 if __name__ == "__main__":

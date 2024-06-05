@@ -93,7 +93,7 @@ def main():
 
     audiomoth_folders = list(find_audiomoth_folders(base_path))
     for subfolder in tqdm(audiomoth_folders, desc='Processing folders'):
-        logging.info(f"Processing audio files: {subfolder}...")
+        logging.info(f"Processing audio files in: {subfolder}...")
         audio_path = os.path.join(subfolder, "AUDIOMOTH")
         if not os.path.exists(audio_path):
             logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")

@@ -6,7 +6,6 @@ from utils import *
 import os
 from config import *
 import ast
-# impor px
 import plotly.express as px
 import matplotlib.colors as mcolors
 from matplotlib.patches import Patch
@@ -714,7 +713,7 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, yamnet_csv, taxonomy_map, fo
             color=class_to_plot,
             title=f'{plotname} | Clases por día desde {start_date} hasta {end_date}',
             color_discrete_sequence=px.colors.qualitative.Alphabet, 
-            color_discrete_map=COLOR_PALLET_URBAN,
+            color_discrete_map=COLOR_PALLET_PORT_L1,
             height=900,
             width=2000
         )
@@ -737,8 +736,6 @@ def plot_prediction_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, pl
 
         # remove empty entries in class column
         df_Pred = df_Pred.dropna(subset=['class'])
-        #check if the class column is empty
-        print(df_Pred)
 
         # make duration to make the resample to 15 minutes
         start_date = df_Pred['date'].iloc[0]
@@ -754,9 +751,7 @@ def plot_prediction_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, pl
 
         #~insert date
         df_exploded = insert_dates(df_exploded)
-        print(df_exploded)
         df_exploded = df_exploded.dropna(subset=['class'])
-        print(df_exploded['class'].unique())
         # print if there is nan values
         if df_exploded['class'].isnull().values.any():
             logger.error("There are nan values in the class column")
@@ -765,7 +760,6 @@ def plot_prediction_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, pl
         # urban_taxonomy_map = pd.read_json(r"C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Urban_Model\Visualization\urban_taxonomy_map_v1_0.json", typ='series').to_dict()
         urban_taxonomy_map = pd.read_json("port_1_taxonomy_mapping_v2.0.json", typ='series').to_dict()
         df_exploded['mapped_class'] = df_exploded['class'].map(urban_taxonomy_map)
-        print(df_exploded['mapped_class'].unique())
         df_exploded = df_exploded.dropna(subset=['mapped_class'])
 
 
@@ -799,18 +793,14 @@ def plot_prediction_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, pl
 
 
 
-        print(df_resampled['mapped_class'].unique())
         # drop None values
         df_resampled = df_resampled.dropna(subset=['mapped_class'])
-        print(df_resampled['mapped_class'].unique())
         # map class to number
         class_to_num = {class_name: index+1 for index, class_name in enumerate(df_resampled['mapped_class'].unique())}
-        print(class_to_num)
 
         df_resampled['class_num'] = df_resampled['mapped_class'].map(class_to_num)
         # drop nan values
         df_resampled = df_resampled.dropna(subset=['class_num'])
-        print(df_resampled['class_num'].unique())
         
         # inverting the dictionary to get the name of the class for the legend
         name_class = {v: k for k, v in class_to_num.items()}
@@ -1010,12 +1000,6 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
 
 
         ####################################################################
-        # df_aligned['class_probability'] = df_aligned.apply(lambda x: list(zip(x['class'], x['probability'])), axis=1)
-        # df_exploded = df_aligned.explode('class_probability')
-        # df_exploded['class'] = df_exploded['class_probability'].apply(lambda x: x[0])
-        # df_exploded['probability'] = df_exploded['class_probability'].apply(lambda x: x[1])
-        # df_exploded = df_exploded.drop(columns=['class_probability'])
-        # After creating class_probability
         df_aligned['class_probability'] = df_aligned.apply(
             lambda x: (x['class'], x['probability']) if isinstance(x['class'], float) else list(zip(x['class'], x['probability'])),
             axis=1
@@ -1378,3 +1362,20 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pre
 
     except Exception as e:
         logger.error(f"Error in plot_predic_laeq_15_min_period: {e}")
+
+
+
+def plot_peak_analysis(peak_prediction_csv_file: pd.DataFrame, yamnet_csv:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
+    try:
+        peak_prediction_csv_file['class'] = peak_prediction_csv_file['classes'].apply(ast.literal_eval)
+        peak_prediction_csv_file['probabilities'] = peak_prediction_csv_file['predictions'].apply(ast.literal_eval)
+        # explode peak_prediction_csv_file to get the classes
+        df_exploded = peak_prediction_csv_file.explode('class')
+        df_merged = pd.merge(df_exploded, yamnet_csv, left_on='class', right_on='display_name', how='left')
+
+        # rename leq for LAeq
+        
+
+        exit()
+    except Exception as e:
+        logger.error(f"Error in plot_peak_analysis: {e}")

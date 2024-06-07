@@ -119,6 +119,22 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             logger.info(f"Created output folder: {predictions_visualization_folder}")
         ##############################################################
 
+        ###################################################################
+        ########## GETTING PEAK PREDICTION FILE FOR EACH FOLDER ###########
+        peak_predictions_folder = os.path.join(folder.replace('3-Medidas', '5-Resultados'), "SPL", "Peaks")
+        if not os.path.exists(peak_predictions_folder):
+            logger.error(f"Peaks folder not found: {peak_predictions_folder}")
+        if os.path.exists(peak_predictions_folder):
+            # list csv files in the directory
+            peak_predictions_files = glob.glob(os.path.join(peak_predictions_folder, "*.csv"))
+            if peak_predictions_files:
+                # take the file which contains 'peak_prediction' in the name
+                peak_prediction_file = [f for f in peak_predictions_files if 'peak_prediction' in f][0]
+                peak_prediction_csv_file = pd.read_csv(peak_prediction_file)
+            else:
+                logger.info("No CSV files found in the peaks folder.")
+        ###################################################################
+
 
         try:
             logger.info("\n")
@@ -149,6 +165,17 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             pred_end_date = prediction_csv_file.index[-1]
             logger.info(f"Start date {pred_start_date} and end date {pred_end_date}")
             logger.info(f"df was sorted by datetime and datetime was set as index")
+
+            # the same for the peak prediction file
+            logger.info(f"FOR PEAK PREDICTION FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
+            peak_prediction_csv_file = add_datetime_columns_pred(peak_prediction_csv_file, logger, date_col='start_time')
+            peak_prediction_csv_file = peak_prediction_csv_file.sort_values('start_time')
+            peak_prediction_csv_file.set_index('start_time', inplace=True, drop=False)
+            peak_pred_start_date = peak_prediction_csv_file.index[0]
+            peak_pred_end_date = peak_prediction_csv_file.index[-1]
+            logger.info(f"Start date {peak_pred_start_date} and end date {peak_pred_end_date}")
+            logger.info(f"df was sorted by datetime and datetime was set as index")
+
             
             try:
                 # drop the beginning and ending of the measurement (15min)
@@ -161,10 +188,14 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"Adding indicators column")
                 df['indicador_str'] = df.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
                 prediction_csv_file['indicador_str'] = prediction_csv_file.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
+                peak_prediction_csv_file['indicador_str'] = peak_prediction_csv_file.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
+
                 # add nights column
                 logger.info(f"Adding nights column")
                 df['night_str'] = df.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
                 prediction_csv_file['night_str'] = prediction_csv_file.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
+                peak_prediction_csv_file['night_str'] = peak_prediction_csv_file.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
+
                 # removing nan values
                 prediction_csv_file = prediction_csv_file.dropna()
                 logger.info(f"Removing nan values")
@@ -278,6 +309,10 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if PLOT_PERIOD_EVOLUTION:
                 logger.info(f"[13] Plotting period evolution (1) Ld (2) Le for folder {folder}")
                 plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder)
+
+            if PLOT_PEAK_ANALYSIS:
+                logger.info(f"[14] Plotting peak analysis for folder {folder}")
+                plot_peak_analysis(peak_prediction_csv_file, yamnet_csv, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
             
 
         except Exception as e:

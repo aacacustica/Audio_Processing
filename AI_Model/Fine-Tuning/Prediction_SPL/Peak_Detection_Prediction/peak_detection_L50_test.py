@@ -65,7 +65,7 @@ def leq(levels):
 def find_audiomoth_folders(base_path):
     for root, dirs, files in os.walk(base_path):
         if 'AUDIOMOTH' in dirs:
-            ## Add AUDIOMOTH to the path
+            ## add AUDIOMOTH to the path
             root = os.path.join(root, 'AUDIOMOTH')
             # find the csv file
             for root, dirs, files in os.walk(root):

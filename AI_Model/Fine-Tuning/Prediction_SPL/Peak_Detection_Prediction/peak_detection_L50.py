@@ -84,9 +84,8 @@ def argument_parser():
 
 
 def main():
-    """
-    python .\peak_detection_L50_test.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR"
-    """
+    # python .\peak_detection_L50.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR"
+
     args = argument_parser()
     base_path = args.path
     # collectin all the csv files

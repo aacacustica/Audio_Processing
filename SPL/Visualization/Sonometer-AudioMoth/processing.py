@@ -103,7 +103,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         ########## GETTING PREDICTION FILE FOR EACH FOLDER ###########
         predictions_folder = os.path.join(folder.replace('3-Medidas', '5-Resultados'), "AI_MODEL", "Predictions")
         if not os.path.exists(predictions_folder):
-            logger.error(f"Predictions folder not found: {predictions_folder}")
+            logger.warning(f"Predictions folder not found: {predictions_folder}")
         if os.path.exists(predictions_folder):
             # list csv files in the directory
             predictions_files = glob.glob(os.path.join(predictions_folder, "*.csv"))
@@ -111,7 +111,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 prediction_file = predictions_files[0]
                 prediction_csv_file = prediction_csv(prediction_file)
             else:
-                logger.info("No CSV files found in the predictions folder.")
+                logger.warning("No CSV files found in the predictions folder.")
         
         predictions_visualization_folder = predictions_folder.replace("Predictions", "Visualizations")
         if not os.path.exists(predictions_visualization_folder):
@@ -123,7 +123,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         ########## GETTING PEAK PREDICTION FILE FOR EACH FOLDER ###########
         peak_predictions_folder = os.path.join(folder.replace('3-Medidas', '5-Resultados'), "SPL", "Peaks")
         if not os.path.exists(peak_predictions_folder):
-            logger.error(f"Peaks folder not found: {peak_predictions_folder}")
+            logger.warning(f"Peaks folder not found: {peak_predictions_folder}")
         if os.path.exists(peak_predictions_folder):
             # list csv files in the directory
             peak_predictions_files = glob.glob(os.path.join(peak_predictions_folder, "*.csv"))
@@ -132,7 +132,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 peak_prediction_file = [f for f in peak_predictions_files if 'peak_prediction' in f][0]
                 peak_prediction_csv_file = pd.read_csv(peak_prediction_file)
             else:
-                logger.info("No CSV files found in the peaks folder.")
+                logger.warning("No CSV files found in the peaks folder.")
         ###################################################################
 
 
@@ -253,7 +253,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
 
             if PLOT_PREDIC_LAEQ_15_MIN_4H:
-                logger.info(f"[5] Plotting PLOT_PREDIC_LAEQ_8H for folder {folder}")
+                logger.info(f"[5] Plotting PLOT_PREDIC_LAEQ_4H for folder {folder}")
                 plot_predic_laeq_15_min_4h(df, yamnet_csv, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
 
 

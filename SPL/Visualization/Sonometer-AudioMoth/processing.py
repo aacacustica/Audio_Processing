@@ -102,6 +102,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         ##############################################################
         ########## GETTING PREDICTION FILE FOR EACH FOLDER ###########
         predictions_folder = os.path.join(folder.replace('3-Medidas', '5-Resultados'), "AI_MODEL", "Predictions")
+        prediction_csv_file = None
         if not os.path.exists(predictions_folder):
             logger.warning(f"Predictions folder not found: {predictions_folder}")
         if os.path.exists(predictions_folder):
@@ -122,6 +123,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         ###################################################################
         ########## GETTING PEAK PREDICTION FILE FOR EACH FOLDER ###########
         peak_predictions_folder = os.path.join(folder.replace('3-Medidas', '5-Resultados'), "SPL", "Peaks")
+        peak_prediction_csv_file = None
         if not os.path.exists(peak_predictions_folder):
             logger.warning(f"Peaks folder not found: {peak_predictions_folder}")
         if os.path.exists(peak_predictions_folder):
@@ -157,48 +159,60 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
 
             # the same for the prediction file
-            logger.info(f"FOR PREDICTION FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
-            prediction_csv_file = add_datetime_columns_pred(prediction_csv_file, logger, date_col='date')
-            prediction_csv_file = prediction_csv_file.sort_values('date')
-            prediction_csv_file.set_index('date', inplace=True, drop=False)
-            pred_start_date = prediction_csv_file.index[0]
-            pred_end_date = prediction_csv_file.index[-1]
-            logger.info(f"Start date {pred_start_date} and end date {pred_end_date}")
-            logger.info(f"df was sorted by datetime and datetime was set as index")
+            if prediction_csv_file is not None:
+                logger.info(f"FOR PREDICTION FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
+                prediction_csv_file = add_datetime_columns_pred(prediction_csv_file, logger, date_col='date')
+                prediction_csv_file = prediction_csv_file.sort_values('date')
+                prediction_csv_file.set_index('date', inplace=True, drop=False)
+                pred_start_date = prediction_csv_file.index[0]
+                pred_end_date = prediction_csv_file.index[-1]
+                logger.info(f"Start date {pred_start_date} and end date {pred_end_date}")
+                logger.info(f"df was sorted by datetime and datetime was set as index")
+            else:
+                logger.warning(f"prediction_csv_file is None")
 
             # the same for the peak prediction file
-            logger.info(f"FOR PEAK PREDICTION FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
-            peak_prediction_csv_file = add_datetime_columns_pred(peak_prediction_csv_file, logger, date_col='start_time')
-            peak_prediction_csv_file = peak_prediction_csv_file.sort_values('start_time')
-            peak_prediction_csv_file.set_index('start_time', inplace=True, drop=False)
-            peak_pred_start_date = peak_prediction_csv_file.index[0]
-            peak_pred_end_date = peak_prediction_csv_file.index[-1]
-            logger.info(f"Start date {peak_pred_start_date} and end date {peak_pred_end_date}")
-            logger.info(f"df was sorted by datetime and datetime was set as index")
+            if peak_prediction_csv_file is not None:
+                logger.info(f"FOR PEAK PREDICTION FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
+                peak_prediction_csv_file = add_datetime_columns_pred(peak_prediction_csv_file, logger, date_col='start_time')
+                peak_prediction_csv_file = peak_prediction_csv_file.sort_values('start_time')
+                peak_prediction_csv_file.set_index('start_time', inplace=True, drop=False)
+                peak_pred_start_date = peak_prediction_csv_file.index[0]
+                peak_pred_end_date = peak_prediction_csv_file.index[-1]
+                logger.info(f"Start date {peak_pred_start_date} and end date {peak_pred_end_date}")
+                logger.info(f"df was sorted by datetime and datetime was set as index")
+            else:
+                logger.warning(f"peak_prediction_csv_file is None")
 
             
             try:
                 # drop the beginning and ending of the measurement (15min)
                 df = df.loc[start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')]
                 logger.info(f"SPL df was trimmed, {REMOVE_START_TIME} secs from the beggining and {REMOVE_END_TIME} secs from the end")
-                prediction_csv_file = prediction_csv_file.loc[pred_start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):pred_end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')]
-                logger.info(f"Prediction df was trimmed, {REMOVE_START_TIME} secs from the beggining and {REMOVE_END_TIME} secs from the end")
+                if prediction_csv_file is not None:
+                    prediction_csv_file = prediction_csv_file.loc[pred_start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):pred_end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')]
+                    logger.info(f"Prediction df was trimmed, {REMOVE_START_TIME} secs from the beggining and {REMOVE_END_TIME} secs from the end")
 
                 # add indicators column
                 logger.info(f"Adding indicators column")
                 df['indicador_str'] = df.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
-                prediction_csv_file['indicador_str'] = prediction_csv_file.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
-                peak_prediction_csv_file['indicador_str'] = peak_prediction_csv_file.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
+                if prediction_csv_file is not None:
+                    prediction_csv_file['indicador_str'] = prediction_csv_file.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
+                if peak_prediction_csv_file is not None:
+                    peak_prediction_csv_file['indicador_str'] = peak_prediction_csv_file.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
 
                 # add nights column
                 logger.info(f"Adding nights column")
                 df['night_str'] = df.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
-                prediction_csv_file['night_str'] = prediction_csv_file.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
-                peak_prediction_csv_file['night_str'] = peak_prediction_csv_file.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
+                if prediction_csv_file is not None:
+                    prediction_csv_file['night_str'] = prediction_csv_file.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
+                if peak_prediction_csv_file is not None:
+                    peak_prediction_csv_file['night_str'] = peak_prediction_csv_file.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
 
                 # removing nan values
-                prediction_csv_file = prediction_csv_file.dropna()
-                logger.info(f"Removing nan values")
+                if prediction_csv_file is not None:
+                    prediction_csv_file = prediction_csv_file.dropna()
+                    logger.info(f"Removing nan values")
                 # check if there is nan values
                 if df.isnull().values.any():
                     logger.warning(f"There are nan values in the dataframe")
@@ -214,6 +228,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                     if folder == key:
                         df = apply_db_correction(df, value)
                         logger.info(f"Apply {value} correction coefficient to the folder {folder}")
+
 
             except Exception as e:
                 logger.error(f"An error occurred while trimming the dataframe {e}")

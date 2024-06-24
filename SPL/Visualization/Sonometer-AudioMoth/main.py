@@ -57,7 +57,6 @@ def main():
                 TAXONOMY_MAP = urban_taxonomy_map
             
             spl_audiomoth_folders = []
-
             for root, dirs, files in os.walk(input_folder):
                 if "AUDIOMOTH" in dirs:
 
@@ -83,7 +82,6 @@ def main():
                 TAXONOMY_MAP = urban_taxonomy_map
             
             spl_sonometer_folders = []
-
             for root, dirs, files in os.walk(input_folder):
                 if 'SONOMETRO' in dirs:
                     spl_sonometer_folder = os.path.join(root, "SONOMETRO")

@@ -62,13 +62,17 @@ def get_data_SV307(filename: str):
         df = pd.read_csv(filename,header=14,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
     except Exception as e:
         df = pd.read_csv(filename,header=18,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
+    
+    if not 'LAeq (Ch1, P1) [dB]' in df.columns:
+        df = pd.read_csv(filename,header=18,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python', sep=';')
 
     df = df[pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S', errors='coerce').notnull()]
-    
     df['datetime'] = pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S')
+    
     df.rename(columns={'LAeq (Ch1, P1) [dB]': 'LAeq',
                        'LAFmax (Ch1, P1) [dB]': 'LAFmax',
                        'LAFmin (Ch1, P1) [dB]': 'LAFmin'}, inplace=True)
+
     return df
 
 

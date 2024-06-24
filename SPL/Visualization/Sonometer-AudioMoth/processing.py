@@ -146,7 +146,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"df is None")
                 continue
 
-
             # add datetime columns, sort by datetime and set datetime as index
             logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
             df = add_datetime_columns(df,logger, date_col='datetime') 
@@ -218,7 +217,9 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                     logger.warning(f"There are nan values in the dataframe")
                 #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
 
-
+                
+                #####################################################
+                ########## APPLYING DB CORRECTION TO THE DATA #########
                 logger.info(f"Applying db correction")
                 for key, value in folder_coefficients.items():
                     key = key.split("\\")[:-1]
@@ -226,14 +227,15 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
                     # assign the value to the folder
                     if folder == key:
-                        df = apply_db_correction(df, value)
+                        df = apply_db_correction(df, value, logger)
                         logger.info(f"Apply {value} correction coefficient to the folder {folder}")
 
 
             except Exception as e:
                 logger.error(f"An error occurred while trimming the dataframe {e}")
                 continue
-            
+
+
             logger.info("")        
             logger.info(f"PLOTTING SECTION")
             folder = folder.split("\\")[-1]
@@ -248,7 +250,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if PLOT_NIGHT_EVOLUTION:
                 logger.info(f"[1] Plotting night evolution for folder {folder}")
                 plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder, indicador_noche="Ln")
-            
             
             # Plotting night evolution 15 min
             if PLOT_NIGHT_EVOLUTION_15_MIN:

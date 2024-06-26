@@ -72,7 +72,7 @@ def process_folder(folder_path, logger):
 
 
 
-def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, TAXONOMY_MAP, yamnet_csv, sufix_string, folder_coefficients, logger):
+def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, sufix_string, folder_coefficients, logger):
     print()
     for folder in tqdm(folders, desc="Processing folders"):
         reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
@@ -145,6 +145,9 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if df is None:
                 logger.info(f"df is None")
                 continue
+
+            if not 'LC-LA' in df.columns:
+                df['LC-LA'] = df['LC'] - df['LA']
 
             # add datetime columns, sort by datetime and set datetime as index
             logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
@@ -276,13 +279,13 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             # Plotting stack bar with predictions class
             if PLOT_PREDICTION_STACK_BAR:
                 logger.info(f"[6] Plotting PLOT_PREDICTION_STACK_BAR for folder {folder}")
-                plot_prediction_stack_bar(prediction_csv_file, yamnet_csv, TAXONOMY_MAP, predictions_visualization_folder, logger, plotname=folder)
+                plot_prediction_stack_bar(prediction_csv_file, yamnet_csv, taxonomy, predictions_visualization_folder, logger, plotname=folder)
             
 
             # Plotting prediction map
             if PLOT_PREDICTION_MAP:
                 logger.info(f"[7] Plotting PLOT_PREDICTION_MAP for folder {folder}")
-                plot_prediction_map(prediction_csv_file, predictions_visualization_folder, logger, plotname=folder)
+                plot_prediction_map(prediction_csv_file, taxonomy, predictions_visualization_folder, logger, plotname=folder)
 
             
             # Plotting tree map
@@ -299,35 +302,36 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
             # Plotting heatmap evolution hour
             if PLOT_HEATMAP_EVOLUTION_HOUR:
-                logger.info(f"[9] Plotting heatmap for folder {folder}")
+                logger.info(f"[10] Plotting heatmap for folder {folder}")
                 plot_heatmap_evolution_hour(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN_COEFF'], agg_func=leq,plotname=folder)
             
             
             # Plotting heatmap evolution 15 min
             if PLOT_HEATMAP_EVOLUTION_15_MIN:
-                logger.info(f"[10] Plotting heatmap 15 min for folder {folder}")
+                logger.info(f"[11] Plotting heatmap 15 min for folder {folder}")
                 plot_heatmap_evolution_15_min(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN_COEFF'], agg_func=leq,plotname=folder)
             
 
             # Plotting individual heatmap
             if PLOT_INDICADORES_HEATMAP:
-                logger.info(f"[11] Plotting indicadores heatmap for folder {folder}")
+                logger.info(f"[12] Plotting indicadores heatmap for folder {folder}")
                 plot_indicadores_heatmap(df, folder_output_dir, logger, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN_COEFF"])
 
 
             # Plotting day evolution
             if PLOT_DAY_EVOLUTION:
-                logger.info(f"[12] Plotting day evolution for folder {folder}")
+                logger.info(f"[13] Plotting day evolution for folder {folder}")
                 plot_day_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder)
             
 
             # Plotting period evolution
             if PLOT_PERIOD_EVOLUTION:
-                logger.info(f"[13] Plotting period evolution (1) Ld (2) Le for folder {folder}")
+                logger.info(f"[14] Plotting period evolution (1) Ld (2) Le for folder {folder}")
                 plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder)
 
+
             if PLOT_PEAK_ANALYSIS:
-                logger.info(f"[14] Plotting peak analysis for folder {folder}")
+                logger.info(f"[15] Plotting peak analysis for folder {folder}")
                 plot_peak_analysis(peak_prediction_csv_file, yamnet_csv, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
             
 

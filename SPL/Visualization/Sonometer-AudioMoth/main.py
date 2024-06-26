@@ -47,14 +47,13 @@ def main():
         # audiomoth
         if args.audiomoth:
             logger.info("Processing audiomoth data")
-
             # set the urban o port taxonomy
             if args.urban:
-                TAXONOMY_MAP = urban_taxonomy_map
+                taxonomy = urban_taxonomy_map
             elif args.port:
-                TAXONOMY_MAP = port_taxonomy_map
+                taxonomy = port_taxonomy_map
             else:
-                TAXONOMY_MAP = urban_taxonomy_map
+                taxonomy = urban_taxonomy_map
             
             spl_audiomoth_folders = []
             for root, dirs, files in os.walk(input_folder):
@@ -66,20 +65,19 @@ def main():
                         folder_coefficients[spl_audiomoth_folder] = coeff
                         spl_audiomoth_folders.append(spl_audiomoth_folder)
             
-            process_all_folders(input_folder, spl_audiomoth_folders, PERIODO_AGREGACION, PERCENTILES, TAXONOMY_MAP, yamnet_csv, 'AUDIOMOTH', folder_coefficients, logger)
+            process_all_folders(input_folder, spl_audiomoth_folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, 'AUDIOMOTH', folder_coefficients, logger)
 
 
         # sonometro
         if args.sonometer:
             logger.info("Processing sonometer data")
-
             # set the urban o port taxonomy
             if args.urban:
-                TAXONOMY_MAP = urban_taxonomy_map
+                taxonomy = urban_taxonomy_map
             elif args.port:
-                TAXONOMY_MAP = port_taxonomy_map
+                taxonomy = port_taxonomy_map
             else:
-                TAXONOMY_MAP = urban_taxonomy_map
+                taxonomy = urban_taxonomy_map
             
             spl_sonometer_folders = []
             for root, dirs, files in os.walk(input_folder):
@@ -90,7 +88,7 @@ def main():
                         folder_coefficients[spl_sonometer_folder] = coeff
                         spl_sonometer_folders.append(spl_sonometer_folder)
 
-            process_all_folders(input_folder, spl_sonometer_folders, PERIODO_AGREGACION, PERCENTILES, TAXONOMY_MAP, yamnet_csv, 'SONOMETRO', folder_coefficients, logger)
+            process_all_folders(input_folder, spl_sonometer_folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, 'SONOMETRO', folder_coefficients, logger)
         
 
         logger.info("Finished sonometer test script")

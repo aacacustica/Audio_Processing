@@ -141,7 +141,7 @@ def yamnet_class_map_csv():
 
 def taxonomy_json():
     urban_taxonomy_map = pd.read_json("urban_taxonomy_map_v1_0.json", typ='series').to_dict()
-    port_taxonomy_map = pd.read_json("port_taxonomy_map_v1.0.json", typ='series').to_dict()
+    port_taxonomy_map = pd.read_json("port_1_taxonomy_mapping_v2.0.json", typ='series').to_dict()
     return urban_taxonomy_map, port_taxonomy_map
 
 
@@ -205,6 +205,7 @@ def apply_db_correction(df, coefficient, logger):
         df['LA_corrected'] = df['LA'] - coefficient
         df['LAmax_corrected'] = df['LAmax'] - coefficient
         df['LAmin_corrected'] = df['LAmin'] - coefficient
+        df['LCeq-LAeq_corrected'] = df['LC-LA'] - coefficient
     
     elif 'LAeq' in df.columns:
         df['LA_corrected'] = df['LAeq'] - coefficient
@@ -216,7 +217,7 @@ def apply_db_correction(df, coefficient, logger):
 
     elif '' in df.columns:
         df['LA_corrected'] = df[''] - coefficient
-        
+
     else:
         logger.error('No column found to apply the correction')
 

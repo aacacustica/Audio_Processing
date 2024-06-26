@@ -49,7 +49,10 @@ class LeqLevel:
             Lmax = np.max(fast_levels)
             Lmin = np.min(fast_levels)
 
-            db_levels.append([LA, LC, LZ, Lmax, Lmin])
+            # getting the LC-LA difference
+            LC_LA = LC - LA
+
+            db_levels.append([LA, LC, LZ, LC_LA, Lmax, Lmin])
         return np.round(db_levels, 2)
     
 
@@ -89,7 +92,7 @@ def main():
     args = parse_arguments()
     base_path = args.path
     calibration_constants = read_calibration_constants('calibration_constants.ini')
-    col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin', 'filename', 'date']
+    col_names = ['LA', 'LC', 'LZ', 'LC-LA', 'LAmax', 'LAmin', 'filename', 'date']
 
     audiomoth_folders = list(find_audiomoth_folders(base_path))
     for subfolder in tqdm(audiomoth_folders, desc='Processing folders'):
@@ -142,7 +145,7 @@ def main():
                 audio_data, _ = sf.read(filepath)
                 db_levels = calculator.calculate_spl_levels(audio_data)
 
-                if db_levels.shape[1] != 5:
+                if db_levels.shape[1] != 6:
                     logging.warning(f'Unexpected shape for db_levels: {db_levels.shape} for file {audio_file}')
                     continue
 

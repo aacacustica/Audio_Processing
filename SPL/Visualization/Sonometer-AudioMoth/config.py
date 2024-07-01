@@ -16,7 +16,7 @@ LE_SECONDS = 7200
 LN_SECONDS = 14400
 
 
-# Plotting Flags there are 9 flags to plot the following plots
+# Plotting Flags there are 15 flags to plot the following plots
 PLOT_NIGHT_EVOLUTION = False
 PLOT_NIGHT_EVOLUTION_15_MIN = False 
 

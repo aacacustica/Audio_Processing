@@ -829,10 +829,7 @@ def plot_tree_map(df_Pred:pd.DataFrame,taxonomy_map, folder_output_dir: str, log
 
         #~insert date
         df_exploded = insert_dates(df_exploded)
-        # get the urban_taxonomy_map
-        # urban_taxonomy_map = pd.read_json(r"C:\Users\scjaa\Documents\GitHubRepos\AAC\AI_Model\Urban_Model\Visualization\urban_taxonomy_map_v1_0.json", typ='series').to_dict()
-        urban_taxonomy_map = pd.read_json("port_1_taxonomy_mapping_v2.0.json", typ='series').to_dict()
-        df_exploded['mapped_class'] = df_exploded['class'].map(urban_taxonomy_map)
+        df_exploded['mapped_class'] = df_exploded['class'].map(taxonomy_map)
 
         #################################
         # union = pd.read_csv(r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Urbano\Taxonomia\yamnet_class_AAC_301123.csv",sep=';')
@@ -870,7 +867,6 @@ def plot_tree_map(df_Pred:pd.DataFrame,taxonomy_map, folder_output_dir: str, log
                  path=[class_to_plot, 'class'], 
                  values='number',
                  color=class_to_plot,  #for coloring
-                #  color_discrete_map=COLOR_PALLET_URBAN
                 color_discrete_map=color_pallet
                 )
 
@@ -890,8 +886,7 @@ def plot_tree_map(df_Pred:pd.DataFrame,taxonomy_map, folder_output_dir: str, log
                      path=[class_to_plot, 'class'], 
                      values='number',
                      color=class_to_plot,  #for coloring
-                    #  color_discrete_map=COLOR_PALLET_URBAN
-                    color_discrete_map=COLOR_PALLET_PORT_L1
+                    color_discrete_map=color_pallet
                     )
             
             fig.update_layout(title=f'{plotname} | {day_df["year"].iloc[0]}-{day_df["month"].iloc[0]}-{day}')

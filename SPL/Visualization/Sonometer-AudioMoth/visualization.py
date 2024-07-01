@@ -175,7 +175,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
 
 
   
-def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
+def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxonomy_map, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
     try:
         # remove nan values
         df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
@@ -235,6 +235,8 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         # set date_y as index
         if "date_y" in df_aligned.columns:
             df_aligned.set_index('date_y', inplace=True, drop=False)
+        else:
+            df_aligned.set_index('date', inplace=True, drop=False)
 
 
         ####################################################################
@@ -264,7 +266,11 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
         noiseport_1 = 'NoisePort_Level_1'
         noiseport_2 = 'NoisePort_Level_2'
 
-        class_to_plot = brown_2
+        if 'Siren' in set(taxonomy_map.values()):
+            class_to_plot = noiseport_1
+        else:
+            class_to_plot = brown_2  
+
 
         grouped_df = df_all.groupby(class_to_plot).agg(
             number=(classes, 'size'),
@@ -300,7 +306,7 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:p
 
 
 
-def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
+def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxonomy_map, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
     try:
         folder_output_dir = os.path.join(folder_output_dir, 'Prediction_LAeq_15_min_Period')
         # remove nan values
@@ -360,6 +366,8 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df
         # set date_y as index
         if "date_y" in df_aligned.columns:
             df_aligned.set_index('date_y', inplace=True, drop=False)
+        else:
+            df_aligned.set_index('date', inplace=True, drop=False)
         
 
         ####################################################################
@@ -377,10 +385,15 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df
         df_all = df_exploded.merge(yamnet_csv, how='left', on='display_name')
         df_all = df_all.dropna(subset=['display_name'])
 
-        # convert data time type datetime_y column
-        df_all['datetime_y'] = pd.to_datetime(df_all['datetime_y'])
-        df_all['time_of_day'] = df_all['hour_x'].apply(categorize_time_of_day)
+        if 'datetime_y' in df_all.columns and 'hour_x' in df_all.columns:
+            logger.info("Using 'datetime_y' and 'hour_x' columns for datetime and hour categorization.")
+            df_all['datetime_y'] = pd.to_datetime(df_all['datetime_y'])
+            df_all['time_of_day'] = df_all['hour_x'].apply(categorize_time_of_day)
 
+        else:
+            logger.info("Using 'date' and 'hour' columns for datetime and hour categorization.")
+            df_all['datetime_y'] = pd.to_datetime(df_all['date'])
+            df_all['time_of_day'] = df_all['hour'].apply(categorize_time_of_day)
     
         #########################################################
         #### Plotting the data ####
@@ -395,7 +408,11 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df
         noiseport_1 = 'NoisePort_Level_1'
         noiseport_2 = 'NoisePort_Level_2'
 
-        class_to_plot = brown_2
+        if 'Siren' in set(taxonomy_map.values()):
+            class_to_plot = noiseport_1
+        else:
+            class_to_plot = brown_2
+
         order_time_of_day = ['Ld', 'Le', 'Ln']
 
         df_all['time_of_day'] = pd.Categorical(df_all['time_of_day'], categories=order_time_of_day, ordered=True)
@@ -407,6 +424,7 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df
             order_index=('order_index', 'first')
         ).reset_index()
 
+        grouped_df = grouped_df.dropna(subset=['LAeq'])
 
         # iterate for each period and save it individually
         for period in order_time_of_day:
@@ -436,34 +454,13 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df
             period_df.to_csv(f"{folder_output_dir}/{plotname}_LAeq_class_period_{period}.csv", index=False)
             logger.info(f"LAeq class period data saved to {folder_output_dir}/{plotname}_LAeq_class_period_{period}.csv")
 
-
-            # save all these images in a single pdf
-            # pdf = FPDF()
-            # pdf.add_page()
-            # pdf.set_margins(10, 10, 10)
-            # # list directory to get all the files (html file)
-            # files = os.listdir(folder_output_dir)
-            # print(files)
-            # html_imgages = [f for f in files if f.endswith('.html')]
-            # print(html_imgages)
-
-            # for img in html_imgages:
-            #     pdf.add_page()
-            #     pdf.set_font("Arial", size=12)
-            #     pdf.cell(200, 10, txt=img, ln=True)
-            #     pdf.image(f"{folder_output_dir}/{img}", x=10, y=20, w=190)
-
-            # pdf.output(f"{folder_output_dir}/{plotname}_LAeq_class_period_all.pdf")
-            # logger.info(f"LAeq class period all pdf saved to {folder_output_dir}/{plotname}_LAeq_class_period_all.pdf")
-            # print(f"{folder_output_dir}/{plotname}_LAeq_class_period_all.pdf")
-
     except Exception as e:
         logger.error(f"Error in plot_predic_laeq_15_min_period: {e}")
 
 
 
 
-def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
+def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxonomy_map, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
     try:
         folder_output_dir = os.path.join(folder_output_dir, 'Prediction_LAeq_15_min_4h')
         # remove nan values
@@ -521,7 +518,9 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pre
 
         # set date_y as index
         if "date_y" in df_aligned.columns:
-            df_aligned.set_index('date_y', inplace=True, drop=False)        
+            df_aligned.set_index('date_y', inplace=True, drop=False)      
+        else:
+            df_aligned.set_index('date', inplace=True, drop=False)
 
         ####################################################################
         df_aligned['class_probability'] = df_aligned.apply(
@@ -539,8 +538,15 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pre
         df_all = df_all.dropna(subset=['display_name'])
 
         # convert data time type datetime_y column
-        df_all['datetime_y'] = pd.to_datetime(df_all['datetime_y'])
-        df_all['time_of_day'] = df_all['hour_x'].apply(categorize_time_of_day_4)
+        if 'datetime_y' in df_all.columns and 'hour_x' in df_all.columns:
+            logger.info("Using 'datetime_y' and 'hour_x' columns for datetime and hour categorization.")
+            df_all['datetime_y'] = pd.to_datetime(df_all['datetime_y'])
+            df_all['time_of_day'] = df_all['hour_x'].apply(categorize_time_of_day)
+
+        else:
+            logger.info("Using 'date' and 'hour' columns for datetime and hour categorization.")
+            df_all['datetime_y'] = pd.to_datetime(df_all['date'])
+            df_all['time_of_day'] = df_all['hour'].apply(categorize_time_of_day)
 
     
         #########################################################
@@ -556,7 +562,11 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pre
         noiseport_1 = 'NoisePort_Level_1'
         noiseport_2 = 'NoisePort_Level_2'
 
-        class_to_plot = brown_2
+        if 'Siren' in set(taxonomy_map.values()):
+            class_to_plot = noiseport_1
+        else:
+            class_to_plot = brown_2
+
         order_time_of_day = ['Ld_1', 'Ld_2', 'Ld_3', 'Le', 'Ln_1', 'Ln_2']
 
         df_all['time_of_day'] = pd.Categorical(df_all['time_of_day'], categories=order_time_of_day, ordered=True)
@@ -568,6 +578,9 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, df_Pre
             LAeq=('LA_corrected', lambda x: leq(x)),
             order_index=('order_index', 'first')
         ).reset_index()
+
+        # remove rows with nan values
+        grouped_df = grouped_df.dropna(subset=['LAeq'])
 
         for period in order_time_of_day:
             period_df = grouped_df[grouped_df['time_of_day'] == period]
@@ -793,7 +806,7 @@ def plot_prediction_map(df_Pred:pd.DataFrame, taxonomy_map, folder_output_dir: s
 
 
 
-def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname: str):
+def plot_tree_map(df_Pred:pd.DataFrame,taxonomy_map, folder_output_dir: str, logger, plotname: str):
     try:
         sns.set_style("white")
         sns.set_palette("tab10")
@@ -823,7 +836,9 @@ def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname
 
         #################################
         # union = pd.read_csv(r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Urbano\Taxonomia\yamnet_class_AAC_301123.csv",sep=';')
-        union = pd.read_csv(r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Puerto\yamnet_class_AAC_v3_0.csv",sep=';')
+        home_dir = os.path.expanduser('~')
+        full_path = os.path.join(home_dir, RELATIVE_PATH.lstrip('\\'))
+        union = pd.read_csv(full_path, sep=';')
 
         # merge classes with ontology
         df_exploded = df_exploded.merge(union, how='left', on='display_name')
@@ -840,7 +855,13 @@ def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname
         brown_3 = 'Brown_Level_3'
         noiseport_1 = 'NoisePort_Level_1'
         noiseport_2 = 'NoisePort_Level_2'
-        class_to_plot = brown_2
+
+        if 'Siren' in set(taxonomy_map.values()):
+            class_to_plot = noiseport_1
+            color_pallet = COLOR_PALLET_PORT_L1
+        else:
+            class_to_plot = brown_2  
+            color_pallet = COLOR_PALLET_URBAN
 
         df_exploded = df_exploded.dropna(subset=[class_to_plot, 'class'])
         # exit()
@@ -850,7 +871,7 @@ def plot_tree_map(df_Pred:pd.DataFrame, folder_output_dir: str, logger, plotname
                  values='number',
                  color=class_to_plot,  #for coloring
                 #  color_discrete_map=COLOR_PALLET_URBAN
-                color_discrete_map=COLOR_PALLET_PORT_L1
+                color_discrete_map=color_pallet
                 )
 
         fig.update_layout(title=f'{plotname} | Clases por día desde {start_date} hasta {end_date}')

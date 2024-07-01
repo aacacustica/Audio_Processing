@@ -146,8 +146,8 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"df is None")
                 continue
 
-            if not 'LC-LA' in df.columns:
-                df['LC-LA'] = df['LC'] - df['LA']
+            # if not 'LC-LA' in df.columns:
+            #     df['LC-LA'] = df['LC'] - df['LA']
 
             # add datetime columns, sort by datetime and set datetime as index
             logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
@@ -263,17 +263,17 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             # Plotting LEq power average with predictions
             if PLOT_PREDIC_LAEQ_15_MIN:
                 logger.info(f"[3] Plotting PLOT_PREDIC_LAEQ for folder {folder}")
-                plot_predic_laeq_15_min(df, yamnet_csv, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
+                plot_predic_laeq_15_min(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
 
             
             if PLOT_PREDIC_LAEQ_15_MIN_PERIOD:
                 logger.info(f"[4] Plotting PLOT_PREDIC_LAEQ_PERIOD for folder {folder}")
-                plot_predic_laeq_15_min_period(df, yamnet_csv, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
+                plot_predic_laeq_15_min_period(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
 
 
             if PLOT_PREDIC_LAEQ_15_MIN_4H:
                 logger.info(f"[5] Plotting PLOT_PREDIC_LAEQ_4H for folder {folder}")
-                plot_predic_laeq_15_min_4h(df, yamnet_csv, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
+                plot_predic_laeq_15_min_4h(df, yamnet_csv,taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
 
 
             # Plotting stack bar with predictions class
@@ -291,7 +291,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             # Plotting tree map
             if PLOT_TREE_MAP:
                 logger.info(f"[8] Plotting PLOT_TREE_MAP for folder {folder}")
-                plot_tree_map(prediction_csv_file,predictions_visualization_folder, logger, plotname=folder)
+                plot_tree_map(prediction_csv_file,taxonomy,predictions_visualization_folder, logger, plotname=folder)
 
             
             # Plotting time plot

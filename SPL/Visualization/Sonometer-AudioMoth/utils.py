@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+from datetime import datetime, time
+
 
 
 def calculate_duration(start_time, end_time):
@@ -82,6 +84,7 @@ def db_limit(hour_column,ld_limit,le_limit,ln_limit):
 
 
 def categorize_time_of_day(hour):
+    # hour = time_obj.hour
     if 7 <= hour < 19:
         return 'Ld'
     elif 19 <= hour < 23:

@@ -24,6 +24,7 @@
 
 - [Description](#description)
 - [Modules](#modules)
+  - [Installation](#nstallation)
   - [AI Model](#ai-model)
   - [SPL](#spl)
   - [Visualization](#Visualization)
@@ -37,9 +38,7 @@ This repository contains tools and scripts for audio analysis, specifically focu
 
 ## Modules
 
-### AI Model
-
-The AI Model directory includes machine learning models for audio analysis, featuring visualization tools and YAMNet, a deep learning model for sound event detection and classification. It has two different folders: Urban and Port. Each contains the necessary Python, CSV, and H5 files for inference and predictions on entire audio files. Note that for the Port model, classifications below a 30% threshold are filtered out and not considered.
+### Installation
 
 To get started, clone the repository and install the required packages:
 
@@ -48,6 +47,87 @@ git clone https://github.com/santiagocampojurado/AAC
 cd AAC
 pip install -r requirements.txt
 ```
+
+### AI Model
+
+The AI Model directory includes machine learning models for audio analysis, featuring visualization tools and YAMNet, a deep learning model for sound event detection and classification. It has two different folders: Urban and Port. Each contains the necessary Python, CSV, and H5 files for inference and predictions on entire audio files. Note that for the Port model, classifications below a 30% threshold are filtered out and not considered.
+
+#### Feature
+- `Audio Classification:` Classifies audio files using YAMNet.
+- `Embeddings:` Option to save embeddings for further analysis.
+- `Spectrograms:` Option to save spectrogram images for visualization.
+- `Windowed Processing:` Supports processing of audio files in windows for detailed analysis.
+
+#### Usage
+To run the script, use the following command:
+
+```sh
+python inference_aac.py -p "<path_to_audio_directory>" [options]
+```
+
+#### Options
+- `-p, --path:` Directory to be processed (required).
+- `-w, --window`: Window size in seconds for processing audio files. Default is None for processing full audio.
+- `-t, --threshold`:` Classification threshold for predictions.
+- `--embeddings:` Save embeddings to tensorboard.
+- `--spectrogram:` Save spectrogram images.
+
+#### Example
+```sh
+python inference_aac.py -p "\\192.168.205.117\AAC_Server\OCIO\OCIO_BILBAO\CAMPAÑA_5"
+```
+
+#### Script Details
+
+#### Main Components
+
+##### Imports
+The script imports several necessary modules for audio processing, including os, numpy, tqdm, resampy, soundfile, logging, and custom utilities and parameters from utils, params, and yamnet.
+
+##### Logging
+Configured to log information, warnings, and errors to yamnet_inference.log.
+
+##### Class: AudioClassifier
+Handles the audio classification process using YAMNet.
+
+#### Methods
+`__init__:` Initializes the classifier, loads the YAMNet model and its parameters.
+`process_single_file:` Processes a single audio file, optionally saving embeddings and spectrograms.
+
+  - Reads the audio file.
+  - Converts to mono and resamples if needed.
+  - Processes the entire file or in windows.
+  - Logs warnings for non-mono files and resampling actions.
+
+##### Function: process_audio_files
+Processes multiple audio files within a specified directory.
+
+  - Searches for subfolders containing audio files.
+  - Reads metadata for each audio file.
+  - Processes each audio file using AudioClassifier.
+  - Saves predictions and embeddings as needed.
+
+##### Function: parse_arguments
+Parses command-line arguments for running the script.
+
+  - `-p, --path:` Directory to be processed.
+  - `-w, --window:` Window size in seconds for processing.
+  - `-t, --threshold:` Classification threshold.
+  - `--embeddings:` Option to save embeddings.
+  - `--spectrogram:` Option to save spectrograms.
+
+##### Helper Functions
+
+  - `setup_gpu:` Configures GPU settings for TensorFlow.
+  - `get_stable_version:` Retrieves the stable version of the model or script.
+  - `find_audiomoth_folders:` Finds subfolders containing audio files.
+  - `get_audiofiles:` Retrieves a list of audio files in a specified directory.
+  - `save_spectrogram_w_funct:` Saves spectrogram images.
+  - `save_embeddings_funct:` Saves embeddings to specified location.
+  - `save_predictions_to_csv:` Saves predictions to a CSV file.
+
+##### Logging
+Logs are saved in yamnet_inference.log to track processing steps, warnings, and errors.
 
 ### SPL
 

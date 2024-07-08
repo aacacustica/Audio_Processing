@@ -38,11 +38,19 @@ This repository contains tools and scripts for audio analysis, specifically focu
 
 ### AI Model
 
-The AI Model directory contains machine learning models for audio analysis, including visualization tools and YAMNet, a deep learning model for sound event detection and classification.
+The AI Model directory includes machine learning models for audio analysis, featuring visualization tools and YAMNet, a deep learning model for sound event detection and classification. It has two different folders: Urban and Port. Each contains the necessary Python, CSV, and H5 files for inference and predictions on entire audio files. Note that for the Port model, classifications below a 30% threshold are filtered out and not considered.
+
+To get started, clone the repository and install the required packages:
+
+```sh
+git clone https://github.com/santiagocampojurado/AAC
+cd AAC
+pip install -r requirements.txt
+```
 
 ### SPL
 
-The SPL directory is dedicated to Sound Pressure Level (SPL) measurement analysis, including Leq levels and visualization tools.
+The SPL directory focuses on Sound Pressure Level (SPL) measurement analysis, including Leq levels and visualization tools.
 
 #### Leq Levels
 
@@ -52,13 +60,11 @@ The SPL directory is dedicated to Sound Pressure Level (SPL) measurement analysi
 
 ### Visualization
 
-- `Dash`: Dash app scripts for interactive visualization.
+This folder contains Python scripts for generating plots to visualize levels and predictions.
 
 ### Workflow
 
-The Workflow directory contains diagrams and images that outline the audio analysis process and server setup.
-
-- `AAC_Servers.drawio`: Diagram source file for server setup.
+The Workflow directory includes diagrams and images that outline the audio analysis process and server setup.
 
 ## Contributing
 

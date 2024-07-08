@@ -1,3 +1,4 @@
+PLOT_PERIOD_EVOLUTION
 # AAC Noise Modeling
 
 ![aac_cover](https://github.com/santiagocampojurado/AAC/assets/89314673/6313860e-af09-4f5d-b8fd-d29b48f9f0e6)
@@ -129,6 +130,7 @@ Parses command-line arguments for running the script.
 ##### Logging
 Logs are saved in yamnet_inference.log to track processing steps, warnings, and errors.
 
+
 ### SPL
 
 The SPL directory focuses on Sound Pressure Level (SPL) measurement analysis, including Leq levels and visualization tools.
@@ -205,8 +207,97 @@ Logs are saved in leq_level.log to track processing steps, warnings, and errors.
 
 
 ### Visualization
+This folder contains scripts and configurations for plotting and visualizing audio data collected from AudioMoth and sonometer devices. The main script, main.py, processes the audio data and generates various plots to aid in the analysis of sound levels and events.
 
-This folder contains Python scripts for generating plots to visualize levels and predictions.
+#### Features
+  - `Data Aggregation:` Supports aggregation of data over specified periods.
+  - `Taxonomy Processing:` Processes data using urban or port taxonomies.
+  - `Visualization:` Generates multiple types of plots to visualize audio data trends and predictions.
+
+#### Usage
+To run the visualization script, use the following command:
+
+````sh
+python main.py -f "<path_to_sonometers_folder>" [options]
+````
+
+#### Options
+  - ` -f, --path_general:` Path to the folder containing AudioMoth or sonometer data (required).
+  - `-a, --agg_period:` Aggregation period in seconds (default: 900 seconds).
+  - `-o, --output-dir:` Output directory for the plots (default: same as input directory).
+  - `-p, --percentiles:` Percentiles to plot (default: [90, 10]).
+  - `--audiomoth:` Process AudioMoth data.
+  - `--sonometer:` Process sonometer data.
+  - `--urban:` Use urban taxonomy for classification.
+  - `--port:` Use port taxonomy for classification.
+
+#### Example
+
+````sh
+python main.py -f "\\192.168.205.117\AAC_Server\OCIO\OCIO_BILBAO\FASE_3" --audiomoth --urban
+````
+
+#### Script Details
+
+##### Imports
+The script imports necessary modules for argument parsing, logging, configuration, and data processing.
+
+##### Logging
+Configured to log information, warnings, and errors to visualization.log.
+
+##### Function: arg_parser
+Parses command-line arguments for running the script.
+
+##### Function: main
+Main function to process audio data and generate plots.
+
+  - `Argument Parsing:` Parses input arguments and sets default values.
+  - `Taxonomy Loading:` Loads urban or port taxonomy based on input arguments.
+  - `Folder Processing:` Identifies folders containing AudioMoth or sonometer data and processes them.
+  - `Data Aggregation:` Aggregates data over specified periods and calculates percentiles.
+  - `Plot Generation:` Generates various plots based on the processed data.
+
+##### Helper Functions
+  - `setup_logging:` Configures the logging settings.
+  - `yamnet_class_map_csv:` Loads YAMNet class map CSV file.
+  - `taxonomy_json:` Loads urban and port taxonomy JSON files.
+  - `process_all_folders:` Processes all identified folders and generates plots.
+
+#### Plots Generated
+The script can generate the following plots:
+
+##### Night Evolution Plots:
+
+  - `PLOT_NIGHT_EVOLUTION`
+  - `PLOT_NIGHT_EVOLUTION_15_MIN`
+
+##### LAeq Prediction Plots:
+
+  - `PLOT_PREDIC_LAEQ_15_MIN`
+  - `PLOT_PREDIC_LAEQ_15_MIN_PERIOD`
+  - `PLOT_PREDIC_LAEQ_15_MIN_4H`
+
+##### Prediction Visualizations:
+
+  - `PLOT_PREDICTION_STACK_BAR`
+  - `PLOT_PREDICTION_MAP`
+  - `PLOT_TREE_MAP`
+
+##### Time Plots:
+
+  - `PLOT_MAKE_TIME_PLOT`
+
+##### Heatmap Plots:
+
+  - `PLOT_HEATMAP_EVOLUTION_HOUR`
+  - `PLOT_HEATMAP_EVOLUTION_15_MIN`
+  - `PLOT_INDICADORES_HEATMAP`
+
+##### Evolution Plots:
+
+  - `PLOT_DAY_EVOLUTION`
+  - `PLOT_PERIOD_EVOLUTION`
+  - `These plots visualize the evolution of audio levels and predictions over different time periods and conditions.
 
 ### Workflow
 

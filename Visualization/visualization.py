@@ -1387,22 +1387,3 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
     
     except Exception as e:
         logger.error(f"Error in plot_period_evolution: {e}")
-
-
-
-
-
-def plot_peak_analysis(peak_prediction_csv_file: pd.DataFrame, yamnet_csv:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
-    try:
-        peak_prediction_csv_file['class'] = peak_prediction_csv_file['classes'].apply(ast.literal_eval)
-        peak_prediction_csv_file['probabilities'] = peak_prediction_csv_file['predictions'].apply(ast.literal_eval)
-        # explode peak_prediction_csv_file to get the classes
-        df_exploded = peak_prediction_csv_file.explode('class')
-        df_merged = pd.merge(df_exploded, yamnet_csv, left_on='class', right_on='display_name', how='left')
-
-        # rename leq for LAeq
-        
-
-        exit()
-    except Exception as e:
-        logger.error(f"Error in plot_peak_analysis: {e}")

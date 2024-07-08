@@ -34,9 +34,7 @@ PLOT_HEATMAP_EVOLUTION_15_MIN = True
 PLOT_INDICADORES_HEATMAP = True
 
 PLOT_DAY_EVOLUTION = True
-PLOT_PERIOD_EVOLUTION = True 
-
-PLOT_PEAK_ANALYSIS = False
+PLOT_PERIOD_EVOLUTION = True
 
 
 ######################## SLM COLUMN MAPS #####################################

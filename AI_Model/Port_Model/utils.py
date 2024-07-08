@@ -26,9 +26,9 @@ def setup_gpu():
 def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, window_size=None, stable_version=None):
     logging.info("")
     if window_size is not None:
-        output_filename = f'Urban_Model_{subfolder_name}_w_{window_size}s_{stable_version}.csv'
+        output_filename = f'Port_Model_{subfolder_name}_w_{window_size}s_{stable_version}.csv'
     else:
-        output_filename = f'Urban_Model_{subfolder_name}_{stable_version}.csv'
+        output_filename = f'Port_Model_{subfolder_name}_{stable_version}.csv'
     
     subfolder = subfolder.replace('3-Medidas', '5-Resultados')
     output_folder = os.path.join(subfolder, 'AI_MODEL', 'Predictions')

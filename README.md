@@ -133,11 +133,76 @@ Logs are saved in yamnet_inference.log to track processing steps, warnings, and 
 
 The SPL directory focuses on Sound Pressure Level (SPL) measurement analysis, including Leq levels and visualization tools.
 
-#### Leq Levels
-
 - `Leq_level`: Script for calculating Leq levels.
 - `Leq_level_oct`: Script for octave band Leq level calculation.
 - `Leq_level_oct_FFT`: Script for Leq level calculation with FFT.
+
+This script calculates Sound Pressure Level (SPL) measurements for audio files, including A-weighted, C-weighted, and unweighted levels. It supports processing audio files in a specified directory, reading metadata, and saving the calculated levels to a CSV file.
+
+#### Features
+`SPL Calculation:` Calculates A-weighted (LA), C-weighted (LC), and unweighted (LZ) sound levels.
+`Windowed Analysis:` Supports analysis in specified time windows.
+`Metadata Reading:` Extracts metadata from audio files for processing.
+`CSV Output:` Saves the SPL measurements to a CSV file for further analysis.
+
+#### Usage
+To run the SPL analysis script, use the following command:
+
+````sh
+python leq_level.py -p "<path_to_audio_directory>"
+````
+
+#### Options
+  - `-p, --path:` Directory to be processed (required).
+
+#### Example
+````sh
+python leq_level.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\"
+````
+
+#### Script Details
+##### Imports
+The script imports necessary modules for SPL analysis, including `pandas`, `soundfile`, `scipy.signal`, `numpy`, `pyfilterbank.splweighting`, and custom utilities from `utils`.
+
+##### Logging
+Configured to log `information`, `warnings`, and `errors` to `leq_level.log`.
+
+##### Class: LeqLevel
+Handles the SPL calculation process.
+
+##### Methods
+- `__init__:` Initializes the SPL calculator with sample rate, calibration constant, and window size.
+- `calculate_spl_levels:` Calculates SPL levels for given audio data.
+- `A-weighted (LA)`, `C-weighted (LC)`, and `unweighted (LZ)` levels.
+- `Maximum (Lmax)` and `minimum (Lmin)` levels within the window.
+- `LC -LA` level.
+- `Function:` read_calibration_constants
+- Reads calibration constants from a specified `INI` file.
+
+##### Function: get_device_id
+Extracts the device ID from audio metadata.
+
+##### Function: find_audiomoth_folders
+Finds subfolders containing audio files in the specified base path.
+
+##### Function: parse_arguments
+Parses command-line arguments for running the script.
+
+##### Helper Functions
+- `get_audiofiles:` Retrieves a list of audio files in a specified directory.
+- `get_db_level:` Calculates the decibel level for given audio data.
+- `setup_gpu:` Configures GPU settings for TensorFlow (if needed).
+- `get_stable_version:` Retrieves the stable version of the model or script.
+
+##### Logging
+Logs are saved in leq_level.log to track processing steps, warnings, and errors.
+
+##### Workflow
+- `Initialization:` Set up the SPL calculator with sample rate, calibration constant, and window size.
+- `Metadata Reading:` Extract metadata from audio files to determine sample rate and device ID.
+- `SPL Calculation:` Calculate SPL levels for each audio file.
+- `CSV Output:` Save the calculated SPL levels to a CSV file.
+
 
 ### Visualization
 

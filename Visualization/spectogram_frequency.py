@@ -8,7 +8,7 @@ def plt_frequency_band(df, folder_output_dir, plotname, target_frequency):
     frequencies = [float(col.replace('Hz', '').replace('k', '000')) for col in frequency_columns]
     target_frequency_str = f"{target_frequency}Hz"
 
-    df = df[(df['date'] >= '2024-07-09 22:30:00') & (df['date'] <= '2024-07-09 23:30:00')]
+    df = df[(df['date'] >= '2024-07-09 22:30:00') & (df['date'] <= '2024-07-09 23:40:00')]
     times = pd.to_datetime(df['date'])
 
     if target_frequency_str in frequency_columns:
@@ -27,10 +27,10 @@ def plt_frequency_band(df, folder_output_dir, plotname, target_frequency):
     plt.legend(loc='upper right')
 
     # Customize x-axis for better readability
-    plt.gca().xaxis.set_major_locator(mdates.MinuteLocator(interval=10))
+    plt.gca().xaxis.set_major_locator(mdates.MinuteLocator(interval=2))
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
     plt.tight_layout()
-    plt.show()
+    # plt.show()
 
     # Save the plot
     output_file = f'{folder_output_dir}/{plotname}_frequency_{target_frequency}.png'

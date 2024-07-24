@@ -907,10 +907,7 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
     try:
         logger.info(f"Using the columns_dict: {columns_dict}")
         # add an hour to the dataframe
-        # print(df)
-        # print(df.columns)
         df.index = df.index + pd.DateOffset(hours=1)
-        # print(df)
         # remove nan values
         df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
         
@@ -943,32 +940,32 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         
         if columns_dict['LAEQ_COLUMN'] == 'Value':
             x = df_LAeq.index
-            ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=1, color='red', label='LAeq')
+            ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=3, color='red', label='LAeq')
             # OCA
             # #ax.plot(x, oca.values, color='#00B0F0')
 
         else:
             x = df_LAeq.index
-            ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=1, color='red', label='LAeq')
-            # ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN_COEFF']], linewidth=1, color='#FF99FF', label='Lmax')
-            # ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN_COEFF']], linewidth=1, color='#92D050', label='Lmin')
+            ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=3, color='red', label='LAeq')
+            ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN_COEFF']], linewidth=1, color='#FF99FF', label='Lmax')
+            ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN_COEFF']], linewidth=1, color='#92D050', label='Lmin')
             # OCA
-            # #ax.plot(x, oca.values, color='#00B0F0')
+            #ax.plot(x, oca.values, color='#00B0F0')
 
 
-            # for percentile in percentiles:
-            #     values = df[columns_dict['LAEQ_COLUMN_COEFF']].resample(f'{agg_period}s').quantile((100 - percentile) / 100)
-            #     ax.plot(
-            #         x, 
-            #         values, 
-            #         linewidth=0.5, 
-            #         label=f'L{percentile}', 
-            #         color=PERCENTIL_COLOUR[percentile]
-            #     )
+            for percentile in percentiles:
+                values = df[columns_dict['LAEQ_COLUMN_COEFF']].resample(f'{agg_period}s').quantile((100 - percentile) / 100)
+                ax.plot(
+                    x, 
+                    values, 
+                    linewidth=0.5, 
+                    label=f'L{percentile}', 
+                    color=PERCENTIL_COLOUR[percentile]
+                )
 
+        # debugg time of the plot
         hours = mdates.HourLocator(interval=1)
         h_fmt = mdates.DateFormatter('%d-%m-%y %H:%M')
-        # debugg time of the plot
         
         ax.xaxis.set_major_locator(hours)
         ax.xaxis.set_major_formatter(h_fmt)
@@ -1396,10 +1393,6 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
 
 
 def plt_spectrogram(df, folder_output_dir, logger, plotname):
-    print("Plotting spectrogram")
-    print(df)
-    # exit()
-
     frequency_columns = df.columns[5:-2] 
     frequencies = [float(col.replace('Hz', '').replace('k', '000')) for col in frequency_columns]
     times = pd.to_datetime(df['date'])
@@ -1425,10 +1418,11 @@ def plt_spectrogram(df, folder_output_dir, logger, plotname):
 
     plt.xticks(rotation=90)
     plt.tight_layout()
-    plt.show()
+    # remove the grid
+    plt.grid(False)
 
     # Save the plot
-    # output_file = f'{folder_output_dir}/{plotname}_spectrogram.png'
-    # plt.savefig(output_file, dpi=150)
-    # plt.close()
-    # print(f"Spectrogram saved to {output_file}")
+    output_file = f'{folder_output_dir}/{plotname}_spectrogram.png'
+    plt.savefig(output_file, dpi=150)
+    plt.close()
+    print(f"Spectrogram saved to {output_file}")

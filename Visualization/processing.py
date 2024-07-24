@@ -85,6 +85,13 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         resultados_dir = reg_folder.split("\\")[:-3]
         resultados_dir = os.path.join('\\\\', *resultados_dir, result_dir_name)
 
+
+        ##############
+        # find the oct file in the folder
+        oct_file = glob.glob(os.path.join(reg_folder, "leq_oct_*"))
+        df_oct = pd.read_csv(oct_file[0])
+        ##############
+
         if not os.path.exists(resultados_dir):
             os.makedirs(resultados_dir)
             logger.info(f"Created output folder: {resultados_dir}")
@@ -145,9 +152,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if df is None:
                 logger.info(f"df is None")
                 continue
-
-            # if not 'LC-LA' in df.columns:
-            #     df['LC-LA'] = df['LC'] - df['LA']
 
             # add datetime columns, sort by datetime and set datetime as index
             logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
@@ -328,11 +332,16 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if PLOT_PERIOD_EVOLUTION:
                 logger.info(f"[14] Plotting period evolution (1) Ld (2) Le for folder {folder}")
                 plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder)
+            
+
+            if PLOT_SPECTROGRAM_1_3:
+                logger.info(f"[15] Plotting spectrogram for folder {folder}")
+                plt_spectrogram(df_oct, folder_output_dir, logger, plotname=folder)
 
 
-            if PLOT_PEAK_ANALYSIS:
-                logger.info(f"[15] Plotting peak analysis for folder {folder}")
-                plot_peak_analysis(peak_prediction_csv_file, yamnet_csv, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
+            # if PLOT_PEAK_ANALYSIS:
+            #     logger.info(f"[15] Plotting peak analysis for folder {folder}")
+            #     plot_peak_analysis(peak_prediction_csv_file, yamnet_csv, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
             
 
         except Exception as e:

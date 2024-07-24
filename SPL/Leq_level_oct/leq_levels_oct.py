@@ -149,8 +149,10 @@ def parse_arguments():
 
 
 def main():
-    # python leq_levels_oct.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\"
-
+    r"""
+    python leq_levels_oct.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\"
+    """
+    
     stable_version = get_stable_version()
     args = parse_arguments()
     base_path = args.path
@@ -173,7 +175,7 @@ def main():
         sample_rates = []
         valid_audio_files = []
         logging.info(f"Reading metadata...")
-        for file in audio_files:
+        for file in tqdm(audio_files, desc='Reading metadata'):
             try:
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)
@@ -198,7 +200,7 @@ def main():
         # initializing the calculator
         calculator = LeqLevelOct(fs_filterbanks, -10.16, int(fs_filterbanks), audio_path)
         logging.info(f"Processing {len(valid_audio_files)} files in {subfolder}...")
-        for audio_file in valid_audio_files:
+        for audio_file in tqdm(valid_audio_files, desc='Processing audio files'):
             try:
                 logging.info(f"Processing file: {audio_file}")
                 # select the audio file

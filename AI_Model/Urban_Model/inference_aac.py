@@ -35,7 +35,8 @@ class AudioClassifier:
 
 
     def process_single_file(self, file_path, window_size=None, save_embeddings=False, save_spectrogram=False):
-        logging.info(f"Processing file: {file_path}")
+        logging.info(f"\nProcessing file: {file_path}")
+        
         wav_data, sr = sf.read(file_path, dtype=np.int16)
         waveform = wav_data / 32768.0  # Convert to [-1.0, +1.0]
         waveform = waveform.astype('float32')
@@ -72,12 +73,14 @@ class AudioClassifier:
 
         # process audio file with window size
         else:
-            if save_spectrogram:
-                logging.info("Entering the window size analysis. But we run the whole audio file to save the complteted spectrogram.")
-                scores, embeddings, spectrogram = self.yamnet(waveform)
-                scores = scores.numpy()
-                spectrogram = spectrogram.numpy()
-                save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate)
+            logging.info(f"Processing file with window size: {window_size}")
+            logging.info(f"Waveform shape: {waveform.shape}")
+            # if save_spectrogram:
+            #     logging.info("Entering the window size analysis. But we run the whole audio file to save the complteted spectrogram.")
+            #     scores, embeddings, spectrogram = self.yamnet(waveform)
+            #     scores = scores.numpy()
+            #     spectrogram = spectrogram.numpy()
+            #     save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate)
 
             logging.info(f"Processing file with window size: {window_size}")
             window_size_samples = int(window_size * sr)
@@ -93,7 +96,7 @@ class AudioClassifier:
                 if save_spectrogram:
                     scores = scores.numpy()
                     spectrogram = spectrogram.numpy()
-                    save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate, start_idx, end_idx, window_size)
+                    # save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate, start_idx, end_idx, window_size)
 
                 prediction = np.mean(scores, axis=0)
                 predictions.append(prediction)
@@ -190,7 +193,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
 
         # save predictions to csv
         if all_data_subfolder:
-            save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, window_size, stable_version)
+            save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, logging, window_size, stable_version)
         else:
             logging.warning(f"No data to save for folder {subfolder}")
 

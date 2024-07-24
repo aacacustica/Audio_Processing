@@ -906,6 +906,12 @@ def plot_tree_map(df_Pred:pd.DataFrame,taxonomy_map, folder_output_dir: str, log
 def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: list):
     try:
         logger.info(f"Using the columns_dict: {columns_dict}")
+        # add an hour to the dataframe
+        # print(df)
+        # print(df.columns)
+        df.index = df.index + pd.DateOffset(hours=1)
+        # print(df)
+        # remove nan values
         df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
         
         # if there is just LAEQ_COLUMN_COEFF, then we use it for all the columns, otherwise use the max and min
@@ -937,30 +943,30 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         
         if columns_dict['LAEQ_COLUMN'] == 'Value':
             x = df_LAeq.index
-            ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=3, color='red', label='LAeq')
+            ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=1, color='red', label='LAeq')
             # OCA
             # #ax.plot(x, oca.values, color='#00B0F0')
 
         else:
             x = df_LAeq.index
-            ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=3, color='red', label='LAeq')
-            ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN_COEFF']], linewidth=1, color='#FF99FF', label='Lmax')
-            ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN_COEFF']], linewidth=1, color='#92D050', label='Lmin')
+            ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=1, color='red', label='LAeq')
+            # ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN_COEFF']], linewidth=1, color='#FF99FF', label='Lmax')
+            # ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN_COEFF']], linewidth=1, color='#92D050', label='Lmin')
             # OCA
             # #ax.plot(x, oca.values, color='#00B0F0')
 
 
-            for percentile in percentiles:
-                values = df[columns_dict['LAEQ_COLUMN_COEFF']].resample(f'{agg_period}s').quantile((100 - percentile) / 100)
-                ax.plot(
-                    x, 
-                    values, 
-                    linewidth=0.5, 
-                    label=f'L{percentile}', 
-                    color=PERCENTIL_COLOUR[percentile]
-                )
+            # for percentile in percentiles:
+            #     values = df[columns_dict['LAEQ_COLUMN_COEFF']].resample(f'{agg_period}s').quantile((100 - percentile) / 100)
+            #     ax.plot(
+            #         x, 
+            #         values, 
+            #         linewidth=0.5, 
+            #         label=f'L{percentile}', 
+            #         color=PERCENTIL_COLOUR[percentile]
+            #     )
 
-        hours = mdates.HourLocator(interval=3)
+        hours = mdates.HourLocator(interval=1)
         h_fmt = mdates.DateFormatter('%d-%m-%y %H:%M')
         # debugg time of the plot
         
@@ -1387,3 +1393,42 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
     
     except Exception as e:
         logger.error(f"Error in plot_period_evolution: {e}")
+
+
+def plt_spectrogram(df, folder_output_dir, logger, plotname):
+    print("Plotting spectrogram")
+    print(df)
+    # exit()
+
+    frequency_columns = df.columns[5:-2] 
+    frequencies = [float(col.replace('Hz', '').replace('k', '000')) for col in frequency_columns]
+    times = pd.to_datetime(df['date'])
+
+    spectrogram_data = df[frequency_columns].T.values
+    spectrogram_data = spectrogram_data.clip(20, 110)
+    freq_labels = [f"{freq} Hz" for freq in frequencies]
+    
+    plt.figure(figsize=(20, 10))
+    plt.pcolormesh(times, frequencies, spectrogram_data, shading='auto', cmap='inferno')
+    plt.colorbar(label='Magnitude (dB)')
+
+    plt.yticks(frequencies, freq_labels)
+    plt.ylabel('Frequency (Hz)')
+
+    plt.xlabel('Time')
+    plt.title(f'Spectrogram: {plotname}')
+    plt.yscale('log')
+    plt.ylim([min(frequencies), max(frequencies)])
+
+    plt.gca().xaxis.set_major_locator(mdates.MinuteLocator(interval=300))
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
+
+    plt.xticks(rotation=90)
+    plt.tight_layout()
+    plt.show()
+
+    # Save the plot
+    # output_file = f'{folder_output_dir}/{plotname}_spectrogram.png'
+    # plt.savefig(output_file, dpi=150)
+    # plt.close()
+    # print(f"Spectrogram saved to {output_file}")

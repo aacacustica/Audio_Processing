@@ -23,11 +23,14 @@ octave_bands = [
 
 bands_multifunction = [31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 12500, 16000]
 
+
 def get_name(file: str):
     return os.path.basename(file).split('.')[0].split('_')[0]
 
+
 def get_path(file: str):
     return os.path.dirname(file)
+
 
 def octave_band(file: str, start_time=None, end_time=None):
     df = pd.read_csv(file, sep=',')
@@ -44,20 +47,29 @@ def octave_band(file: str, start_time=None, end_time=None):
     df_filtered = df_filtered.drop(columns=['20158.74'])
     return df_filtered
 
-def plot_spectrogram_octave(path: str, df_filtered, file_name: str, interval_minutes: int, start_time=None, end_time=None):
-    frequencies = df_filtered.columns.astype(float)
-    values = df_filtered.values.T
-    valid_frequencies = frequencies[~np.all(np.isnan(values) | np.isinf(values), axis=1)]
 
-    freq_labels = [f"{freq} Hz" for freq in valid_frequencies]
+def plot_spectrogram_octave(path: str, df_filtered, file_name: str, interval_minutes: int, start_time=None, end_time=None):
+    # frequencies = df_filtered.columns.astype(float)
+    # values = df_filtered.values.T
+    # valid_frequencies = frequencies[~np.all(np.isnan(values) | np.isinf(values), axis=1)]
+    frequency_columns = df_filtered.columns[5:-2] 
+    frequencies = [float(col.replace('Hz', '').replace('.', '').replace('k', '000')) for col in frequency_columns]
+    times = pd.to_datetime(df_filtered['date'])
+
+    # freq_labels = [f"{freq} Hz" for freq in valid_frequencies]
+    freq_labels = [f"{freq} Hz" for freq in frequencies]
+
 
     plt.figure(figsize=(23, 10))
-    plt.pcolormesh(df_filtered.index, range(len(valid_frequencies)), values[frequencies.searchsorted(valid_frequencies)], shading='auto', cmap='inferno')
+    # plt.pcolormesh(df_filtered.index, range(len(valid_frequencies)), values[frequencies.searchsorted(valid_frequencies)], shading='auto', cmap='inferno')
+    plt.pcolormesh(times, frequencies, df_filtered[frequency_columns].T.values, shading='auto', cmap='inferno')
     plt.colorbar(label='Magnitude (dB)')
 
-    plt.yticks(range(len(valid_frequencies)), freq_labels)
+    # plt.yticks(range(len(valid_frequencies)), freq_labels)
+    plt.yticks(frequencies, freq_labels)
     plt.ylabel('Frequency (Hz)')
     plt.xlabel('Time')
+    plt.yscale('log')
 
     plt.gca().xaxis.set_major_locator(mdates.MinuteLocator(interval=interval_minutes))
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
@@ -66,12 +78,15 @@ def plot_spectrogram_octave(path: str, df_filtered, file_name: str, interval_min
 
     plt.title(f'Spectrogram {file_name}')
     plt.tight_layout()
+    plt.show()
+    exit()
     
-    os.makedirs(f'{path}/Spectrogram', exist_ok=True)
-    if start_time and end_time:
-        plt.savefig(f'{path}/Spectrogram/{file_name}_spect_oct_detail.png')
-    else:
-        plt.savefig(f'{path}/Spectrogram/{file_name}_spect_oct.png')
+    # os.makedirs(f'{path}/Spectrogram', exist_ok=True)
+    # if start_time and end_time:
+    #     plt.savefig(f'{path}/Spectrogram/{file_name}_spect_oct_detail.png')
+    # else:
+    #     plt.savefig(f'{path}/Spectrogram/{file_name}_spect_oct.png')
+
 
 def plot_spectrogram_audio(file_path, path, file_name, bands_multifunction, start_db=None, end_db=None, n_fft=2048, hop_length=512, win_length=None):
     y, sr = librosa.load(file_path, sr=None)
@@ -134,10 +149,12 @@ def argument_parser():
     parser.add_argument('-s', '--start', required=False, type=str, help='Start time for the spectrogram')
     parser.add_argument('-e', '--end', required=False, type=str, help='End time for the spectrogram')
     parser.add_argument('-t', '--type', required=False, type=str, default="csv", choices=['csv', 'audio'], help='File type: csv or audio')
-    parser.add_argument('-sd', '--start-db', required=False, type=str, help='Start Db for the spectrogram')
-    parser.add_argument('-ed', '--end-db', required=False, type=str, help='End Db for the spectrogram')
+    parser.add_argument('-sdb', '--start-db', required=False, type=str, help='Start Db for the spectrogram')
+    parser.add_argument('-edb', '--end-db', required=False, type=str, help='End Db for the spectrogram')
     args = parser.parse_args()
     return args
+
+
 
 def main():
     args = argument_parser()
@@ -167,8 +184,10 @@ def main():
         file_name = get_name(file_path)
         path = get_path(file_path)
         
-        df = octave_band(file_path, start_time, end_time)
+        # df = octave_band(file_path, start_time, end_time)
+        df = pd.read_csv(file_path)
         plot_spectrogram_octave(path, df, file_name, interval_minutes, start_time, end_time)
+
 
 if __name__ == "__main__":
     main()

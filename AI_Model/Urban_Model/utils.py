@@ -23,7 +23,7 @@ def setup_gpu():
             print()
 
 
-def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, window_size=None, stable_version=None):
+def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, logging, window_size=None, stable_version=None):
     logging.info("")
     if window_size is not None:
         output_filename = f'Urban_Model_{subfolder_name}_w_{window_size}s_{stable_version}.csv'

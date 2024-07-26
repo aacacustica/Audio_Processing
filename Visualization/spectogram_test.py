@@ -6,7 +6,6 @@ import matplotlib.ticker as ticker
 
 
 def plt_spectrogram(df, folder_output_dir, plotname):
-    print(df)
     frequency_columns = df.columns[5:-2]
     frequencies = [float(col.replace('Hz', '').replace('k', '000')) for col in frequency_columns]
     
@@ -32,23 +31,23 @@ def plt_spectrogram(df, folder_output_dir, plotname):
     plt.yscale('log')
     plt.ylim([min(frequencies), max(frequencies)])
 
-    plt.gca().xaxis.set_major_locator(mdates.MinuteLocator(interval=300))
+    plt.gca().xaxis.set_major_locator(mdates.MinuteLocator(interval=2))
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
 
     plt.xticks(rotation=90)
     plt.tight_layout()
-    plt.show()
+    # plt.show()
 
     # Save the plot
-    # output_file = f'{folder_output_dir}/{plotname}_spectrogram.png'
-    # plt.savefig(output_file, dpi=150)
-    # plt.close()
-    # print(f"Spectrogram saved to {output_file}")
+    output_file = f'{folder_output_dir}/{plotname}_spectrogram_22_23.png'
+    plt.savefig(output_file, dpi=150)
+    plt.close()
+    print(f"Spectrogram saved to {output_file}")
 
 
 
 def main():
-    oct_file_path = r"\\192.168.205.117\AAC_Server\TRAFICO\23129_LEBER_GAUTXORI\3-Medidas\P1_Fueros\AUDIOMOTH\leq_oct_P1_Fueros_v2_0.csv"
+    oct_file_path = r"\\192.168.205.117\AAC_Server\TRAFICO\23129_LEBER_GAUTXORI\3-Medidas\P5_Salburua\AUDIOMOTH\leq_oct__v2_0.csv"
     print("Reading file...")
     df = pd.read_csv(oct_file_path)
     # print(df)

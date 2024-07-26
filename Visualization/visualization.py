@@ -696,6 +696,8 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, yamnet_csv, taxonomy_map, fo
 
 def plot_prediction_map(df_Pred:pd.DataFrame, taxonomy_map, folder_output_dir: str, logger, plotname: str):
     try:
+        print(df_Pred)
+        # exit()
         sns.set_style("white")
         sns.set_palette("tab10")
 
@@ -1422,7 +1424,8 @@ def plt_spectrogram(df, folder_output_dir, logger, plotname):
     plt.grid(False)
 
     # Save the plot
-    output_file = f'{folder_output_dir}/{plotname}_spectrogram.png'
+    output_file = f'{folder_output_dir}/Spectrogram/{plotname}_spectrogram.png'
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
     plt.savefig(output_file, dpi=150)
     plt.close()
-    print(f"Spectrogram saved to {output_file}")
+    logger.info(f"Spectrogram saved to {output_file}")

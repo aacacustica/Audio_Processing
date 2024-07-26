@@ -116,7 +116,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             # list csv files in the directory
             predictions_files = glob.glob(os.path.join(predictions_folder, "*.csv"))
             if predictions_files:
-                prediction_file = predictions_files[0]
+                prediction_file = predictions_files[1]
                 prediction_csv_file = prediction_csv(prediction_file)
             else:
                 logger.warning("No CSV files found in the predictions folder.")

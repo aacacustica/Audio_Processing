@@ -1399,6 +1399,10 @@ def plt_spectrogram(df, folder_output_dir, logger, plotname):
     frequencies = [float(col.replace('Hz', '').replace('k', '000')) for col in frequency_columns]
     times = pd.to_datetime(df['date'])
 
+    # select datatime from 22:30 to 23:30 of just one day
+    # df = df[(df['date'] >= '2024-07-09 22:30:00') & (df['date'] <= '2024-07-09 23:30:00')]
+    # times = pd.to_datetime(df['date'])
+
     spectrogram_data = df[frequency_columns].T.values
     spectrogram_data = spectrogram_data.clip(20, 110)
     freq_labels = [f"{freq} Hz" for freq in frequencies]

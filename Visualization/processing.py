@@ -88,8 +88,8 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
         ##############
         # find the oct file in the folder
-        oct_file = glob.glob(os.path.join(reg_folder, "leq_oct_*"))
-        df_oct = pd.read_csv(oct_file[0])
+        # oct_file = glob.glob(os.path.join(reg_folder, "leq_oct_*"))
+        # df_oct = pd.read_csv(oct_file[0])
         ##############
 
         if not os.path.exists(resultados_dir):
@@ -116,7 +116,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             # list csv files in the directory
             predictions_files = glob.glob(os.path.join(predictions_folder, "*.csv"))
             if predictions_files:
-                prediction_file = predictions_files[1]
+                prediction_file = predictions_files[0]
                 prediction_csv_file = prediction_csv(prediction_file)
             else:
                 logger.warning("No CSV files found in the predictions folder.")
@@ -152,6 +152,14 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if df is None:
                 logger.info(f"df is None")
                 continue
+        
+            print(df)
+            # add one hour to the datetime column
+            if 'datetime' in df.columns:
+                df['datetime'] = pd.to_datetime(df['datetime']) + pd.Timedelta(hours=1)
+            
+            print(df)
+            # exit()
 
             # add datetime columns, sort by datetime and set datetime as index
             logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")

@@ -909,7 +909,7 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
     try:
         logger.info(f"Using the columns_dict: {columns_dict}")
         # add an hour to the dataframe
-        df.index = df.index + pd.DateOffset(hours=1)
+        # df.index = df.index + pd.DateOffset(hours=1)
         # remove nan values
         df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
         

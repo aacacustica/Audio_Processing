@@ -4,15 +4,17 @@ def setup_logging(log_file='sonometer.log', level=logging.DEBUG):
     logger = logging.getLogger(__name__)
     logger.setLevel(level)
 
-    file_handler = logging.FileHandler(log_file)
-    # console_handler = logging.StreamHandler()
+    # Create a file handler that overwrites the log file each time
+    file_handler = logging.FileHandler(log_file, mode='w')  # 'w' mode overwrites the file
 
     file_formatter = logging.Formatter('%(asctime)s - %(filename)s - %(name)s - %(levelname)s - %(message)s')
-    console_formatter = logging.Formatter('%(filename)s - %(name)s - %(levelname)s - %(message)s')
 
     file_handler.setFormatter(file_formatter)
-    # console_handler.setFormatter(console_formatter)
+
+    # Check if the logger already has handlers, and if so, clear them
+    if logger.hasHandlers():
+        logger.handlers.clear()
 
     logger.addHandler(file_handler)
-    # logger.addHandler(console_handler)
+
     return logger

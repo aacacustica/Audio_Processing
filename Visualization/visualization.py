@@ -930,7 +930,7 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
 
         logger.info(f"Using the agg_funcs: {agg_funcs}")
         df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs)
-        #oca = df.resample(f'{agg_period}s').agg({'oca': 'min'})
+        oca = df.resample(f'{agg_period}s').agg({'oca': 'min'})
 
         plt.style.use('seaborn-v0_8-whitegrid')
         fig, ax = plt.subplots(figsize=(20, 10))
@@ -944,7 +944,7 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
             x = df_LAeq.index
             ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=3, color='red', label='LAeq')
             # OCA
-            # #ax.plot(x, oca.values, color='#00B0F0')
+            ax.plot(x, oca.values, color='#00B0F0')
 
         else:
             x = df_LAeq.index
@@ -952,7 +952,7 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
             ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN_COEFF']], linewidth=1, color='#FF99FF', label='Lmax')
             ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN_COEFF']], linewidth=1, color='#92D050', label='Lmin')
             # OCA
-            #ax.plot(x, oca.values, color='#00B0F0')
+            ax.plot(x, oca.values, color='#00B0F0', label='OCA')
 
 
             for percentile in percentiles:
@@ -981,6 +981,8 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         plt.xticks(rotation=90)
         plt.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0.1, fancybox=True, framealpha=1, edgecolor='black')
         plt.tight_layout()
+        # make grid
+        plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 
         os.makedirs(folder_output_dir, exist_ok=True)
 

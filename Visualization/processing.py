@@ -284,7 +284,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             with open(os.path.join(folder_output_dir, "processing_parameters.json"), 'w') as f:
                 json.dump(info_dict, f)
             logger.info(f"Saved processing_parameters.json in {folder_output_dir}")
-            exit()
 
 
             # Plotting night evolution

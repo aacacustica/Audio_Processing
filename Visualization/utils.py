@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from datetime import datetime, time
+import subprocess
 
 
 
@@ -227,3 +228,33 @@ def apply_db_correction(df, coefficient, logger):
         logger.error('No column found to apply the correction')
 
     return df
+
+
+
+def list_git_tags():
+    try:
+        tags = tags = subprocess.check_output(["git", "tag"]).strip().decode()
+        return tags.split('\n')
+    except subprocess.CalledProcessError:
+        return None
+
+
+def select_tag(tags, logger):
+    for i, tag in enumerate(tags):
+        logger.info(f"{i}: {tag}")
+    
+    choice = int(input("Select the tag to use: "))
+    tag_selected = tags[choice]
+    tag_selected = tag_selected.replace(".", "_")
+    return tag_selected
+
+
+def get_stable_version(logger):
+    tags = list_git_tags()
+    # get the latest stable version
+    tag_selected = tags[-1]
+    logger.info(f"Latest stable version: {tag_selected}")
+    
+    tag_selected = tag_selected.replace(".", "_")
+    logger.info(f"Latest stable version string: {tag_selected}")
+    return tag_selected

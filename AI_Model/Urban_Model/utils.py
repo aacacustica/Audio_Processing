@@ -209,7 +209,7 @@ def select_tag(tags):
 def get_stable_version():
     tags = list_git_tags()
     # get the latest stable version
-    tag_selected = tags[-1]
+    tag_selected = tags[-2]
     logging.info(f"Latest stable version: {tag_selected}")
     # replace "." with "_" to be able to use it as a file name
     tag_selected = tag_selected.replace(".", "_")

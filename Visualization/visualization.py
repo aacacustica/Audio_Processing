@@ -5,12 +5,9 @@ import seaborn as sns
 from utils import *
 import os
 from config import *
-import ast
 import plotly.express as px
 import matplotlib.colors as mcolors
 from matplotlib.patches import Patch
-from matplotlib.backends.backend_pdf import PdfPages
-from fpdf import FPDF
 
 
 

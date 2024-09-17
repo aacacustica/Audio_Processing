@@ -8,7 +8,7 @@ from utils import *
 from config import *
 from tqdm import tqdm
 import glob
-
+import json
 
 
 def load_data(file_path, logger):
@@ -74,8 +74,9 @@ def process_folder(folder_path, logger):
 
 def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, sufix_string, folder_coefficients, logger):
     print()
+    stable_version = get_stable_version(logger)
+
     for folder in tqdm(folders, desc="Processing folders"):
-        print(folder)
         # \\192.168.205.117\AAC_Server\OCIO\24052_ZARAUTZ\CAMPAÑA_1\3-Medidas\ZARAUTZ_C1_P1\AUDIOMOTH
         if "ZARAUTZ_C1_P1" in folder:
                 
@@ -158,7 +159,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                     logger.info(f"df is None")
                     continue
             
-                print(df)
                 # add one hour to the datetime column
                 if 'datetime' in df.columns:
                     df['datetime'] = pd.to_datetime(df['datetime']) + pd.Timedelta(hours=1)
@@ -228,8 +228,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                     # add oca column
                     logger.info(f"Adding oca column")
                     df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
-                    print(df)
-                    # exit()
 
                     # removing nan values
                     if prediction_csv_file is not None:
@@ -243,9 +241,19 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                     
                     #####################################################
                     ########## APPLYING DB CORRECTION TO THE DATA #########
+                    #####################################################
+                    tuple_folder_coeff = []
                     logger.info(f"Applying db correction")
                     for key, value in folder_coefficients.items():
                         key = key.split("\\")[:-1]
+                        folder_name = key[-1]
+                        # print(folder_name)
+
+                        # save tupples folder name, coefficient value
+                        folder_name_coeff_value = (folder_name, value)
+                        # print(folder_name_coeff_value)
+                        tuple_folder_coeff.append(folder_name_coeff_value)
+
                         key = os.path.join('\\\\', *key)
 
                         # assign the value to the folder
@@ -267,6 +275,25 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 slm_dict["LAEQ_COLUMN_COEFF"] = 'LA_corrected'
                 slm_dict["LAMAX_COLUMN_COEFF"] = 'LAmax_corrected'
                 slm_dict["LAMIN_COLUMN_COEFF"] = 'LAmin_corrected'
+
+
+                print()
+                info_dict = {
+                    "PERIODO_AGREGACION": PERIODO_AGREGACION,
+                    "PERCENTILES": PERCENTILES,
+                    "folder_coeff": tuple_folder_coeff,
+                    "stable_version": stable_version
+                }
+
+                print(info_dict)
+
+                # save the info in a json file
+                with open(os.path.join(folder_output_dir, "processing_parameters.json"), 'w') as f:
+                    json.dump(info_dict, f)
+
+                print(f"Saved processing_parameters.json in {folder_output_dir}")
+
+                exit()
 
 
                 # Plotting night evolution

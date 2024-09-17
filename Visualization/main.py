@@ -61,7 +61,8 @@ def main():
 
                     spl_audiomoth_folder = os.path.join(root, "AUDIOMOTH")
                     if os.path.exists(spl_audiomoth_folder):
-                        coeff = float(input(f"Enter correction coefficient for {spl_audiomoth_folder}: "))
+                        spl_audiomoth_folder_name = spl_audiomoth_folder.split("\\")[-2]
+                        coeff = float(input(f"Enter correction coefficient for {spl_audiomoth_folder_name}: "))
                         folder_coefficients[spl_audiomoth_folder] = coeff
                         spl_audiomoth_folders.append(spl_audiomoth_folder)
             

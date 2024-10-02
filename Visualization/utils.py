@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 from datetime import datetime, time
 import subprocess
-
+import os
+from config import *
 
 
 def calculate_duration(start_time, end_time):
@@ -137,15 +138,21 @@ def remove_unnamed_columns(df_preds):
 
 
 def yamnet_class_map_csv():
-    yammnet_class_map = "yamnet_class_AAC_v3_0.csv" 
-    df_audioset = pd.read_csv(yammnet_class_map,sep=';')
+    home_dir = os.path.expanduser('~')
+    yammnet_class_map_path = os.path.join(home_dir, RELATIVE_PATH_YAMNET_MAP.lstrip('\\'))
+    df_audioset = pd.read_csv(yammnet_class_map_path,sep=';')
     df_audioset = remove_unnamed_columns(df_audioset)
     return df_audioset
 
 
 def taxonomy_json():
-    urban_taxonomy_map = pd.read_json("urban_taxonomy_map_v1_0.json", typ='series').to_dict()
-    port_taxonomy_map = pd.read_json("port_1_taxonomy_mapping_v2.0.json", typ='series').to_dict()
+    home_dir = os.path.expanduser('~')
+    urban_taxonomy_map_path = os.path.join(home_dir, RELATIVE_PATH_TAXONOMY_URBAN.lstrip('\\'))
+    urban_taxonomy_map = pd.read_json(urban_taxonomy_map_path, typ='series').to_dict()
+    
+    
+    port_taxonomy_map_path = os.path.join(home_dir, RELATIVE_PATH_TAXONOMY_PORT.lstrip('\\'))
+    port_taxonomy_map = pd.read_json(port_taxonomy_map_path, typ='series').to_dict()
     return urban_taxonomy_map, port_taxonomy_map
 
 

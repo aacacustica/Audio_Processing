@@ -1,14 +1,19 @@
+# relative path to the yamnet class map, urban taxonomy and port taxonomy
+RELATIVE_PATH_YAMNET_MAP = r"\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Puerto\yamnet_class_AAC_v3_0.csv"
+RELATIVE_PATH_TAXONOMY_URBAN = r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\taxonomies_json\urban_taxonomy_map_v1_0.json"
+RELATIVE_PATH_TAXONOMY_PORT = r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\taxonomies_json\port_1_taxonomy_mapping_v2.0.json"
+
+
 # Remove start time and end time
 REMOVE_START_TIME = 900
 REMOVE_END_TIME = 900
 
-# relative path
-RELATIVE_PATH = r"\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Puerto\yamnet_class_AAC_v3_0.csv"
 
 # Limits
 LIMITE_DIA = 65
 LIMITE_NOCHE = 55
 LIMITE_TARDE = 65
+
 
 # Time limits for evaluation indicadores
 LD_SECONDS = 21600
@@ -90,7 +95,7 @@ audiopost_dict = {'LAEQ_COLUMN': 'LA',
                   'LAMIN_COLUMN': 'LAmin'}
 
 
-# Constants for plotting Colors
+# plotting Colors
 C_MAP_WEEKDAY = {
             'Lunes': '#cc0000', # RED
             'Martes': '#8e7cc3', # PURPLE

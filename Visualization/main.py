@@ -21,7 +21,7 @@ def arg_parser():
 
 
 def main():
-    """
+    """ usage example:
     python main.py -f \\192.168.205.117\AAC_Server\OCIO\OCIO_BILBAO\FASE_3 --audiomoth --urban
     """
     logger = setup_logging()

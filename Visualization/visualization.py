@@ -10,16 +10,12 @@ import matplotlib.colors as mcolors
 from matplotlib.patches import Patch
 
 
-SMALL_SIZE = 8
-MEDIUM_SIZE = 10
-BIGGER_SIZE = 12
-
-plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc('font', size=MEDIUM_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=MEDIUM_SIZE)     # fontsize of the axes title
 plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
-plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('xtick', labelsize=MEDIUM_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=MEDIUM_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=MEDIUM_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 
@@ -177,7 +173,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
 
         # save the plot
         logger.info(f"Saving the plot {plotname}_{indicador_noche}")
-        fig.savefig(os.path.join(folder_output_dir, f'{plotname}_{indicador_noche}_evolution_{name_extension}.png'))
+        fig.savefig(os.path.join(folder_output_dir, f'{plotname}_{indicador_noche}_evolution_{name_extension}.png'),  dpi=150)
         logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.png")
     except Exception as e:
         logger.error(f"Error in plot_night_evolution_15_min: {e}")
@@ -706,8 +702,6 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, yamnet_csv, taxonomy_map, fo
 
 def plot_prediction_map(df_Pred:pd.DataFrame, taxonomy_map, folder_output_dir: str, logger, plotname: str):
     try:
-        print(df_Pred)
-        # exit()
         sns.set_style("white")
         sns.set_palette("tab10")
 
@@ -789,22 +783,28 @@ def plot_prediction_map(df_Pred:pd.DataFrame, taxonomy_map, folder_output_dir: s
         day_class = pd.pivot_table(data=df_resampled, columns=df_resampled.index.time, index=["year", "month", "fullday"], values="class_num", aggfunc='mean')
 
 
+        day_class.columns = [pd.Timestamp.combine(pd.to_datetime("2024-01-01"), t) for t in day_class.columns]
+        time_interval = pd.date_range(start=day_class.columns.min(), end=day_class.columns.max(), freq='1H')
 
         plt.figure(figsize=(45, 35))
         if day_class.isna().all().all() or day_class.empty:
             logger.warning("No valid data. Skipping...")
         else:
             ax = sns.heatmap(day_class, annot=False, cmap=cmap, linewidth=0.5, cbar=False)
-            
-            ax.set_xticks(range(len(day_class.columns)))
-            ax.set_xticklabels([t.strftime('%H:%M:%S') for t in day_class.columns], rotation=90)
-            
-            yticklabels = [f"{idx[0]}-{idx[1]}-{idx[2]}" for idx in day_class.index]
-            ax.set_yticklabels(yticklabels, rotation=0)
-            
-            plt.legend(handles=legend_elements, title="Clases", loc='center left', bbox_to_anchor=(1, 0.5))
-            plt.title(f"{plotname} | Clases por día y hora desde {start_date} hasta {end_date}")
 
+            # set intervals for the x datetime axis
+            ax.set_xticks([day_class.columns.get_loc(t) for t in time_interval])
+            ax.set_xticklabels([t.strftime('%H:%M:%S') for t in time_interval], rotation=90, fontsize=BIGGEST_PREDICT_MIN_SIZE)
+
+            yticklabels = [f"{idx[0]}-{idx[1]}-{idx[2]}" for idx in day_class.index]
+            # remove ".0" from the string
+            yticklabels = [label.replace('.0', '') for label in yticklabels]
+            ax.set_yticklabels(yticklabels, rotation=0, fontsize=BIGGEST_PREDICT_MIN_SIZE)
+
+            plt.title(f"{plotname} Predicciones", fontsize=BIGGEST_PREDICT_TITLE_SIZE)
+            plt.legend(handles=legend_elements, loc='center left', bbox_to_anchor=(1, 0.5), fontsize=BIGGEST_PREDICT_MIN_SIZE)
+
+            # save
             plt.savefig(f"{folder_output_dir}/{plotname}_prediction_map.png", bbox_inches='tight')
             logger.info(f"Saved image at {folder_output_dir}/{plotname}_prediction_map.png")
 
@@ -814,6 +814,7 @@ def plot_prediction_map(df_Pred:pd.DataFrame, taxonomy_map, folder_output_dir: s
           
     except Exception as e:
         logger.error(f"Error in plot_prediction_map: {e}")
+
 
 
 
@@ -976,28 +977,33 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
                 )
 
         # debugg time of the plot
-        hours = mdates.HourLocator(interval=1)
+        hours = mdates.HourLocator(interval=5)
         h_fmt = mdates.DateFormatter('%d-%m-%y %H:%M')
         
         ax.xaxis.set_major_locator(hours)
         ax.xaxis.set_major_formatter(h_fmt)
 
         plt.xlim(df.index.min(), df.index.max())
-        plt.ylim([20, 105])
-        plt.ylabel('dB(A)')
-        plt.xlabel('Hora')
-        plt.title(f'{plotname} Nivel equivalente {agg_period}s')
+        plt.ylim([DB_LOWER_LIMIT, DB_UPPER_LIMIT])
+        plt.ylabel('dB(A)', fontsize=BIGGEST_SIZE)
+        plt.xlabel('Hora', fontsize=BIGGEST_SIZE)
+        plt.title(f'{plotname} Nivel equivalente {agg_period}s', fontsize=BIGGEST_SIZE)
 
-        plt.xticks(rotation=90)
-        plt.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0.1, fancybox=True, framealpha=1, edgecolor='black')
+        plt.xticks(rotation=90, fontsize=BIGGEST_SIZE)
+        plt.yticks(fontsize=BIGGEST_SIZE)
+
+        plt.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0.1, fancybox=True, framealpha=1, edgecolor='black', fontsize=BIGGEST_SIZE)
+        
         plt.tight_layout()
+        
         # make grid
         plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 
+        # save
         os.makedirs(folder_output_dir, exist_ok=True)
 
         logger.info(f"Saving the plot {plotname}")
-        plt.savefig(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.png', dpi=150)
+        plt.savefig(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.png', dpi=350) # dpi stands for dots per inch, the more the dpi the better the quality of the image
         logger.info(f"Timeplot saved to {folder_output_dir}/{plotname}_{agg_period}s_time_plot.png")
 
         logger.info(f"Saving the data {plotname}")
@@ -1034,26 +1040,32 @@ def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_colum
   
         leq_day_hour.columns = [f"{hour:02d}:00" for hour in leq_day_hour.columns]
         
-        plt.figure(figsize=(20,5))
-        sns.heatmap(
+        plt.figure(figsize=(20,10))
+        heatmap =sns.heatmap(
             leq_day_hour, 
             vmin=30, 
-            vmax= 85, 
+            vmax=85, 
             cmap=cmap_dict, 
-            annot=True
+            annot=True,
+            annot_kws={"size": BIGGER_SIZE}
         )
         
-        plt.xlabel('Hora')
-        plt.ylabel('Día')
-        plt.title(f'{plotname} Nivel equivalente')
+        plt.xlabel('Hora', fontsize=BIGGEST_SIZE)
+        plt.ylabel('Día', fontsize=BIGGEST_SIZE)
+        plt.title(f'{plotname} Nivel equivalente', fontsize=BIGGEST_SIZE)
         
-        plt.yticks(rotation=0)
+        plt.yticks(rotation=0, fontsize=BIGGEST_SIZE)
+        plt.xticks(rotation=90, fontsize=BIGGEST_SIZE)
+
+        cbar = heatmap.collections[0].colorbar
+        cbar.ax.tick_params(labelsize=BIGGEST_SIZE)
+
         plt.tight_layout()
         
         os.makedirs(f'{folder_output_dir}', exist_ok=True)
         
         logger.info(f"Saving the plot {plotname}")
-        plt.savefig(f'{folder_output_dir}/{plotname}_heatmap_evolucion.png',dpi=150)
+        plt.savefig(f'{folder_output_dir}/{plotname}_heatmap_evolucion.png',dpi=350)
         logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}_heatmap_evolucion.png")
 
         logger.info(f"Saving the data {plotname}")
@@ -1064,6 +1076,7 @@ def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_colum
         
     except Exception as e:
         logger.error(f"Error in plot_heatmap_evolution_hour: {e}")
+
 
 
 
@@ -1096,21 +1109,27 @@ def plot_heatmap_evolution_15_min(df, folder_output_dir: str, logger, values_col
             aggfunc=agg_func
         ).round(1)
         
-        plt.figure(figsize=(25,15))
-        
-        sns.heatmap(
+
+        plt.figure(figsize=(20,10))
+        heatmap =sns.heatmap(
             leq_day_15min, 
             vmin=30, 
             vmax=85, 
             cmap=cmap_dict, 
-            annot=True
+            # annot=True,
+            # annot_kws={"size": MEDIUM_SIZE}
         )
         
-        plt.xlabel('Hora')
-        plt.ylabel('Día')
-        plt.title(f'{plotname} Nivel equivalente')
+        plt.xlabel('Hora', fontsize=BIGGEST_15_MIN_SIZE)
+        plt.ylabel('Día', fontsize=BIGGEST_15_MIN_SIZE)
+        plt.title(f'{plotname} Nivel equivalente 15 minutos', fontsize=30)
         
-        plt.yticks(rotation=0)
+        plt.yticks(rotation=0, fontsize=BIGGEST_15_MIN_SIZE)
+        plt.xticks(rotation=90, fontsize=BIGGEST_15_MIN_SIZE)
+
+        cbar = heatmap.collections[0].colorbar
+        cbar.ax.tick_params(labelsize=BIGGEST_15_MIN_SIZE)
+        
         plt.tight_layout()
         
         os.makedirs(f'{folder_output_dir}', exist_ok=True)
@@ -1222,13 +1241,21 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
             linewidth=0.5, 
             cmap=cmap_dict, 
             vmin=30, 
-            vmax=85
+            vmax=85,
+            annot_kws={"size": MEDIUM_SIZE}
         )
         ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
         
-        plt.ylabel('Día')
-        plt.xlabel('Indicador')
-        plt.title(f'{plotname} Indicadores')
+        plt.ylabel('Día', fontsize=BIGGEST_SIZE)
+        plt.xlabel('Indicador', fontsize=BIGGEST_SIZE)
+        plt.title(f'{plotname} Indicadores', fontsize=BIGGEST_SIZE)
+
+        plt.yticks(rotation=0, fontsize=BIGGEST_SIZE)
+        plt.xticks(rotation=0, fontsize=BIGGEST_SIZE)
+
+        cbar = ax.collections[0].colorbar
+        cbar.ax.tick_params(labelsize=BIGGEST_SIZE)
+
         plt.tight_layout()
         
         os.makedirs(f'{folder_output_dir}', exist_ok=True)

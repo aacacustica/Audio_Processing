@@ -1,13 +1,27 @@
 # relative path to the yamnet class map, urban taxonomy and port taxonomy
 RELATIVE_PATH_YAMNET_MAP = r"\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Puerto\yamnet_class_AAC_v3_0.csv"
-RELATIVE_PATH_TAXONOMY_URBAN = r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\taxonomies_json\urban_taxonomy_map_v1_0.json"
-RELATIVE_PATH_TAXONOMY_PORT = r"C:\Users\scjaa\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\taxonomies_json\port_1_taxonomy_mapping_v2.0.json"
+RELATIVE_PATH_TAXONOMY_URBAN = r"\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\taxonomies_json\urban_taxonomy_map_v1_0.json"
+RELATIVE_PATH_TAXONOMY_PORT = r"\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\taxonomies_json\port_1_taxonomy_mapping_v2.0.json"
 
 
 # Remove start time and end time
 REMOVE_START_TIME = 900
 REMOVE_END_TIME = 900
 
+
+# dB limits
+DB_UPPER_LIMIT = 105
+DB_LOWER_LIMIT = 30
+
+
+#Font size
+SMALL_SIZE = 10
+MEDIUM_SIZE = 12
+BIGGER_SIZE = 20
+BIGGEST_SIZE = 22
+BIGGEST_15_MIN_SIZE = 24
+BIGGEST_PREDICT_MIN_SIZE = 50
+BIGGEST_PREDICT_TITLE_SIZE = 60
 
 # Limits
 LIMITE_DIA = 65
@@ -23,16 +37,16 @@ LN_SECONDS = 14400
 
 # Plotting Flags there are 15 flags to plot the following plots
 PLOT_NIGHT_EVOLUTION = False
-PLOT_NIGHT_EVOLUTION_15_MIN = False 
+PLOT_NIGHT_EVOLUTION_15_MIN = False
 
 PLOT_PREDIC_LAEQ_15_MIN = False
 PLOT_PREDIC_LAEQ_15_MIN_PERIOD = False
 PLOT_PREDIC_LAEQ_15_MIN_4H = False
 PLOT_PREDICTION_STACK_BAR = False
-PLOT_PREDICTION_MAP = False
+PLOT_PREDICTION_MAP = True
 PLOT_TREE_MAP = False
 
-PLOT_MAKE_TIME_PLOT = True
+PLOT_MAKE_TIME_PLOT = False
 
 PLOT_HEATMAP_EVOLUTION_HOUR = False 
 PLOT_HEATMAP_EVOLUTION_15_MIN = False 

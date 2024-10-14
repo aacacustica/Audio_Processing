@@ -273,6 +273,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             slm_dict["LAMIN_COLUMN_COEFF"] = 'LAmin_corrected'
 
 
+            # SAVE THE INFO IN A JSON FILE
             info_dict = {
                 "PERIODO_AGREGACION": PERIODO_AGREGACION,
                 "PERCENTILES": PERCENTILES,
@@ -284,6 +285,8 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             with open(os.path.join(folder_output_dir, "processing_parameters.json"), 'w') as f:
                 json.dump(info_dict, f)
             logger.info(f"Saved processing_parameters.json in {folder_output_dir}")
+
+
 
 
             # Plotting night evolution

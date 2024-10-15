@@ -700,8 +700,12 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, yamnet_csv, taxonomy_map, fo
 
 
 
+
+
 def plot_prediction_map(df_Pred:pd.DataFrame, taxonomy_map, folder_output_dir: str, logger, plotname: str):
     try:
+        print(df_Pred)
+        # exit()
         sns.set_style("white")
         sns.set_palette("tab10")
 
@@ -783,28 +787,22 @@ def plot_prediction_map(df_Pred:pd.DataFrame, taxonomy_map, folder_output_dir: s
         day_class = pd.pivot_table(data=df_resampled, columns=df_resampled.index.time, index=["year", "month", "fullday"], values="class_num", aggfunc='mean')
 
 
-        day_class.columns = [pd.Timestamp.combine(pd.to_datetime("2024-01-01"), t) for t in day_class.columns]
-        time_interval = pd.date_range(start=day_class.columns.min(), end=day_class.columns.max(), freq='1H')
 
         plt.figure(figsize=(45, 35))
         if day_class.isna().all().all() or day_class.empty:
             logger.warning("No valid data. Skipping...")
         else:
             ax = sns.heatmap(day_class, annot=False, cmap=cmap, linewidth=0.5, cbar=False)
-
-            # set intervals for the x datetime axis
-            ax.set_xticks([day_class.columns.get_loc(t) for t in time_interval])
-            ax.set_xticklabels([t.strftime('%H:%M:%S') for t in time_interval], rotation=90, fontsize=BIGGEST_PREDICT_MIN_SIZE)
-
+            
+            ax.set_xticks(range(len(day_class.columns)))
+            ax.set_xticklabels([t.strftime('%H:%M:%S') for t in day_class.columns], rotation=90)
+            
             yticklabels = [f"{idx[0]}-{idx[1]}-{idx[2]}" for idx in day_class.index]
-            # remove ".0" from the string
-            yticklabels = [label.replace('.0', '') for label in yticklabels]
-            ax.set_yticklabels(yticklabels, rotation=0, fontsize=BIGGEST_PREDICT_MIN_SIZE)
+            ax.set_yticklabels(yticklabels, rotation=0)
+            
+            plt.legend(handles=legend_elements, title="Clases", loc='center left', bbox_to_anchor=(1, 0.5))
+            plt.title(f"{plotname} | Clases por día y hora desde {start_date} hasta {end_date}")
 
-            plt.title(f"{plotname} Predicciones", fontsize=BIGGEST_PREDICT_TITLE_SIZE)
-            plt.legend(handles=legend_elements, loc='center left', bbox_to_anchor=(1, 0.5), fontsize=BIGGEST_PREDICT_MIN_SIZE)
-
-            # save
             plt.savefig(f"{folder_output_dir}/{plotname}_prediction_map.png", bbox_inches='tight')
             logger.info(f"Saved image at {folder_output_dir}/{plotname}_prediction_map.png")
 

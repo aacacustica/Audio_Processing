@@ -22,7 +22,7 @@ logging.basicConfig(
 
 
 
-class LeqLevel:
+class LeqLevelOctave:
     def __init__(self, fs, calibration_constant, window_size):
         self.fs = fs
         self.C = calibration_constant
@@ -30,7 +30,7 @@ class LeqLevel:
         self.bA, self.aA = a_weighting_coeffs_design(fs)
         self.bC, self.aC = c_weighting_coeffs_design(fs)
         self.fast_samples = int(window_size / 8)
-        logging.info(f"LeqLevel initialized with fs: {fs}, C: {calibration_constant}, window_size: {window_size}")
+        logging.info(f"LeqLevelOctave initialized with fs: {fs}, C: {calibration_constant}, window_size: {window_size}")
 
 
     def calculate_spl_levels(self, audio_data):
@@ -139,7 +139,7 @@ def main():
                 metadata = audio_metadata.load(filepath)
                 device_id = get_device_id(metadata)
                 C = calibration_constants.get(device_id, -10.16)
-                calculator = LeqLevel(fs_filterbanks, C, int(fs_filterbanks))
+                calculator = LeqLevelOctave(fs_filterbanks, C, int(fs_filterbanks))
                 logging.info(f'Processing file: {audio_file} with calibration constant: {C} and sample rate: {fs_filterbanks} Hz')
 
                 audio_data, _ = sf.read(filepath)

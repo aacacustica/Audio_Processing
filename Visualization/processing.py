@@ -156,9 +156,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"df is None")
                 continue
         
-            # add one hour to the datetime column
-            if 'datetime' in df.columns:
-                df['datetime'] = pd.to_datetime(df['datetime']) + pd.Timedelta(hours=1)
 
             # add datetime columns, sort by datetime and set datetime as index
             logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
@@ -371,8 +368,8 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             
 
             # if PLOT_SPECTROGRAM_1_3:
-                # logger.info(f"[15] Plotting spectrogram for folder {folder}")
-                # plt_spectrogram(df_oct, folder_output_dir, logger, plotname=folder)
+            #     logger.info(f"[15] Plotting spectrogram for folder {folder}")
+            #     plt_spectrogram(df_oct, folder_output_dir, logger, plotname=folder)
 
 
             # if PLOT_PEAK_ANALYSIS:

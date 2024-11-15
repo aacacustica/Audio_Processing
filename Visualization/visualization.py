@@ -1067,14 +1067,13 @@ def plot_heatmap_evolution_hour(df, folder_output_dir: str, logger, values_colum
         logger.info(f"Heatmap plot saved to {folder_output_dir}/{plotname}_heatmap_evolucion.png")
 
         logger.info(f"Saving the data {plotname}")
-        leq_day_hour.to_csv(f'{folder_output_dir}/{plotname}_heatmap_evolucion.csv', index=False)
+        leq_day_hour.to_csv(f'{folder_output_dir}/{plotname}_heatmap_evolucion.csv', index=True)
         logger.info(f"Heatmap data saved to {folder_output_dir}/{plotname}_heatmap_evolucion.csv")
         
         plt.close()
         
     except Exception as e:
         logger.error(f"Error in plot_heatmap_evolution_hour: {e}")
-
 
 
 

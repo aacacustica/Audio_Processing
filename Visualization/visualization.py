@@ -1171,7 +1171,8 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
             logger.info("No Fecha column found")
             # reindex datetime index column
             if isinstance(df.index, pd.DatetimeIndex):
-                df.reset_index(inplace=True)
+                # uncomment if you want to reset the index
+                # df.reset_index(inplace=True)
                 df["Fecha"] = pd.to_datetime(df['datetime'], dayfirst=True)
                 logger.info(f"Using the datetime index as Fecha")
 

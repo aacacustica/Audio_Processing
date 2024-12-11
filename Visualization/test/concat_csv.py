@@ -1,6 +1,12 @@
 import os
 import pandas as pd
 
+
+def get_title(filename: str):
+    title = filename.split('\\')[-2]
+    return title
+
+
 def get_data_SV307(filename: str):
     try:
         df = pd.read_csv(filename,header=14,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
@@ -18,6 +24,8 @@ def get_data_SV307(filename: str):
                        'LAFmin (Ch1, P1) [dB]': 'LAFmin'}, inplace=True)
 
     return df
+
+
 
 def concatenate_csv_files(folder_path: str):
     # get all the files in the folder
@@ -45,16 +53,21 @@ def concatenate_csv_files(folder_path: str):
     return df
 
 def main():
-    folder_path = r"\\192.168.205.117\AAC_Server\OCIO\24052_ZARAUTZ\CAMPAÑA_2\3-Medidas\ZARAUTZ_C2_P6\SONOMETRO"
+    folder_path = r"\\192.168.205.123\aac_server\INDUSTRIA\24027_ERRENTERIA_MR\CAMPAÑA_1\3-Medidas\ERRENTERIA_C1P1\SONOMETRO"
+    title = get_title(folder_path)
+    print(title)
+
+
     df = concatenate_csv_files(folder_path)
-    print(df)
 
     # order by datetime
     df = df.sort_values(by='datetime')
+    print(df)
     # exit()
 
     # save csv in the folder_path
-    df.to_csv(os.path.join(folder_path, "concatenated.csv"), index=False)
+    exit()
+    df.to_csv(os.path.join(folder_path, f"Svantek_{title}.csv"), index=False)
     print("CSV file saved")
 
 

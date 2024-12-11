@@ -212,23 +212,31 @@ def remove_row_out_timespan(df_LAeq, df_Pred):
 
 
 def apply_db_correction(df, coefficient, logger):
+    print(df)
+    print(df.columns)
+    # exit()
     if 'LA' in df.columns:
+        logger.info('Entering --> Entering LA')
         df['LA_corrected'] = df['LA'] - coefficient
         df['LAmax_corrected'] = df['LAmax'] - coefficient
         df['LAmin_corrected'] = df['LAmin'] - coefficient
     
     elif 'LC-LA' in df.columns:
+        logger.info('Entering --> LC-LA')
         df['LC-LA_corrected'] = df['LC-LA'] - coefficient
 
     elif 'LAeq' in df.columns:
+        logger.info('Entering --> LAeq')
         df['LA_corrected'] = df['LAeq'] - coefficient
         df['LAmax_corrected'] = df['LAFmax'] - coefficient
         df['LAmin_corrected'] = df['LAFmin'] - coefficient
 
     elif 'Value' in df.columns:
+        logger.info('Entering --> Value')
         df['LA_corrected'] = df['Value'] - coefficient
 
     elif '' in df.columns:
+        logger.info('Entering --> nothing in the apply_db_correction!!')
         df['LA_corrected'] = df[''] - coefficient
 
     else:

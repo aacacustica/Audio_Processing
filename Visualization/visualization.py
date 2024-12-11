@@ -922,20 +922,12 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         # remove nan values
         df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
         
-        # if there is just LAEQ_COLUMN_COEFF, then we use it for all the columns, otherwise use the max and min
-        if columns_dict['LAEQ_COLUMN'] == 'Value':
-            agg_funcs = {
-                columns_dict['LAEQ_COLUMN_COEFF']: leq
-            }
-            logger.info(f"Using the columns_dict: df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']]")
-        
-        else:
-            agg_funcs = {
-                columns_dict['LAEQ_COLUMN_COEFF']: leq,
-                columns_dict['LAMAX_COLUMN_COEFF']: 'max',
-                columns_dict['LAMIN_COLUMN_COEFF']: 'min'
-            }
-            logger.info(f"Using the columns_dict: df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']]")
+        agg_funcs = {
+            columns_dict['LAEQ_COLUMN_COEFF']: leq,
+            columns_dict['LAMAX_COLUMN_COEFF']: 'max',
+            columns_dict['LAMIN_COLUMN_COEFF']: 'min'
+        }
+        logger.info(f"Using the columns_dict: {columns_dict}")
 
         logger.info(f"Using the agg_funcs: {agg_funcs}")
         df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs)
@@ -949,30 +941,24 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         logger.info(f"Using the agg_period: {agg_period}")
         
         
-        if columns_dict['LAEQ_COLUMN'] == 'Value':
-            x = df_LAeq.index
-            ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=3, color='red', label='LAeq')
-            # OCA
-            ax.plot(x, oca.values, color='#00B0F0')
-
-        else:
-            x = df_LAeq.index
-            ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=3, color='red', label='LAeq')
-            ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN_COEFF']], linewidth=1, color='#FF99FF', label='Lmax')
-            ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN_COEFF']], linewidth=1, color='#92D050', label='Lmin')
-            # OCA
-            ax.plot(x, oca.values, color='#00B0F0', label='OCA')
+        logger.info(f"Using the columns_dict: {columns_dict['LAEQ_COLUMN_COEFF']}, {columns_dict['LAMAX_COLUMN_COEFF']}, {columns_dict['LAMIN_COLUMN_COEFF']}")
+        x = df_LAeq.index
+        ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=3, color='red', label='LAeq')
+        ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN_COEFF']], linewidth=1, color='#FF99FF', label='Lmax')
+        ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN_COEFF']], linewidth=1, color='#92D050', label='Lmin')
+        # OCA
+        ax.plot(x, oca.values, color='#00B0F0', label='OCA')
 
 
-            for percentile in percentiles:
-                values = df[columns_dict['LAEQ_COLUMN_COEFF']].resample(f'{agg_period}s').quantile((100 - percentile) / 100)
-                ax.plot(
-                    x, 
-                    values, 
-                    linewidth=0.5, 
-                    label=f'L{percentile}', 
-                    color=PERCENTIL_COLOUR[percentile]
-                )
+        for percentile in percentiles:
+            values = df[columns_dict['LAEQ_COLUMN_COEFF']].resample(f'{agg_period}s').quantile((100 - percentile) / 100)
+            ax.plot(
+                x, 
+                values, 
+                linewidth=0.5, 
+                label=f'L{percentile}', 
+                color=PERCENTIL_COLOUR[percentile]
+            )
 
         # debugg time of the plot
         hours = mdates.HourLocator(interval=5)

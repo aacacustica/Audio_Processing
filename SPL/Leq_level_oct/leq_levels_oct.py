@@ -8,7 +8,6 @@ from utils import *
 import os
 import datetime
 import argparse
-from scipy.signal import lfilter
 import configparser
 import audio_metadata
 import logging

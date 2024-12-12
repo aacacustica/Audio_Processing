@@ -25,7 +25,7 @@ def load_data(file_path, logger):
     # load the data for each SLM type until one works |  for each slm_type, (func, slm_dict) in slm_type_function_mapping.items(): means that for each key and value in the dictionary, the key is slm_type and the value is a tuple with the function and the dictionary | the function is the function to load the data and the dictionary is the dictionary with the column names for the SLM type
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
         try:
-            logger.info(f"Loading data for SLM type {slm_type}")
+            logger.info(f"Loading file {file_path} for SLM type {slm_type}")
             df = func(file_path)
             logger.info("\n")
             logger.info(f"Data loaded for SLM type {slm_type}")
@@ -156,6 +156,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"df is None")
                 continue
             
+
 
             # add datetime columns, sort by datetime and set datetime as index
             logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")

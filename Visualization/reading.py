@@ -5,13 +5,20 @@ import pandas as pd
 
 
 def get_data_bilbo(filename: str):
-    df = pd.read_csv(filename)
+    print("Reading data from Bilbao sonometer...")
+    # df = pd.read_csv(filename)
+    df = pd.read_csv(filename, encoding='latin1', sep=';')
+
     try:
         df['datetime'] = pd.to_datetime(df['datetime'], errors='raise')
     except KeyError:
         print("No 'datetime' column found in CSV.")
     except pd.errors.OutOfBoundsDatetime:
         print("Error converting 'datetime' column.")
+    
+    print(df)
+    print("Data read from Bilbao sonometer.")
+    # exit()
     return df
 
 

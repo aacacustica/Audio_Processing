@@ -933,7 +933,12 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs)
         oca = df.resample(f'{agg_period}s').agg({'oca': 'min'})
 
-        plt.style.use('seaborn-v0_8-whitegrid')
+        # try a style, if not, use seaborn-whitegrid
+        try:
+            plt.style.use('seaborn-v0_8-whitegrid')
+        except:
+            plt.style.use('seaborn-whitegrid')
+            
         fig, ax = plt.subplots(figsize=(20, 10))
         ax.set_facecolor("white")
 

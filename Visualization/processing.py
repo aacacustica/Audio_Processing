@@ -11,7 +11,7 @@ import glob
 import json
 
 
-def load_data(file_path, logger):
+def load_data(file_path, logger, new_date=None, new_time=None):
     slm_type_function_mapping = {
         "814": (get_data_814, larson814_dict),
         "824": (get_data_824, larson824_dict),
@@ -26,7 +26,7 @@ def load_data(file_path, logger):
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
         try:
             logger.info(f"Loading file {file_path} for SLM type {slm_type}")
-            df = func(file_path)
+            df = func(file_path, new_date=new_date, new_time=new_time)
             logger.info("\n")
             logger.info(f"Data loaded for SLM type {slm_type}")
             return df, slm_type, slm_dict
@@ -39,12 +39,15 @@ def load_data(file_path, logger):
 
 
 
-def process_folder(folder_path, logger):
+def process_folder(folder_path, folder_date_time, logger):
     # folder contains a CESVA folder
     cesva_path = os.path.join(folder_path, 'CESVA')
     if os.path.isdir(cesva_path):
         # load the data from the CESVA folder
         subfolders = [f for f in os.listdir(cesva_path) if os.path.isdir(os.path.join(cesva_path, f))]
+        new_date, new_time = folder_date_time.get(folder_path, (None, None))
+        print(new_date)
+        print(new_time)
         
         # CESVA folder contains subfolders
         for subfolder in subfolders:
@@ -55,11 +58,17 @@ def process_folder(folder_path, logger):
             files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV', 'XLSX'))]
             if files:
                 logger.info(f"Files found: {files}")
-                return load_data(files[0], logger)  
+                return load_data(files[0], logger, new_date=new_date, new_time=new_time)  
             else:
                 logger.warning(f"No measurement files found in {subfolder_path}")
 
     else:
+        new_date, new_time = folder_date_time.get(folder_path, (None, None))
+        print("New date and time")
+        print(new_date)
+        print(new_time)
+
+
         files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith(('.csv', '.xlsx', '.CSV'))]
         logger.info(f"Files found: {files}")
         
@@ -67,12 +76,12 @@ def process_folder(folder_path, logger):
             logger.warning(f"No measurement files found in {folder_path}")
             return None, None, None
         
-        return load_data(files[0], logger) 
+        return load_data(files[0], logger, new_date=new_date, new_time=new_time) 
     return None, None, None 
 
 
 
-def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, sufix_string, folder_coefficients, logger):
+def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, sufix_string, folder_coefficients, folder_date_time, logger):
     print()
     stable_version = get_stable_version(logger)
 
@@ -151,11 +160,12 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         try:
             logger.info("\n")
             logger.info(f"Processing folder {folder}") 
-            df, slm_type, slm_dict = process_folder(reg_folder, logger)
+            
+            df, slm_type, slm_dict = process_folder(reg_folder, folder_date_time, logger)
             if df is None:
                 logger.info(f"df is None")
                 continue
-            
+
 
 
             # add datetime columns, sort by datetime and set datetime as index

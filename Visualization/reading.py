@@ -1,10 +1,11 @@
 from datetime import datetime
 import os
 import pandas as pd
+from utils import change_date_and_time
 
 
 
-def get_data_bilbo(filename: str):
+def get_data_bilbo(filename: str, new_date=None, new_time=None):
     print("Reading data from Bilbao sonometer...")
     # df = pd.read_csv(filename)
     df = pd.read_csv(filename, encoding='latin1', sep=';')
@@ -16,14 +17,21 @@ def get_data_bilbo(filename: str):
     except pd.errors.OutOfBoundsDatetime:
         print("Error converting 'datetime' column.")
     
-    print(df)
     print("Data read from Bilbao sonometer.")
-    # exit()
+
+    try:    
+        df = change_date_and_time(df, new_date, new_time)
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+    
+    # remove data if it is longer than day 10, month 8, year 2024
+    # df = df[df['datetime'] < pd.Timestamp(2024, 8, 10)]
     return df
 
 
 
-def get_data_814(filename: str):
+def get_data_814(filename: str, new_date=None, new_time=None):
     try:
         df = pd.read_csv(filename, header=16, encoding='latin1')
     except UnicodeDecodeError:
@@ -32,27 +40,55 @@ def get_data_814(filename: str):
     if "Leq" not in df.columns:
         df = pd.read_csv(filename, header=19, sep=';', encoding='latin1')
     df['datetime'] = pd.to_datetime(df['Date'] + ' ' + df['Time'])
+
+    try:    
+        df = change_date_and_time(df, new_date, new_time)
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+    
+    # remove data if it is longer than day 10, month 8, year 2024
+    # df = df[df['datetime'] < pd.Timestamp(2024, 8, 10)]
     return df
 
 
 
-def get_data_lx_ES(filename: str):
+
+def get_data_lx_ES(filename: str, new_date=None, new_time=None):
     df = pd.read_excel(filename, sheet_name='Historia del tiempo')
     df['datetime'] = pd.to_datetime(df['Fecha'])
-    # add a day beacuse there is a bug in the data
-    # df['datetime'] = df['datetime'] + pd.DateOffset(days=1)
+    print(df)
+
+    try:    
+        df = change_date_and_time(df, new_date, new_time)
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+    
+    # remove data if it is longer than day 10, month 8, year 2024
+    # df = df[df['datetime'] < pd.Timestamp(2024, 8, 10)]
     return df
 
 
 
-def get_data_lx_EN(filename: str):
+
+def get_data_lx_EN(filename: str, new_date=None, new_time=None):
     df = pd.read_excel(filename,sheet_name=4)
     df['datetime'] = pd.to_datetime(df['Date'])
+
+    try:    
+        df = change_date_and_time(df, new_date, new_time)
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+    
+    # remove data if it is longer than day 10, month 8, year 2024
+    # df = df[df['datetime'] < pd.Timestamp(2024, 8, 10)]
     return df
 
 
 
-def get_data_824(filename: str):
+def get_data_824(filename: str, new_date=None, new_time=None):
     df = pd.read_csv(filename, sep=',', encoding='latin1', header=15)
     df = df.dropna(axis=1)
     
@@ -60,11 +96,20 @@ def get_data_824(filename: str):
         df = pd.read_csv(filename,header=15, sep=',')
     
     df['datetime'] = pd.to_datetime(df['Date'] + ' '+ df['Time'])
+
+    try:    
+        df = change_date_and_time(df, new_date, new_time)
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+    
+    # remove data if it is longer than day 10, month 8, year 2024
+    # df = df[df['datetime'] < pd.Timestamp(2024, 8, 10)]
     return df
 
 
 
-def get_data_SV307(filename: str):
+def get_data_SV307(filename: str, new_date=None, new_time=None):
     try:
         df = pd.read_csv(filename,header=14,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
     except Exception as e:
@@ -75,26 +120,44 @@ def get_data_SV307(filename: str):
 
     df = df[pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S', errors='coerce').notnull()]
     df['datetime'] = pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S')
+
+    try:    
+        df = change_date_and_time(df, new_date, new_time)
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+    
+    # remove data if it is longer than day 10, month 8, year 2024
+    # df = df[df['datetime'] < pd.Timestamp(2024, 8, 10)]
     
     df.rename(columns={'LAeq (Ch1, P1) [dB]': 'LAeq',
                        'LAFmax (Ch1, P1) [dB]': 'LAFmax',
                        'LAFmin (Ch1, P1) [dB]': 'LAFmin'}, inplace=True)
-
     return df
 
 
 
-def get_data_audiomoth(filename: str):
+def get_data_audiomoth(filename: str, new_date=None, new_time=None):
     df = pd.read_csv(filename)
     if 'Time' in df.columns:
         df['datetime'] = pd.to_datetime(df['Time'], format='%Y-%m-%d_%H:%M:%S')
     else:
         df['datetime'] = pd.to_datetime(df['date'])
+    
+
+    try:    
+        df = change_date_and_time(df, new_date, new_time)
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+    
+    # remove data if it is longer than day 10, month 8, year 2024
+    # df = df[df['datetime'] < pd.Timestamp(2024, 8, 10)]
     return df 
 
 
 
-def get_data_cesva(measurement_folder: str):
+def get_data_cesva(measurement_folder: str, new_date=None, new_time=None):
     if os.path.isfile(measurement_folder):
         cesva_index = measurement_folder.find('CESVA')
         if cesva_index != -1:
@@ -138,4 +201,13 @@ def get_data_cesva(measurement_folder: str):
     
     df['datetime'] = df.apply(lambda x: datetime.strptime(x['Date hour'], '%d/%m/%Y %H:%M:%S'),axis=1)
     df['datetime'] = pd.to_datetime(df['datetime'])
+
+    try:    
+        df = change_date_and_time(df, new_date, new_time)
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+    
+    # remove data if it is longer than day 10, month 8, year 2024
+    # df = df[df['datetime'] < pd.Timestamp(2024, 8, 10)]
     return df

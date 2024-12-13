@@ -246,6 +246,62 @@ def apply_db_correction(df, coefficient, logger):
 
 
 
+def change_date_and_time(df, new_date, new_time):
+    try:
+        # if new_date and new_time are provided
+        if new_date is not None and new_time is not None:
+            start_datetime = pd.Timestamp(f"{new_date} {new_time}")
+            df['datetime'] = [start_datetime + pd.Timedelta(seconds=i) for i in range(len(df))]
+            print("Updated DataFrame:")
+            print(df)
+        
+        # new_date is provided but new_time is None
+        elif new_date is not None and new_time is None:
+            # get the first item in 'Hora' column
+            first_time = df['Hora'][0]
+
+            # string if necessary
+            if not isinstance(first_time, str):
+                first_time = first_time.strftime("%H:%M:%S")
+            print(f"First time in 'Hora' column: {first_time}")
+            # exit()
+            start_datetime = pd.Timestamp(f"{new_date} {first_time}")
+            df['datetime'] = [start_datetime + pd.Timedelta(seconds=i) for i in range(len(df))]
+            print("Updated DataFrame:")
+            print(df)
+
+
+        # new_time is provided but new_date is None
+        elif new_time is not None:
+            # get the first item in 'Fecha' column
+            first_date = df['Fecha'][0]
+            print(f"First date in 'Fecha' column: {first_date}")
+
+
+            #  string if necessary
+            if not isinstance(first_date, str):
+                first_date = first_date.strftime("%Y-%m-%d")
+            
+            print(f"First date in 'Fecha' column: {first_date}")
+
+            start_datetime = pd.Timestamp(f"{first_date} {new_time}")
+            df['datetime'] = [start_datetime + pd.Timedelta(seconds=i) for i in range(len(df))]
+            print("Updated DataFrame:")
+            print(df)
+
+        else:
+            print("No new date or time provided.")
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+    
+    # remove data if it is longer than day 10, month 8, year 2024
+    # df = df[df['datetime'] < pd.Timestamp(2024, 8, 10)]
+    return df
+
+
+
 def list_git_tags():
     try:
         tags = tags = subprocess.check_output(["git", "tag"]).strip().decode()

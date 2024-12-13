@@ -4,6 +4,7 @@ from logging_config import setup_logging
 import config
 from config import *
 from processing import *
+import re
 
 
 def arg_parser():
@@ -43,6 +44,7 @@ def main():
 
     try:
         folder_coefficients = {}
+        folder_date_time = {}
         
         # audiomoth
         if args.audiomoth:
@@ -85,11 +87,66 @@ def main():
                 if 'SONOMETRO' in dirs:
                     spl_sonometer_folder = os.path.join(root, "SONOMETRO")
                     if os.path.exists(spl_sonometer_folder):
-                        coeff = float(input(f"Enter correction coefficient for {spl_sonometer_folder}: "))
+                        # ask user for the correction coefficient
+                        spl_sonometer_folder_name = spl_sonometer_folder.split("\\")[-2]
+                        coeff = float(input(f"Enter correction coefficient for {spl_sonometer_folder_name}: "))
+                        
+
+                        ##############################################
+                        ## ask user if they want to change the date ##
+                        ##############################################
+                        # ask user if they want to change the date 
+                        date_to_change = input("Would you like to change the date of the csv file? (y/n): ")
+                        # to lower case
+                        date_to_change = date_to_change.lower()
+
+                        # if the answer is not y or n, ask again
+                        while date_to_change not in ['y', 'n']:
+                            date_to_change = input("Would you like to change the date of the csv file? (y/n): ")
+                            date_to_change = date_to_change.lower()
+
+                        if date_to_change == 'y':
+                            new_date = input("Enter the new date (yyyy-mm-dd): ")
+                            # check the format is correct, if not, ask again
+                            while not re.match(r"\d{4}-\d{2}-\d{2}", new_date):
+                                new_date = input("Enter the new date (yyyy-mm-dd): ")
+                        
+                        else:
+                            new_date = None
+
+
+                        ##############################################
+                        ## ask user if they want to change the time ##
+                        ##############################################
+                        time_to_change = input("Would you like to change the time of the csv file? (y/n): ")
+                        # to lower case
+                        time_to_change = time_to_change.lower()
+
+                        # if the answer is not y or n, ask again
+                        while time_to_change not in ['y', 'n']:
+                            time_to_change = input("Would you like to change the time of the csv file? (y/n): ")
+                            time_to_change = time_to_change.lower()
+
+                        if time_to_change == 'y':
+                            new_time = input("Enter the new time (hh:mm:ss): ")
+
+                            # check the format is correct, if not, ask again
+                            while not re.match(r"([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]", new_time):
+                                new_time = input("Enter the new time (hh:mm:ss): ")
+
+                        else:
+                            new_time = None
+
+
+                        ##############################################
+                        # add the folder and the coefficient and the new date to the dictionary
                         folder_coefficients[spl_sonometer_folder] = coeff
                         spl_sonometer_folders.append(spl_sonometer_folder)
 
-            process_all_folders(input_folder, spl_sonometer_folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, 'SONOMETRO', folder_coefficients, logger)
+                        folder_date_time[spl_sonometer_folder] = (new_date, new_time)
+
+
+            process_all_folders(input_folder, spl_sonometer_folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, 'SONOMETRO', folder_coefficients, folder_date_time, logger)
         
 
         logger.info("Finished sonometer test script")

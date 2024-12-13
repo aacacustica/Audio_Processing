@@ -67,8 +67,10 @@ def main():
                         coeff = float(input(f"Enter correction coefficient for {spl_audiomoth_folder_name}: "))
                         folder_coefficients[spl_audiomoth_folder] = coeff
                         spl_audiomoth_folders.append(spl_audiomoth_folder)
+                        # make a dictionary with the folder and the new date
+                        folder_date_time[spl_audiomoth_folder] = (None, None)
             
-            process_all_folders(input_folder, spl_audiomoth_folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, 'AUDIOMOTH', folder_coefficients, logger)
+            process_all_folders(input_folder, spl_audiomoth_folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, 'AUDIOMOTH', folder_coefficients, folder_date_time, logger)
 
 
         # sonometro

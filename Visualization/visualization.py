@@ -1167,6 +1167,13 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
         if "Fecha" not in df.columns and 'OVLD' not in df.columns:
             # copy 'date' colimn and named it as 'Fecha'
             df['Fecha'] = df['datetime']
+            logger.info(f"Using the datetime index as Fecha")
+
+        # if 'Fecha' and 'datetime' columns are present, use 'datetime' as 'Fecha'
+        if 'Fecha' in df.columns and 'datetime' in df.columns:
+            df['Fecha'] = df['datetime']
+            logger.info(f"Using the datetime index as Fecha")
+
 
         df_indicadores = (df.groupby(['date','indicador_str'])['Fecha'].agg(['first','last']))
         df_indicadores['duration'] = df_indicadores.apply(lambda row: calculate_duration(row['first'], row['last']), axis=1)
@@ -1206,6 +1213,8 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
                 df = df[~((df['date'] == last_day) & (df['indicador_str'] == indicator))]
                 logger.info(f"{indicator} indicator from last day {last_day} removed, less than {LE_SECONDS} seconds")
         
+
+
         # make the energy average of the indicators
         indicadores_table = pd.pivot_table(
             data=df,

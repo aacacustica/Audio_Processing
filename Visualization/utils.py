@@ -245,10 +245,7 @@ def apply_db_correction(df, coefficient, logger):
 
 def change_date_and_time(df, new_date, new_time, new_threshold_date, new_threshold_time, logger):
     try:
-        # order the df by datetime column
         df = df.sort_values(by='datetime')
-
-        
         ####################################################################################
         ####################################################################################
         # if new_date and new_time are provided

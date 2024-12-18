@@ -45,6 +45,7 @@ def main():
     try:
         folder_coefficients = {}
         folder_date_time = {}
+        folder_threshold = {}
         
         # audiomoth
         if args.audiomoth:
@@ -69,8 +70,38 @@ def main():
                         spl_audiomoth_folders.append(spl_audiomoth_folder)
                         # make a dictionary with the folder and the new date
                         folder_date_time[spl_audiomoth_folder] = (None, None)
+                        
+                        ####################################################
+                        ### ask user if they want to change the threshold ##
+                        ####################################################
+                        threshold_to_change = input("Would you like to set a limit on the date to process the data? (y/n): ")
+                        # to lower case
+                        threshold_to_change = threshold_to_change.lower()
+
+                        # if the answer is not y or n, ask again
+                        while threshold_to_change not in ['y', 'n']:
+                            threshold_to_change = input("Would you like to set a limit on the date to process the data? (y/n): ")
+                            threshold_to_change = threshold_to_change.lower()
+                        
+                        if threshold_to_change == 'y':
+                            threshold = input("Enter the threshold date (yyyy-mm-dd): ")
+                            # check the format is correct, if not, ask again
+                            while not re.match(r"\d{4}-\d{2}-\d{2}", threshold):
+                                threshold = input("Enter the threshold date (yyyy-mm-dd): ")
+                        
+                        else:
+                            threshold = None
+
+
+                        ##############################################
+                        # add the folder and the coefficient and the new date to the dictionary
+                        folder_coefficients[spl_sonometer_folder] = coeff
+                        spl_sonometer_folders.append(spl_sonometer_folder)
+
+                        folder_date_time[spl_sonometer_folder] = (new_date, new_time)
+                        folder_threshold[spl_sonometer_folder] = threshold
             
-            process_all_folders(input_folder, spl_audiomoth_folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, 'AUDIOMOTH', folder_coefficients, folder_date_time, logger)
+            process_all_folders(input_folder, spl_audiomoth_folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, 'AUDIOMOTH', folder_coefficients, folder_date_time, folder_threshold, logger)
 
 
         # sonometro
@@ -139,6 +170,49 @@ def main():
                         else:
                             new_time = None
 
+                        
+                        ####################################################
+                        ### ask user if they want to change the limit date ##
+                        ####################################################
+                        threshold_to_change = input("Would you like to set a limit on the date to process the data? (y/n): ")
+                        # to lower case
+                        threshold_to_change = threshold_to_change.lower()
+
+                        # if the answer is not y or n, ask again
+                        while threshold_to_change not in ['y', 'n']:
+                            threshold_to_change = input("Would you like to set a limit on the date to process the data? (y/n): ")
+                            threshold_to_change = threshold_to_change.lower()
+                        
+                        if threshold_to_change == 'y':
+                            threshold_date = input("Enter the threshold date (yyyy-mm-dd): ")
+                            # check the format is correct, if not, ask again
+                            while not re.match(r"\d{4}-\d{2}-\d{2}", threshold_date):
+                                threshold_date = input("Enter the threshold date (yyyy-mm-dd): ")
+                        
+                        else:
+                            threshold_date = None
+
+                        
+                        ########################################################
+                        ## ask the user if they want to change the limit time ##
+                        ########################################################
+                        threshold_time_to_change = input("Would you like to set a limit on the time to process the data? (y/n): ")
+                        # to lower case
+                        threshold_time_to_change = threshold_time_to_change.lower()
+
+                        # if the answer is not y or n, ask again
+                        while threshold_time_to_change not in ['y', 'n']:
+                            threshold_time_to_change = input("Would you like to set a limit on the time to process the data? (y/n): ")
+                            threshold_time_to_change = threshold_time_to_change.lower()
+
+                        if threshold_time_to_change == 'y':
+                            threshold_time = input("Enter the threshold time (hh:mm:ss): ")
+                            # check the format is correct, if not, ask again
+                            while not re.match(r"([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]", threshold_time):
+                                threshold_time = input("Enter the threshold time (hh:mm:ss): ")
+                        
+                        else:
+                            threshold_time = None
 
                         ##############################################
                         # add the folder and the coefficient and the new date to the dictionary
@@ -146,9 +220,9 @@ def main():
                         spl_sonometer_folders.append(spl_sonometer_folder)
 
                         folder_date_time[spl_sonometer_folder] = (new_date, new_time)
+                        folder_threshold[spl_sonometer_folder] = (threshold_date, threshold_time)
 
-
-            process_all_folders(input_folder, spl_sonometer_folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, 'SONOMETRO', folder_coefficients, folder_date_time, logger)
+            process_all_folders(input_folder, spl_sonometer_folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, 'SONOMETRO', folder_coefficients, folder_date_time, folder_threshold, logger)
         
 
         logger.info("Finished sonometer test script")

@@ -52,6 +52,8 @@ def concatenate_csv_files(folder_path: str):
     df = pd.concat(dfs)
     return df
 
+
+
 def main():
     folder_path = r"\\192.168.205.123\aac_server\INDUSTRIA\24027_ERRENTERIA_MR\CAMPAÑA_1\3-Medidas\ERRENTERIA_C1P1\SONOMETRO"
     title = get_title(folder_path)

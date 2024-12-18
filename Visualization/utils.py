@@ -212,9 +212,6 @@ def remove_row_out_timespan(df_LAeq, df_Pred):
 
 
 def apply_db_correction(df, coefficient, logger):
-    print(df)
-    print(df.columns)
-    # exit()
     if 'LA' in df.columns:
         logger.info('Entering --> Entering LA')
         df['LA_corrected'] = df['LA'] - coefficient
@@ -246,58 +243,111 @@ def apply_db_correction(df, coefficient, logger):
 
 
 
-def change_date_and_time(df, new_date, new_time):
+def change_date_and_time(df, new_date, new_time, new_threshold_date, new_threshold_time, logger):
     try:
+        # order the df by datetime column
+        df = df.sort_values(by='datetime')
+
+        
+        ####################################################################################
+        ####################################################################################
         # if new_date and new_time are provided
         if new_date is not None and new_time is not None:
+            logger.info("new_date and new_time are provided")
             start_datetime = pd.Timestamp(f"{new_date} {new_time}")
             df['datetime'] = [start_datetime + pd.Timedelta(seconds=i) for i in range(len(df))]
-            print("Updated DataFrame:")
-            print(df)
+            logger.info(f"New datetime column created with new date and time: {start_datetime}")
         
+
         # new_date is provided but new_time is None
         elif new_date is not None and new_time is None:
-            # get the first item in 'Hora' column
-            first_time = df['Hora'][0]
+            logger.info("new_date is provided but new_time is None")
+            # get the first item in 'datetime' column
+            first_time = df.iloc[0]['datetime'] 
+            logger.info(f"First time in 'datetime' column: {first_time}")
 
             # string if necessary
             if not isinstance(first_time, str):
                 first_time = first_time.strftime("%H:%M:%S")
-            print(f"First time in 'Hora' column: {first_time}")
-            # exit()
+            logger.info(f"First time in 'datetime' column: {first_time}")
+            
             start_datetime = pd.Timestamp(f"{new_date} {first_time}")
             df['datetime'] = [start_datetime + pd.Timedelta(seconds=i) for i in range(len(df))]
-            print("Updated DataFrame:")
-            print(df)
+            logger.info(f"New datetime column created with new date: {start_datetime}")
 
 
         # new_time is provided but new_date is None
-        elif new_time is not None:
-            # get the first item in 'Fecha' column
-            first_date = df['Fecha'][0]
-            print(f"First date in 'Fecha' column: {first_date}")
-
+        elif new_time is not None and new_date is None:
+            logger.info("new_time is provided but new_date is None")
+            # get the first item in 'datetime' column
+            first_date = df.iloc[0]['datetime']
+            logger.info(f"First date in 'datetime' column: {first_date}")
 
             #  string if necessary
             if not isinstance(first_date, str):
                 first_date = first_date.strftime("%Y-%m-%d")
-            
-            print(f"First date in 'Fecha' column: {first_date}")
+            logger.info(f"First date in 'datetime' column: {first_date}")
 
             start_datetime = pd.Timestamp(f"{first_date} {new_time}")
             df['datetime'] = [start_datetime + pd.Timedelta(seconds=i) for i in range(len(df))]
-            print("Updated DataFrame:")
-            print(df)
+
 
         else:
-            print("No new date or time provided.")
+            logger.info("No new date or time provided.")
+
+
+
+        
+        ####################################################################################
+        ## If there is a limit threshold date or time, trim the df with this information ##
+        ####################################################################################
+        if new_threshold_date is not None and new_threshold_time is not None:
+            logger.info("[0] new_threshold_date and new_threshold_time are provided")
+
+            threshold_datetime = pd.Timestamp(f"{new_threshold_date} {new_threshold_time}")
+            df = df[df['datetime'] <= threshold_datetime]
+
+            logger.info(f"Trimming the dataframe with threshold date: {threshold_datetime}")
+            
+
+        elif new_threshold_date is not None and new_threshold_time is None:
+            logger.info("[1] new_threshold_date is provided but new_threshold_time is None")
+
+            thr_first_time = df.iloc[0]['datetime']
+            logger.info(f"First time in 'datetime' column: {thr_first_time}")
+            
+            if not isinstance(thr_first_time, str):
+                thr_first_time = thr_first_time.strftime("%H:%M:%S")
+            logger.info(f"First time in 'datetime' column: {thr_first_time}")
+
+            threshold_datetime = pd.Timestamp(f"{new_threshold_date} {thr_first_time}")
+            df = df[df['datetime'] <= threshold_datetime]
+            logger.info(f"Trimming the dataframe with threshold date: {threshold_datetime}")
+
+
+        elif new_threshold_date is None and new_threshold_time is not None:
+            logger.info("[2] new_threshold_time is provided but new_threshold_date is None")
+
+            thr_first_date = df.iloc[0]['datetime']
+            logger.info(f"First date in 'datetime' column: {thr_first_date}")
+
+            if not isinstance(thr_first_date, str):
+                thr_first_date = thr_first_date.strftime("%Y-%m-%d")
+            logger.info(f"First date in 'datetime' column: {thr_first_date}")
+
+            threshold_datetime = pd.Timestamp(f"{thr_first_date} {new_threshold_time}")
+            df = df[df['datetime'] <= threshold_datetime]
+            logger.info(f"Trimming the dataframe with threshold date: {threshold_datetime}")
+
+
+
+        else:
+            logger.info("No threshold limit date or time provided.")
+
 
     except Exception as e:
-        print(f"Error: {e}")
+        logger.error(f"Error: {e}")
         return None
-    
-    # remove data if it is longer than day 10, month 8, year 2024
-    # df = df[df['datetime'] < pd.Timestamp(2024, 8, 10)]
     return df
 
 

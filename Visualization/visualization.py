@@ -704,8 +704,6 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, yamnet_csv, taxonomy_map, fo
 
 def plot_prediction_map(df_Pred:pd.DataFrame, taxonomy_map, folder_output_dir: str, logger, plotname: str):
     try:
-        print(df_Pred)
-        # exit()
         sns.set_style("white")
         sns.set_palette("tab10")
 
@@ -871,7 +869,6 @@ def plot_tree_map(df_Pred:pd.DataFrame,taxonomy_map, folder_output_dir: str, log
             color_pallet = COLOR_PALLET_URBAN
 
         df_exploded = df_exploded.dropna(subset=[class_to_plot, 'class'])
-        # exit()
 
         fig = px.treemap(df_exploded, 
                  path=[class_to_plot, 'class'], 

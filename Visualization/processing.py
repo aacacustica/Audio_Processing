@@ -11,7 +11,7 @@ import glob
 import json
 
 
-def load_data(file_path, logger, new_date=None, new_time=None):
+def load_data(file_path, logger, new_date=None, new_time=None, new_threshold_date=None, new_threshold_time=None):
     slm_type_function_mapping = {
         "814": (get_data_814, larson814_dict),
         "824": (get_data_824, larson824_dict),
@@ -26,7 +26,11 @@ def load_data(file_path, logger, new_date=None, new_time=None):
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
         try:
             logger.info(f"Loading file {file_path} for SLM type {slm_type}")
-            df = func(file_path, new_date=new_date, new_time=new_time)
+
+            # this is the actual invocation of the function
+            df = func(file_path, logger, new_date=new_date, new_time=new_time, new_threshold_date=new_threshold_date, new_threshold_time=new_threshold_time)
+
+            # loggers
             logger.info("\n")
             logger.info(f"Data loaded for SLM type {slm_type}")
             return df, slm_type, slm_dict
@@ -35,19 +39,19 @@ def load_data(file_path, logger, new_date=None, new_time=None):
             clean_message = str(e).replace('\n', ' ')
             logger.warning(f"Failed to load data for SLM type {slm_type}: {clean_message}. Trying next SLM type")
             continue
+    
     raise ValueError("SLM type not found or file could not be loaded")
 
 
 
-def process_folder(folder_path, folder_date_time, logger):
+def process_folder(folder_path, folder_date_time, folder_threshold, logger):
     # folder contains a CESVA folder
     cesva_path = os.path.join(folder_path, 'CESVA')
     if os.path.isdir(cesva_path):
         # load the data from the CESVA folder
         subfolders = [f for f in os.listdir(cesva_path) if os.path.isdir(os.path.join(cesva_path, f))]
         new_date, new_time = folder_date_time.get(folder_path, (None, None))
-        print(new_date)
-        print(new_time)
+        new_threshold_date, new_threshold_time  = folder_threshold.get(folder_path, (None, None))
         
         # CESVA folder contains subfolders
         for subfolder in subfolders:
@@ -58,16 +62,13 @@ def process_folder(folder_path, folder_date_time, logger):
             files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV', 'XLSX'))]
             if files:
                 logger.info(f"Files found: {files}")
-                return load_data(files[0], logger, new_date=new_date, new_time=new_time)  
+                return load_data(files[0], logger, new_date=new_date, new_time=new_time, new_threshold_date=new_threshold_date, new_threshold_time=new_threshold_time)
             else:
                 logger.warning(f"No measurement files found in {subfolder_path}")
 
     else:
         new_date, new_time = folder_date_time.get(folder_path, (None, None))
-        print("New date and time")
-        print(new_date)
-        print(new_time)
-
+        new_threshold_date, new_threshold_time  = folder_threshold.get(folder_path, (None, None))
 
         files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith(('.csv', '.xlsx', '.CSV'))]
         logger.info(f"Files found: {files}")
@@ -76,12 +77,12 @@ def process_folder(folder_path, folder_date_time, logger):
             logger.warning(f"No measurement files found in {folder_path}")
             return None, None, None
         
-        return load_data(files[0], logger, new_date=new_date, new_time=new_time) 
+        return load_data(files[0], logger, new_date=new_date, new_time=new_time, new_threshold_date=new_threshold_date, new_threshold_time=new_threshold_time)
     return None, None, None 
 
 
 
-def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, sufix_string, folder_coefficients, folder_date_time, logger):
+def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, sufix_string, folder_coefficients, folder_date_time, folder_threshold, logger):
     print()
     stable_version = get_stable_version(logger)
 
@@ -160,13 +161,13 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         try:
             logger.info("\n")
             logger.info(f"Processing folder {folder}") 
+            logger.info(f"Getting the data from the dataframes")
             
-            df, slm_type, slm_dict = process_folder(reg_folder, folder_date_time, logger)
+            df, slm_type, slm_dict = process_folder(reg_folder, folder_date_time, folder_threshold, logger)
             if df is None:
-                logger.info(f"df is None")
+                logger.warning(f"df is None")
                 continue
-
-
+            
 
             # add datetime columns, sort by datetime and set datetime as index
             logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
@@ -382,11 +383,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             #     logger.info(f"[15] Plotting spectrogram for folder {folder}")
             #     plt_spectrogram(df_oct, folder_output_dir, logger, plotname=folder)
 
-
-            # if PLOT_PEAK_ANALYSIS:
-            #     logger.info(f"[15] Plotting peak analysis for folder {folder}")
-            #     plot_peak_analysis(peak_prediction_csv_file, yamnet_csv, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
-            
 
         except Exception as e:
             logger.error(f"An error occurred while processing folder {folder}: {e}")

@@ -468,11 +468,15 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, ta
 
 def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxonomy_map, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
     try:
+        print(df)
+        print(df_Pred)
+        print(columns_dict)
         folder_output_dir = os.path.join(folder_output_dir, 'Prediction_LAeq_15_min_4h')
         # remove nan values
         df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
         logger.info(f"Using the columns_dict: {columns_dict}")
 
+        exit()
         # # check
         spl_start_date = df['datetime'].iloc[0]
         spl_end_date = df['datetime'].iloc[-1]

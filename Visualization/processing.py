@@ -171,11 +171,13 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
             # add datetime columns, sort by datetime and set datetime as index
             logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
-            df = add_datetime_columns(df,logger, date_col='datetime') 
+            
+            df = add_datetime_columns(df,logger, date_col='datetime')
             df = df.sort_values('datetime')
             df.set_index('datetime', inplace=True, drop=False)
             start_date = df.index[0]
             end_date = df.index[-1]
+
             logger.info(f"Start date {start_date} and end date {end_date}")
             logger.info(f"df was sorted by datetime and datetime was set as index")
 
@@ -183,24 +185,29 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             # the same for the prediction file
             if prediction_csv_file is not None:
                 logger.info(f"FOR PREDICTION FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
+                
                 prediction_csv_file = add_datetime_columns_pred(prediction_csv_file, logger, date_col='date')
                 prediction_csv_file = prediction_csv_file.sort_values('date')
                 prediction_csv_file.set_index('date', inplace=True, drop=False)
                 pred_start_date = prediction_csv_file.index[0]
                 pred_end_date = prediction_csv_file.index[-1]
+
                 logger.info(f"Start date {pred_start_date} and end date {pred_end_date}")
                 logger.info(f"df was sorted by datetime and datetime was set as index")
             else:
                 logger.warning(f"prediction_csv_file is None")
 
+
             # the same for the peak prediction file
             if peak_prediction_csv_file is not None:
                 logger.info(f"FOR PEAK PREDICTION FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
+
                 peak_prediction_csv_file = add_datetime_columns_pred(peak_prediction_csv_file, logger, date_col='start_time')
                 peak_prediction_csv_file = peak_prediction_csv_file.sort_values('start_time')
                 peak_prediction_csv_file.set_index('start_time', inplace=True, drop=False)
                 peak_pred_start_date = peak_prediction_csv_file.index[0]
                 peak_pred_end_date = peak_prediction_csv_file.index[-1]
+
                 logger.info(f"Start date {peak_pred_start_date} and end date {peak_pred_end_date}")
                 logger.info(f"df was sorted by datetime and datetime was set as index")
             else:
@@ -211,9 +218,11 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 # drop the beginning and ending of the measurement (15min)
                 df = df.loc[start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')]
                 logger.info(f"SPL df was trimmed, {REMOVE_START_TIME} secs from the beggining and {REMOVE_END_TIME} secs from the end")
+                
                 if prediction_csv_file is not None:
                     prediction_csv_file = prediction_csv_file.loc[pred_start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):pred_end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')]
                     logger.info(f"Prediction df was trimmed, {REMOVE_START_TIME} secs from the beggining and {REMOVE_END_TIME} secs from the end")
+
 
                 # add indicators column
                 logger.info(f"Adding indicators column")

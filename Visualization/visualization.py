@@ -283,32 +283,38 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxonomy_
             LAeq=('LA_corrected', lambda x: leq(x))
         ).reset_index()
 
-        fig = px.treemap(grouped_df, 
-                        path=[class_to_plot],  
-                        values='number',
-                        color='LAeq',
-                        color_continuous_scale=custom_color_scale,
-                        range_color=[30, 85],
-                        hover_data={'LAeq': True, 'number': True},
-                        custom_data=['LAeq'],                  
-                        )
+        fig = px.treemap(
+                grouped_df,
+                path=[class_to_plot],  
+                values='number',
+                color=class_to_plot,           # <--- color by category
+                color_discrete_map=COLOR_PALLET_URBAN,  # <--- use your dictionary
+                hover_data={'LAeq': True, 'number': True},
+                custom_data=['LAeq']                  
+            )
 
+        # Title and hover settings
         fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) por Clases')
-        fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
-        fig.update_traces(texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB')
-
+        fig.update_traces(
+            hovertemplate=(
+                '<b>%{label}</b><br>'
+                'LAeq: %{customdata[0]:.2f} dB<br>'
+                'Count: %{value}'
+            ),
+            texttemplate='%{label}<br><br>LAeq: %{customdata[0]:.2f} dB'
+        )
+            
+        # Save plot
         os.makedirs(folder_output_dir, exist_ok=True)
-
-        logger.info(f"Saving the plot {plotname}")
         fig.write_html(f"{folder_output_dir}/{plotname}_LAeq_class_mean.html")
-        logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean.html")
-
-        logger.info(f"Saving the data {plotname}")
         grouped_df.to_csv(f"{folder_output_dir}/{plotname}_LAeq_class_mean.csv", index=False)
+        
+        logger.info(f"LAeq class mean plot saved to {folder_output_dir}/{plotname}_LAeq_class_mean.html")
         logger.info(f"LAeq class mean data saved to {folder_output_dir}/{plotname}_LAeq_class_mean.csv")
 
     except Exception as e:
         logger.error(f"Error in plot_predic_laeq_15_min: {e}")
+        
 
 
 

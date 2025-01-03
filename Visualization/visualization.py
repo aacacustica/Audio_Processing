@@ -274,8 +274,12 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxonomy_
 
         if 'Siren' in set(taxonomy_map.values()):
             class_to_plot = noiseport_1
+            color_palet = COLOR_PALLET_PORT_L1
+            logger.info("Using 'NoisePort_Level_1' class for plotting")
         else:
-            class_to_plot = brown_2  
+            class_to_plot = brown_2
+            color_palet = COLOR_PALLET_URBAN
+            logger.info("Using 'Brown_Level_2' class for plotting")
 
 
         grouped_df = df_all.groupby(class_to_plot).agg(
@@ -287,8 +291,8 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxonomy_
                 grouped_df,
                 path=[class_to_plot],  
                 values='number',
-                color=class_to_plot,           # <--- color by category
-                color_discrete_map=COLOR_PALLET_URBAN,  # <--- use your dictionary
+                color=class_to_plot,# color by category
+                color_discrete_map= color_palet,
                 hover_data={'LAeq': True, 'number': True},
                 custom_data=['LAeq']                  
             )

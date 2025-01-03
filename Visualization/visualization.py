@@ -468,15 +468,12 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, ta
 
 def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxonomy_map, df_Pred:pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str):
     try:
-        print(df)
-        print(df_Pred)
-        print(columns_dict)
         folder_output_dir = os.path.join(folder_output_dir, 'Prediction_LAeq_15_min_4h')
         # remove nan values
         df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
         logger.info(f"Using the columns_dict: {columns_dict}")
 
-        exit()
+
         # # check
         spl_start_date = df['datetime'].iloc[0]
         spl_end_date = df['datetime'].iloc[-1]
@@ -490,9 +487,7 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxono
         pred_difference_between_first_days = df_Pred['date'].iloc[10] - df_Pred['date'].iloc[9]
         logger.info(f"Pred file: Difference between first and second date: {pred_difference_between_first_days}")
 
-        agg_funcs = {
-            columns_dict['LAEQ_COLUMN_COEFF']: leq,
-        }
+        agg_funcs = {columns_dict['LAEQ_COLUMN_COEFF']: leq}
 
         if pred_difference_between_first_days >= pd.Timedelta(minutes=15):
             logger.info(f"Resampling the SPL file to 15 minutes")
@@ -507,7 +502,9 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxono
 
         df_LAeq = df_LAeq[start_date:end_date]
         df_Pred = df_Pred[start_date:end_date]
+
         df_Pred.index = df_Pred.index.round('15min')
+        
 
         # check if the first date for lae and pred is the same
         check_dilay = df_LAeq.index[0] - df_Pred.index[0]
@@ -521,10 +518,13 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxono
                 df_Pred = df_Pred.shift(periods=abs(check_dilay.seconds), freq='s')
             logger.info(f"Shifted the data to match the dates")
 
+
+
         # merge df
         df_aligned = df_LAeq.merge(df_Pred, how='left', left_index=True, right_index=True)
         # remove rows with NaN values
         df_aligned.dropna(inplace=True)
+
 
         # set date_y as index
         if "date_y" in df_aligned.columns:
@@ -551,14 +551,12 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxono
         if 'datetime_y' in df_all.columns and 'hour_x' in df_all.columns:
             logger.info("Using 'datetime_y' and 'hour_x' columns for datetime and hour categorization.")
             df_all['datetime_y'] = pd.to_datetime(df_all['datetime_y'])
-            df_all['time_of_day'] = df_all['hour_x'].apply(categorize_time_of_day)
+            df_all['time_of_day'] = df_all['hour_x'].apply(categorize_time_of_day_4)
 
         else:
             logger.info("Using 'date' and 'hour' columns for datetime and hour categorization.")
             df_all['datetime_y'] = pd.to_datetime(df_all['date'])
-            df_all['time_of_day'] = df_all['hour'].apply(categorize_time_of_day)
-
-    
+            df_all['time_of_day'] = df_all['hour'].apply(categorize_time_of_day_4)
         #########################################################
         #### Plotting the data ####
         
@@ -581,7 +579,7 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxono
 
         df_all['time_of_day'] = pd.Categorical(df_all['time_of_day'], categories=order_time_of_day, ordered=True)
         df_all['order_index'] = df_all['time_of_day'].cat.codes
-
+        
 
         grouped_df = df_all.groupby([class_to_plot, df_all['time_of_day']]).agg(
             number=(classes, 'size'),
@@ -589,9 +587,9 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxono
             order_index=('order_index', 'first')
         ).reset_index()
 
+
         # remove rows with nan values
         grouped_df = grouped_df.dropna(subset=['LAeq'])
-
         for period in order_time_of_day:
             period_df = grouped_df[grouped_df['time_of_day'] == period]
 

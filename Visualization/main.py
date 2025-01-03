@@ -9,20 +9,32 @@ import re
 
 def arg_parser():
     parser = argparse.ArgumentParser(description='Plotting AudioMoth data')
-    parser.add_argument('-f', '--path_general', type=str, required=True, help='Path to sonometers folder')
-    parser.add_argument('-a', '--agg_period', type=int, required=False, default=900, help='Aggregation period in seconds')
-    parser.add_argument('-o', '--output-dir', type=str, required=False, help='Output directory, if not provided, the output directory is the same as the input directory')
-    parser.add_argument('-p', '--percentiles', type=float, nargs='+', required=False, default=[90, 10], help='Percentiles to plot [1 5 10 50 90] (L90 and L10 as default)')
-    parser.add_argument('--audiomoth', action='store_true', help='Process audiomoth data')
-    parser.add_argument('--sonometer', action='store_true', help='Process sonometer data')
-    # paerser to urban or port taxonomy
-    parser.add_argument('--urban', action='store_true', help='Urban taxonomy')
-    parser.add_argument('--port', action='store_true', help='Port taxonomy')
+    parser.add_argument('-f', '--path_general', type=str, required=True, 
+                        help='Path to sonometers folder')
+    parser.add_argument('-a', '--agg_period', type=int, required=False, default=900, 
+                        help='Aggregation period in seconds')
+    parser.add_argument('-o', '--output-dir', type=str, required=False, 
+                        help='Output directory, if not provided, the output directory is the same as the input directory')
+    parser.add_argument('-p', '--percentiles', type=float, nargs='+', required=False, default=[90, 10],
+                        help='Percentiles to plot [1 5 10 50 90] (L90 and L10 as default)')
+    parser.add_argument('--audiomoth', action='store_true', 
+                        help='Process audiomoth data')
+    parser.add_argument('--sonometer', action='store_true', 
+                        help='Process sonometer data')
+    #urban or port taxonomy
+    parser.add_argument('--urban', action='store_true', 
+                        help='Urban taxonomy')
+    parser.add_argument('--port', action='store_true', 
+                        help='Port taxonomy')
+    # ask the user to change the date/time
+    parser.add_argument('--change-date', action='store_true',
+                        help='Change the date and the time of the csv file')
     return parser.parse_args()
 
 
 def main():
-    """ usage example:
+    """
+    usage example:
     python main.py -f \\192.168.205.117\AAC_Server\OCIO\OCIO_BILBAO\FASE_3 --audiomoth --urban
     """
     logger = setup_logging()
@@ -41,16 +53,25 @@ def main():
     if args.percentiles:
         PERCENTILES = args.percentiles
 
+    # user to change the date and/or time
+    if args.change_date:
+        CHANGE_DATE_TIME = True
+    else:
+        CHANGE_DATE_TIME = False
+
+
 
     try:
         folder_coefficients = {}
         folder_date_time = {}
         folder_threshold = {}
         
-        # audiomoth
+
+        # -------------------------------------
+        # A U D I O M O T H   P R O C E S S I N G
+        # -------------------------------------
         if args.audiomoth:
             logger.info("Processing audiomoth data")
-            # set the urban o port taxonomy
             if args.urban:
                 taxonomy = urban_taxonomy_map
             elif args.port:
@@ -64,50 +85,100 @@ def main():
 
                     spl_audiomoth_folder = os.path.join(root, "AUDIOMOTH")
                     if os.path.exists(spl_audiomoth_folder):
+                        # ask user for the correction coefficient
                         spl_audiomoth_folder_name = spl_audiomoth_folder.split("\\")[-2]
                         coeff = float(input(f"Enter correction coefficient for {spl_audiomoth_folder_name}: "))
+
+                        # default values
+                        new_date = None
+                        new_time = None
+                        threshold_date = None
+                        threshold_time = None
+
+                        if CHANGE_DATE_TIME:
+                            # DATE
+                            date_to_change = input("Would you like to change the date of the csv file? (y/n): ").lower()
+                            while date_to_change not in ['y', 'n']:
+                                date_to_change = input("Would you like to change the date of the csv file? (y/n): ").lower()
+                            
+                            if date_to_change == 'y':
+                                new_date = input("Enter the new date (yyyy-mm-dd): ")
+                                while not re.match(r"\d{4}-\d{2}-\d{2}", new_date):
+                                    new_date = input("Enter the new date (yyyy-mm-dd): ")
+                            
+                            # TIME
+                            time_to_change = input("Would you like to change the time of the csv file? (y/n): ").lower()
+                            while time_to_change not in ['y', 'n']:
+                                time_to_change = input("Would you like to change the time of the csv file? (y/n): ").lower()
+
+                            if time_to_change == 'y':
+                                new_time = input("Enter the new time (hh:mm:ss): ")
+                                while not re.match(r"([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]", new_time):
+                                    new_time = input("Enter the new time (hh:mm:ss): ")
+
+                            # LIMIT DATE
+                            threshold_to_change = input("Would you like to set a limit on the date to process the data? (y/n): ").lower()
+                            while threshold_to_change not in ['y', 'n']:
+                                threshold_to_change = input("Would you like to set a limit on the date to process the data? (y/n): ").lower()
+                            
+                            if threshold_to_change == 'y':
+                                threshold_date = input("Enter the threshold date (yyyy-mm-dd): ")
+                                while not re.match(r"\d{4}-\d{2}-\d{2}", threshold_date):
+                                    threshold_date = input("Enter the threshold date (yyyy-mm-dd): ")
+
+                            #LIMIT TIME
+                            threshold_time_to_change = input("Would you like to set a limit on the time to process the data? (y/n): ").lower()
+                            while threshold_time_to_change not in ['y', 'n']:
+                                threshold_time_to_change = input("Would you like to set a limit on the time to process the data? (y/n): ").lower()
+
+                            if threshold_time_to_change == 'y':
+                                threshold_time = input("Enter the threshold time (hh:mm:ss): ")
+                                while not re.match(r"([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]", threshold_time):
+                                    threshold_time = input("Enter the threshold time (hh:mm:ss): ")
+
+                        
+                        # ADD TO THE DICTIONARIES
                         folder_coefficients[spl_audiomoth_folder] = coeff
                         spl_audiomoth_folders.append(spl_audiomoth_folder)
-                        # make a dictionary with the folder and the new date
-                        folder_date_time[spl_audiomoth_folder] = (None, None)
-                        
-                        ####################################################
-                        ### ask user if they want to change the threshold ##
-                        ####################################################
-                        threshold_to_change = input("Would you like to set a limit on the date to process the data? (y/n): ")
-                        # to lower case
-                        threshold_to_change = threshold_to_change.lower()
 
-                        # if the answer is not y or n, ask again
-                        while threshold_to_change not in ['y', 'n']:
-                            threshold_to_change = input("Would you like to set a limit on the date to process the data? (y/n): ")
-                            threshold_to_change = threshold_to_change.lower()
-                        
-                        if threshold_to_change == 'y':
-                            threshold = input("Enter the threshold date (yyyy-mm-dd): ")
-                            # check the format is correct, if not, ask again
-                            while not re.match(r"\d{4}-\d{2}-\d{2}", threshold):
-                                threshold = input("Enter the threshold date (yyyy-mm-dd): ")
-                        
-                        else:
-                            threshold = None
+                        folder_date_time[spl_audiomoth_folder] = (new_date, new_time)
+                        folder_threshold[spl_audiomoth_folder] = (threshold_date, threshold_time)
 
 
-                        ##############################################
-                        # add the folder and the coefficient and the new date to the dictionary
-                        folder_coefficients[spl_sonometer_folder] = coeff
-                        spl_sonometer_folders.append(spl_sonometer_folder)
 
-                        folder_date_time[spl_sonometer_folder] = (new_date, new_time)
-                        folder_threshold[spl_sonometer_folder] = threshold
-            
-            process_all_folders(input_folder, spl_audiomoth_folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, 'AUDIOMOTH', folder_coefficients, folder_date_time, folder_threshold, logger)
+            # logger the info from the process_all_folders function
+            logger.info("Processing AUDIOMOTH data")
+            logger.info(f"Using percentiles {PERCENTILES}")
+            logger.info(f"Using aggregation period {PERIODO_AGREGACION}")
+            logger.info(f"Using taxonomy {taxonomy}")
+            logger.info(f"Using yamnet csv {yamnet_csv}")
+            logger.info(f"Using folder coefficients {folder_coefficients}")
+            logger.info(f"Using folder date time {folder_date_time}")
+            logger.info(f"Using folder threshold {folder_threshold}")
 
 
-        # sonometro
+            process_all_folders(
+                input_folder,
+                spl_audiomoth_folders,
+                PERIODO_AGREGACION,
+                PERCENTILES,
+                taxonomy,
+                yamnet_csv,
+                'AUDIOMOTH',
+                folder_coefficients,
+                folder_date_time,
+                folder_threshold,
+                logger
+            )
+
+
+
+        # -------------------------------------
+        # S O N O M E T E R   P R O C E S S I N G
+        # -------------------------------------
         if args.sonometer:
             logger.info("Processing sonometer data")
-            # set the urban o port taxonomy
+            
             if args.urban:
                 taxonomy = urban_taxonomy_map
             elif args.port:
@@ -120,115 +191,100 @@ def main():
                 if 'SONOMETRO' in dirs:
                     spl_sonometer_folder = os.path.join(root, "SONOMETRO")
                     if os.path.exists(spl_sonometer_folder):
-                        # ask user for the correction coefficient
+                        
+                        # correction coefficient
                         spl_sonometer_folder_name = spl_sonometer_folder.split("\\")[-2]
                         coeff = float(input(f"Enter correction coefficient for {spl_sonometer_folder_name}: "))
                         
+                        new_date = None
+                        new_time = None
+                        threshold_date = None
+                        threshold_time = None
 
-                        ##############################################
-                        ## ask user if they want to change the date ##
-                        ##############################################
-                        # ask user if they want to change the date 
-                        date_to_change = input("Would you like to change the date of the csv file? (y/n): ")
-                        # to lower case
-                        date_to_change = date_to_change.lower()
+                        if CHANGE_DATE_TIME:
+                            # DATE
+                            date_to_change = input("Would you like to change the date of the csv file? (y/n): ").lower()
+                            while date_to_change not in ['y', 'n']:
+                                date_to_change = input("Would you like to change the date of the csv file? (y/n): ").lower()
 
-                        # if the answer is not y or n, ask again
-                        while date_to_change not in ['y', 'n']:
-                            date_to_change = input("Would you like to change the date of the csv file? (y/n): ")
-                            date_to_change = date_to_change.lower()
-
-                        if date_to_change == 'y':
-                            new_date = input("Enter the new date (yyyy-mm-dd): ")
-                            # check the format is correct, if not, ask again
-                            while not re.match(r"\d{4}-\d{2}-\d{2}", new_date):
+                            if date_to_change == 'y':
                                 new_date = input("Enter the new date (yyyy-mm-dd): ")
-                        
-                        else:
-                            new_date = None
+                                while not re.match(r"\d{4}-\d{2}-\d{2}", new_date):
+                                    new_date = input("Enter the new date (yyyy-mm-dd): ")
+                            
+                            # TIME
+                            time_to_change = input("Would you like to change the time of the csv file? (y/n): ").lower()
+                            while time_to_change not in ['y', 'n']:
+                                time_to_change = input("Would you like to change the time of the csv file? (y/n): ").lower()
 
-
-                        ##############################################
-                        ## ask user if they want to change the time ##
-                        ##############################################
-                        time_to_change = input("Would you like to change the time of the csv file? (y/n): ")
-                        # to lower case
-                        time_to_change = time_to_change.lower()
-
-                        # if the answer is not y or n, ask again
-                        while time_to_change not in ['y', 'n']:
-                            time_to_change = input("Would you like to change the time of the csv file? (y/n): ")
-                            time_to_change = time_to_change.lower()
-
-                        if time_to_change == 'y':
-                            new_time = input("Enter the new time (hh:mm:ss): ")
-
-                            # check the format is correct, if not, ask again
-                            while not re.match(r"([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]", new_time):
+                            if time_to_change == 'y':
                                 new_time = input("Enter the new time (hh:mm:ss): ")
+                                while not re.match(r"([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]", new_time):
+                                    new_time = input("Enter the new time (hh:mm:ss): ")
+                            
+                            # LIMIT DATE
+                            threshold_to_change = input("Would you like to set a limit on the date to process the data? (y/n): ").lower()
+                            while threshold_to_change not in ['y', 'n']:
+                                threshold_to_change = input("Would you like to set a limit on the date to process the data? (y/n): ").lower()
 
-                        else:
-                            new_time = None
-
-                        
-                        ####################################################
-                        ### ask user if they want to change the limit date ##
-                        ####################################################
-                        threshold_to_change = input("Would you like to set a limit on the date to process the data? (y/n): ")
-                        # to lower case
-                        threshold_to_change = threshold_to_change.lower()
-
-                        # if the answer is not y or n, ask again
-                        while threshold_to_change not in ['y', 'n']:
-                            threshold_to_change = input("Would you like to set a limit on the date to process the data? (y/n): ")
-                            threshold_to_change = threshold_to_change.lower()
-                        
-                        if threshold_to_change == 'y':
-                            threshold_date = input("Enter the threshold date (yyyy-mm-dd): ")
-                            # check the format is correct, if not, ask again
-                            while not re.match(r"\d{4}-\d{2}-\d{2}", threshold_date):
+                            if threshold_to_change == 'y':
                                 threshold_date = input("Enter the threshold date (yyyy-mm-dd): ")
-                        
-                        else:
-                            threshold_date = None
+                                while not re.match(r"\d{4}-\d{2}-\d{2}", threshold_date):
+                                    threshold_date = input("Enter the threshold date (yyyy-mm-dd): ")
+                            
+                            # LIMIT TIME
+                            threshold_time_to_change = input("Would you like to set a limit on the time to process the data? (y/n): ").lower()
+                            while threshold_time_to_change not in ['y', 'n']:
+                                threshold_time_to_change = input("Would you like to set a limit on the time to process the data? (y/n): ").lower()
 
-                        
-                        ########################################################
-                        ## ask the user if they want to change the limit time ##
-                        ########################################################
-                        threshold_time_to_change = input("Would you like to set a limit on the time to process the data? (y/n): ")
-                        # to lower case
-                        threshold_time_to_change = threshold_time_to_change.lower()
-
-                        # if the answer is not y or n, ask again
-                        while threshold_time_to_change not in ['y', 'n']:
-                            threshold_time_to_change = input("Would you like to set a limit on the time to process the data? (y/n): ")
-                            threshold_time_to_change = threshold_time_to_change.lower()
-
-                        if threshold_time_to_change == 'y':
-                            threshold_time = input("Enter the threshold time (hh:mm:ss): ")
-                            # check the format is correct, if not, ask again
-                            while not re.match(r"([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]", threshold_time):
+                            if threshold_time_to_change == 'y':
                                 threshold_time = input("Enter the threshold time (hh:mm:ss): ")
-                        
-                        else:
-                            threshold_time = None
+                                while not re.match(r"([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]", threshold_time):
+                                    threshold_time = input("Enter the threshold time (hh:mm:ss): ")
 
-                        ##############################################
-                        # add the folder and the coefficient and the new date to the dictionary
+                        
+                        
+                        # ADD TO THE DICTIONARIES
                         folder_coefficients[spl_sonometer_folder] = coeff
                         spl_sonometer_folders.append(spl_sonometer_folder)
 
                         folder_date_time[spl_sonometer_folder] = (new_date, new_time)
                         folder_threshold[spl_sonometer_folder] = (threshold_date, threshold_time)
 
-            process_all_folders(input_folder, spl_sonometer_folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, 'SONOMETRO', folder_coefficients, folder_date_time, folder_threshold, logger)
-        
+
+            # logger the info from the process_all_folders function
+            logger.info("Processing SONOMETER data")
+            logger.info(f"Using percentiles {PERCENTILES}")
+            logger.info(f"Using aggregation period {PERIODO_AGREGACION}")
+            logger.info(f"Using taxonomy {taxonomy}")
+            logger.info(f"Using yamnet csv {yamnet_csv}")
+            logger.info(f"Using folder coefficients {folder_coefficients}")
+            logger.info(f"Using folder date time {folder_date_time}")
+            logger.info(f"Using folder threshold {folder_threshold}")
+
+
+            process_all_folders(
+                input_folder,
+                spl_sonometer_folders,
+                PERIODO_AGREGACION,
+                PERCENTILES,
+                taxonomy,
+                yamnet_csv,
+                'SONOMETRO',
+                folder_coefficients,
+                folder_date_time,
+                folder_threshold,
+                logger
+            )
+
 
         logger.info("Finished sonometer test script")
+
+
     except Exception as e:
         logger.exception(f"Error occurred: {e}")
-        
+
+
 
 if __name__ == "__main__":
     main()

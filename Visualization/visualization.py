@@ -260,6 +260,8 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxonomy_
         df_all = df_exploded.merge(yamnet_csv, how='left', on='display_name')
         df_all = df_all.dropna(subset=['display_name'])
     
+
+
         #########################################################
         #### Plotting the data ####
         
@@ -291,13 +293,13 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxonomy_
                 grouped_df,
                 path=[class_to_plot],  
                 values='number',
-                color=class_to_plot,# color by category
+                color=class_to_plot,#color by category
                 color_discrete_map= color_palet,
                 hover_data={'LAeq': True, 'number': True},
                 custom_data=['LAeq']                  
             )
 
-        # Title and hover settings
+        # title and hover settings
         fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) por Clases')
         fig.update_traces(
             hovertemplate=(
@@ -361,6 +363,8 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, ta
         df_Pred = df_Pred[start_date:end_date]
         df_Pred.index = df_Pred.index.round('15min')
 
+
+
         # check if the first date for lae and pred is the same
         check_dilay = df_LAeq.index[0] - df_Pred.index[0]
         if check_dilay != pd.Timedelta(seconds=0):
@@ -411,6 +415,8 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, ta
             df_all['datetime_y'] = pd.to_datetime(df_all['date'])
             df_all['time_of_day'] = df_all['hour'].apply(categorize_time_of_day)
     
+
+
         #########################################################
         #### Plotting the data ####
         
@@ -426,8 +432,12 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, ta
 
         if 'Siren' in set(taxonomy_map.values()):
             class_to_plot = noiseport_1
+            color_palet = COLOR_PALLET_PORT_L1
+            logger.info("Using 'NoisePort_Level_1' class for plotting")
         else:
             class_to_plot = brown_2
+            color_palet = COLOR_PALLET_URBAN
+            logger.info("Using 'Brown_Level_2' class for plotting")
 
         order_time_of_day = ['Ld', 'Le', 'Ln']
 
@@ -446,15 +456,15 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, ta
         for period in order_time_of_day:
             period_df = grouped_df[grouped_df['time_of_day'] == period]
 
-            fig = px.treemap(period_df, 
-                            path=[px.Constant(period),class_to_plot],  
+            fig = px.treemap(
+                            period_df, 
+                            path=[px.Constant(period), class_to_plot],  
                             values='number',
-                            color='LAeq',
-                            color_continuous_scale=custom_color_scale,
-                            range_color=[30, 85],
+                            color=class_to_plot,
+                            color_discrete_map=color_palet,# <--- color_discrete_map, and not 'color_continuous_scale=color_palet' 
                             hover_data={'LAeq': True, 'number': True},
-                            custom_data=['LAeq'],                  
-                            )
+                            custom_data=['LAeq'],
+                        )
 
             fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) distribución por Periodo {period} por Clases')
             fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')

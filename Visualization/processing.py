@@ -325,7 +325,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
             
             if PLOT_PREDIC_LAEQ_15_MIN_PERIOD:
-                logger.info(f"[4] Plotting PLOT_PREDIC_LAEQ_PERIOD for folder {folder}")
+                logger.info(f"[4] Plotting PLOT_PREDIC_LAEQ_15_MIN_PERIOD for folder {folder}")
                 plot_predic_laeq_15_min_period(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
 
 

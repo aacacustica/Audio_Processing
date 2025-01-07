@@ -628,7 +628,7 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxono
                             # range_color=[30, 85],
                             hover_data={'LAeq': True, 'number': True},
                             custom_data=['LAeq'],                  
-                            )
+                        )
 
             fig.update_layout(title=f'{plotname} | Promedio Energético (LAeq) distribución por Periodo {period} por Clases')
             fig.update_traces(hovertemplate='<b>%{label}</b><br>LAeq: %{customdata[0]:.2f} dB<br>Count: %{value}')
@@ -688,6 +688,8 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, yamnet_csv, taxonomy_map, fo
         df_exploded['Día'] = pd.Categorical(df_exploded['Día'], categories=unique_día_weekday, ordered=True)
 
 
+
+        ################################ PLOT ################################
         display_name = 'display_name'
         iso_taxonomy = 'iso_taxonomy'
         classes = 'class'
@@ -700,9 +702,11 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, yamnet_csv, taxonomy_map, fo
         if 'Siren' in set(taxonomy_map.values()):
             class_to_plot = noiseport_1
             color_pallet = COLOR_PALLET_PORT_L1
+            logger.info("Using 'NoisePort_Level_1' class for plotting")
         else:
             class_to_plot = brown_2  
             color_pallet = COLOR_PALLET_URBAN
+            logger.info("Using 'Brown_Level_2' class for plotting")
 
         dfg = df_exploded.groupby([class_to_plot,'Día']).count().reset_index()
         fig = px.bar(
@@ -710,7 +714,7 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, yamnet_csv, taxonomy_map, fo
             x='Día',
             y='Distribución de clases',
             color=class_to_plot,
-            title=f'{plotname} | Clases por día desde {start_date} hasta {end_date}',
+            title=f'{plotname} | Clases por Día',
             color_discrete_sequence=px.colors.qualitative.Alphabet, 
             color_discrete_map=color_pallet,
             height=900,
@@ -761,6 +765,8 @@ def plot_prediction_map(df_Pred:pd.DataFrame, taxonomy_map, folder_output_dir: s
         df_exploded['mapped_class'] = df_exploded['class'].map(taxonomy_map)
         df_exploded = df_exploded.dropna(subset=['mapped_class'])
 
+
+
         ################################ PLOT ################################
         # if plot_prediction_stack_bar is greater than 1 second
         if difference_between_first_days == pd.Timedelta(seconds=1):
@@ -802,11 +808,16 @@ def plot_prediction_map(df_Pred:pd.DataFrame, taxonomy_map, folder_output_dir: s
         # inverting the dictionary to get the name of the class for the legend
         name_class = {v: k for k, v in class_to_num.items()}
         
+
+
+
         # mapping from classes numbers to colors
         if 'Siren' in set(taxonomy_map.values()):
             num_to_color = {num: COLOR_PALLET_PORT_L1[class_name] for class_name, num in class_to_num.items()}
+            logger.info("Using 'NoisePort_Level_1' class for plotting")
         else:
             num_to_color = {num: COLOR_PALLET_URBAN[class_name] for class_name, num in class_to_num.items()}
+            logger.info("Using 'Brown_Level_2' class for plotting")
         cmap = [num_to_color[cls_num] for cls_num in name_class.keys()]
         
         # leggend elements colors
@@ -814,21 +825,31 @@ def plot_prediction_map(df_Pred:pd.DataFrame, taxonomy_map, folder_output_dir: s
         day_class = pd.pivot_table(data=df_resampled, columns=df_resampled.index.time, index=["year", "month", "fullday"], values="class_num", aggfunc='mean')
 
 
-
         plt.figure(figsize=(45, 35))
         if day_class.isna().all().all() or day_class.empty:
             logger.warning("No valid data. Skipping...")
         else:
             ax = sns.heatmap(day_class, annot=False, cmap=cmap, linewidth=0.5, cbar=False)
+
+            # show every 4th column as an example
+            step = 2
+            xtick_locs = range(0, len(day_class.columns), step)
+            xtick_labels = [day_class.columns[i].strftime('%H:%M:%S') for i in xtick_locs]
             
-            ax.set_xticks(range(len(day_class.columns)))
-            ax.set_xticklabels([t.strftime('%H:%M:%S') for t in day_class.columns], rotation=90)
-            
+            ax.set_xticks(xtick_locs)
+            ax.set_xticklabels(xtick_labels, rotation=90, fontsize=50)
+
             yticklabels = [f"{idx[0]}-{idx[1]}-{idx[2]}" for idx in day_class.index]
-            ax.set_yticklabels(yticklabels, rotation=0)
+            ax.set_yticklabels(yticklabels, rotation=0, fontsize=50)
             
-            plt.legend(handles=legend_elements, title="Clases", loc='center left', bbox_to_anchor=(1, 0.5))
-            plt.title(f"{plotname} | Clases por día y hora desde {start_date} hasta {end_date}")
+            plt.legend(
+                handles=legend_elements, 
+                title="Clases", 
+                loc='center left', 
+                bbox_to_anchor=(1, 0.5),
+                fontsize=40
+            )
+            plt.title(f"{plotname} | Clases 15 min", fontsize=60)
 
             plt.savefig(f"{folder_output_dir}/{plotname}_prediction_map.png", bbox_inches='tight')
             logger.info(f"Saved image at {folder_output_dir}/{plotname}_prediction_map.png")
@@ -893,9 +914,11 @@ def plot_tree_map(df_Pred:pd.DataFrame,taxonomy_map, folder_output_dir: str, log
         if 'Siren' in set(taxonomy_map.values()):
             class_to_plot = noiseport_1
             color_pallet = COLOR_PALLET_PORT_L1
+            logger.info("Using 'NoisePort_Level_1' class for plotting")
         else:
             class_to_plot = brown_2  
             color_pallet = COLOR_PALLET_URBAN
+            logger.info("Using 'Brown_Level_2' class for plotting")
 
         df_exploded = df_exploded.dropna(subset=[class_to_plot, 'class'])
 
@@ -906,7 +929,7 @@ def plot_tree_map(df_Pred:pd.DataFrame,taxonomy_map, folder_output_dir: str, log
                 color_discrete_map=color_pallet
                 )
 
-        fig.update_layout(title=f'{plotname} | Clases por día desde {start_date} hasta {end_date}')
+        fig.update_layout(title=f'{plotname} | Clases')
 
         fig.write_html(f"{folder_output_dir}/{plotname}_prediction_tree_map.html")
         logger.info(f"{folder_output_dir}/{plotname}_prediction_tree_map.html")

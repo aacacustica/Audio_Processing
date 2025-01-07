@@ -13,14 +13,14 @@ import json
 
 def load_data(file_path, logger, new_date=None, new_time=None, new_threshold_date=None, new_threshold_time=None):
     slm_type_function_mapping = {
+        "audiomoth": (get_data_audiomoth, audiopost_dict),
         "814": (get_data_814, larson814_dict),
         "824": (get_data_824, larson824_dict),
         "lx_ES": (get_data_lx_ES, larsonlx_dict),
         "lx_EN": (get_data_lx_EN, larsonlx_dict),
-        "SV307": (get_data_SV307, sv307_dict),
         "cesva": (get_data_cesva, cesva_dict),
-        "audiomoth": (get_data_audiomoth, audiopost_dict),
         "sono-bilbo": (get_data_bilbo, sonometer_bilbo_dict),
+        "SV307": (get_data_SV307, sv307_dict),
     } # SLM stands for Sound Level Meter
     # load the data for each SLM type until one works |  for each slm_type, (func, slm_dict) in slm_type_function_mapping.items(): means that for each key and value in the dictionary, the key is slm_type and the value is a tuple with the function and the dictionary | the function is the function to load the data and the dictionary is the dictionary with the column names for the SLM type
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
@@ -167,8 +167,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if df is None:
                 logger.warning(f"df is None")
                 continue
-            
-
+                
             # add datetime columns, sort by datetime and set datetime as index
             logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
             
@@ -390,7 +389,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
             # if PLOT_SPECTROGRAM_1_3:
             #     logger.info(f"[15] Plotting spectrogram for folder {folder}")
-            #     plt_spectrogram(df_oct, folder_output_dir, logger, plotname=folder)
+                plt_spectrogram(df_oct, folder_output_dir, logger, plotname=folder)
 
 
         except Exception as e:

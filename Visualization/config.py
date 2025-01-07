@@ -58,7 +58,7 @@ PLOT_INDICADORES_HEATMAP = False
 PLOT_DAY_EVOLUTION = False
 PLOT_PERIOD_EVOLUTION = False
 
-# PLOT_SPECTROGRAM_1_3 = False
+PLOT_SPECTROGRAM_1_3 = False
 
 
 ######################## SLM COLUMN MAPS #####################################

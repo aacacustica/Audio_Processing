@@ -577,9 +577,11 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxono
             logger.info("Using 'date' and 'hour' columns for datetime and hour categorization.")
             df_all['datetime_y'] = pd.to_datetime(df_all['date'])
             df_all['time_of_day'] = df_all['hour'].apply(categorize_time_of_day_4)
+        
+        
+        
         #########################################################
         #### Plotting the data ####
-        
         display_name = 'display_name'
         iso_taxonomy = 'iso_taxonomy'
         classes = 'class'
@@ -592,8 +594,13 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxono
 
         if 'Siren' in set(taxonomy_map.values()):
             class_to_plot = noiseport_1
+            color_palet = COLOR_PALLET_PORT_L1
+            logger.info("Using 'NoisePort_Level_1' class for plotting")
         else:
             class_to_plot = brown_2
+            color_palet = COLOR_PALLET_URBAN
+            logger.info("Using 'Brown_Level_2' class for plotting")
+
 
         order_time_of_day = ['Ld_1', 'Ld_2', 'Ld_3', 'Le', 'Ln_1', 'Ln_2']
 
@@ -616,9 +623,9 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxono
             fig = px.treemap(period_df, 
                             path=[px.Constant(period),class_to_plot],  
                             values='number',
-                            color='LAeq',
-                            color_continuous_scale=custom_color_scale,
-                            range_color=[30, 85],
+                            color=class_to_plot,
+                            color_discrete_map=color_palet,
+                            # range_color=[30, 85],
                             hover_data={'LAeq': True, 'number': True},
                             custom_data=['LAeq'],                  
                             )

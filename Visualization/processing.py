@@ -389,7 +389,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
             # if PLOT_SPECTROGRAM_1_3:
             #     logger.info(f"[15] Plotting spectrogram for folder {folder}")
-                plt_spectrogram(df_oct, folder_output_dir, logger, plotname=folder)
+                # plt_spectrogram(df_oct, folder_output_dir, logger, plotname=folder)
 
 
         except Exception as e:

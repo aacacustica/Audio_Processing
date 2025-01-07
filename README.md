@@ -230,6 +230,8 @@ python main.py -f "<path_to_sonometers_folder>" [options]
   - `--sonometer:` Process sonometer data.
   - `--urban:` Use urban taxonomy for classification.
   - `--port:` Use port taxonomy for classification.
+  - `--change-date`: Change the date and the time of the csv file.
+
 
 #### Example
 

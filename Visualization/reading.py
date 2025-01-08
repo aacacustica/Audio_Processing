@@ -52,7 +52,6 @@ def get_data_814(file_path: str, logger, new_date=None, new_time=None, new_thres
 def get_data_lx_ES(file_path: str, logger, new_date=None, new_time=None, new_threshold_date=None, new_threshold_time=None):
     df = pd.read_excel(file_path, sheet_name='Historia del tiempo')
     df['datetime'] = pd.to_datetime(df['Fecha'])
-    # print(df)
 
     try:    
         df = change_date_and_time(df, new_date, new_time, new_threshold_date, new_threshold_time, logger)
@@ -176,7 +175,6 @@ def get_data_SV307(file_path: str,logger, new_date=None, new_time=None, new_thre
                        'LAFmin (Ch1, P1) [dB]': 'LAFmin'}, inplace=True)
     
     # df = df[['datetime','LAeq','LAFmax','LAFmin']]
-    print(df)
     return df
 
 

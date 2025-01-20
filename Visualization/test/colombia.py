@@ -23,14 +23,14 @@ def power_avg_colum(df_path, column_name='LA'):
     print(f"{name} --> {power_aveg} dBs")
     print()
 
+
+
 def main():
     df_path_bello = r"\\192.168.205.123\aac_server\HANDIA\COLOMBIA\CALIBRACION\3-Medidas\Punto Bello\AUDIOMOTH\leq_Punto Bello_santi_v3_0.csv"
     df_path_aranjuez = r"\\192.168.205.123\aac_server\HANDIA\COLOMBIA\CALIBRACION\3-Medidas\aranjuez\AUDIOMOTH\leq_aranjuez_v3_0.csv"
 
     power_avg_colum(df_path_bello)
     power_avg_colum(df_path_aranjuez)
-
-
 
 if __name__ == '__main__':
     main()

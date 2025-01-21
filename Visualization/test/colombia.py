@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import numpy as np
-
+import argparse
 
 
 def leq(levels):
@@ -24,13 +24,23 @@ def power_avg_colum(df_path, column_name='LA'):
     print()
 
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Calculate SPL levels for audio files in a directory')
+    parser.add_argument('-p', '--path', type=str, required=False, help='Directory to be processed')
+    return parser.parse_args()
+
+
 
 def main():
-    df_path_bello = r"\\192.168.205.123\aac_server\HANDIA\COLOMBIA\CALIBRACION\3-Medidas\Punto Bello\AUDIOMOTH\leq_Punto Bello_santi_v3_0.csv"
-    df_path_aranjuez = r"\\192.168.205.123\aac_server\HANDIA\COLOMBIA\CALIBRACION\3-Medidas\aranjuez\AUDIOMOTH\leq_aranjuez_v3_0.csv"
+    args = parse_arguments()
+    # df_path = args.path
 
-    power_avg_colum(df_path_bello)
+    df_path_aranjuez = r"\\192.168.205.123\aac_server\HANDIA\COLOMBIA\CALIBRACION\3-Medidas\aranjuez\AUDIOMOTH\leq_aranjuez_v3_0.csv"
+    df_path_bello = r"\\192.168.205.123\aac_server\HANDIA\COLOMBIA\CALIBRACION\3-Medidas\Punto_Bello\AUDIOMOTH\leq_Punto_Bello_v3_0.csv"
+
     power_avg_colum(df_path_aranjuez)
+    power_avg_colum(df_path_bello)
+
 
 if __name__ == '__main__':
     main()

@@ -17,7 +17,7 @@ logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s', 
     filename='leq_level.log', 
-    filemode='a'
+    filemode='w'
     )
 
 

@@ -12,12 +12,15 @@ import configparser
 import audio_metadata
 import logging
 
+
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s', 
     filename='leq_level_1_3_oct.log', 
     filemode='a'
     )
+
+
 
 class LeqLevelOct:
     def __init__(self, fs, calibration_constant, window_size, audio_path):
@@ -45,6 +48,7 @@ class LeqLevelOct:
         logging.info(f"LeqLevelOct initialized with fs: {fs}, C: {calibration_constant}, window_size: {window_size}")
 
 
+
     def get_oct_levels(self, frame):
         """Calculate 1/3 octave levels for a frame of audio data
         :param frame:
@@ -56,6 +60,8 @@ class LeqLevelOct:
         y_oct, _ = self.third_oct.filter(frame)
         oct_level_temp = [get_db_level(y_band, self.C) for y_band in y_oct.T]
         return oct_level_temp
+
+
 
     def process_audio_files(self, audio_files):
         """Process audio files and calculate SPL levels for each frame of audio data

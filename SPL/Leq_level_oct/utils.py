@@ -65,7 +65,9 @@ def get_edge_frequencies(idx_low=-16, idx_high=12):
 
 # [3]
 def parseval(x_dft):
-    """   
+    """
+    This function calculates the Sound Pressure Level (SPL) of a given frame of audio data, represented as a Fast Fourier Transform (FFT) of complex numbers.
+    parseval is a function that calculates the Sound Pressure Level (SPL) of a given frame of audio data, represented as a Fast Fourier Transform (FFT) of complex numbers. The SPL is calculated using the Parseval's theorem, which states that the total energy in the time domain is equal to the total energy in the frequency domain. The SPL is calculated as the ratio of the sum of the squared magnitudes of the FFT to the total energy in the time domain.
     Args:
         x_dft (numpy.ndarray): The Fast Fourier Transform (FFT) of a frame of audio data, represented as an array of complex numbers.
 

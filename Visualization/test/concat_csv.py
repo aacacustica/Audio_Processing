@@ -26,6 +26,12 @@ def get_data_SV307(filename: str):
     return df
 
 
+def get_data_lx_ES(file_path: str):
+    df = pd.read_excel(file_path, sheet_name='Historia del tiempo')
+    df['datetime'] = pd.to_datetime(df['Fecha'])
+   
+    return df
+ 
 
 def concatenate_csv_files(folder_path: str):
     # get all the files in the folder

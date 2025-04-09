@@ -973,8 +973,10 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         
         agg_funcs = {
             columns_dict['LAEQ_COLUMN_COEFF']: leq,
+            columns_dict['LCEQ_COLUMN_COEFF']: leq,
             columns_dict['LAMAX_COLUMN_COEFF']: 'max',
             columns_dict['LAMIN_COLUMN_COEFF']: 'min'
+            
         }
         logger.info(f"Using the columns_dict: {columns_dict}")
 
@@ -998,6 +1000,8 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         logger.info(f"Using the columns_dict: {columns_dict['LAEQ_COLUMN_COEFF']}, {columns_dict['LAMAX_COLUMN_COEFF']}, {columns_dict['LAMIN_COLUMN_COEFF']}")
         x = df_LAeq.index
         ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=3, color='red', label='LAeq')
+        #plot LCEQ
+        ax.plot(x, df_LAeq[columns_dict['LCEQ_COLUMN_COEFF']], linewidth=1, color='blue', label='LCeq')
         ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN_COEFF']], linewidth=1, color='#FF99FF', label='Lmax')
         ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN_COEFF']], linewidth=1, color='#92D050', label='Lmin')
         # OCA

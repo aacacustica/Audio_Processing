@@ -254,6 +254,11 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
 
                 
+                # just for now
+                # create LCeq column which is LC - LA = LC_LA. I know the LC_LA and the LA
+                df['LCeq'] = df['LAeq'] + df['LCeq-LAeq']
+
+
                 #####################################################
                 ########## APPLYING DB CORRECTION TO THE DATA #########
                 #####################################################
@@ -280,7 +285,8 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.error(f"An error occurred while trimming the dataframe {e}")
                 continue
 
-
+            
+            
             logger.info("")        
             logger.info(f"PLOTTING SECTION")
             folder = folder.split("\\")[-1]
@@ -289,6 +295,8 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             slm_dict["LAEQ_COLUMN_COEFF"] = 'LA_corrected'
             slm_dict["LAMAX_COLUMN_COEFF"] = 'LAmax_corrected'
             slm_dict["LAMIN_COLUMN_COEFF"] = 'LAmin_corrected'
+            # just for now
+            slm_dict["LCEQ_COLUMN_COEFF"] = 'LC_corrected'
 
 
             # SAVE THE INFO IN A JSON FILE
@@ -356,7 +364,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if PLOT_MAKE_TIME_PLOT:
                 logger.info(f"[9] Plotting time plot for folder {folder}")
                 make_time_plot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
-            
+
 
             # Plotting heatmap evolution hour
             if PLOT_HEATMAP_EVOLUTION_HOUR:
@@ -388,9 +396,12 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder)
             
 
-            # if PLOT_SPECTROGRAM_1_3:
-            #     logger.info(f"[15] Plotting spectrogram for folder {folder}")
+            # I dont know why I commented this out
+            if PLOT_SPECTROGRAM_1_3:
+                logger.info(f"[15] Plotting spectrogram for folder {folder}")
                 # plt_spectrogram(df_oct, folder_output_dir, logger, plotname=folder)
+                plt_spectrogram(df, folder_output_dir, logger, plotname=folder)
+
 
 
         except Exception as e:

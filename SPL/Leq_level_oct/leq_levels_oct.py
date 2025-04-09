@@ -157,7 +157,7 @@ def main():
     r"""
     python leq_levels_oct.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\"
     """
-    
+
     stable_version = get_stable_version()
     args = parse_arguments()
     base_path = args.path
@@ -254,6 +254,7 @@ def main():
             print(f'Output saved to {output_path}')
         else:
             logging.warning(f"No data to save for folder {subfolder}")
+
 
 
 if __name__ == '__main__':

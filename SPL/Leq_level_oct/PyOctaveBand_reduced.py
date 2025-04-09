@@ -1,19 +1,6 @@
 import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt
-import os
-import logging
-import configparser
-import argparse
-
-
-
-logging.basicConfig(
-    level=logging.INFO, 
-    format='%(asctime)s - %(levelname)s - %(message)s', 
-    filename='leq_level_1_3_oct.log', 
-    filemode='a'
-)
 
 
 
@@ -68,8 +55,17 @@ def third_octave_filter(x, fs, order=6, limits=[12, 20000], show=False, sigbands
             # Reconstruct signal at original sampling rate
             xb.append(signal.resample_poly(y, factor[idx], 1))
             # Apply calibration if provided
+            # if calibration_coeff is not None:
+            #     spl[idx] += calibration_coeff[idx]
+            
             if calibration_coeff is not None:
-                spl[idx] += calibration_coeff[idx]
+                if isinstance(calibration_coeff, (list, tuple, np.ndarray)):
+                    spl[idx] += calibration_coeff[idx]
+                else:
+                    spl[idx] += calibration_coeff
+
+
+
         return spl.tolist(), freq, xb
     else:
         spl = np.zeros(len(freq))
@@ -77,8 +73,15 @@ def third_octave_filter(x, fs, order=6, limits=[12, 20000], show=False, sigbands
             sd = signal.resample(x, round(len(x) / factor[idx]))
             y = signal.sosfilt(sos[idx], sd)
             spl[idx] = 20 * np.log10(np.std(y) / 2e-5)
+            # if calibration_coeff is not None:
+            #     spl[idx] += calibration_coeff[idx]
+
             if calibration_coeff is not None:
-                spl[idx] += calibration_coeff[idx]
+                if isinstance(calibration_coeff, (list, tuple, np.ndarray)):
+                    spl[idx] += calibration_coeff[idx]
+                else:
+                    spl[idx] += calibration_coeff
+                    
         return spl.tolist(), freq
 
 
@@ -200,58 +203,3 @@ def _downsamplingfactor(freq, fs):
     guard = 0.10  # small guard factor
     factor = np.floor((fs / (2 + guard)) / np.array(freq)).astype(int)
     return np.clip(factor, 1, 50)
-
-
-
-
-
-############################ 
-############################ 
-############################ 
-def read_calibration_constants(ini_file):
-    """Read calibration constants from an INI file
-    :param ini_file:
-        Path to the INI file containing the calibration constants
-    :return:
-        Dictionary of calibration constants"""
-    
-    config = configparser.ConfigParser()
-    config.read(ini_file)
-    logging.info(f"Reading calibration constants from {ini_file}")
-    return {key: float(value) for key, value in config['CalibrationConstants'].items()}
-
-
-def get_device_id(metadata):
-    """Get the device ID from the metadata
-    :param metadata:
-        Metadata object
-    :return:
-        Device ID
-        """
-    artist_tags = metadata.tags.get("artist", ["songmeter"])
-    if not artist_tags or len(artist_tags[0].split(" ")) < 2:
-        return "songmeter"
-    logging.info(f"Device ID: {artist_tags[0].split(' ')[1].lower()}")
-    return artist_tags[0].split(" ")[1].lower()
-
-
-def find_audiomoth_folders(base_path):
-    """Recursively find all subdirectories containing an 'AUDIOMOTH' folder."""
-    for root, dirs, files in os.walk(base_path):
-        if 'AUDIOMOTH' in dirs:
-            yield root
-
-
-def parse_arguments():
-    parser = argparse.ArgumentParser(description='Calculate SPL levels for audio files in a directory')
-    parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
-    return parser.parse_args()
-
-
-def main():
-    pass 
-
-
-
-if __name__ == "__main__":
-    main()

@@ -137,7 +137,7 @@ def main():
     ###### FIND AUDIO FOLDERS ######
     # ------------------------------
     audiomoth_folders = list(find_audiomoth_folders(base_path))
-    for subfolder in tqdm(audiomoth_folders, desc='Processing folders'):
+    for subfolder in tqdm(audiomoth_folders[:1], desc='Processing folders'):
         logging.info(f"Processing audio files in: {subfolder}...")
         audio_path = os.path.join(subfolder, "AUDIOMOTH")
         if not os.path.exists(audio_path):
@@ -155,7 +155,7 @@ def main():
         sample_rates = []
         valid_audio_files = []
         logging.info("Reading metadata...")
-        for file in tqdm(audio_files[:1], desc='Reading metadata'):
+        for file in tqdm(audio_files, desc='Reading metadata'):
             try:
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)
@@ -231,7 +231,7 @@ def main():
             
 
             subfolder_name = os.path.basename(subfolder)
-            output_filename = f'leq_oct_{subfolder_name}_{stable_version}.csv'
+            output_filename = f'leq_oct_{subfolder_name}_{stable_version}_PyOct.csv'
             output_folder = audio_path
             output_path = os.path.join(output_folder, output_filename)
             

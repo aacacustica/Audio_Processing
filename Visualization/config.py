@@ -49,7 +49,7 @@ PLOT_PREDICTION_MAP = False
 PLOT_TREE_MAP = False
 
 
-PLOT_MAKE_TIME_PLOT = True
+PLOT_MAKE_TIME_PLOT = False
 
 PLOT_HEATMAP_EVOLUTION_HOUR = False 
 PLOT_HEATMAP_EVOLUTION_15_MIN = False 
@@ -58,7 +58,7 @@ PLOT_INDICADORES_HEATMAP = False
 PLOT_DAY_EVOLUTION = False
 PLOT_PERIOD_EVOLUTION = False
 
-PLOT_SPECTROGRAM_1_3 = False
+PLOT_SPECTROGRAM_1_3 = True
 
 
 ######################## SLM COLUMN MAPS #####################################
@@ -185,3 +185,20 @@ C_MAP_GRADIENT = {
     10: '#8C3CFF',
     11: '#000078',
 }
+
+
+
+
+####################################
+# SPECTROGRAM CONFIGURATION 
+####################################
+SPECTOGRAM_COLUMNS_LX_ES = [
+    '1/3 LZeq 20,0', '1/3 LZeq 25,0', '1/3 LZeq 31,5', '1/3 LZeq 40,0', 
+    '1/3 LZeq 50,0', '1/3 LZeq 63,0', '1/3 LZeq 80,0', '1/3 LZeq 100',
+    '1/3 LZeq 125', '1/3 LZeq 160', '1/3 LZeq 200', '1/3 LZeq 250',
+    '1/3 LZeq 315', '1/3 LZeq 400', '1/3 LZeq 500', '1/3 LZeq 630',
+    '1/3 LZeq 800', '1/3 LZeq 1000', '1/3 LZeq 1250', '1/3 LZeq 1600',
+    '1/3 LZeq 2000', '1/3 LZeq 2500', '1/3 LZeq 3150', '1/3 LZeq 4000',
+    '1/3 LZeq 5000', '1/3 LZeq 6300', '1/3 LZeq 8000', '1/3 LZeq 10000',
+    '1/3 LZeq 12500', '1/3 LZeq 16000', '1/3 LZeq 20000'
+]

@@ -164,7 +164,7 @@ def main():
     calibration_constants = read_calibration_constants('calibration_constants.ini')
 
     audiomoth_folders = list(find_audiomoth_folders(base_path))
-    for subfolder in tqdm(audiomoth_folders, desc='Processing folders'):
+    for subfolder in tqdm(audiomoth_folders[:1], desc='Processing folders'):
         logging.info(f"Processing audio files: {subfolder}...")
         audio_path = os.path.join(subfolder, "AUDIOMOTH")
         if not os.path.exists(audio_path):

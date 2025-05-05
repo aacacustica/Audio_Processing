@@ -1008,15 +1008,24 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         ax.plot(x, oca.values, color='#00B0F0', label='OCA')
 
 
+
+        # for percentile in percentiles:
+        #     values = df[columns_dict['LAEQ_COLUMN_COEFF']].resample(f'{agg_period}s').quantile((100 - percentile) / 100)
+        #     ax.plot(
+        #         x, 
+        #         values, 
+        #         linewidth=0.5, 
+        #         label=f'L{percentile}', 
+        #         color=PERCENTIL_COLOUR[percentile]
+        #     )
+
+        percentile_data = {}
         for percentile in percentiles:
-            values = df[columns_dict['LAEQ_COLUMN_COEFF']].resample(f'{agg_period}s').quantile((100 - percentile) / 100)
-            ax.plot(
-                x, 
-                values, 
-                linewidth=0.5, 
-                label=f'L{percentile}', 
-                color=PERCENTIL_COLOUR[percentile]
-            )
+            quantile_value = (100 - percentile) / 100
+            percentile_series = df[columns_dict['LAEQ_COLUMN_COEFF']].resample(f'{agg_period}s').quantile(quantile_value)
+            ax.plot(x, percentile_series, linewidth=0.5, label=f'L{percentile}', color=PERCENTIL_COLOUR[percentile])
+            percentile_data[f'L{percentile}'] = percentile_series
+
 
         # debugg time of the plot
         hours = mdates.HourLocator(interval=5)
@@ -1048,11 +1057,23 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         plt.savefig(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.png', dpi=350) # dpi stands for dots per inch, the more the dpi the better the quality of the image
         logger.info(f"Timeplot saved to {folder_output_dir}/{plotname}_{agg_period}s_time_plot.png")
 
-        logger.info(f"Saving the data {plotname}")
-        df_LAeq.to_csv(f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.csv', index=True)
-        logger.info(f"Timeplot data saved to {folder_output_dir}/{plotname}_{agg_period}s_time_plot.xlsx")
+
+
+
+        # --- save CSV ---
+        df_plot_data = df_LAeq.copy()
+        df_plot_data['oca'] = oca['oca']
+        for col_name, series in percentile_data.items():
+            df_plot_data[col_name] = series
+
+        # save
+        output_csv = f'{folder_output_dir}/{plotname}_{agg_period}s_time_plot.csv'
+        logger.info(f"Saving the data to {output_csv}")
+        df_plot_data.to_csv(output_csv, index=True)
+        logger.info(f"Timeplot data saved to {output_csv}")
 
         plt.close()
+
 
     except Exception as e:
         logger.error(f"Error in make_timeplot: {e}")

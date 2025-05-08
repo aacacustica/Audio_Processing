@@ -23,6 +23,7 @@ BIGGEST_15_MIN_SIZE = 24
 BIGGEST_PREDICT_MIN_SIZE = 50
 BIGGEST_PREDICT_TITLE_SIZE = 60
 
+
 # OCA RESIDENTIAL
 # LIMITE_DIA = 65
 # LIMITE_NOCHE = 55
@@ -56,7 +57,6 @@ PLOT_TREE_MAP = True
 
 
 PLOT_MAKE_TIME_PLOT = True
-
 PLOT_HEATMAP_EVOLUTION_HOUR = True 
 PLOT_HEATMAP_EVOLUTION_15_MIN = True 
 PLOT_INDICADORES_HEATMAP = True
@@ -116,6 +116,11 @@ sonometer_bilbo_dict = {'LAEQ_COLUMN': 'Value'}
 audiopost_dict = {'LAEQ_COLUMN': 'LA',
                   'LAMAX_COLUMN': 'LAmax',
                   'LAMIN_COLUMN': 'LAmin'}
+
+
+bruel_kjaer_dict = {'LAEQ_COLUMN': 'Leq',
+                    'LAMAX_COLUMN': 'LAFmax',
+                    'LAMIN_COLUMN': 'LAFmin'}
 
 
 # plotting Colors

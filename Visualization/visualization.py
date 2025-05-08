@@ -973,7 +973,7 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         
         agg_funcs = {
             columns_dict['LAEQ_COLUMN_COEFF']: leq,
-            columns_dict['LCEQ_COLUMN_COEFF']: leq,
+            # columns_dict['LCEQ_COLUMN_COEFF']: leq,
             columns_dict['LAMAX_COLUMN_COEFF']: 'max',
             columns_dict['LAMIN_COLUMN_COEFF']: 'min'
             
@@ -983,6 +983,7 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         logger.info(f"Using the agg_funcs: {agg_funcs}")
         df_LAeq = df.resample(f'{agg_period}s').agg(agg_funcs)
         oca = df.resample(f'{agg_period}s').agg({'oca': 'min'})
+
 
         # try a style, if not, use seaborn-whitegrid
         try:
@@ -1001,23 +1002,13 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         x = df_LAeq.index
         ax.plot(x, df_LAeq[columns_dict['LAEQ_COLUMN_COEFF']], linewidth=3, color='red', label='LAeq')
         #plot LCEQ
-        ax.plot(x, df_LAeq[columns_dict['LCEQ_COLUMN_COEFF']], linewidth=1, color='blue', label='LCeq')
+        # ax.plot(x, df_LAeq[columns_dict['LCEQ_COLUMN_COEFF']], linewidth=1, color='blue', label='LCeq')
         ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN_COEFF']], linewidth=1, color='#FF99FF', label='Lmax')
         ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN_COEFF']], linewidth=1, color='#92D050', label='Lmin')
         # OCA
         ax.plot(x, oca.values, color='#00B0F0', label='OCA')
 
 
-
-        # for percentile in percentiles:
-        #     values = df[columns_dict['LAEQ_COLUMN_COEFF']].resample(f'{agg_period}s').quantile((100 - percentile) / 100)
-        #     ax.plot(
-        #         x, 
-        #         values, 
-        #         linewidth=0.5, 
-        #         label=f'L{percentile}', 
-        #         color=PERCENTIL_COLOUR[percentile]
-        #     )
 
         percentile_data = {}
         for percentile in percentiles:

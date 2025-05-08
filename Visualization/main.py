@@ -17,6 +17,8 @@ def arg_parser():
                         help='Output directory, if not provided, the output directory is the same as the input directory')
     parser.add_argument('-p', '--percentiles', type=float, nargs='+', required=False, default=[90, 10],
                         help='Percentiles to plot [1 5 10 50 90] (L90 and L10 as default)')
+    parser.add_argument('-l', '--limit_oca', type=str, required=False, default='OCA_RESIDENTIAL',
+                        help='Limit OCA to plot [OCA_RESIDENTIAL, OCA_LEISURE]')
     parser.add_argument('--audiomoth', action='store_true', 
                         help='Process audiomoth data')
     parser.add_argument('--sonometer', action='store_true', 
@@ -42,6 +44,7 @@ def main():
     yamnet_csv = yamnet_class_map_csv()
     urban_taxonomy_map, port_taxonomy_map = taxonomy_json()
     
+    
     if args.path_general:
         input_folder = args.path_general
     else:
@@ -59,6 +62,11 @@ def main():
     else:
         CHANGE_DATE_TIME = False
 
+
+    # CHOICE OCA TYPE
+    oca_type = args.limit_oca
+    print(f"Using {oca_type} limits")
+    
 
 
     try:

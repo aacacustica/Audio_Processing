@@ -38,6 +38,10 @@ def main():
     """
     usage example:
     python main.py -f \\192.168.205.117\AAC_Server\OCIO\OCIO_BILBAO\FASE_3 --audiomoth --urban
+    
+    or
+
+    python main.py -f \\192.168.205.117\AAC_Server\OCIO\OCIO_BILBAO\FASE_3 --audiomoth --urban -l OCA_LEISURE
     """
     logger = setup_logging()
     args = arg_parser()
@@ -65,8 +69,12 @@ def main():
 
     # CHOICE OCA TYPE
     oca_type = args.limit_oca
-    print(f"Using {oca_type} limits")
-    
+    if oca_type == 'OCA_RESIDENTIAL':
+        oca_limits = config.OCA_RESIDENTIAL
+    elif oca_type == 'OCA_LEISURE':
+        oca_limits = config.OCA_LEISURE
+    else:
+        raise ValueError(f"Unknown OCA type {oca_type!r}, must be 'OCA_RESIDENTIAL' or 'OCA_LEISURE'")
 
 
     try:
@@ -163,6 +171,7 @@ def main():
             logger.info(f"Using folder coefficients {folder_coefficients}")
             logger.info(f"Using folder date time {folder_date_time}")
             logger.info(f"Using folder threshold {folder_threshold}")
+            logger.info(f"Using OCA type {oca_type}")
 
 
             process_all_folders(
@@ -176,6 +185,7 @@ def main():
                 folder_coefficients,
                 folder_date_time,
                 folder_threshold,
+                oca_limits,
                 logger
             )
 
@@ -269,6 +279,7 @@ def main():
             logger.info(f"Using folder coefficients {folder_coefficients}")
             logger.info(f"Using folder date time {folder_date_time}")
             logger.info(f"Using folder threshold {folder_threshold}")
+            logger.info(f"Using OCA type {oca_type}")
 
 
             process_all_folders(
@@ -282,6 +293,7 @@ def main():
                 folder_coefficients,
                 folder_date_time,
                 folder_threshold,
+                oca_limits,
                 logger
             )
 

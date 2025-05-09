@@ -83,7 +83,7 @@ def process_folder(folder_path, folder_date_time, folder_threshold, logger):
 
 
 
-def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, sufix_string, folder_coefficients, folder_date_time, folder_threshold, logger):
+def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, sufix_string, folder_coefficients, folder_date_time, folder_threshold, oca_limits, logger):
     print()
     stable_version = get_stable_version(logger)
 
@@ -168,11 +168,12 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if df is None:
                 logger.warning(f"df is None")
                 continue
+            
+            print(df)
 
-                
+
             # add datetime columns, sort by datetime and set datetime as index
             logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
-            
             df = add_datetime_columns(df,logger, date_col='datetime')
             df = df.sort_values('datetime')
             df.set_index('datetime', inplace=True, drop=False)
@@ -181,6 +182,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
             logger.info(f"Start date {start_date} and end date {end_date}")
             logger.info(f"df was sorted by datetime and datetime was set as index")
+
 
 
             # the same for the prediction file
@@ -241,9 +243,17 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 if peak_prediction_csv_file is not None:
                     peak_prediction_csv_file['night_str'] = peak_prediction_csv_file.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
 
+
+
                 # add oca column
                 logger.info(f"Adding oca column")
-                df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
+                logger.info(oca_limits)
+
+                df['oca'] = df['hour'].apply(
+                        lambda h: db_limit(h, **oca_limits)
+                   )
+                # df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
+                print(df)
 
                 # removing nan values
                 if prediction_csv_file is not None:
@@ -252,7 +262,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 # check if there is nan values
                 if df.isnull().values.any():
                     logger.warning(f"There are nan values in the dataframe")
-                #df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
 
                 
                 # just for now
@@ -297,7 +306,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             slm_dict["LAMAX_COLUMN_COEFF"] = 'LAmax_corrected'
             slm_dict["LAMIN_COLUMN_COEFF"] = 'LAmin_corrected'
             # just for now
-            slm_dict["LCEQ_COLUMN_COEFF"] = 'LC_corrected'
+            # slm_dict["LCEQ_COLUMN_COEFF"] = 'LC_corrected'
 
 
             # SAVE THE INFO IN A JSON FILE
@@ -305,7 +314,9 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 "PERIODO_AGREGACION": PERIODO_AGREGACION,
                 "PERCENTILES": PERCENTILES,
                 "folder_coeff": tuple_folder_coeff,
-                "stable_version": stable_version
+                "stable_version": stable_version,
+                "slm_type": slm_type,
+                "oca_type": oca_limits,
             }
 
             # save the info in a json file

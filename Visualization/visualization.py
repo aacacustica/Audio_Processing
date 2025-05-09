@@ -1005,9 +1005,10 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
         # ax.plot(x, df_LAeq[columns_dict['LCEQ_COLUMN_COEFF']], linewidth=1, color='blue', label='LCeq')
         ax.plot(x, df_LAeq[columns_dict['LAMAX_COLUMN_COEFF']], linewidth=1, color='#FF99FF', label='Lmax')
         ax.plot(x, df_LAeq[columns_dict['LAMIN_COLUMN_COEFF']], linewidth=1, color='#92D050', label='Lmin')
-        # OCA
-        ax.plot(x, oca.values, color='#00B0F0', label='OCA')
-
+        
+        if SHOW_OCA:
+            # OCA
+            ax.plot(x, oca.values, color='#00B0F0', label='OCA')
 
 
         percentile_data = {}

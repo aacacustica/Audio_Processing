@@ -229,7 +229,7 @@ def apply_db_correction(df, coefficient, logger):
         df['LA_corrected'] = df['LAeq'] - coefficient
         df['LAmax_corrected'] = df['LAFmax'] - coefficient
         df['LAmin_corrected'] = df['LAFmin'] - coefficient
-        df['LC_corrected'] = df['LCeq'] - coefficient
+        # df['LC_corrected'] = df['LCeq'] - coefficient
 
 
     

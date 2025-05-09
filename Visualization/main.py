@@ -18,7 +18,7 @@ def arg_parser():
     parser.add_argument('-p', '--percentiles', type=float, nargs='+', required=False, default=[90, 10],
                         help='Percentiles to plot [1 5 10 50 90] (L90 and L10 as default)')
     parser.add_argument('-l', '--limit_oca', type=str, required=False, default='OCA_RESIDENTIAL',
-                        help='Limit OCA to plot [OCA_RESIDENTIAL, OCA_LEISURE]')
+                        help='Limit OCA to plot [OCA_RESIDENTIAL, OCA_LEISURE, OCA_OFFICE, OCA_INDUSTRIAL, OCA_CULTURE]')
     parser.add_argument('--audiomoth', action='store_true', 
                         help='Process audiomoth data')
     parser.add_argument('--sonometer', action='store_true', 
@@ -186,6 +186,7 @@ def main():
                 folder_date_time,
                 folder_threshold,
                 oca_limits,
+                oca_type,
                 logger
             )
 

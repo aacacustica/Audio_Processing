@@ -83,7 +83,7 @@ def process_folder(folder_path, folder_date_time, folder_threshold, logger):
 
 
 
-def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, sufix_string, folder_coefficients, folder_date_time, folder_threshold, oca_limits, logger):
+def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, sufix_string, folder_coefficients, folder_date_time, folder_threshold, oca_limits, oca_type, logger):
     print()
     stable_version = get_stable_version(logger)
 
@@ -316,7 +316,8 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 "folder_coeff": tuple_folder_coeff,
                 "stable_version": stable_version,
                 "slm_type": slm_type,
-                "oca_type": oca_limits,
+                "oca_limits": oca_limits,
+                "oca_type": oca_type,
             }
 
             # save the info in a json file

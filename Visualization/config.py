@@ -61,19 +61,36 @@ SHOW_OCA = True
 
 
 
-############# 
-OCA_LEISURE = {
-    'ld_limit': 73,
-    'le_limit': 73,
-    'ln_limit': 63,
-}
-
+#############
 OCA_RESIDENTIAL = {
     'ld_limit': 65,
     'le_limit': 65,
     'ln_limit': 55,
 }
 
+OCA_LEISURE = {
+    'ld_limit': 73,
+    'le_limit': 73,
+    'ln_limit': 63,
+}
+
+OCA_OFFICE = {
+    'ld_limit': 70,
+    'le_limit': 70,
+    'ln_limit': 65,
+}
+
+OCA_INDUSTRIAL = {
+    'ld_limit': 75,
+    'le_limit': 75,
+    'ln_limit': 65,
+}
+
+OCA_CULTURE = {
+    'ld_limit': 60,
+    'le_limit': 60,
+    'ln_limit': 50,
+}
 
 
 ######################## SLM COLUMN MAPS #####################################

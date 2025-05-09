@@ -1020,7 +1020,7 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
 
 
         # debugg time of the plot
-        hours = mdates.HourLocator(interval=5)
+        hours = mdates.HourLocator(interval=HOUR_INTERVAL)
         h_fmt = mdates.DateFormatter('%d-%m-%y %H:%M')
         
         ax.xaxis.set_major_locator(hours)

@@ -144,7 +144,7 @@ audiopost_dict = {'LAEQ_COLUMN': 'LA',
                   'LAMIN_COLUMN': 'LAmin'}
 
 
-bruel_kjaer_dict = {'LAEQ_COLUMN': 'Leq',
+bruel_kjaer_dict = {'LAEQ_COLUMN': 'LAeq',
                     'LAMAX_COLUMN': 'LAFmax',
                     'LAMIN_COLUMN': 'LAFmin'}
 

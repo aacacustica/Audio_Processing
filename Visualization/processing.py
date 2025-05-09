@@ -13,15 +13,15 @@ import json
 
 def load_data(file_path, logger, new_date=None, new_time=None, new_threshold_date=None, new_threshold_time=None):
     slm_type_function_mapping = {
-        "audiomoth": (get_data_audiomoth, audiopost_dict),
-        "814": (get_data_814, larson814_dict),
-        "824": (get_data_824, larson824_dict),
-        "lx_ES": (get_data_lx_ES, larsonlx_dict),
-        "lx_EN": (get_data_lx_EN, larsonlx_dict),
-        "cesva": (get_data_cesva, cesva_dict),
-        "sono-bilbo": (get_data_bilbo, sonometer_bilbo_dict),
-        "SV307": (get_data_SV307, sv307_dict),
         "bruel&kjaer": (get_data_bruel_kjaer, bruel_kjaer_dict),
+        # "audiomoth": (get_data_audiomoth, audiopost_dict),
+        # "814": (get_data_814, larson814_dict),
+        # "824": (get_data_824, larson824_dict),
+        # "lx_ES": (get_data_lx_ES, larsonlx_dict),
+        # "lx_EN": (get_data_lx_EN, larsonlx_dict),
+        # "cesva": (get_data_cesva, cesva_dict),
+        # "sono-bilbo": (get_data_bilbo, sonometer_bilbo_dict),
+        # "SV307": (get_data_SV307, sv307_dict),
     } # SLM stands for Sound Level Meter
     # load the data for each SLM type until one works |  for each slm_type, (func, slm_dict) in slm_type_function_mapping.items(): means that for each key and value in the dictionary, the key is slm_type and the value is a tuple with the function and the dictionary | the function is the function to load the data and the dictionary is the dictionary with the column names for the SLM type
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
@@ -169,8 +169,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.warning(f"df is None")
                 continue
             
-            print(df)
-
 
             # add datetime columns, sort by datetime and set datetime as index
             logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
@@ -253,7 +251,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                         lambda h: db_limit(h, **oca_limits)
                    )
                 # df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
-                print(df)
 
                 # removing nan values
                 if prediction_csv_file is not None:

@@ -295,6 +295,7 @@ def main():
                 folder_date_time,
                 folder_threshold,
                 oca_limits,
+                oca_type,
                 logger
             )
 

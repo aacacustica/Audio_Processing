@@ -80,7 +80,7 @@ def main():
     elif oca_type == 'OCA_CULTURE':
         oca_limits = config.OCA_CULTURE
     else:
-        raise ValueError(f"Unknown OCA type {oca_type!r}, must be 'OCA_RESIDENTIAL' or 'OCA_LEISURE'")
+        raise ValueError(f"Unknown OCA type {oca_type!r}, must be 'OCA_RESIDENTIAL', 'OCA_LEISURE', 'OCA_OFFICE', 'OCA_INDUSTRIAL', 'OCA_CULTURE'")
 
 
     try:

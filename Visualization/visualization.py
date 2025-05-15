@@ -27,6 +27,8 @@ custom_color_scale = [[i/len(hex_colors), color] for i, color in enumerate(hex_c
 custom_color_scale.append([1, hex_colors[-1]])
     
 
+
+
 def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str, indicador_noche:str):
     try:
         df = df.dropna(subset=[laeq_column])
@@ -71,7 +73,7 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
         )
         
         plt.xticks(range(-1, 7), ['23:00', '00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00'])
-        plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
+        plt.yticks(range(DB_RANGE_BOTTOM, DB_RANGE_TOP, BD_RANGE_STEP), [str(level) for level in range(DB_RANGE_BOTTOM, DB_RANGE_TOP, BD_RANGE_STEP)])
 
         plt.xlim(-1.5, 6.5)
 
@@ -159,7 +161,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
                 
         x_ticks = range(-15, 465, 15)
         plt.xticks(x_ticks, x_labels, rotation=90)
-        plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
+        plt.yticks(range(DB_RANGE_BOTTOM, DB_RANGE_TOP, BD_RANGE_STEP), [str(level) for level in range(DB_RANGE_BOTTOM, DB_RANGE_TOP, BD_RANGE_STEP)])
         
         plt.xlim(-30, 465)
         
@@ -1389,7 +1391,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column: str, plo
         hour_labels = [f"{hour:02d}:00" for hour in range(24)]
         plt.xticks(range(24), hour_labels, rotation=90)
 
-        plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
+        plt.yticks(range(DB_RANGE_BOTTOM, DB_RANGE_TOP, BD_RANGE_STEP), [str(level) for level in range(DB_RANGE_BOTTOM, DB_RANGE_TOP, BD_RANGE_STEP)])
 
         for ax in fig.axes.flat:
             ax.spines['top'].set_visible(True)

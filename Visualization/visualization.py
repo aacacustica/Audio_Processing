@@ -1385,7 +1385,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column: str, plo
             palette=C_MAP_WEEKDAY,
         )
 
-        fig.set(xlim=(-1, 24), ylim=(30, 105))
+        fig.set(xlim=(-1, 24), ylim=(DB_RANGE_BOTTOM, DB_RANGE_TOP))
 
         # change the x-axis labels to 24-hour format
         hour_labels = [f"{hour:02d}:00" for hour in range(24)]
@@ -1463,16 +1463,16 @@ def plot_period_evolution(df,  folder_output_dir: str, logger, laeq_column:str, 
             )
             
             if ind == 'Ld':
-                fig.set(xlim=(6, 19), ylim=(30, 105))
+                fig.set(xlim=(6, 19), ylim=(DB_RANGE_BOTTOM, DB_RANGE_TOP))
                 plt.xticks(range(7, 19), [f"{hour:02d}:00" for hour in range(7, 19)])
                 logger.info(f"Plotted Ld")
                 
             elif ind == 'Le':
-                fig.set(xlim=(18.7, 22.3), ylim=(30, 105))
+                fig.set(xlim=(18.7, 22.3), ylim=(DB_RANGE_BOTTOM, DB_RANGE_TOP))
                 plt.xticks([18.7, 19, 20, 21, 22, 22.3], ['', '19:00', '20:00', '21:00', '22:00', ''])
                 logger.info(f"Ploted Le")
 
-            plt.yticks(range(30, 105, 5), [str(level) for level in range(30, 105, 5)])
+            plt.yticks(range(DB_RANGE_BOTTOM, DB_RANGE_TOP, BD_RANGE_STEP), [str(level) for level in range(DB_RANGE_BOTTOM, DB_RANGE_TOP, BD_RANGE_STEP)])
 
             for ax in fig.axes.flat:
                 ax.spines['top'].set_visible(True)

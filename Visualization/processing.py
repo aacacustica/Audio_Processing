@@ -168,13 +168,15 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if df is None:
                 logger.warning(f"df is None")
                 continue
-            
+
 
             # add datetime columns, sort by datetime and set datetime as index
             logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
             df = add_datetime_columns(df,logger, date_col='datetime')
             df = df.sort_values('datetime')
             df.set_index('datetime', inplace=True, drop=False)
+            if TENERIFE_TIMEZONE:
+                df['date'] = pd.to_datetime(df['date']) - pd.Timedelta(hours=1)
             start_date = df.index[0]
             end_date = df.index[-1]
 

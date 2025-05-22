@@ -174,6 +174,8 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 df['datetime'] = pd.to_datetime(df['datetime']) - pd.Timedelta(hours=1)
                 logger.info(f"Time zone was set to Tenerife")
 
+            #take data from 06/05/2025  16:00:00
+            df = df.loc[df['datetime'] >= '2025-05-06 16:00:00']
 
             # add datetime columns, sort by datetime and set datetime as index
             logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")

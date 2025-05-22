@@ -107,7 +107,14 @@ def read_SV307(file_path: str, logger):
     except Exception as e:
         df = pd.read_csv(file_path,header=18,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
         logger.info("Reading SV307 file with header 18")
-    
+    try:
+        df = pd.read_csv(file_path,header=6,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
+        logger.info("Reading SV307 file with header 6")
+    except Exception as e:
+        logger.error(f"Error reading file: {file_path}")
+
+
+    logger.info(f"Lenght of the file: {len(df)}")
     if not 'LAeq (Ch1, P1) [dB]' in df.columns:
         df = pd.read_csv(file_path,header=18,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python', sep=';')
         logger.info("Reading SV307 file with header 18 and sep=';'")
@@ -138,6 +145,7 @@ def get_data_SV307(file_path: str,logger, new_date=None, new_time=None, new_thre
             file_path = os.path.join(folder_path, file)
             try:
                 df = read_SV307(file_path, logger)
+                logger.info(f"Reading file: {file_path}")
             except Exception as e:
                 filename = file_path.split('\\')[-1]
                 logger.error(f"Error reading file: {filename}")
@@ -175,6 +183,7 @@ def get_data_SV307(file_path: str,logger, new_date=None, new_time=None, new_thre
                        'LAFmin (Ch1, P1) [dB]': 'LAFmin'}, inplace=True)
     
     # df = df[['datetime','LAeq','LAFmax','LAFmin']]
+    logger.info(f"Final length of the file: {len(df)}")
     return df
 
 

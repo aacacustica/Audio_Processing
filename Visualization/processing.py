@@ -160,7 +160,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
 
         try:
-            logger.info("\n")
+            logger.info("")
             logger.info(f"Processing folder {folder}") 
             logger.info(f"Getting the data from the dataframes")
             
@@ -168,6 +168,11 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             if df is None:
                 logger.warning(f"df is None")
                 continue
+            
+            logger.info("\n")
+            if TENERIFE_TIMEZONE:
+                df['datetime'] = pd.to_datetime(df['datetime']) - pd.Timedelta(hours=1)
+                logger.info(f"Time zone was set to Tenerife")
 
 
             # add datetime columns, sort by datetime and set datetime as index
@@ -175,8 +180,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             df = add_datetime_columns(df,logger, date_col='datetime')
             df = df.sort_values('datetime')
             df.set_index('datetime', inplace=True, drop=False)
-            if TENERIFE_TIMEZONE:
-                df['date'] = pd.to_datetime(df['date']) - pd.Timedelta(hours=1)
             start_date = df.index[0]
             end_date = df.index[-1]
 

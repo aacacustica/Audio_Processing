@@ -106,7 +106,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
         df['Día'] = df['night_str']
         df.index = pd.to_datetime(df.index)
 
-        df_resampled = df.resample('15min')[laeq_column].mean()
+        df_resampled = df.resample('15min')[laeq_column].apply(leq)
         df_night_str = df.resample('15min')['Día'].agg(lambda x: x.value_counts().index[0] if len(x) > 0 else None)
         df_resampled = pd.DataFrame(df_resampled).join([df_night_str])
         

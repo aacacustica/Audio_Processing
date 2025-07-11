@@ -141,22 +141,8 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             logger.info(f"Created output folder: {predictions_visualization_folder}")
         ##############################################################
 
-        ###################################################################
-        ########## GETTING PEAK PREDICTION FILE FOR EACH FOLDER ###########
-        peak_predictions_folder = os.path.join(folder.replace('3-Medidas', '5-Resultados'), "SPL", "Peaks")
-        peak_prediction_csv_file = None
-        if not os.path.exists(peak_predictions_folder):
-            logger.warning(f"Peaks folder not found: {peak_predictions_folder}")
-        if os.path.exists(peak_predictions_folder):
-            # list csv files in the directory
-            peak_predictions_files = glob.glob(os.path.join(peak_predictions_folder, "*.csv"))
-            if peak_predictions_files:
-                # take the file which contains 'peak_prediction' in the name
-                peak_prediction_file = [f for f in peak_predictions_files if 'peak_prediction' in f][0]
-                peak_prediction_csv_file = pd.read_csv(peak_prediction_file)
-            else:
-                logger.warning("No CSV files found in the peaks folder.")
-        ###################################################################
+
+
 
 
         try:
@@ -206,21 +192,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.warning(f"prediction_csv_file is None")
 
 
-            # the same for the peak prediction file
-            if peak_prediction_csv_file is not None:
-                logger.info(f"FOR PEAK PREDICTION FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
-
-                peak_prediction_csv_file = add_datetime_columns_pred(peak_prediction_csv_file, logger, date_col='start_time')
-                peak_prediction_csv_file = peak_prediction_csv_file.sort_values('start_time')
-                peak_prediction_csv_file.set_index('start_time', inplace=True, drop=False)
-                peak_pred_start_date = peak_prediction_csv_file.index[0]
-                peak_pred_end_date = peak_prediction_csv_file.index[-1]
-
-                logger.info(f"Start date {peak_pred_start_date} and end date {peak_pred_end_date}")
-                logger.info(f"df was sorted by datetime and datetime was set as index")
-            else:
-                logger.warning(f"peak_prediction_csv_file is None")
-
             
             try:
                 # drop the beginning and ending of the measurement (15min)
@@ -237,16 +208,12 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 df['indicador_str'] = df.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
                 if prediction_csv_file is not None:
                     prediction_csv_file['indicador_str'] = prediction_csv_file.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
-                if peak_prediction_csv_file is not None:
-                    peak_prediction_csv_file['indicador_str'] = peak_prediction_csv_file.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
 
                 # add nights column
                 logger.info(f"Adding nights column")
                 df['night_str'] = df.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
                 if prediction_csv_file is not None:
                     prediction_csv_file['night_str'] = prediction_csv_file.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
-                if peak_prediction_csv_file is not None:
-                    peak_prediction_csv_file['night_str'] = peak_prediction_csv_file.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
 
 
 

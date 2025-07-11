@@ -43,7 +43,7 @@ LN_SECONDS = 14400
 
 # Plotting Flags there are 15 flags to plot the following plots
 PLOT_NIGHT_EVOLUTION = False
-PLOT_NIGHT_EVOLUTION_15_MIN = False
+PLOT_NIGHT_EVOLUTION_15_MIN = True
 
 
 # prediction
@@ -55,7 +55,7 @@ PLOT_PREDICTION_MAP = False
 PLOT_TREE_MAP = False
 
 
-PLOT_MAKE_TIME_PLOT = True
+PLOT_MAKE_TIME_PLOT = False
 
 PLOT_HEATMAP_EVOLUTION_HOUR = False 
 PLOT_HEATMAP_EVOLUTION_15_MIN = False 

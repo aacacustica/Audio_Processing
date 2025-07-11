@@ -125,6 +125,7 @@ def parse_arguments():
 def main():
     # Example usage:
     #   python leq_level.py -p "\\192.168.205.117\\AAC_Server\\PUERTOS\\NOISEPORT\\20231211_SANTUR\\"
+    # python.exe .\Py_leq_oct_level.py -p "\\192.168.205.124\aac_server\CALIBRATION\EXPERI\3-Medidas\"
     
     stable_version = get_stable_version()
     args = parse_arguments()
@@ -136,8 +137,10 @@ def main():
     # ------------------------------
     ###### FIND AUDIO FOLDERS ######
     # ------------------------------
+    logging.info("")
     audiomoth_folders = list(find_audiomoth_folders(base_path))
-    for subfolder in tqdm(audiomoth_folders[:1], desc='Processing folders'):
+    # for subfolder in tqdm(audiomoth_folders[:1], desc='Processing folders'):
+    for subfolder in tqdm(audiomoth_folders, desc='Processing folders'):
         logging.info(f"Processing audio files in: {subfolder}...")
         audio_path = os.path.join(subfolder, "AUDIOMOTH")
         if not os.path.exists(audio_path):
@@ -154,6 +157,7 @@ def main():
         # ------------------------------
         sample_rates = []
         valid_audio_files = []
+        logging.info("")
         logging.info("Reading metadata...")
         for file in tqdm(audio_files, desc='Reading metadata'):
             try:
@@ -180,13 +184,15 @@ def main():
         all_data_subfolder = []
         third_oct_labels = None
         
+        logging.info("")
         for audio_file in tqdm(valid_audio_files, desc='Processing audio files'):
             try:
                 logging.info(f"Processing file: {audio_file}...")
                 filepath = os.path.join(audio_path, audio_file)
                 metadata = audio_metadata.load(filepath)
                 device_id = get_device_id(metadata)
-                C = calibration_constants.get(device_id, -10.16)
+                # C = calibration_constants.get(device_id, -10.16)
+                C = calibration_constants.get(device_id, 0)
                 calculator = LeqLevelOctave(fs_filterbanks, C, int(fs_filterbanks))
                 logging.info(f"Processing file: {audio_file} with calibration constant: {C} and sample rate: {fs_filterbanks} Hz")
                 

@@ -19,8 +19,8 @@ def load_data(file_path, logger, new_date=None, new_time=None, new_threshold_dat
         "lx_ES": (get_data_lx_ES, larsonlx_dict),
         "lx_EN": (get_data_lx_EN, larsonlx_dict),
         "cesva": (get_data_cesva, cesva_dict),
-        "sono-bilbo": (get_data_bilbo, sonometer_bilbo_dict),
         "SV307": (get_data_SV307, sv307_dict),
+        "sono-bilbo": (get_data_bilbo, sonometer_bilbo_dict),
         "bruel&kjaer": (get_data_bruel_kjaer, bruel_kjaer_dict),
     } # SLM stands for Sound Level Meter
     # load the data for each SLM type until one works |  for each slm_type, (func, slm_dict) in slm_type_function_mapping.items(): means that for each key and value in the dictionary, the key is slm_type and the value is a tuple with the function and the dictionary | the function is the function to load the data and the dictionary is the dictionary with the column names for the SLM type

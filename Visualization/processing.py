@@ -155,8 +155,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.warning(f"df is None")
                 continue
             
-            print(df)
-            exit()
             
             logger.info("\n")
             if TENERIFE_TIMEZONE:

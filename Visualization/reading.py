@@ -101,28 +101,94 @@ def get_data_824(file_path: str,logger, new_date=None, new_time=None, new_thresh
 
 
 def read_SV307(file_path: str, logger):
+    df = None  
+    read_attempts = [
+        {"header": 14, "sep": ";", "label": "header 14"},
+        {"header": 13, "sep": None, "label": "header 13 without ';'"},
+        {"header": 18, "sep": None, "label": "header 18"},
+        {"header": 6,  "sep": ";", "label": "header 6"}
+    ]
+    for attempt in read_attempts:
+        try:
+            df = pd.read_csv(
+                file_path,
+                header=attempt["header"],
+                sep=attempt["sep"],
+                skipfooter=8,
+                usecols=range(9),
+                engine='python'
+            )
+            logger.info(f"Reading SV307 file with {attempt['label']}")
+            
+            if "Time" not in df.columns:
+                logger.warning("'Time' column not found in this format.")
+            break
+
+
+        except Exception as e:
+            logger.warning(f"Failed attempt with {attempt['label']}: {e}")
+            continue
+
+
+
+    if df is not None and 'LAeq (Ch1, P1) [dB]' not in df.columns:
+            try:
+                df = pd.read_csv(
+                    file_path,
+                    header=18,
+                    sep=';',
+                    skipfooter=8,
+                    usecols=range(9),
+                    engine='python'
+                )
+                logger.info("Reading SV307 file with header 18 and sep=';' (fallback for missing 'LAeq (Ch1, P1) [dB]')")
+            except Exception as e:
+                logger.error("Fallback read with header 18 and sep=';' also failed")
+                logger.error(f"Error: {e}")
+                return None
+            
+    logger.info(f"Length of the file: {len(df)}")
+
+    # try:
+    #     df = pd.read_csv(file_path,header=14,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
+    #     logger.info("Reading SV307 file with header 14")
+
+    #     #checking if there is the "Time column"
+    #     # if not "Time" in df.columns:
+            
+            
+    # except A:
+    #     df = pd.read_csv(file_path,header=13,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
+    #     logger.info("Reading SV307 file with header 13 without ';'")
+    
+    # except B:
+    #     df = pd.read_csv(file_path,header=18,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
+    #     logger.info("Reading SV307 file with header 18")
+    
+    # except C:
+    #     df = pd.read_csv(file_path,header=6,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
+    #     logger.info("Reading SV307 file with header 6")
+    
+    # except Exception as e:
+    #     logger.error(f"Error reading file: {file_path}")
+    #     logger.error(f"Error: {e}")
+
+    # logger.info(f"Lenght of the file: {len(df)}")
+
+    # print(df)
+    # exit()
+
+
+    # if not 'LAeq (Ch1, P1) [dB]' in df.columns:
+    #     df = pd.read_csv(file_path,header=18,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python', sep=';')
+    #     logger.info("Reading SV307 file with header 18 and sep=';'")
+
     try:
-        df = pd.read_csv(file_path,header=14,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
-        logger.info("Reading SV307 file with header 14")
+        df = df[pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S', errors='coerce').notnull()]
+        df['datetime'] = pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S')
+        logger.info("Converting 'Time' column to datetime")
     except Exception as e:
-        df = pd.read_csv(file_path,header=18,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
-        logger.info("Reading SV307 file with header 18")
-    try:
-        df = pd.read_csv(file_path,header=6,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
-        logger.info("Reading SV307 file with header 6")
-    except Exception as e:
-        logger.error(f"Error reading file: {file_path}")
-
-
-    logger.info(f"Lenght of the file: {len(df)}")
-    if not 'LAeq (Ch1, P1) [dB]' in df.columns:
-        df = pd.read_csv(file_path,header=18,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python', sep=';')
-        logger.info("Reading SV307 file with header 18 and sep=';'")
-
-    df = df[pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S', errors='coerce').notnull()]
-    df['datetime'] = pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S')
-    logger.info("Converting 'Time' column to datetime")
-
+        logger.info(f"Error {e}")
     return df
 
 
@@ -163,6 +229,7 @@ def get_data_SV307(file_path: str,logger, new_date=None, new_time=None, new_thre
     else:
         # read the only csv file in the folder
         try:
+            logger.info("Trying to read with the read_SV307 function the single file")
             df = read_SV307(file_path, logger)
         except Exception as e:
             logger.error(f"Error reading file: {file_path}")

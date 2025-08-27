@@ -290,6 +290,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 "slm_type": slm_type,
                 "oca_limits": oca_limits,
                 "oca_type": oca_type,
+                "tenerife_timezone": TENERIFE_TIMEZONE,
             }
 
             # save the info in a json file

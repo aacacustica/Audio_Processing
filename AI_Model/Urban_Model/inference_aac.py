@@ -202,8 +202,9 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Make prediction with YAMNet model for audio files in a directory')
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
+    parser.add_argument('-m', '--model', type=str, required=True, help='Type "urban" or "port" model to be processed later on.')
     parser.add_argument('-w', '--window', type=float, default=None, help='Window size in seconds for processing audio files. Default is None for processing full audio.')
-    parser.add_argument('-t', '--threshold', type=float, default=None, help='Classification threshold for predictions.')
+    parser.add_argument('-t', '--threshold', type=float, default=30, help='Classification threshold for predictions.')
     parser.add_argument('--embeddings', action='store_true', help='Save embeddings to tensorboard')
     parser.add_argument('--spectrogram', action='store_true', help='Save spectrogram images')
     return parser.parse_args()

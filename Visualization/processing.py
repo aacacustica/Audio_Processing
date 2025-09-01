@@ -235,6 +235,12 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 if df.isnull().values.any():
                     logger.warning(f"There are nan values in the dataframe")
 
+                print(prediction_csv_file)
+
+                # here has to be the prediction analysis
+
+                exit()
+
                 
                 # just for now
                 # create LCeq column which is LC - LA = LC_LA. I know the LC_LA and the LA

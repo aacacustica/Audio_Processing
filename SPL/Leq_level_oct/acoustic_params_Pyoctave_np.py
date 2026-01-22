@@ -53,8 +53,6 @@ class LeqLevelOct:
         :param audio_path:
             Path to the audio files
         """
-        
-        
         self.id_micro = id_micro
         self.fs = fs
         self.C = calibration_constant
@@ -197,7 +195,6 @@ class LeqLevelOct:
         # ----------------------------------
         # saving the missing files information to the previous json file
         # ----------------------------------
-        
         report = {
             "expected_wav_files": expect_wav_files,
             "total_audio_files": total_audio_files,
@@ -228,11 +225,11 @@ class LeqLevelOct:
         col_names = ['id_micro', 'Filename', 'Timestamp', 'Unixtimestamp', 'LA', 'LC', 'LZ', 'LAmax', 'LAmin']
         freq_labels = None
         
+
         
         # ----------------------------------
         # PROCESSING
         # ----------------------------------
-        
         all_data = []
         # for audio_file in tqdm(full_paths[:1], desc="Processing audio files", unit="file"):
         for audio_file in tqdm(full_paths, desc="Processing audio files", unit="file"):
@@ -407,12 +404,7 @@ class LeqLevelOct:
 
 
 def load_processed_files(processed_file_path):
-    
-      
     """Load the set of processed filenames from a text file."""
-    
-    
- 
     if os.path.exists(processed_file_path):
         with open(processed_file_path, "r") as f:
             return {line.strip() for line in f if line.strip()}
@@ -421,14 +413,10 @@ def load_processed_files(processed_file_path):
 
 
 def update_processed_files(processed_file_path, filename):
-    
-    
-    
     """Append a processed filename to the text file."""
-    
-    
     with open(processed_file_path, "a") as f:
         f.write(filename + "\n")
+
 
 
 def point_iteration_acoustics(point, root, storage_output_wav_folder,audio_sample_rate, audio_window_size,
@@ -437,7 +425,6 @@ def point_iteration_acoustics(point, root, storage_output_wav_folder,audio_sampl
     """
     Creates leq_processor object for given params in order to process given wav_file_folder    
     """
-
     # ------------------------------
     # POINT PARAMS
     # ------------------------------
@@ -589,7 +576,6 @@ def main():
 
 
                 if point == "P5_TEST":
-
                     leq_processor, wav_files_folder = point_iteration_acoustics(
                         point,
                         root,
@@ -601,18 +587,14 @@ def main():
                         upload_s3,
                         logging
                     )
-
                     logging.info("Processing audio files...")
                     leq_processor.process_audio_files(wav_files_folder)
                 
                 
                 else:
-                    
-                    
-                    logging.info(f"Skipping point: {point}")
-                    
-                    
+                    logging.info(f"Skipping point: {point}")  
                     continue
+
 
     except KeyboardInterrupt:
         logging.error("Recording interrupted by user.")
@@ -620,10 +602,6 @@ def main():
         logging.error(f"An unexpected error occurred: {e}")
 
 
-
-            #-------------------------------
-            #   6- End !
-            #-------------------------------
     logging.info("")
     logging.info("Done!")
 

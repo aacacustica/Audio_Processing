@@ -1,10 +1,14 @@
 import numpy as np
 import pandas as pd
 import soundfile as sf
-from scipy.signal import lfilter
+
+# from scipy.signal import lfilter
+from lfilter_numpy import lfilter_np
 from pyfilterbank.splweighting import a_weighting_coeffs_design, c_weighting_coeffs_design
-from tqdm import tqdm
 from utils import *
+
+
+from tqdm import tqdm
 import os
 import datetime
 import argparse
@@ -17,7 +21,7 @@ logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s', 
     filename='leq_level_1_3_oct.log', 
-    filemode='a'
+    filemode='w'
     )
 
 
@@ -35,7 +39,6 @@ class LeqLevelOct:
         :param audio_path:
             Path to the audio files
         """
-
         self.fs = fs
         self.C = calibration_constant
         self.window_size = window_size
@@ -56,7 +59,6 @@ class LeqLevelOct:
         :return:
             List of 1/3 octave levels
         """
-
         y_oct, _ = self.third_oct.filter(frame)
         oct_level_temp = [get_db_level(y_band, self.C) for y_band in y_oct.T]
         return oct_level_temp
@@ -78,40 +80,84 @@ class LeqLevelOct:
         for audio_file in audio_files:
             db = []
             x, _ = sf.read(os.path.join(self.audio_path, audio_file))
+            # lfilter_np only supports 1D arrays
+            if x.ndim > 1:
+                x = x[:, 0]  # or x.mean(axis=1)
+
             
             name_split = audio_file.split(".")[0]
             start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
             timestamps = [start_timestamp + datetime.timedelta(seconds=fstart/self.fs) for fstart in range(0, len(x) - self.window_size + 1, self.window_size)]
             
             # A and C weighting to the signal
-            y_A_weighted = lfilter(self.bA, self.aA, x)
-            y_C_weighted = lfilter(self.bC, self.aC, x)
+            # y_A_weighted = lfilter(self.bA, self.aA, x)
+            # y_C_weighted = lfilter(self.bC, self.aC, x)
 
-            for fstart, timestamp in zip(range(0, len(x) - self.window_size + 1, self.window_size), timestamps):
+
+            # y_A_weighted, _ = lfilter_np(self.bA, self.aA, x)
+            # y_C_weighted, _ = lfilter_np(self.bC, self.aC, x)
+
+
+            ziA = None
+            ziC = None
+
+
+            for fstart, timestamp in zip(range(0, len(x) - self.window_size + 1, self.window_size),timestamps):
                 frame = x[fstart:fstart + self.window_size]
-                yA = y_A_weighted[fstart:fstart + self.window_size]
-                yC = y_C_weighted[fstart:fstart + self.window_size]
 
-                # levels with weightings
+                yA, ziA = lfilter_np(self.bA, self.aA, frame, zi=ziA)
+                yC, ziC = lfilter_np(self.bC, self.aC, frame, zi=ziC)
+
                 LA = round(get_db_level(yA, self.C), 2)
                 LC = round(get_db_level(yC, self.C), 2)
                 LZ = round(get_db_level(frame, self.C), 2)
 
-                # LAmax and LAmin over fast intervals
-                fast_levels = [get_db_level(yA[i:i + self.window_size // 8], self.C) for i in range(0, len(frame) - self.window_size // 8 + 1, self.window_size // 8)]
+                fast_chunk = self.window_size // 8
+                fast_levels = [
+                    get_db_level(yA[i:i + fast_chunk], self.C)
+                    for i in range(0, len(yA) - fast_chunk + 1, fast_chunk)
+                ]
                 Lmax = round(np.max(fast_levels), 2)
                 Lmin = round(np.min(fast_levels), 2)
-                
-                # 1/3 levels
+
                 oct_level_temp = [round(level, 2) for level in self.get_oct_levels(frame)]
-                
-                # lists 
-                level_temp = [LA, LC, LZ, Lmax, Lmin] + oct_level_temp + [audio_file, timestamp.strftime('%Y-%m-%d %H:%M:%S')]
+
+                level_temp = [LA, LC, LZ, Lmax, Lmin] + oct_level_temp + [
+                    audio_file, timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                ]
                 db.append(level_temp)
+
+
+
+            # for fstart, timestamp in zip(range(0, len(x) - self.window_size + 1, self.window_size), timestamps):
+            #     frame = x[fstart:fstart + self.window_size]
+            #     yA = y_A_weighted[fstart:fstart + self.window_size]
+            #     yC = y_C_weighted[fstart:fstart + self.window_size]
+
+            #     # levels with weightings
+            #     LA = round(get_db_level(yA, self.C), 2)
+            #     LC = round(get_db_level(yC, self.C), 2)
+            #     LZ = round(get_db_level(frame, self.C), 2)
+
+            #     # LAmax and LAmin over fast intervals
+            #     fast_levels = [get_db_level(yA[i:i + self.window_size // 8], self.C) for i in range(0, len(frame) - self.window_size // 8 + 1, self.window_size // 8)]
+            #     Lmax = round(np.max(fast_levels), 2)
+            #     Lmin = round(np.min(fast_levels), 2)
+                
+            #     # 1/3 levels
+            #     oct_level_temp = [round(level, 2) for level in self.get_oct_levels(frame)]
+                
+            #     # lists 
+            #     level_temp = [LA, LC, LZ, Lmax, Lmin] + oct_level_temp + [audio_file, timestamp.strftime('%Y-%m-%d %H:%M:%S')]
+            #     db.append(level_temp)
+
+
+            # append data end for loop
             all_data.append(db)
             logging.info(f"Processed file: {audio_file}")
         return all_data
     
+
 
 def read_calibration_constants(ini_file):
     """Read calibration constants from an INI file
@@ -157,7 +203,6 @@ def main():
     r"""
     python leq_levels_oct.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\"
     """
-
     stable_version = get_stable_version()
     args = parse_arguments()
     base_path = args.path
@@ -236,7 +281,7 @@ def main():
             
             # handling the output directory and final filename
             subfolder = subfolder.split('\\')[-1]
-            output_filename = f'leq_oct_{subfolder}_{stable_version}.csv'
+            output_filename = f'leq_oct_{subfolder}_{stable_version}_nm.csv'
             subfolder = subfolder.split('\\')[-1]
 
             output_folder = audio_path

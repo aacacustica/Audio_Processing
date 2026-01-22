@@ -94,14 +94,8 @@ class LeqLevelOct:
             # y_C_weighted = lfilter(self.bC, self.aC, x)
 
 
-            # y_A_weighted, _ = lfilter_np(self.bA, self.aA, x)
-            # y_C_weighted, _ = lfilter_np(self.bC, self.aC, x)
-
-
             ziA = None
             ziC = None
-
-
             for fstart, timestamp in zip(range(0, len(x) - self.window_size + 1, self.window_size),timestamps):
                 frame = x[fstart:fstart + self.window_size]
 
@@ -126,30 +120,6 @@ class LeqLevelOct:
                     audio_file, timestamp.strftime('%Y-%m-%d %H:%M:%S')
                 ]
                 db.append(level_temp)
-
-
-
-            # for fstart, timestamp in zip(range(0, len(x) - self.window_size + 1, self.window_size), timestamps):
-            #     frame = x[fstart:fstart + self.window_size]
-            #     yA = y_A_weighted[fstart:fstart + self.window_size]
-            #     yC = y_C_weighted[fstart:fstart + self.window_size]
-
-            #     # levels with weightings
-            #     LA = round(get_db_level(yA, self.C), 2)
-            #     LC = round(get_db_level(yC, self.C), 2)
-            #     LZ = round(get_db_level(frame, self.C), 2)
-
-            #     # LAmax and LAmin over fast intervals
-            #     fast_levels = [get_db_level(yA[i:i + self.window_size // 8], self.C) for i in range(0, len(frame) - self.window_size // 8 + 1, self.window_size // 8)]
-            #     Lmax = round(np.max(fast_levels), 2)
-            #     Lmin = round(np.min(fast_levels), 2)
-                
-            #     # 1/3 levels
-            #     oct_level_temp = [round(level, 2) for level in self.get_oct_levels(frame)]
-                
-            #     # lists 
-            #     level_temp = [LA, LC, LZ, Lmax, Lmin] + oct_level_temp + [audio_file, timestamp.strftime('%Y-%m-%d %H:%M:%S')]
-            #     db.append(level_temp)
 
 
             # append data end for loop

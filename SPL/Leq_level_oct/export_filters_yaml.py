@@ -72,7 +72,7 @@ def export_sos_bank_1_3(fs, order=4, idx_low=-16, idx_high=12, out_path="sos_ban
 
 
 if __name__ == "__main__":
-    # fs = 32000
-    fs = 16000
+    fs = 32000
+    # fs = 16000
     export_weighting(fs, out_path=f"weighting_fs{fs}.yaml")
     export_sos_bank_1_3(fs, order=4, idx_low=-16, idx_high=12,out_path=f"sos_bank_1_3_fs{fs}.yaml")

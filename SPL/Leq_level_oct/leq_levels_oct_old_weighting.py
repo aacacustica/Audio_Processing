@@ -1,281 +1,340 @@
-import numpy as np
-import pandas as pd
-import soundfile as sf
+"""
+leq_levels_oct_sos.py
 
-# from scipy.signal import lfilter
-from lfilter_numpy import lfilter_np
-from sosfilt_numpy import sosfilt_np
-import yaml
-from pyfilterbank.splweighting import a_weighting_coeffs_design, c_weighting_coeffs_design
-from utils import *
+Goal:
+- NO SciPy / NO pyfilterbank at runtime (sensor side)
+- Uses:
+  - lfilter_np for A/C weighting (b,a loaded from YAML)
+  - sosfilt_np for 1/3-oct bandpass bank (SOS loaded from YAML)
+  - numpy + soundfile + yaml + audio_metadata
 
+Files you need next to this script:
+- lfilter_numpy.py   (contains lfilter_np)
+- sosfilt_numpy.py   (contains sosfilt_np)
+- weighting_fs<FS>.yaml
+- sos_bank_1_3_fs<FS>.yaml
+- calibration_constants.ini
+"""
 
-from tqdm import tqdm
 import os
 import datetime
 import argparse
 import configparser
-import audio_metadata
 import logging
 
+import numpy as np
+import pandas as pd
+import soundfile as sf
+import yaml
+import audio_metadata
+from tqdm import tqdm
 
+from lfilter_numpy import lfilter_np
+from sosfilt_numpy import sosfilt_np
+
+# If you still want to use these utils, make sure YOUR utils.py DOES NOT import scipy/pyfilterbank.
+# This script only uses get_audiofiles + get_stable_version; both can be replaced easily if needed.
+from utils import get_audiofiles, get_stable_version
+
+
+# -----------------------------
+# Logging
+# -----------------------------
 logging.basicConfig(
-    level=logging.INFO, 
-    format='%(asctime)s - %(levelname)s - %(message)s', 
-    filename='leq_level_1_3_oct.log', 
-    filemode='w'
-    )
-
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    filename="leq_level_1_3_oct.log",
+    filemode="w",
+)
 
 
 PREF = 2e-6
 
 
+# -----------------------------
+# Small helpers
+# -----------------------------
+def get_level_db(x: np.ndarray, C: float) -> float:
+    """SPL-like level in dB using mean-square reference to PREF."""
+    x = np.asarray(x, dtype=np.float64)
+    ms = float(np.mean(x * x)) + 1e-30
+    return 10.0 * np.log10(ms / (PREF * PREF)) + float(C)
+
+
+def read_calibration_constants(ini_file: str) -> dict:
+    cfg = configparser.ConfigParser()
+    cfg.read(ini_file)
+    logging.info(f"Reading calibration constants from {ini_file}")
+    return {k: float(v) for k, v in cfg["CalibrationConstants"].items()}
+
+
+def get_device_id(metadata) -> str:
+    artist_tags = metadata.tags.get("artist", ["songmeter"])
+    if not artist_tags or len(artist_tags[0].split(" ")) < 2:
+        return "songmeter"
+    device_id = artist_tags[0].split(" ")[1].lower()
+    logging.info(f"Device ID: {device_id}")
+    return device_id
+
+
+def find_audiomoth_folders(base_path: str):
+    """Recursively find all subdirectories containing an 'AUDIOMOTH' folder."""
+    for root, dirs, _files in os.walk(base_path):
+        if "AUDIOMOTH" in dirs:
+            yield root
+
+
+def load_yaml(path: str) -> dict:
+    with open(path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Calculate SPL + 1/3-octave levels without SciPy runtime")
+    parser.add_argument("-p", "--path", type=str, required=True, help="Directory to be processed")
+    parser.add_argument("--fs", type=int, default=None, help="Force FS (if metadata not reliable)")
+    parser.add_argument("--weighting-yaml", type=str, default=None, help="Path to weighting_fsXXXX.yaml")
+    parser.add_argument("--bank-yaml", type=str, default=None, help="Path to sos_bank_1_3_fsXXXX.yaml")
+    parser.add_argument("--limit-folders", type=int, default=1, help="Process only first N folders (debug)")
+    parser.add_argument("--limit-files", type=int, default=None, help="Process only first N wav files (debug)")
+    return parser.parse_args()
+
+
+# -----------------------------
+# Core class
+# -----------------------------
 class LeqLevelOct:
-    def __init__(self, fs, calibration_constant, window_size, audio_path):
-        """
-        Set up the LeqLevelOct object with the necessary parameters
-        :param fs:
-            Sample rate of the audio
-        :param calibration_constant:
-            Calibration constant for the microphone
-        :param window_size:
-            Size of the window for calculating SPL levels
-        :param audio_path:
-            Path to the audio files
-        """
-        self.fs = fs
-        self.C = calibration_constant
-        self.window_size = window_size
+    def __init__(
+        self,
+        fs: int,
+        calibration_constant: float,
+        window_size: int,
+        audio_path: str,
+        weighting_yaml_path: str,
+        bank_yaml_path: str,
+    ):
+        self.fs = int(fs)
+        self.C = float(calibration_constant)
+        self.window_size = int(window_size)
         self.audio_path = audio_path
-        # A and C weighting filters
-        self.bA, self.aA = a_weighting_coeffs_design(fs)
-        self.bC, self.aC = c_weighting_coeffs_design(fs)
-        # 1/3 and octave filter banks
-        self.third_oct, self.octave = filterbanks(fs)
-        logging.info(f"LeqLevelOct initialized with fs: {fs}, C: {calibration_constant}, window_size: {window_size}")
 
+        # Load weighting (b,a) for A/C
+        w = load_yaml(weighting_yaml_path)
+        if int(w["fs"]) != self.fs:
+            raise ValueError(f"Weighting YAML fs={w['fs']} does not match fs={self.fs}")
 
+        self.bA = np.asarray(w["A_weighting"]["b"], dtype=np.float64)
+        self.aA = np.asarray(w["A_weighting"]["a"], dtype=np.float64)
+        self.bC = np.asarray(w["C_weighting"]["b"], dtype=np.float64)
+        self.aC = np.asarray(w["C_weighting"]["a"], dtype=np.float64)
 
-    def get_oct_levels(self, frame):
-        """Calculate 1/3 octave levels for a frame of audio data
-        :param frame:
-            Frame of audio data
-        :return:
-            List of 1/3 octave levels
-        """
-        y_oct, _ = self.third_oct.filter(frame)
-        oct_level_temp = [get_db_level(y_band, self.C) for y_band in y_oct.T]
-        return oct_level_temp
+        # Load 1/3-oct SOS bank
+        b = load_yaml(bank_yaml_path)
+        if int(b["fs"]) != self.fs:
+            raise ValueError(f"Bank YAML fs={b['fs']} does not match fs={self.fs}")
 
+        self.sos_bank = b["sos_bank"]              # list[band] -> list[section] -> 6 floats
+        self.center_freqs = b["freq_center"]       # for column labels
 
+        logging.info(
+            f"LeqLevelOct initialized fs={self.fs}, C={self.C}, window={self.window_size}, "
+            f"bands={len(self.sos_bank)}"
+        )
 
     def process_audio_files(self, audio_files):
-        """Process audio files and calculate SPL levels for each frame of audio data
-        :param audio_files:
-            List of audio files to process
-        :return:
-            List of SPL levels for each frame of audio data"""
-        
-        col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin']
-        band_names = [f"{freq:.2f}Hz" for freq in self.third_oct.center_frequencies]
-        col_names.extend(band_names)
+        """
+        Returns:
+          all_data: list of per-file rows
+          col_names: column names
+        """
+        col_names = ["LA", "LC", "LZ", "LAmax", "LAmin"] + \
+                    [f"{f:.2f}Hz" for f in self.center_freqs] + \
+                    ["filename", "date"]
+
         all_data = []
 
         for audio_file in audio_files:
             db = []
+
             x, _ = sf.read(os.path.join(self.audio_path, audio_file))
-            # lfilter_np only supports 1D arrays
             if x.ndim > 1:
-                x = x[:, 0]  # or x.mean(axis=1)
+                x = x[:, 0]
+            x = np.asarray(x, dtype=np.float64)
 
-            
-            name_split = audio_file.split(".")[0]
-            start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
-            timestamps = [start_timestamp + datetime.timedelta(seconds=fstart/self.fs) for fstart in range(0, len(x) - self.window_size + 1, self.window_size)]
-            
-            # A and C weighting to the signal
-            # y_A_weighted = lfilter(self.bA, self.aA, x)
-            # y_C_weighted = lfilter(self.bC, self.aC, x)
+            if len(x) < self.window_size:
+                logging.warning(f"Skipping {audio_file}: shorter than one window.")
+                continue
 
+            name_split = os.path.splitext(audio_file)[0]
+            start_timestamp = datetime.datetime.strptime(name_split, "%Y%m%d_%H%M%S")
 
+            frame_starts = range(0, len(x) - self.window_size + 1, self.window_size)
+            timestamps = [
+                start_timestamp + datetime.timedelta(seconds=fstart / self.fs)
+                for fstart in frame_starts
+            ]
+
+            # Streaming states (per file)
             ziA = None
             ziC = None
-            for fstart, timestamp in zip(range(0, len(x) - self.window_size + 1, self.window_size),timestamps):
+            ziBands = [None] * len(self.sos_bank)
+
+            for fstart, timestamp in zip(frame_starts, timestamps):
                 frame = x[fstart:fstart + self.window_size]
 
+                # A/C weighting via lfilter_np (b,a)
                 yA, ziA = lfilter_np(self.bA, self.aA, frame, zi=ziA)
                 yC, ziC = lfilter_np(self.bC, self.aC, frame, zi=ziC)
 
-                LA = round(get_db_level(yA, self.C), 2)
-                LC = round(get_db_level(yC, self.C), 2)
-                LZ = round(get_db_level(frame, self.C), 2)
+                LA = round(get_level_db(yA, self.C), 2)
+                LC = round(get_level_db(yC, self.C), 2)
+                LZ = round(get_level_db(frame, self.C), 2)
 
+                # LAmax/LAmin over FAST subchunks (8 per second if window=fs)
                 fast_chunk = self.window_size // 8
                 fast_levels = [
-                    get_db_level(yA[i:i + fast_chunk], self.C)
+                    get_level_db(yA[i:i + fast_chunk], self.C)
                     for i in range(0, len(yA) - fast_chunk + 1, fast_chunk)
                 ]
-                Lmax = round(np.max(fast_levels), 2)
-                Lmin = round(np.min(fast_levels), 2)
+                Lmax = round(float(np.max(fast_levels)), 2)
+                Lmin = round(float(np.min(fast_levels)), 2)
 
-                oct_level_temp = [round(level, 2) for level in self.get_oct_levels(frame)]
+                # 1/3-oct band levels via SOS bank
+                band_levels = []
+                for i, sos in enumerate(self.sos_bank):
+                    yb, ziBands[i] = sosfilt_np(sos, frame, zi=ziBands[i])
+                    band_levels.append(round(get_level_db(yb, self.C), 2))
 
-                level_temp = [LA, LC, LZ, Lmax, Lmin] + oct_level_temp + [
-                    audio_file, timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                row = [LA, LC, LZ, Lmax, Lmin] + band_levels + [
+                    audio_file,
+                    timestamp.strftime("%Y-%m-%d %H:%M:%S"),
                 ]
-                db.append(level_temp)
+                db.append(row)
 
-
-            # append data end for loop
             all_data.append(db)
             logging.info(f"Processed file: {audio_file}")
-        return all_data
-    
+
+        return all_data, col_names
 
 
-def read_calibration_constants(ini_file):
-    """Read calibration constants from an INI file
-    :param ini_file:
-        Path to the INI file containing the calibration constants
-    :return:
-        Dictionary of calibration constants"""
-    
-    config = configparser.ConfigParser()
-    config.read(ini_file)
-    logging.info(f"Reading calibration constants from {ini_file}")
-    return {key: float(value) for key, value in config['CalibrationConstants'].items()}
-
-
-def get_device_id(metadata):
-    """Get the device ID from the metadata
-    :param metadata:
-        Metadata object
-    :return:
-        Device ID
-        """
-    artist_tags = metadata.tags.get("artist", ["songmeter"])
-    if not artist_tags or len(artist_tags[0].split(" ")) < 2:
-        return "songmeter"
-    logging.info(f"Device ID: {artist_tags[0].split(' ')[1].lower()}")
-    return artist_tags[0].split(" ")[1].lower()
-
-
-def find_audiomoth_folders(base_path):
-    """Recursively find all subdirectories containing an 'AUDIOMOTH' folder."""
-    for root, dirs, files in os.walk(base_path):
-        if 'AUDIOMOTH' in dirs:
-            yield root
-
-
-def parse_arguments():
-    parser = argparse.ArgumentParser(description='Calculate SPL levels for audio files in a directory')
-    parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
-    return parser.parse_args()
-
-
+# -----------------------------
+# Main
+# -----------------------------
 def main():
     r"""
-    python leq_levels_oct.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\"
+    Example:
+      python leq_levels_oct_sos.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\"
     """
-    stable_version = get_stable_version()
     args = parse_arguments()
+    stable_version = get_stable_version()
     base_path = args.path
-    calibration_constants = read_calibration_constants('calibration_constants.ini')
+
+    calibration_constants = read_calibration_constants("calibration_constants.ini")
 
     audiomoth_folders = list(find_audiomoth_folders(base_path))
-    for subfolder in tqdm(audiomoth_folders[:1], desc='Processing folders'):
+    if args.limit_folders is not None:
+        audiomoth_folders = audiomoth_folders[:args.limit_folders]
+
+    for subfolder in tqdm(audiomoth_folders, desc="Processing folders"):
         logging.info(f"Processing audio files: {subfolder}...")
         audio_path = os.path.join(subfolder, "AUDIOMOTH")
         if not os.path.exists(audio_path):
             logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
             continue
+
         audio_files = get_audiofiles(audio_path)
         if not audio_files:
             logging.warning(f"No audio files found in: {audio_path}")
             continue
 
-        
-        # read metadata
+        # Read metadata to get sample rates (unless forced)
         sample_rates = []
         valid_audio_files = []
-        logging.info(f"Reading metadata...")
-        for file in tqdm(audio_files, desc='Reading metadata'):
+
+        logging.info("Reading metadata...")
+        for file in tqdm(audio_files, desc="Reading metadata"):
             try:
                 metadata = audio_metadata.load(os.path.join(audio_path, file))
                 sample_rates.append(metadata.streaminfo.sample_rate)
                 valid_audio_files.append(file)
             except Exception as e:
-                logging.warning(f'Error reading file metadata: {file}, {e}')
-        if not sample_rates:
-            logging.warning("No valid audio files to process.")
-            continue
+                logging.warning(f"Error reading file metadata: {file}, {e}")
+
         if not valid_audio_files:
             logging.warning(f"No valid audio files to process in {subfolder}")
             continue
-        logging.info(f'Processing {len(valid_audio_files)} files in {subfolder}')
 
-        fs_filterbanks = np.median(sample_rates)
-        logging.info(f'Using sample rate: {fs_filterbanks}')
+        if args.limit_files is not None:
+            valid_audio_files = valid_audio_files[:args.limit_files]
 
+        if args.fs is not None:
+            fs = int(args.fs)
+        else:
+            fs = int(round(float(np.median(sample_rates)))) if sample_rates else None
 
+        if fs is None:
+            logging.warning("Could not determine fs.")
+            continue
 
-        # process audio files
+        # Decide which YAMLs to load (either given or inferred)
+        weighting_yaml = args.weighting_yaml or f"weighting_fs{fs}.yaml"
+        bank_yaml = args.bank_yaml or f"sos_bank_1_3_fs{fs}.yaml"
+
+        if not os.path.exists(weighting_yaml):
+            raise FileNotFoundError(f"Missing weighting YAML: {weighting_yaml}")
+        if not os.path.exists(bank_yaml):
+            raise FileNotFoundError(f"Missing bank YAML: {bank_yaml}")
+
+        logging.info(f"Using sample rate: {fs}")
+        logging.info(f"Using weighting YAML: {weighting_yaml}")
+        logging.info(f"Using bank YAML: {bank_yaml}")
+
+        # Initialize calculator
+        calculator = LeqLevelOct(
+            fs=fs,
+            calibration_constant=-10.16,
+            window_size=fs,  # 1 second
+            audio_path=audio_path,
+            weighting_yaml_path=weighting_yaml,
+            bank_yaml_path=bank_yaml,
+        )
+
         all_data_subfolder = []
-        # initializing the calculator
-        calculator = LeqLevelOct(fs_filterbanks, -10.16, int(fs_filterbanks), audio_path)
+
         logging.info(f"Processing {len(valid_audio_files)} files in {subfolder}...")
-        for audio_file in tqdm(valid_audio_files, desc='Processing audio files'):
+        for audio_file in tqdm(valid_audio_files, desc="Processing audio files"):
             try:
-                logging.info(f"Processing file: {audio_file}")
-                # select the audio file
                 filepath = os.path.join(audio_path, audio_file)
-                # read the metadata to get the device_id and eventually get its calibration constant
                 metadata = audio_metadata.load(filepath)
                 device_id = get_device_id(metadata)
                 C = calibration_constants.get(device_id, -10.16)
                 calculator.C = C
-                # process the audio file
-                file_data = calculator.process_audio_files([audio_file])
-                # append the data to the list
+
+                file_data, col_names = calculator.process_audio_files([audio_file])
                 all_data_subfolder.extend(file_data)
-                logging.info(f"Processed file: {audio_file} with device_id: {device_id} and C: {C} and sample rate: {fs_filterbanks}")
+
+                logging.info(
+                    f"Processed file: {audio_file} with device_id={device_id}, C={C}, fs={fs}"
+                )
             except Exception as e:
-                logging.warning(f'Error processing file: {audio_file}, {e}')
+                logging.warning(f"Error processing file: {audio_file}, {e}")
 
-
-
-        # save output to CSV
+        # Save output
         if all_data_subfolder:
-            # setting yp the columns
-            col_names = ['LA', 'LC', 'LZ', 'LAmax', 'LAmin'] + [f"{freq:.2f}Hz" for freq in calculator.third_oct.center_frequencies] + ['filename', 'date']
-            flat_data = [item for sublist in all_data_subfolder for item in sublist]
-            # initializaing the dataframe
+            flat_data = [row for file_rows in all_data_subfolder for row in file_rows]
             df = pd.DataFrame(flat_data, columns=col_names)
-            df = df.sort_values(by='date')
-            
-            # handling the output directory and final filename
-            subfolder = subfolder.split('\\')[-1]
-            output_filename = f'leq_oct_{subfolder}_{stable_version}_nm.csv'
-            subfolder = subfolder.split('\\')[-1]
+            df = df.sort_values(by="date")
 
-            output_folder = audio_path
-            output_path = os.path.join(output_folder, output_filename)
+            folder_name = subfolder.split("\\")[-1]
+            output_filename = f"leq_oct_{folder_name}_{stable_version}_sos_weighting.csv"
+            output_path = os.path.join(audio_path, output_filename)
 
-            if not os.path.exists(output_folder):
-                os.makedirs(output_folder)
-                logging.info(f"Creating folder {output_folder}")
-            else:
-                logging.info(f"Folder {output_folder} already exists")
-
-            # save to CSV            
             df.to_csv(output_path, index=False)
-            logging.info(f'Output saved to {output_path}')
-            print(f'Output saved to {output_path}')
+            logging.info(f"Output saved to {output_path}")
+            print(f"Output saved to {output_path}")
         else:
             logging.warning(f"No data to save for folder {subfolder}")
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

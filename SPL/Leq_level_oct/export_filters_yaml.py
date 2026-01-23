@@ -1,4 +1,3 @@
-# export_filters_yaml.py  (EJECUTAR SOLO EN PC)
 import numpy as np
 import yaml
 from scipy import signal

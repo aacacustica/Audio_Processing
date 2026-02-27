@@ -1,0 +1,5 @@
+/io/build-cp312/CMakeFiles/leq_levels_oct_weighting_C.dir
+/io/build-cp312/CMakeFiles/edit_cache.dir
+/io/build-cp312/CMakeFiles/rebuild_cache.dir
+/io/build-cp312/libs_c/deps/pybind11/CMakeFiles/edit_cache.dir
+/io/build-cp312/libs_c/deps/pybind11/CMakeFiles/rebuild_cache.dir

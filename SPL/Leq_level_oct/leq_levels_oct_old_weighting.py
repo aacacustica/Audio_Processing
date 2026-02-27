@@ -16,11 +16,25 @@ Files you need next to this script:
 - calibration_constants.ini
 """
 
+
+
+
+
+
+import soxr
 import os
+import sys
 import datetime
 import argparse
 import configparser
 import logging
+
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DEPS_DIR = os.path.join(BASE_DIR,'libs_c')
+sys.path.insert(0,DEPS_DIR)
+
+
+import leq_levels_oct_weighting_C as m
 
 import numpy as np
 import pandas as pd
@@ -34,7 +48,7 @@ from sosfilt_numpy import sosfilt_np
 
 # If you still want to use these utils, make sure YOUR utils.py DOES NOT import scipy/pyfilterbank.
 # This script only uses get_audiofiles + get_stable_version; both can be replaced easily if needed.
-from utils import get_audiofiles, get_stable_version
+from utils import get_audiofiles, get_stable_version,twenty_db_fix
 
 
 # -----------------------------
@@ -49,7 +63,6 @@ logging.basicConfig(
 
 
 PREF = 2e-6
-
 
 # -----------------------------
 # Small helpers
@@ -123,10 +136,10 @@ class LeqLevelOct:
         if int(w["fs"]) != self.fs:
             raise ValueError(f"Weighting YAML fs={w['fs']} does not match fs={self.fs}")
 
-        self.bA = np.asarray(w["A_weighting"]["b"], dtype=np.float64)
-        self.aA = np.asarray(w["A_weighting"]["a"], dtype=np.float64)
-        self.bC = np.asarray(w["C_weighting"]["b"], dtype=np.float64)
-        self.aC = np.asarray(w["C_weighting"]["a"], dtype=np.float64)
+        self.bA = np.asarray(w["A_weighting"]["b"], dtype=np.float32)
+        self.aA = np.asarray(w["A_weighting"]["a"], dtype=np.float32)
+        self.bC = np.asarray(w["C_weighting"]["b"], dtype=np.float32)
+        self.aC = np.asarray(w["C_weighting"]["a"], dtype=np.float32)
 
         # Load 1/3-oct SOS bank
         b = load_yaml(bank_yaml_path)
@@ -156,14 +169,18 @@ class LeqLevelOct:
         for audio_file in audio_files:
             db = []
 
-            x, _ = sf.read(os.path.join(self.audio_path, audio_file))
+            x, fs_read = sf.read(os.path.join(self.audio_path, audio_file))
             if x.ndim > 1:
                 x = x[:, 0]
-            x = np.asarray(x, dtype=np.float64)
-
+            x = np.asarray(x, dtype=np.float32).ravel()
             if len(x) < self.window_size:
                 logging.warning(f"Skipping {audio_file}: shorter than one window.")
                 continue
+            
+            if fs_read != self.fs:
+                logging.warning(f"File {audio_file} has fs={fs_read} but expected {self.fs}. Resampling audio file")
+                x = soxr.resample(x,in_rate = fs_read,out_rate=self.fs).astype(np.float32,copy=False)
+                logging.info(f"Resampled file {audio_file} into fs={self.fs} ")
 
             name_split = os.path.splitext(audio_file)[0]
             start_timestamp = datetime.datetime.strptime(name_split, "%Y%m%d_%H%M%S")
@@ -178,22 +195,40 @@ class LeqLevelOct:
             ziA = None
             ziC = None
             ziBands = [None] * len(self.sos_bank)
-
+            #---C++ implementation substitution----
             for fstart, timestamp in zip(frame_starts, timestamps):
                 frame = x[fstart:fstart + self.window_size]
-
+                
                 # A/C weighting via lfilter_np (b,a)
-                yA, ziA = lfilter_np(self.bA, self.aA, frame, zi=ziA)
-                yC, ziC = lfilter_np(self.bC, self.aC, frame, zi=ziC)
+                #yA, ziA = lfilter_np(self.bA, self.aA, frame, zi=ziA)
+                #yC, ziC = lfilter_np(self.bC, self.aC, frame, zi=ziC)
 
-                LA = round(get_level_db(yA, self.C), 2)
-                LC = round(get_level_db(yC, self.C), 2)
-                LZ = round(get_level_db(frame, self.C), 2)
+                self.bA = np.ascontiguousarray(self.bA, dtype=np.float32)
+                self.aA = np.ascontiguousarray(self.aA, dtype=np.float32)
+                frame   = np.ascontiguousarray(frame, dtype=np.float32)
 
+                if ziA is not None:
+                    ziA = np.ascontiguousarray(ziA, dtype=np.float32)
+
+                yA, ziA  = m.lfilter_np(self.bA, self.aA, frame, ziA)
+                yC, ziC  = m.lfilter_np(self.bC, self.aC, frame, ziC)
+
+                
+
+
+                #LA = round(get_level_db(yA, self.C), 2)
+                #LC = round(get_level_db(yC, self.C), 2)
+                #LZ = round(get_level_db(frame, self.C), 2)
+
+                LA = round(float(m.get_level_db(yA, self.C)),2)
+                LC = round(float(m.get_level_db(yC, self.C)),2)
+                LZ = round(float(m.get_level_db(frame, self.C)),2)
                 # LAmax/LAmin over FAST subchunks (8 per second if window=fs)
+
                 fast_chunk = self.window_size // 8
                 fast_levels = [
-                    get_level_db(yA[i:i + fast_chunk], self.C)
+                    #get_level_db(yA[i:i + fast_chunk], self.C)
+                    float(m.get_level_db(yA[i:i + fast_chunk], self.C))
                     for i in range(0, len(yA) - fast_chunk + 1, fast_chunk)
                 ]
                 Lmax = round(float(np.max(fast_levels)), 2)
@@ -201,18 +236,31 @@ class LeqLevelOct:
 
                 # 1/3-oct band levels via SOS bank
                 band_levels = []
-                for i, sos in enumerate(self.sos_bank):
-                    yb, ziBands[i] = sosfilt_np(sos, frame, zi=ziBands[i])
-                    band_levels.append(round(get_level_db(yb, self.C), 2))
 
+                for i, sos in enumerate(self.sos_bank):
+                    sos = np.asarray(sos, dtype=np.float32)
+                    sos = np.ascontiguousarray(sos,dtype = np.float32)
+                    #yb, ziBands[i] = sosfilt_np(sos, frame, zi=ziBands[i])
+
+                    
+
+                    yb , ziBands[i] = m.sosfilt_np(sos,frame,zi=ziBands[i])
+                    #band_levels.append(round(get_level_db(yb, self.C), 2))
+                    band_levels.append(round(m.get_level_db(yb,self.C),2))
+
+                #20db fix
+                    band_levels = twenty_db_fix(band_levels)
                 row = [LA, LC, LZ, Lmax, Lmin] + band_levels + [
                     audio_file,
-                    timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                    timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
                 ]
                 db.append(row)
 
-            all_data.append(db)
-            logging.info(f"Processed file: {audio_file}")
+            if db:
+                all_data.append(db)
+                logging.info(f"Processed file: {audio_file} (rows={len(db)})")
+            else:
+                logging.warning(f"Processed file: {audio_file} produced 0 rows (no frames).")
 
         return all_data, col_names
 
@@ -226,10 +274,12 @@ def main():
       python leq_levels_oct_sos.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\3-Medidas\"
     """
     args = parse_arguments()
-    stable_version = get_stable_version()
+    #stable_version = get_stable_version()
+    #--DEBUG--
+    stable_version = "v0.1.0"
     base_path = args.path
 
-    calibration_constants = read_calibration_constants("calibration_constants.ini")
+    calibration_constants = read_calibration_constants("/home/aac/I+D/CODIGOS/Audio_Processing/SPL/Leq_level_oct/calibration_constants.ini")
 
     audiomoth_folders = list(find_audiomoth_folders(base_path))
     if args.limit_folders is not None:
@@ -302,6 +352,7 @@ def main():
         all_data_subfolder = []
 
         logging.info(f"Processing {len(valid_audio_files)} files in {subfolder}...")
+        
         for audio_file in tqdm(valid_audio_files, desc="Processing audio files"):
             try:
                 filepath = os.path.join(audio_path, audio_file)
@@ -321,14 +372,22 @@ def main():
 
         # Save output
         if all_data_subfolder:
+            
             flat_data = [row for file_rows in all_data_subfolder for row in file_rows]
+            
+
+            if not flat_data:
+                logging.warning(f"No rows to save for folder {subfolder} (flat_data is empty). Skipping CSV.")
+                continue
+
             df = pd.DataFrame(flat_data, columns=col_names)
             df = df.sort_values(by="date")
-
+            
             folder_name = subfolder.split("\\")[-1]
             output_filename = f"leq_oct_{folder_name}_{stable_version}_sos_weighting.csv"
+            #Testing
             output_path = os.path.join(audio_path, output_filename)
-
+            output_path = "/home/aac/I+D/TEST/MUXICA/C1/3-Medidas/P1/leq_oct_test.csv"
             df.to_csv(output_path, index=False)
             logging.info(f"Output saved to {output_path}")
             print(f"Output saved to {output_path}")

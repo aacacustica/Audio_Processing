@@ -218,3 +218,18 @@ def get_stable_version():
     tag_selected = tag_selected.replace(".", "_")
     logging.info(f"Latest stable version string: {tag_selected}")
     return tag_selected
+
+
+def twenty_db_fix(levels):
+    levels_fix = []
+    """"
+    for row in levels:
+        row_fix = []
+        for octave_level in row:
+            row_fix.append(octave_level + 20)
+        levels_fix.append(row_fix)
+    """
+    for level in levels:
+        levels_fix.append(level + 20)
+
+    return levels_fix

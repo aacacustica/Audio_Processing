@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"/io/build-cp312/cmake_install.cmake",
+		"/io/build-cp312/libs_c/deps/pybind11/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

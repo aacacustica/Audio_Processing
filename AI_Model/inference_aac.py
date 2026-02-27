@@ -10,6 +10,7 @@ from utils import *
 import datetime
 import audio_metadata
 import argparse
+import csv
 
 import params as yamnet_params
 import yamnet as yamnet_model
@@ -152,7 +153,9 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
         # processing audio files
         print()
         all_data_subfolder = []
+        prediction_per_class_count = {}
         for file_name in tqdm.tqdm(valid_audio_files, desc='Processing audio files'):
+            prediction_per_file_per_class_count = {}
             try:
                 full_path = os.path.join(audio_path, file_name)
                 predictions_list, embeddings = classifier.process_single_file(full_path, window_size, save_embeddings, save_spectrogram)
@@ -177,7 +180,15 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
                         if prediction[idx] >= threshold:
                             filtered_classes.append(classifier.yamnet_classes[idx])
                             filtered_probabilities.append(f'{prediction[idx]:.4f}')
+                            #TESTING-----------------
+                            if classifier.yamnet_classes[idx] not in prediction_per_class_count:
+                                prediction_per_class_count[classifier.yamnet_classes[idx]] = 0
+                            prediction_per_class_count[classifier.yamnet_classes[idx]] += 1
 
+                            if classifier.yamnet_classes[idx] not in prediction_per_file_per_class_count:
+                                prediction_per_file_per_class_count[classifier.yamnet_classes[idx]] = 0
+                            prediction_per_file_per_class_count[classifier.yamnet_classes[idx]] += 1
+                            #TESTING-----------------
                     # adjust timestamp based on window size
                     adjusted_timestamp = start_timestamp if window_size is None else start_timestamp + datetime.timedelta(seconds=i*window_size)
 
@@ -187,13 +198,31 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
                         filtered_classes,
                         filtered_probabilities
                     ])
-
+                    #TESTING-----------------
+                    prediction_count_filename = f"prediction_count_{file_name}_threshold_{threshold}.csv"
+                    subfolder_path = subfolder.replace("3-Medidas","5-Resultados")
+                    output_count_path = os.path.join(subfolder_path,"AI_MODEL","Predictions")
+                    
+                    if not os.path.exists(output_count_path):
+                        os.makedirs(output_count_path)
+                    with open(os.path.join(output_count_path, prediction_count_filename),'w') as f:
+                        w = csv.writer(f)
+                        w.writerows(prediction_per_file_per_class_count.items())
+                    #TESTING-----------------
             except Exception as e:
                 logging.error(f"Error processing file {file_name}: {e}")
 
         # save predictions to csv
         if all_data_subfolder:
             save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, model_type, logging, window_size, stable_version)
+            #TESTING-----------------
+            prediction_count_filename = f"prediction_count_threshold_{threshold}.csv"
+            subfolder_path = subfolder.replace("3-Medidas","5-Resultados")
+            output_count_path = os.path.join(subfolder_path,"AI_MODEL","Predictions")
+            with open(os.path.join(output_count_path, prediction_count_filename),'w') as f:
+                w = csv.writer(f)
+                w.writerows(prediction_per_class_count.items())
+            #TESTING-----------------
         else:
             logging.warning(f"No data to save for folder {subfolder}")
 

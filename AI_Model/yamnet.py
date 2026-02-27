@@ -36,39 +36,39 @@ def _batch_norm(name, params):
 
 def _conv(name, kernel, stride, filters, params):
   def _conv_layer(layer_input):
-    output = layers.Conv2D(name='{}/conv'.format(name),
+    output = layers.Conv2D(name='{}_conv'.format(name),
                            filters=filters,
                            kernel_size=kernel,
                            strides=stride,
                            padding=params.conv_padding,
                            use_bias=False,
                            activation=None)(layer_input)
-    output = _batch_norm('{}/conv/bn'.format(name), params)(output)
-    output = layers.ReLU(name='{}/relu'.format(name))(output)
+    output = _batch_norm('{}_conv_bn'.format(name), params)(output)
+    output = layers.ReLU(name='{}_relu'.format(name))(output)
     return output
   return _conv_layer
 
 
 def _separable_conv(name, kernel, stride, filters, params):
   def _separable_conv_layer(layer_input):
-    output = layers.DepthwiseConv2D(name='{}/depthwise_conv'.format(name),
+    output = layers.DepthwiseConv2D(name='{}_depthwise_conv'.format(name),
                                     kernel_size=kernel,
                                     strides=stride,
                                     depth_multiplier=1,
                                     padding=params.conv_padding,
                                     use_bias=False,
                                     activation=None)(layer_input)
-    output = _batch_norm('{}/depthwise_conv/bn'.format(name), params)(output)
-    output = layers.ReLU(name='{}/depthwise_conv/relu'.format(name))(output)
-    output = layers.Conv2D(name='{}/pointwise_conv'.format(name),
+    output = _batch_norm('{}_depthwise_conv_bn'.format(name), params)(output)
+    output = layers.ReLU(name='{}_depthwise_conv_relu'.format(name))(output)
+    output = layers.Conv2D(name='{}_pointwise_conv'.format(name),
                            filters=filters,
                            kernel_size=(1, 1),
                            strides=1,
                            padding=params.conv_padding,
                            use_bias=False,
                            activation=None)(output)
-    output = _batch_norm('{}/pointwise_conv/bn'.format(name), params)(output)
-    output = layers.ReLU(name='{}/pointwise_conv/relu'.format(name))(output)
+    output = _batch_norm('{}_pointwise_conv_bn'.format(name), params)(output)
+    output = layers.ReLU(name='{}_pointwise_conv_relu'.format(name))(output)
     return output
   return _separable_conv_layer
 
@@ -94,9 +94,13 @@ _YAMNET_LAYER_DEFS = [
 
 def yamnet(features, params):
   """Define the core YAMNet mode in Keras."""
+
+  #net = layers.Reshape(
+  #    (params.patch_frames, params.patch_bands, 1),
+  #    input_shape=(params.patch_frames, params.patch_bands))(features) --> En functionalAPI no es necesaria una definicíon de input_shape
   net = layers.Reshape(
       (params.patch_frames, params.patch_bands, 1),
-      input_shape=(params.patch_frames, params.patch_bands))(features)
+      )(features)
   for (i, (layer_fun, kernel, stride, filters)) in enumerate(_YAMNET_LAYER_DEFS):
     net = layer_fun('layer{}'.format(i + 1), kernel, stride, filters, params)(net)
   embeddings = layers.GlobalAveragePooling2D()(net)
@@ -118,9 +122,12 @@ def yamnet_frames_model(params):
     - log_mel_spectrogram: (num_spectrogram_frames, num_mel_bins) spectrogram feature matrix
   """
   waveform = layers.Input(batch_shape=(None,), dtype=tf.float32)
-  waveform_padded = features_lib.pad_waveform(waveform, params)
-  log_mel_spectrogram, features = features_lib.waveform_to_log_mel_spectrogram_patches(
-      waveform_padded, params)
+
+  log_mel_spectrogram, features = tf.keras.layers.Lambda(
+      lambda x: features_lib.waveform_to_log_mel_spectrogram_patches(
+          features_lib.pad_waveform(x, params), params
+      )
+  )(waveform)
   predictions, embeddings = yamnet(features, params)
   frames_model = Model(
       name='yamnet_frames', inputs=waveform,

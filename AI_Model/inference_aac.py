@@ -1,5 +1,20 @@
 from __future__ import division, print_function
 
+import tensorflow as tf
+
+gpus = tf.config.list_physical_devices('GPU')
+print("Num GPUs Available:", len(gpus))
+
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except RuntimeError as e:
+        print(e)
+
+for gpu in gpus:
+    print(gpu)
+
 import os
 import numpy as np
 import tqdm
@@ -191,14 +206,17 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
                             #TESTING-----------------
                     # adjust timestamp based on window size
                     adjusted_timestamp = start_timestamp if window_size is None else start_timestamp + datetime.timedelta(seconds=i*window_size)
-
+                    
+                    selected_class = sorted(filtered_classes)[0] if filtered_classes else 'Sin inferencia'
+                    selected_prob = sorted(filtered_probabilities)[0] if filtered_probabilities else "Sin inferencia"
                     all_data_subfolder.append([
                         file_name, 
                         adjusted_timestamp.strftime('%Y-%m-%d %H:%M:%S'), 
-                        filtered_classes,
-                        filtered_probabilities
+                        selected_class,
+                        selected_prob
                     ])
                     #TESTING-----------------
+                    """
                     prediction_count_filename = f"prediction_count_{file_name}_threshold_{threshold}.csv"
                     subfolder_path = subfolder.replace("3-Medidas","5-Resultados")
                     output_count_path = os.path.join(subfolder_path,"AI_MODEL","Predictions")
@@ -208,6 +226,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
                     with open(os.path.join(output_count_path, prediction_count_filename),'w') as f:
                         w = csv.writer(f)
                         w.writerows(prediction_per_file_per_class_count.items())
+                    """
                     #TESTING-----------------
             except Exception as e:
                 logging.error(f"Error processing file {file_name}: {e}")

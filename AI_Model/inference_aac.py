@@ -234,22 +234,35 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
         # save predictions to csv
         if all_data_subfolder:
             save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, model_type, logging, window_size, stable_version)
-            #TESTING-----------------
-            prediction_count_filename = f"prediction_count_threshold_{threshold}.csv"
-            subfolder_path = subfolder.replace("3-Medidas","5-Resultados")
-            output_count_path = os.path.join(subfolder_path,"AI_MODEL","Predictions")
-            with open(os.path.join(output_count_path, prediction_count_filename),'w') as f:
-                w = csv.writer(f)
-                w.writerows(prediction_per_class_count.items())
-            #TESTING-----------------
+
+
         else:
             logging.warning(f"No data to save for folder {subfolder}")
 
+        #generate summary file
+        summary_filename = f"summary_{args.model}_threshold_{args.threshold}.txt"
+        subfolder_path = args.path.replace("3-Medidas","5-Resultados")
+        output_summary_path = os.path.join(subfolder_path,subfolder_name,"AI_MODEL","Predictions")
+        with open(os.path.join(output_summary_path, summary_filename),'w') as f:
+
+            f.write(f"Resumen de precciones del modelo:        {args.model}\n")
+            f.write(f"Del archivo:                             {subfolder}\n")
+            f.write(f"Usando un umbral de:                     {args.threshold}\n")
+            f.write(f"Aplicando una ventana de predicciones de:{args.window if args.window else 'Full audio'} segundos \n")
+            f.write(f"Habiendo procesado un total de:          {len(audiomoth_folders)} archivos\n")
+            f.write(f"Habiendo encontrado un total de:         {len(prediction_per_class_count)} clases con predicciones por encima del umbral\n")
+            f.write(f"\n")
+            f.write("Clases con predicciones por encima del umbral:\n")
+            
+            for class_name, count in prediction_per_class_count.items():
+                f.write(f"{class_name}: {count}\n")
+
+        logging.info(f"Summary file saved to: {os.path.join(output_summary_path, summary_filename)}")
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Make prediction with YAMNet model for audio files in a directory')
-    parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
+    parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed ( Medidas folder )')
     parser.add_argument('-m', '--model', type=str, required=True, help='Type "urban" or "port" model to be processed later on.')
     parser.add_argument('-w', '--window', type=float, default=None, help='Window size in seconds for processing audio files. Default is None for processing full audio.')
     parser.add_argument('-t', '--threshold', type=float, default=0.30, help='Classification threshold for predictions.')
@@ -270,6 +283,6 @@ if __name__ == '__main__':
     
     # process audio files
     classifier = AudioClassifier()
-    process_audio_files(classifier, args.path, args.window, args.threshold, stable_version, args.embeddings, args.spectrogram, args.model)
-
+    prediction_per_class_count = process_audio_files(classifier, args.path, args.window, args.threshold, stable_version, args.embeddings, args.spectrogram, args.model)
     logging.info("Inference finished.")
+

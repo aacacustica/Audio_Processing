@@ -2,26 +2,22 @@ from __future__ import division, print_function
 
 import tensorflow as tf
 
-gpus = tf.config.list_physical_devices('GPU')
-print("Num GPUs Available:", len(gpus))
-
-if gpus:
-    try:
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-    except RuntimeError as e:
-        print(e)
-
-for gpu in gpus:
-    print(gpu)
-
 import os
 import numpy as np
 import tqdm
 import resampy
 import soundfile as sf
 import logging
-from utils import *
+
+from utils import (
+    find_audiomoth_folders,
+    get_audiofiles,
+    save_embeddings_funct,
+    save_predictions_to_csv,
+    save_spectrogram_w_funct,
+    setup_gpu,
+    get_stable_version,
+)
 import datetime
 import audio_metadata
 import argparse
@@ -41,6 +37,15 @@ logging.basicConfig(
     filemode='w'
     )
 
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+        logical_gpus = tf.config.list_logical_devices('GPU')
+        print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+    except RuntimeError as e:
+        print(e)
 
 class AudioClassifier:
     def __init__(self):
@@ -91,6 +96,7 @@ class AudioClassifier:
         else:
             logging.info(f"Processing file with window size: {window_size}")
             logging.info(f"Waveform shape: {waveform.shape}")
+
             # if save_spectrogram:
             #     logging.info("Entering the window size analysis. But we run the whole audio file to save the complteted spectrogram.")
             #     scores, embeddings, spectrogram = self.yamnet(waveform)
@@ -99,7 +105,7 @@ class AudioClassifier:
             #     save_spectrogram_w_funct(spectrogram, scores, self.yamnet_classes, file_path, self.params.sample_rate)
 
             logging.info(f"Processing file with window size: {window_size}")
-            window_size_samples = int(window_size * sr)
+            window_size_samples = int(window_size * self.params.sample_rate)
 
             for start_idx in range(0, len(waveform), window_size_samples):
                 end_idx = start_idx + window_size_samples
@@ -207,8 +213,8 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
                     # adjust timestamp based on window size
                     adjusted_timestamp = start_timestamp if window_size is None else start_timestamp + datetime.timedelta(seconds=i*window_size)
                     
-                    selected_class = sorted(filtered_classes)[0] if filtered_classes else 'Sin inferencia'
-                    selected_prob = sorted(filtered_probabilities)[0] if filtered_probabilities else "Sin inferencia"
+                    selected_class = sorted(filtered_classes)[0] if filtered_classes else  []
+                    selected_prob = sorted(filtered_probabilities)[0] if filtered_probabilities else []
                     all_data_subfolder.append([
                         file_name, 
                         adjusted_timestamp.strftime('%Y-%m-%d %H:%M:%S'), 
@@ -233,7 +239,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
 
         # save predictions to csv
         if all_data_subfolder:
-            save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, model_type, logging, window_size, stable_version)
+            save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, model_type, logging, window_size, stable_version, threshold)
 
 
         else:
@@ -253,7 +259,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
             f.write(f"Habiendo encontrado un total de:         {len(prediction_per_class_count)} clases con predicciones por encima del umbral\n")
             f.write(f"\n")
             f.write("Clases con predicciones por encima del umbral:\n")
-            
+
             for class_name, count in prediction_per_class_count.items():
                 f.write(f"{class_name}: {count}\n")
 

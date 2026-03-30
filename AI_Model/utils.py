@@ -23,18 +23,18 @@ def setup_gpu():
             print()
 
 
-def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, model_type, logging, window_size=None, stable_version=None):
+def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, model_type, logging, window_size=None, stable_version=None,threshold=None):
     logging.info("")
     if window_size is not None:
         if model_type == "port":
-            output_filename = f'Port_Model_{subfolder_name}_w_{window_size}s_{stable_version}.csv'
+            output_filename = f'Port_Model_{subfolder_name}_w_{window_size}s_{stable_version}t_{threshold}.csv'
         else:
-            output_filename = f'Urban_Model_{subfolder_name}_w_{window_size}s_{stable_version}.csv'
+            output_filename = f'Urban_Model_{subfolder_name}_w_{window_size}s_{stable_version}t_{threshold}.csv'
     else:
         if model_type == "port":
-            output_filename = f'Port_Model_{subfolder_name}_{stable_version}.csv'
+            output_filename = f'Port_Model_{subfolder_name}_{stable_version}t_{threshold}.csv'
         else:
-            output_filename = f'Urban_Model_{subfolder_name}_{stable_version}.csv'
+            output_filename = f'Urban_Model_{subfolder_name}_{stable_version}t_{threshold}.csv'
     
     subfolder = subfolder.replace('3-Medidas', '5-Resultados')
     output_folder = os.path.join(subfolder, 'AI_MODEL', 'Predictions')

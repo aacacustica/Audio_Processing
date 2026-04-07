@@ -157,7 +157,7 @@ def taxonomy_json():
 
 
 def prediction_csv(path_input):
-    df_prediction = pd.read_csv(path_input, converters={'class': eval, 'probability': eval})
+    df_prediction = pd.read_csv(path_input, parse_dates=['date'])
     columns_to_check = ["classes_custom", "probabilities_custom", "sum_probs_custom", "sum_probs_original"]
     
     for col in columns_to_check:

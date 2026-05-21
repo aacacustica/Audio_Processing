@@ -90,7 +90,7 @@ def process_folder(folder_path, folder_date_time, folder_threshold, logger):
             logger.warning(f"No measurement files found in {folder_path}")
             return None, None, None
         
-        return load_data(files[0], logger, new_date=new_date, new_time=new_time, new_threshold_date=new_threshold_date, new_threshold_time=new_threshold_time)
+        return load_data(files, logger, new_date=new_date, new_time=new_time, new_threshold_date=new_threshold_date, new_threshold_time=new_threshold_time)
     return None, None, None 
 
 

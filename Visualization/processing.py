@@ -11,7 +11,7 @@ import glob
 import json
 
 
-def load_data(file_path, logger, new_date=None, new_time=None, new_threshold_date=None, new_threshold_time=None):
+def load_data(files, logger, new_date=None, new_time=None, new_threshold_date=None, new_threshold_time=None):
     slm_type_function_mapping = {
         "audiomoth": (get_data_audiomoth, audiopost_dict),
         "814": (get_data_814, larson814_dict),
@@ -24,17 +24,29 @@ def load_data(file_path, logger, new_date=None, new_time=None, new_threshold_dat
         "bruel&kjaer": (get_data_bruel_kjaer, bruel_kjaer_dict),
     } # SLM stands for Sound Level Meter
     # load the data for each SLM type until one works |  for each slm_type, (func, slm_dict) in slm_type_function_mapping.items(): means that for each key and value in the dictionary, the key is slm_type and the value is a tuple with the function and the dictionary | the function is the function to load the data and the dictionary is the dictionary with the column names for the SLM type
+    file_path = files[0]
     for slm_type, (func, slm_dict) in slm_type_function_mapping.items():
         try:
             logger.info(f"Loading file {file_path} for SLM type {slm_type}")
 
             # this is the actual invocation of the function
-            df = func(file_path, logger, new_date=new_date, new_time=new_time, new_threshold_date=new_threshold_date, new_threshold_time=new_threshold_time)
+            first_df = func(file_path, logger, new_date=new_date, new_time=new_time, new_threshold_date=new_threshold_date, new_threshold_time=new_threshold_time)
 
             # loggers
-            logger.info("\n")
-            logger.info(f"Data loaded for SLM type {slm_type}")
-            return df, slm_type, slm_dict
+            if len(files) > 1 :
+                dfs = [first_df]
+                for file in files[1:]:
+                    df_i = func(file, logger, new_date=new_date, new_time=new_time, new_threshold_date=new_threshold_date, new_threshold_time=new_threshold_time)
+                    dfs.append(df_i)
+
+                df = pd.concat(dfs,ignore_index=True)
+                return df,slm_type,slm_dict
+            else:
+                
+                logger.info("\n")
+                logger.info(f"Data loaded for SLM type {slm_type}")
+                return first_df, slm_type, slm_dict
+
         
         except Exception as e:
             clean_message = str(e).replace('\n', ' ')
@@ -63,7 +75,7 @@ def process_folder(folder_path, folder_date_time, folder_threshold, logger):
             files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV', 'XLSX'))]
             if files:
                 logger.info(f"Files found: {files}")
-                return load_data(files[0], logger, new_date=new_date, new_time=new_time, new_threshold_date=new_threshold_date, new_threshold_time=new_threshold_time)
+                return load_data(files, logger, new_date=new_date, new_time=new_time, new_threshold_date=new_threshold_date, new_threshold_time=new_threshold_time)
             else:
                 logger.warning(f"No measurement files found in {subfolder_path}")
 

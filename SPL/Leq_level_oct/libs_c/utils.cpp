@@ -97,7 +97,6 @@ std::tuple<nc::NdArray<float>, nc::NdArray<float>> lfilter_np(const nc::NdArray<
 
     return {y, z};
 
-
 }
 
 std::tuple<nc::NdArray<float>, nc::NdArray<float>> sosfilt_np(const nc::NdArray<float>& sos, const nc::NdArray<float>& x, const nc::NdArray<float>& zi){
@@ -115,9 +114,6 @@ std::tuple<nc::NdArray<float>, nc::NdArray<float>> sosfilt_np(const nc::NdArray<
     if (!(y_rows == 1 || y_cols == 1)) {
         throw std::invalid_argument("x must be a vector (1xN or Nx1).");
     }
-
-
-
 
     if (zi.size() == 0) {
         z = nc::zeros<float>(nsec, 2);

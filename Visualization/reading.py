@@ -66,7 +66,7 @@ def get_data_lx_ES(file_path: str, logger, new_date=None, new_time=None, new_thr
 
 
 def get_data_lx_EN(file_path: str,logger, new_date=None, new_time=None, new_threshold_date=None, new_threshold_time=None):
-    df = pd.read_excel(file_path,sheet_name=4)
+    df = pd.read_excel(file_path,sheet_name='Time History')
     df['datetime'] = pd.to_datetime(df['Date'])
 
     try:    

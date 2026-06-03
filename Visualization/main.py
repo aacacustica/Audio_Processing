@@ -218,7 +218,9 @@ def main():
                     if os.path.exists(spl_sonometer_folder):
                         
                         # correction coefficient
-                        spl_sonometer_folder_name = spl_sonometer_folder.split("\\")[-2]
+                        if "\\" in spl_sonometer_folder: spl_sonometer_folder_name = spl_sonometer_folder.split("\\")[-2]
+                        else: spl_sonometer_folder_name = spl_sonometer_folder.split("/")[-2]
+                        
                         coeff = float(input(f"Enter correction coefficient for {spl_sonometer_folder_name}: "))
                         
                         new_date = None

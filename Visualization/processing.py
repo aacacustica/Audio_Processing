@@ -103,8 +103,12 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
     for folder in tqdm(folders, desc="Processing folders"): # \\192.168.205.117\AAC_Server\OCIO\24052_ZARAUTZ\CAMPAÑA_1\3-Medidas\ZARAUTZ_C1_P1\AUDIOMOTH
         reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
-        folder = folder.split("\\")[:-1]
-        folder = os.path.join('\\\\', *folder)
+        if "\\" in folder:
+            folder.split("\\")[:-1]
+            folder = os.path.join('\\\\', *folder)
+        else:
+            folder = folder.split("/")[-1]
+        
         logger.info(f"Entering folder: {folder}")
         spl_string = "SPL"
         graphics_string = f"Graphics_{sufix_string}"
@@ -304,7 +308,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
                 # here has to be the prediction analysis
 
-                exit()
+                #exit()
 
 
                 # just for now
@@ -321,14 +325,22 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info("Applying db correction")
 
                 for key, value in folder_coefficients.items():
-                    key = key.split("\\")[:-1]
-                    folder_name = key[-1]
+
+                    if "\\" in key: 
+                        key = key.split("\\")[:-1]
+                        folder_name = key[-1]
+                        key = os.path.join('\\\\', *key)
+                        
+                    else: 
+                        key = key.split("/")[-1]
+                        folder_name = key[-1]
+                    
 
                     # save tuples folder name, coefficient value
                     folder_name_coeff_value = (folder_name, value)
                     tuple_folder_coeff.append(folder_name_coeff_value)
 
-                    key = os.path.join('\\\\', *key)
+                    
 
                     # assign the value to the folder
                     if folder == key:
@@ -346,7 +358,9 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             
             logger.info("")        
             logger.info(f"PLOTTING SECTION")
-            folder = folder.split("\\")[-1]
+            if "\\" in folder: folder = folder.split("\\")[-1]
+            else: folder = folder.split("/")[-1]
+            
             
             # add slm_dict column LAEQ_COLUMN_COEFF: with the value of LA_corrected
             slm_dict["LAEQ_COLUMN_COEFF"] = 'LA_corrected'

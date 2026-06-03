@@ -131,27 +131,36 @@ def get_day_levels_valencia(df,laeq_column):
 
 
 def remove_unnamed_columns(df_preds):
+    
     df_preds = df_preds.loc[:, ~df_preds.columns.str.contains('^Unnamed')]
     df_preds = df_preds.drop(columns=['Brown_Level_1'])
     df_preds = df_preds.drop(columns=['index'])
+    
     return df_preds
 
 
 def yamnet_class_map_csv():
+    
     home_dir = os.path.expanduser('~')
-    yammnet_class_map_path = os.path.join(home_dir, RELATIVE_PATH_YAMNET_MAP.lstrip('\\'))
+    cwd_dir = os.getcwd()
+    cwd_dir = cwd_dir.replace("Visualization","")
+    yammnet_class_map_path = os.path.join(cwd_dir, YAMNET_CLASS_MAP_FILE_NAME)
     df_audioset = pd.read_csv(yammnet_class_map_path,sep=';')
-    df_audioset = remove_unnamed_columns(df_audioset)
+    #df_audioset = remove_unnamed_columns(df_audioset)
+    
     return df_audioset
 
 
 def taxonomy_json():
     home_dir = os.path.expanduser('~')
-    urban_taxonomy_map_path = os.path.join(home_dir, RELATIVE_PATH_TAXONOMY_URBAN.lstrip('\\'))
+    cwd_dir = os.getcwd()
+    cwd_dir = cwd_dir.replace("Visualization","")
+
+    urban_taxonomy_map_path = os.path.join(cwd_dir, URBAN_TAXONOMY_FILE_NAME)
     urban_taxonomy_map = pd.read_json(urban_taxonomy_map_path, typ='series').to_dict()
     
     
-    port_taxonomy_map_path = os.path.join(home_dir, RELATIVE_PATH_TAXONOMY_PORT.lstrip('\\'))
+    port_taxonomy_map_path = os.path.join(cwd_dir, PORT_TAXONOMY_FILE_NAME)
     port_taxonomy_map = pd.read_json(port_taxonomy_map_path, typ='series').to_dict()
     return urban_taxonomy_map, port_taxonomy_map
 

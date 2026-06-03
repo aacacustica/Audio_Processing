@@ -204,6 +204,7 @@ def get_data_SV307(file_path: str,logger, new_date=None, new_time=None, new_thre
     csv_files = [f for f in os.listdir(folder_path) if f.endswith('.csv')]
     logger.info(f"Number of csv files in the folder: {len(csv_files)}")
     
+    
     if len(csv_files) > 1:
         logger.info("Concatenating all the csv files in the folder and ordering them by date")
         df_all = []

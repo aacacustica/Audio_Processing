@@ -73,9 +73,9 @@ SHOW_OCA = True
 
 #############
 OCA_RESIDENTIAL = {
-    'ld_limit': 65,
-    'le_limit': 65,
-    'ln_limit': 55,
+    'ld_limit': 60,
+    'le_limit': 60,
+    'ln_limit': 50,
 }
 
 OCA_LEISURE = {

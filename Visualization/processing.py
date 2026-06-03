@@ -210,44 +210,95 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             
             try:
                 # drop the beginning and ending of the measurement (15min)
-                df = df.loc[start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')]
-                logger.info(f"SPL df was trimmed, {REMOVE_START_TIME} secs from the beggining and {REMOVE_END_TIME} secs from the end")
-                
+                df = df.loc[
+                    start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):
+                    end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')
+                ]
+
+                logger.info(
+                    f"SPL df was trimmed, {REMOVE_START_TIME} secs from the beginning "
+                    f"and {REMOVE_END_TIME} secs from the end"
+                )
+
                 if prediction_csv_file is not None:
-                    prediction_csv_file = prediction_csv_file.loc[pred_start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):pred_end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')]
-                    logger.info(f"Prediction df was trimmed, {REMOVE_START_TIME} secs from the beggining and {REMOVE_END_TIME} secs from the end")
+                    prediction_csv_file = prediction_csv_file.loc[
+                        pred_start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):
+                        pred_end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')
+                    ]
+
+                    logger.info(
+                        f"Prediction df was trimmed, {REMOVE_START_TIME} secs from the beginning "
+                        f"and {REMOVE_END_TIME} secs from the end"
+                    )
+
+                    logger.info(f"Prediction df shape after trimming: {prediction_csv_file.shape}")
+
+                    if prediction_csv_file.empty:
+                        logger.warning(
+                            "Prediction df is empty after trimming. "
+                            "Skipping prediction analysis columns."
+                        )
+                        prediction_csv_file = None
 
 
                 # add indicators column
-                logger.info(f"Adding indicators column")
-                df['indicador_str'] = df.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
+                logger.info("Adding indicators column")
+
+                df['indicador_str'] = df['hour'].apply(evaluation_period_str)
+
                 if prediction_csv_file is not None:
-                    prediction_csv_file['indicador_str'] = prediction_csv_file.apply(lambda x: evaluation_period_str(x['hour']), axis=1)
+                    prediction_csv_file['indicador_str'] = prediction_csv_file['hour'].apply(
+                        evaluation_period_str
+                    )
+
 
                 # add nights column
-                logger.info(f"Adding nights column")
-                df['night_str'] = df.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
-                if prediction_csv_file is not None:
-                    prediction_csv_file['night_str'] = prediction_csv_file.apply(lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
+                logger.info("Adding nights column")
 
+                df['night_str'] = df.apply(
+                    lambda x: add_night_column(x['hour'], x['weekday']),
+                    axis=1
+                )
+
+                if prediction_csv_file is not None:
+                    prediction_csv_file['night_str'] = prediction_csv_file.apply(
+                        lambda x: add_night_column(x['hour'], x['weekday']),
+                        axis=1
+                    )
 
 
                 # add oca column
-                logger.info(f"Adding oca column")
+                logger.info("Adding oca column")
                 logger.info(oca_limits)
 
                 df['oca'] = df['hour'].apply(
-                        lambda h: db_limit(h, **oca_limits)
-                   )
-                # df['oca'] = df.apply(lambda x: db_limit(x['hour'],ld_limit= LIMITE_DIA , le_limit= LIMITE_TARDE ,ln_limit= LIMITE_NOCHE) , axis=1)
+                    lambda h: db_limit(h, **oca_limits)
+                )
+
+                # If prediction file also needs OCA, uncomment this:
+                # if prediction_csv_file is not None:
+                #     prediction_csv_file['oca'] = prediction_csv_file['hour'].apply(
+                #         lambda h: db_limit(h, **oca_limits)
+                #     )
+
 
                 # removing nan values
                 if prediction_csv_file is not None:
                     prediction_csv_file = prediction_csv_file.dropna()
-                    logger.info(f"Removing nan values")
+                    logger.info("Removing nan values from prediction df")
+
+                    if prediction_csv_file.empty:
+                        logger.warning(
+                            "Prediction df is empty after dropna. "
+                            "Skipping prediction analysis."
+                        )
+                        prediction_csv_file = None
+
+
                 # check if there is nan values
                 if df.isnull().values.any():
-                    logger.warning(f"There are nan values in the dataframe")
+                    logger.warning("There are nan values in the dataframe")
+
 
                 print(prediction_csv_file)
 
@@ -255,24 +306,26 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
                 exit()
 
-                
+
                 # just for now
-                # create LCeq column which is LC - LA = LC_LA. I know the LC_LA and the LA
+                # create LCeq column which is LC - LA = LC_LA.
+                # I know the LC_LA and the LA
                 # df['LCeq'] = df['LAeq'] + df['LCeq-LAeq']
 
 
                 #####################################################
-                ########## APPLYING DB CORRECTION TO THE DATA #########
+                ########## APPLYING DB CORRECTION TO THE DATA ########
                 #####################################################
+
                 tuple_folder_coeff = []
-                logger.info(f"Applying db correction")
+                logger.info("Applying db correction")
+
                 for key, value in folder_coefficients.items():
                     key = key.split("\\")[:-1]
                     folder_name = key[-1]
 
-                    # save tupples folder name, coefficient value
+                    # save tuples folder name, coefficient value
                     folder_name_coeff_value = (folder_name, value)
-
                     tuple_folder_coeff.append(folder_name_coeff_value)
 
                     key = os.path.join('\\\\', *key)
@@ -280,7 +333,9 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                     # assign the value to the folder
                     if folder == key:
                         df = apply_db_correction(df, value, logger)
-                        logger.info(f"Apply {value} correction coefficient to the folder {folder}")
+                        logger.info(
+                            f"Apply {value} correction coefficient to the folder {folder}"
+                        )
 
 
             except Exception as e:

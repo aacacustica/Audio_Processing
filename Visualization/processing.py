@@ -103,9 +103,10 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
     for folder in tqdm(folders, desc="Processing folders"): # \\192.168.205.117\AAC_Server\OCIO\24052_ZARAUTZ\CAMPAÑA_1\3-Medidas\ZARAUTZ_C1_P1\AUDIOMOTH
         reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
+        point_folder = os.path.basename(reg_folder)
         if "\\" in folder:
-            folder.split("\\")[:-1]
-            folder = os.path.join('\\\\', *folder)
+            folder.split("\\")[-1]
+            #folder = os.path.join('\\\\', *folder)
         else:
             folder = folder.split("/")[-1]
         
@@ -113,6 +114,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         spl_string = "SPL"
         graphics_string = f"Graphics_{sufix_string}"
         result_dir_name = "5-Resultados"
+        
         if "\\" in reg_folder: 
             resultados_dir = reg_folder.split("\\")[:-3]
             resultados_dir = os.path.join('\\\\', *resultados_dir, result_dir_name)
@@ -134,7 +136,8 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             os.makedirs(resultados_dir)
             logger.info(f"Created output folder: {resultados_dir}")
         
-        folder_output_dir = os.path.join(resultados_dir, folder, spl_string, graphics_string)
+        folder_output_dir = os.path.join(resultados_dir,point_folder,spl_string, folder, graphics_string)
+        
         logger.info(f"folder_output_dir: {folder_output_dir}")
         if '3-Medidas' in folder_output_dir:
             folder_output_dir = folder_output_dir.replace('3-Medidas', '5-Resultados')
@@ -175,6 +178,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             logger.info(f"Getting the data from the dataframes")
             
             df, slm_type, slm_dict = process_folder(reg_folder, folder_date_time, folder_threshold, logger)
+            
             if df is None:
                 logger.warning(f"df is None")
                 continue
@@ -331,7 +335,8 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info("Applying db correction")
 
                 for key, value in folder_coefficients.items():
-                    key = "\\192.168.205.115\\aac_server\\OCIO\\26013_ETS_Salburua\\C3\\3-Medidas\\M2\\SONOMETRO"
+                    
+                    
                     if "\\" in key: 
                         key = key.split("\\")[-1]
                         folder_name = key[-1]
@@ -341,13 +346,10 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                         key = key.split("/")[-1]
                         folder_name = key[-1]
                     
-
                     # save tuples folder name, coefficient value
                     folder_name_coeff_value = (folder_name, value)
                     tuple_folder_coeff.append(folder_name_coeff_value)
-
                     
-
                     # assign the value to the folder
                     if folder == key:
                         df = apply_db_correction(df, value, logger)

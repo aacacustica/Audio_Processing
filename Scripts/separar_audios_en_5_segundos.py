@@ -1,39 +1,27 @@
 import argparse
 from pathlib import Path
+from datetime import datetime, timedelta
 import soundfile as sf
-import tqdm
 
 
 def arg_parser():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument(
-        "-f", "--folder",
-        type=str,
-        required=True,
-        help="Carpeta donde están los .wav"
-    )
-
+    parser.add_argument("-f", "--folder", type=str, required=True)
     parser.add_argument(
         "-v", "--ventana",
         type=float,
         default=15,
-        help="Duración de cada fragmento en minutos. Default: 15"
+        help="Duración de cada fragmento en minutos"
     )
 
     return parser.parse_args()
 
 
-def format_time(seconds: float) -> str:
-    """Convierte segundos a formato HHhMMmSSs."""
-    seconds = int(seconds)
-    h = seconds // 3600
-    m = (seconds % 3600) // 60
-    s = seconds % 60
-    return f"{h:02d}h{m:02d}m{s:02d}s"
-
-
 def split_audio(file_path: Path, output_folder: Path, ventana_minutos: float):
+    
+    start_datetime = datetime.strptime(file_path.stem, "%Y%m%d_%H%M%S")
+
     with sf.SoundFile(file_path, mode="r") as audio:
         sr = audio.samplerate
         total_frames = len(audio)
@@ -57,18 +45,11 @@ def split_audio(file_path: Path, output_folder: Path, ventana_minutos: float):
 
             end_frame = start_frame + len(data)
 
-            start_seconds = start_frame / sr
+            # Tiempo final real del fragmento
             end_seconds = end_frame / sr
+            fragment_datetime = start_datetime + timedelta(seconds=end_seconds)
 
-            start_label = format_time(start_seconds)
-            end_label = format_time(end_seconds)
-
-            output_name = (
-                f"{file_path.stem}_"
-                f"{start_label}-{end_label}"
-                f"{file_path.suffix}"
-            )
-
+            output_name = fragment_datetime.strftime("%Y%m%d_%H%M%S") + file_path.suffix
             output_path = output_folder / output_name
 
             sf.write(
@@ -93,9 +74,9 @@ def main():
     output_files_folder_path = audio_files_folder_path / "pistas_separadas"
     output_files_folder_path.mkdir(parents=True, exist_ok=True)
 
-    for file_path in tqdm.tqdm(audio_files_folder_path.iterdir(),unit=file_path):
+    for file_path in audio_files_folder_path.iterdir():
         if file_path.suffix.lower() == ".wav":
-            print(f"\nProcesando: {file_path.name}")
+            print(f"Procesando: {file_path.name}")
             split_audio(
                 file_path=file_path,
                 output_folder=output_files_folder_path,

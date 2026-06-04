@@ -113,8 +113,14 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
         spl_string = "SPL"
         graphics_string = f"Graphics_{sufix_string}"
         result_dir_name = "5-Resultados"
-        resultados_dir = reg_folder.split("\\")[:-3]
-        resultados_dir = os.path.join('\\\\', *resultados_dir, result_dir_name)
+        if "\\" in reg_folder: 
+            resultados_dir = reg_folder.split("\\")[:-3]
+            resultados_dir = os.path.join('\\\\', *resultados_dir, result_dir_name)
+        else: 
+            resultados_dir = reg_folder.split("/")[:-3]
+            resultados_dir = os.path.join(*resultados_dir,result_dir_name)
+        
+        
 
 
         ##############
@@ -325,9 +331,9 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info("Applying db correction")
 
                 for key, value in folder_coefficients.items():
-
+                    key = "\\192.168.205.115\\aac_server\\OCIO\\26013_ETS_Salburua\\C3\\3-Medidas\\M2\\SONOMETRO"
                     if "\\" in key: 
-                        key = key.split("\\")[:-1]
+                        key = key.split("\\")[-1]
                         folder_name = key[-1]
                         key = os.path.join('\\\\', *key)
                         

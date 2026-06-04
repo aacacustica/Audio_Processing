@@ -335,7 +335,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                     if "\\" in key: 
                         key = key.split("\\")[-1]
                         folder_name = key[-1]
-                        key = os.path.join('\\\\', *key)
+                        #key = os.path.join('\\\\', *key)
                         
                     else: 
                         key = key.split("/")[-1]

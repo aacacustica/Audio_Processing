@@ -353,7 +353,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                     tuple_folder_coeff.append(folder_name_coeff_value)
                     
                     # assign the value to the folder
-                    if folder == key:
+                    if (key in folder):
                         df = apply_db_correction(df, value, logger)
                         logger.info(
                             f"Apply {value} correction coefficient to the folder {folder}"

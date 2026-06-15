@@ -103,10 +103,11 @@ def get_data_824(file_path: str,logger, new_date=None, new_time=None, new_thresh
 def read_SV307(file_path: str, logger):
     df = None  
     read_attempts = [
-        {"header": 14, "sep": ";", "label": "header 14"},
-        {"header": 13, "sep": None, "label": "header 13 without ';'"},
-        {"header": 18, "sep": None, "label": "header 18"},
-        {"header": 6,  "sep": ";", "label": "header 6"}
+        {"header": 14, "sep": ";",  "usecols":9,    "label": "header 14"},
+        {"header": 13, "sep": None, "usecols":9,    "label": "header 13 without ';'"},
+        {"header": 18, "sep": None, "usecols":9,    "label": "header 18"},
+        {"header": 6,  "sep": ";",  "usecols":9,    "label": "header 6"},
+        {"header": 3,  "sep": ",",  "usecols":43,   "label": "header 5"}
     ]
     for attempt in read_attempts:
         try:
@@ -115,13 +116,15 @@ def read_SV307(file_path: str, logger):
                 header=attempt["header"],
                 sep=attempt["sep"],
                 skipfooter=8,
-                usecols=range(9),
+                usecols=range(attempt['usecols']),
                 engine='python'
             )
             logger.info(f"Reading SV307 file with {attempt['label']}")
             
-            if "Time" not in df.columns:
+            if ("Time" not in df.columns) and ("Date & time" not in df.columns):
                 logger.warning("'Time' column not found in this format.")
+                continue
+            chosen_header = attempt
             break
 
 
@@ -129,9 +132,8 @@ def read_SV307(file_path: str, logger):
             logger.warning(f"Failed attempt with {attempt['label']}: {e}")
             continue
 
-
-
-    if df is not None and 'LAeq (Ch1, P1) [dB]' not in df.columns:
+    
+    if df is not None and 'LAeq (Ch1, P1) [dB]' not in df.columns and chosen_header['label'] != 'header 5':
             try:
                 df = pd.read_csv(
                     file_path,
@@ -184,9 +186,15 @@ def read_SV307(file_path: str, logger):
     #     logger.info("Reading SV307 file with header 18 and sep=';'")
 
     try:
-        df = df[pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S', errors='coerce').notnull()]
-        df['datetime'] = pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S')
-        logger.info("Converting 'Time' column to datetime")
+        if chosen_header['label'] != 'header 5':
+            df = df[pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S', errors='coerce').notnull()]
+            df['datetime'] = pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S')
+            logger.info("Converting 'Time' column to datetime")
+        else:
+            df = df[pd.to_datetime(df['Date & time'], format='%d/%m/%Y %H:%M:%S', errors='coerce').notnull()]
+            df['datetime'] = pd.to_datetime(df['Date & time'], format='%d/%m/%Y %H:%M:%S')
+            df.drop(columns="Date & time",axis=1,inplace=True)
+            logger.info("Converting 'Time' column to datetime")
     except Exception as e:
         logger.info(f"Error {e}")
     return df
@@ -246,9 +254,18 @@ def get_data_SV307(file_path: str,logger, new_date=None, new_time=None, new_thre
         return None
     
     
-    df.rename(columns={'LAeq (Ch1, P1) [dB]': 'LAeq',
-                       'LAFmax (Ch1, P1) [dB]': 'LAFmax',
-                       'LAFmin (Ch1, P1) [dB]': 'LAFmin'}, inplace=True)
+    if 'LAeq (Ch1, P1) [dB]' in df.columns:
+        df.rename(columns={'LAeq (Ch1, P1) [dB]': 'LAeq',
+                        'LAFmax (Ch1, P1) [dB]': 'LAFmax',
+                        'LAFmin (Ch1, P1) [dB]': 'LAFmin'}, inplace=True)
+    else:
+        df.rename(columns={
+            'Unnamed: 2' : 'LAFmax',
+            'Unnamed: 3' : 'LAFmin',
+            'Unnamed: 4' : 'LAeq'}, inplace=True
+        )
+        if 'Unnamed: 5' in df.columns: df.drop(columns={'Unnamed: 5'},inplace=True)
+        if 'Unnamed: 6' in df.columns: df.drop(columns={'Unnamed: 6'},inplace=True)
     
     # df = df[['datetime','LAeq','LAFmax','LAFmin']]
     logger.info(f"Final length of the file: {len(df)}")

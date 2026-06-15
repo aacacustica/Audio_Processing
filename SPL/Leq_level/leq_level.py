@@ -87,14 +87,13 @@ def parse_arguments():
 
 def main():
     # python leq_level.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\"
-
     stable_version = get_stable_version()
     args = parse_arguments()
     base_path = args.path
     calibration_constants = read_calibration_constants('calibration_constants.ini')
     col_names = ['LA', 'LC', 'LZ', 'LC-LA', 'LAmax', 'LAmin', 'filename', 'date']
-
     audiomoth_folders = list(find_audiomoth_folders(base_path))
+
     for subfolder in tqdm(audiomoth_folders, desc='Processing folders'):
         logging.info(f"Processing audio files in: {subfolder}...")
         audio_path = os.path.join(subfolder, "AUDIOMOTH")
@@ -102,7 +101,7 @@ def main():
             logging.warning(f"Skipping {subfolder}, AUDIOMOTH folder not found.")
             continue
         audio_files = get_audiofiles(audio_path)
-        if not audio_files:
+        if not audio_files: 
             logging.warning(f"No audio files found in: {audio_path}")
             continue
 

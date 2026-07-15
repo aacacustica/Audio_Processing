@@ -31,6 +31,7 @@ def arg_parser():
     # ask the user to change the date/time
     parser.add_argument('--change-date', action='store_true',
                         help='Change the date and the time of the csv file')
+    parser.add_argument('--filter_point',type=str, required=False)
     return parser.parse_args()
 
 
@@ -65,6 +66,11 @@ def main():
         CHANGE_DATE_TIME = True
     else:
         CHANGE_DATE_TIME = False
+
+    if args.filter_point:
+        filter_point = args.filter_point
+    else:
+        filter_point = None
 
 
     # CHOICE OCA TYPE
@@ -182,6 +188,7 @@ def main():
 
             process_all_folders(
                 input_folder,
+                filter_point,
                 spl_audiomoth_folders,
                 PERIODO_AGREGACION,
                 PERCENTILES,

@@ -129,13 +129,19 @@ class AudioClassifier:
 
 
 
-def process_audio_files(classifier, base_path, window_size, threshold, stable_version, save_embeddings, save_spectrogram, model_type):
+def process_audio_files(classifier, base_path, window_size, threshold, stable_version, save_embeddings, save_spectrogram,point_filter, model_type):
     col_names = ['filename', 'date', 'class', 'probability']
 
     # looking for subfolders
     audiomoth_folders = list(find_audiomoth_folders(base_path))
     for subfolder in tqdm.tqdm(audiomoth_folders, desc='Processing subfolders'):
+        
+
+
         subfolder_name = os.path.basename(subfolder)
+
+        if point_filter is not None:
+            if subfolder_name != point_filter: continue
         audio_path = os.path.join(subfolder, "AUDIOMOTH")
         logging.info(f"Processing subfolder: {subfolder}...")
 
@@ -274,6 +280,7 @@ def parse_arguments():
     parser.add_argument('-t', '--threshold', type=float, default=0.30, help='Classification threshold for predictions.')
     parser.add_argument('--embeddings', action='store_true', help='Save embeddings to tensorboard')
     parser.add_argument('--spectrogram', action='store_true', help='Save spectrogram images')
+    parser.add_argument('--filter_point', type=str, help="Parametro opcional que ejecuta la inferencia solo en el punto pasado")
     return parser.parse_args()
 
 
@@ -289,6 +296,6 @@ if __name__ == '__main__':
     
     # process audio files
     classifier = AudioClassifier()
-    prediction_per_class_count = process_audio_files(classifier, args.path, args.window, args.threshold, stable_version, args.embeddings, args.spectrogram, args.model)
+    prediction_per_class_count = process_audio_files(classifier, args.path, args.window, args.threshold, stable_version, args.embeddings, args.spectrogram,args.filter_point, args.model)
     logging.info("Inference finished.")
 

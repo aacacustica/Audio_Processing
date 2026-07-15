@@ -73,6 +73,11 @@ def process_folder(folder_path, folder_date_time, folder_threshold, logger):
             
             # subfolder contains measurement files
             files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV', 'XLSX'))]
+            
+            if files == []:
+                files = [os.path.join(subfolder_path,'AI_MODEL','Predictions',f) for f in os.listdir(os.path.join(subfolder_path,'AI_MODEL','Predictions')) if f.endswith('.csv','.xlsx')]
+                logger.info(f"Files in {os.path.join(subfolder_path,'AI_MODEL','Predictions')}: {files}")
+            
             if files:
                 logger.info(f"Files found: {files}")
                 return load_data(files, logger, new_date=new_date, new_time=new_time, new_threshold_date=new_threshold_date, new_threshold_time=new_threshold_time)
@@ -87,6 +92,10 @@ def process_folder(folder_path, folder_date_time, folder_threshold, logger):
         files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith(('.csv', '.xlsx', '.CSV'))]
         logger.info(f"Files found: {files}")
         
+        if files == []:
+                files = [os.path.join(folder_path,'AI_MODEL','Predictions',f) for f in os.listdir(os.path.join(folder_path,'AI_MODEL','Predictions')) if f.endswith('.csv','.xlsx')]
+                logger.info(f"Files in {os.path.join(folder_path,'AI_MODEL','Predictions')}: {files}")
+        
         if not files:
             logger.warning(f"No measurement files found in {folder_path}")
             return None, None, None
@@ -97,7 +106,7 @@ def process_folder(folder_path, folder_date_time, folder_threshold, logger):
 
 
 
-def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, sufix_string, folder_coefficients, folder_date_time, folder_threshold, oca_limits, oca_type, logger):
+def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, sufix_string, folder_coefficients, folder_date_time, folder_threshold, oca_limits, oca_type, logger):
     print()
     stable_version = get_stable_version(logger)
 

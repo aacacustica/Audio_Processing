@@ -73,8 +73,11 @@ def get_device_id(metadata):
         return artist_tags[0].split(" ")[1].lower()
 
 
-def find_audiomoth_folders(base_path):
+def find_audiomoth_folders(base_path,filter_campaign):
+    
     for root, dirs, files in os.walk(base_path):
+        if filter_campaign != None:
+            if filter_campaign not in root: continue
         if 'AUDIOMOTH' in dirs:
             yield root
 
@@ -82,19 +85,35 @@ def find_audiomoth_folders(base_path):
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Calculate SPL levels for audio files in a directory')
     parser.add_argument('-p', '--path', type=str, required=True, help='Directory to be processed')
+    parser.add_argument('--filter_campaign',type=str,required=False)
+    parser.add_argument('--filter_point',type=str,required=False)
     return parser.parse_args()
 
 
 def main():
     # python leq_level.py -p "\\192.168.205.117\AAC_Server\PUERTOS\NOISEPORT\20231211_SANTUR\"
+    
     stable_version = get_stable_version()
     args = parse_arguments()
     base_path = args.path
+    
+    if args.filter_point:
+        filter_point = args.filter_point
+    else:
+        filter_point = None
+
+    if args.filter_campaign:
+        filter_campaign = args.filter_campaign
+    else:
+        filter_campaign = None
+
     calibration_constants = read_calibration_constants('calibration_constants.ini')
     col_names = ['LA', 'LC', 'LZ', 'LC-LA', 'LAmax', 'LAmin', 'filename', 'date']
-    audiomoth_folders = list(find_audiomoth_folders(base_path))
+    audiomoth_folders = list(find_audiomoth_folders(base_path,filter_campaign))
 
     for subfolder in tqdm(audiomoth_folders, desc='Processing folders'):
+        if filter_point != None:
+            if os.path.basename(subfolder) != filter_point: continue
         logging.info(f"Processing audio files in: {subfolder}...")
         audio_path = os.path.join(subfolder, "AUDIOMOTH")
         if not os.path.exists(audio_path):

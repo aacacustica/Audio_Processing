@@ -1,0 +1,70 @@
+campaign:
+  name: "OCIO_BILBAO_CAMPAÑA_5"
+  input_root: "\\\\192.168.205.117\\AAC_Server\\OCIO\\OCIO_BILBAO\\CAMPAÑA_5\\3-Medidas"
+  output_root: "\\\\192.168.205.117\\AAC_Server\\OCIO\\OCIO_BILBAO\\CAMPAÑA_5\\5-Resultados"
+
+execution:
+  run_spl: true
+  run_ai: true
+  run_visualization: true
+  stop_on_error: false
+
+discovery:
+  filter_campaign: null
+  filter_point: null
+
+devices:
+  audiomoth:
+    enabled: true
+    folder_name: "AUDIOMOTH"
+    needs_spl: true
+    needs_ai: true
+    visualize: true
+
+  sonometer:
+    enabled: true
+    folder_name: "SONOMETRO"
+    needs_spl: false
+    needs_ai: false
+    visualize: true
+
+spl:
+  enabled: true
+  calibration_file: "configs/devices.yaml"
+  filter_campaign: null
+  filter_point: null
+  output_subfolder: "SPL"
+
+ai:
+  enabled: true
+  model: "urban"
+  window_seconds: 5
+  threshold: 0.30
+  save_embeddings: false
+  save_spectrograms: false
+  filter_point: null
+
+visualization:
+  enabled: true
+  taxonomy: "urban"
+  aggregation_seconds: 900
+  percentiles: [90, 10]
+  oca_type: "OCA_RESIDENTIAL"
+  remove_start_seconds: 900
+  remove_end_seconds: 900
+  tenerife_timezone: true
+
+points:
+  default:
+    correction_db: 0.0
+    new_date: null
+    new_time: null
+    threshold_date: null
+    threshold_time: null
+
+  ZARAUTZ_C1_P1:
+    correction_db: -1.2
+    new_date: null
+    new_time: null
+    threshold_date: null
+    threshold_time: null

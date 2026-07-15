@@ -31,7 +31,7 @@ class CampaignPipeline:
 
         self._setup_runtime()
 
-        for source in sources: self.run_source(sources)
+        for source in sources: self.run_source(source)
 
     def _setup_runtime(self) -> None:
 
@@ -57,6 +57,7 @@ class CampaignPipeline:
         if output_path is None: self.logger.warning(f"SPL no generó salida para {source.source_id}")
         else: self.logger.info(f"SPL guardado en {output_path}")
 
+
     def run_ai(self,source) -> None:
         raise NotImplementedError(f"AI todavía no se ha migrado")
     def run_visualization(self,source) -> None:
@@ -69,11 +70,9 @@ class CampaignPipeline:
 
         if self.config.execution.run_spl and point.needs_spl: self.print_spl_plan()
         if self.config.execution.run_ai and point.needs_ai: self.print_ai_plan()
-        if self.config.execution.run_visualization and point.needs_visualization: self.print_visualization_plan
+        if self.config.execution.run_visualization and point.needs_visualization: self.print_visualization_plan()
 
         if self.dry_run: return
-
-        raise NotImplementedError("La ejecución real todavía no está migrada. Usa dry-run hasta implementar los servicios")    
 
     def print_source_plan(self,point):
 

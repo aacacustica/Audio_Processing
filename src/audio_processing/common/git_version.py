@@ -2,15 +2,21 @@ import subprocess
 
 def list_git_tags():
     try:
-        tags = tags = subprocess.check_output(["git", "tag"]).strip().decode()
-        return tags.split('\n')
+        tags = subprocess.check_output(["git", "tag"],stderr=subprocess.DEVNULL).strip().decode()
+        if not tags:
+            return []
+        
+        return tags.splitlines()
     except subprocess.CalledProcessError:
         return None
     
-def get_stable_version():
+def get_stable_version(default: str = "dev") -> str:
 
     tags = list_git_tags()
-    tag_selected = tags[-2]
-    tag_selected = tag_selected.replace(".", "_")
+    if len(tags) >= 2: return tags[-2].replace(".","_")
+        
+    if len(tags) == 1: return tags[-1].replace(".","_")
+    
 
-    return tag_selected
+
+    return default

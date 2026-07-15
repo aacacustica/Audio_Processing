@@ -44,8 +44,7 @@ def discover_measurement_points(config) -> list[MeasurementSource]:
     input_root = Path(config.campaign.input_root)
     output_root = Path(config.campaign.output_root)
 
-    filter_point = getattr(config.discovery,"filter_point",None)
-
+    
     if not input_root.exists(): raise FileNotFoundError(f"No existe input_root {input_root}")
         
     filter_point = getattr(config.discovery, "filter_point", None)
@@ -53,11 +52,9 @@ def discover_measurement_points(config) -> list[MeasurementSource]:
 
     for point_root in sorted(input_root.iterdir()):
 
+        if not point_root.is_dir(): continue
         if filter_point and point_root.name != filter_point: continue
         
-        if not point_root.is_dir(): continue
-        
-
         audiomoth_cfg = config.devices.audiomoth
         sonometer_cfg = config.devices.sonometer
 
@@ -70,16 +67,15 @@ def discover_measurement_points(config) -> list[MeasurementSource]:
                 
                     MeasurementSource(
                         name                    = point_root.name,
-                        source_id               = _build_source_id(point_root.name,"audiomoth")
-                    ),
-
-                    root_path               = point_root,
-                    device_type             = "audiomoth",
-                    raw_data_path           = audiomoth_path,
-                    output_path             = Path(config.campaign.output_root) / point_root.name,
-                    needs_spl               = audiomoth_cfg.default_needs_spl,
-                    needs_ai                = audiomoth_cfg.default_needs_ai,
-                    needs_visualization     = audiomoth_cfg.default_visualize
+                        source_id               = _build_source_id(point_root.name,"audiomoth"),                   
+                        root_path               = point_root,
+                        device_type             = "audiomoth",
+                        raw_data_path           = audiomoth_path,
+                        output_path             = output_root / point_root.name,
+                        needs_spl               = audiomoth_cfg.default_needs_spl,
+                        needs_ai                = audiomoth_cfg.default_needs_ai,
+                        needs_visualization     = audiomoth_cfg.default_visualize
+                    )
                 )
             
         if sonometer_path is not None and _device_allowed(filter_device,"sonometer"):
@@ -88,16 +84,15 @@ def discover_measurement_points(config) -> list[MeasurementSource]:
 
                     MeasurementSource(
                         name                    = point_root.name,
-                        source_id               = _build_source_id(point_root.name,"sonometer")
-                    ),
-
-                    root_path               = point_root,
-                    device_type             = "sonometer",
-                    raw_data_path           = sonometer_path,
-                    output_path             = Path(config.campaign.output_root) / point_root.name,
-                    needs_spl               = sonometer_cfg.default_needs_spl,
-                    needs_ai                = sonometer_cfg.default_needs_ai,
-                    needs_visualization     = sonometer_cfg.default_visualize
+                        source_id               = _build_source_id(point_root.name,"sonometer"),
+                        root_path               = point_root,
+                        device_type             = "sonometer",
+                        raw_data_path           = sonometer_path,
+                        output_path             = Path(config.campaign.output_root) / point_root.name,
+                        needs_spl               = sonometer_cfg.default_needs_spl,
+                        needs_ai                = sonometer_cfg.default_needs_ai,
+                        needs_visualization     = sonometer_cfg.default_visualize
+                    )
                 )
             
 

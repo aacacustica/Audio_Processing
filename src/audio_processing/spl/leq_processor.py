@@ -64,7 +64,7 @@ def _get_device_id(metadata) -> str:
 
     parts = artists_tags[0].split(" ")
 
-    if len(parts) < 2: return 'songmenter'
+    if len(parts) < 2: return 'songmeter'
 
     return parts[1].lower()
 
@@ -94,7 +94,7 @@ def run_leq_for_source(source,config,logger=None) -> Path | None:
         try:
             metadata = audio_metadata.load(audio_file)
             sample_rates.append(metadata.streaminfo.sample_rate)
-            valid_audio_files.append(audio_files)
+            valid_audio_files.append(audio_file)
         except Exception as exc:
             if logger:
                 logger.warning("Error leyendo metadata de %s: %s",audio_file,exc)
@@ -105,7 +105,7 @@ def run_leq_for_source(source,config,logger=None) -> Path | None:
     rows=[]
     columns = ["LA","LC","LZ","LC-LA","LAmax","LAmin","filename","date"]
 
-    for audio_file in tqdm(valid_audio_files,desc = f'SPL {source.source_id}'):
+    for audio_file in tqdm.tqdm(valid_audio_files,desc = f'SPL {source.source_id}'):
 
         try:
             metadata = audio_metadata.load(audio_file)

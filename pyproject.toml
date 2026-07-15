@@ -11,6 +11,8 @@ dependencies = [
     "matplotlib",
     "soundfile",
     "tqdm",
+    "audio-metadata",
+    "pyfilterbank",
 ]
 
 [tool.setuptools.packages.find]

@@ -13,7 +13,7 @@ execution:
 discovery:
   filter_campaign: null
   filter_point: 'P3 - test'
-  filter_device: 'sonometer'
+  filter_device: 'audiomoth'
 
 devices:
   audiomoth:
@@ -23,7 +23,7 @@ devices:
     default_visualize: true
 
   sonometer:
-    folder_names: ["SONOMETRO","SONOETER"]
+    folder_names: ["SONOMETRO","SONOMETER"]
     default_needs_spl: false
     default_needs_ai: false
     default_visualize: true

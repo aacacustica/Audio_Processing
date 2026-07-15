@@ -10,7 +10,7 @@ def write_leq_csv(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents = True, exist_ok = True)
 
-    df = pd.dataFrame(rows, columns=columns)
+    df = pd.DataFrame(rows, columns=columns)
 
     if 'date' in df.columns: df = df.sort_values(by='date')
     df.to_csv(output_path,index=False)

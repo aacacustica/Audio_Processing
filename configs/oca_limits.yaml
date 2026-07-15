@@ -1,0 +1,5 @@
+oca_limits:
+  OCA_RESIDENTIAL:
+    day: null
+    evening: null
+    night: null

@@ -1,0 +1,8 @@
+taxonomies:
+  urban:
+    taxonomy_json: "taxonomia_urbano.json"
+    class_map_csv: "yamnet_class_map.csv"
+
+  port:
+    taxonomy_json: "taxonomia_puerto.json"
+    class_map_csv: "yamnet_class_map.csv"

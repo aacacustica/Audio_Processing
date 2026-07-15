@@ -1,7 +1,7 @@
 campaign:
-  name: "OCIO_BILBAO_CAMPAÑA_5"
-  input_root: "\\\\192.168.205.117\\AAC_Server\\OCIO\\OCIO_BILBAO\\CAMPAÑA_5\\3-Medidas"
-  output_root: "\\\\192.168.205.117\\AAC_Server\\OCIO\\OCIO_BILBAO\\CAMPAÑA_5\\5-Resultados"
+  name: "CAMPAÑA TEST ACLIMA"
+  input_root: "/home/martin/Campañas de test/ACLIMA/C1/3-Medidas"
+  output_root: "/home/martin/Campañas de test/ACLIMA/C1/5-Resultados"
 
 execution:
   run_spl: true
@@ -55,7 +55,7 @@ visualization:
   tenerife_timezone: true
 
 points:
-  default:
+  example:
     correction_db: 0.0
     new_date: null
     new_time: null

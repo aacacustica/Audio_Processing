@@ -1,0 +1,9 @@
+plots:
+  night_evolution: true
+  night_evolution_15_min: true
+  prediction_stack_bar: true
+  prediction_map: true
+  tree_map: true
+  time_plot: true
+  heatmap_hour: true
+  heatmap_15_min: true

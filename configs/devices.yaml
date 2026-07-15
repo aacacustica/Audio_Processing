@@ -1,0 +1,16 @@
+devices:
+  default:
+    calibration_db: 0.0
+    type: "unknown"
+
+  audiomoth:
+    default_calibration_db: 0.0
+
+  sonometer:
+    default_correction_db: 0.0
+
+calibration_constants:
+  # Ejemplo:
+  # "24F3190361CBDDE4":
+  #   type: "audiomoth"
+  #   calibration_db: -7.09

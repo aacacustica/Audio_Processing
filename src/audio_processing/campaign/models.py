@@ -21,7 +21,7 @@ class MeasurementPoint:
     name: str
     root_path: Path
     device_type: DeviceType
-    raw_data_path: DeviceType
+    raw_data_path: Path
     output_path: Path
     needs_spl: bool
     needs_ai: bool

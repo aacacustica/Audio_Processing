@@ -1,0 +1,21 @@
+[project]
+name = "audio-processing"
+version = "0.1.0"
+description = "Pipeline modular para procesado de campañas acústicas"
+requires-python = ">=3.10"
+dependencies = [
+    "pyyaml",
+    "numpy",
+    "pandas",
+    "scipy",
+    "matplotlib",
+    "soundfile",
+    "tqdm",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"

@@ -19,18 +19,28 @@ from audio_processing.campaign.models import MeasurementPoint
 
 def discover_measurement_points(config) -> list[MeasurementPoint]:
 
-    points = []
+    points: list[MeasurementPoint] = []
 
     input_root = Path(config.campaign.input_root)
+    output_root = Path(config.campaign.output_root)
 
-    for point_root in input_root.iterdir():
+    filter_point = getattr(config.discovery,"filter_point",None)
+
+    if not input_root.exists(): raise FileNotFoundError(f"No existe input_root {input_root}")
+        
+
+    for point_root in sorted(input_root.iterdir()):
 
         if not point_root.is_dir(): continue
+        if filter_point and point_root.name != filter_point: continue
+
+        audiomoth_cfg = config.devices.audiomoth
+        sonometer_cfg = config.devices.sonometer
 
         audiomoth_path = point_root / config.devices.audiomoth.folder_name
         sonometer_path = point_root / config.devices.sonometer.folder_name
 
-        if audiomoth_path.exists():
+        if audiomoth_cfg.enabled and audiomoth_path.exists():
 
             points.append(
                 MeasurementPoint(
@@ -39,12 +49,12 @@ def discover_measurement_points(config) -> list[MeasurementPoint]:
                     device_type             = "audiomoth",
                     raw_data_path           = audiomoth_path,
                     output_path             = Path(config.campaign.output_root) / point_root.name,
-                    needs_spl               = config.devices.audiomoth.needs_spl,
-                    needs_ai                = config.devices.audiomoth.needs_ai,
-                    needs_visualization     = config.devices.audiomoth.visualize
+                    needs_spl               = audiomoth_cfg.needs_spl,
+                    needs_ai                = audiomoth_cfg.needs_ai,
+                    needs_visualization     = audiomoth_cfg.visualize
                 )
             )
-        if sonometer_path.exists():
+        if sonometer_cfg.enabled and sonometer_path.exists():
 
             points.append(
                 MeasurementPoint(
@@ -53,9 +63,9 @@ def discover_measurement_points(config) -> list[MeasurementPoint]:
                     device_type             = "sonometer",
                     raw_data_path           = sonometer_path,
                     output_path             = Path(config.campaign.output_root) / point_root.name,
-                    needs_spl               = config.devices.sonometer.needs_spl,
-                    needs_ai                = config.devices.sonometer.needs_ai,
-                    needs_visualization     = config.devices.sonometer.visualize
+                    needs_spl               = sonometer_cfg.needs_spl,
+                    needs_ai                = sonometer_cfg.needs_ai,
+                    needs_visualization     = sonometer_cfg.visualize
                 )
             )
 

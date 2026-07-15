@@ -1,0 +1,17 @@
+LICENSE
+README.md
+pyproject.toml
+src/audio_processing/__init__.py
+src/audio_processing.egg-info/PKG-INFO
+src/audio_processing.egg-info/SOURCES.txt
+src/audio_processing.egg-info/dependency_links.txt
+src/audio_processing.egg-info/requires.txt
+src/audio_processing.egg-info/top_level.txt
+src/audio_processing/ai/classifier.py
+src/audio_processing/ai/inference.py
+src/audio_processing/ai/writers.py
+src/audio_processing/campaign/config.py
+src/audio_processing/campaign/discovery.py
+src/audio_processing/campaign/models.py
+src/audio_processing/campaign/pipeline.py
+src/audio_processing/cli/run_campaign.py

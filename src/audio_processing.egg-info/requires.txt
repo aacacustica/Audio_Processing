@@ -1,0 +1,7 @@
+pyyaml
+numpy
+pandas
+scipy
+matplotlib
+soundfile
+tqdm

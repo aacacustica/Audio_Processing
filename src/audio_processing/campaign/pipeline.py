@@ -36,7 +36,7 @@ class CampaignPipeline:
         raise NotImplementedError(f"Visualization todavía no se ha migrado")
     
     @staticmethod
-    def print_plan(point) -> None:
+    def print_plan(self,point) -> None:
         print(f"#----------Información del punto----------#")
         print()
         print(f"Punto:          {point.name}")

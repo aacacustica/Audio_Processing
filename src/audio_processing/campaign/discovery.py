@@ -17,6 +17,16 @@ input_root
 from pathlib import Path
 from audio_processing.campaign.models import MeasurementPoint
 
+def _build_source_id(point_name: str, device_type: str) -> str:
+    normalized_point = (
+        point_name
+        .strip()
+        .replace(" ", "_")
+        .replace("/", "_")
+    )
+
+    return f"{normalized_point}__{device_type}"
+
 def discover_measurement_points(config) -> list[MeasurementPoint]:
 
     points: list[MeasurementPoint] = []
@@ -28,11 +38,15 @@ def discover_measurement_points(config) -> list[MeasurementPoint]:
 
     if not input_root.exists(): raise FileNotFoundError(f"No existe input_root {input_root}")
         
+    filter_point = getattr(config.discovery, "filter_point", None)
+    filter_device = getattr(config.discovery, "filter_device", None)
 
     for point_root in sorted(input_root.iterdir()):
 
-        if not point_root.is_dir(): continue
         if filter_point and point_root.name != filter_point: continue
+        
+        if not point_root.is_dir(): continue
+        
 
         audiomoth_cfg = config.devices.audiomoth
         sonometer_cfg = config.devices.sonometer
@@ -41,10 +55,11 @@ def discover_measurement_points(config) -> list[MeasurementPoint]:
         sonometer_path = point_root / config.devices.sonometer.folder_name
 
         if audiomoth_cfg.enabled and audiomoth_path.exists():
-
+            if filter_device and filter_device != "audiomoth": continue
             points.append(
                 MeasurementPoint(
                     name                    = point_root.name,
+                    source_id               = _build_source_id(point_root.name,"audiomoth"),
                     root_path               = point_root,
                     device_type             = "audiomoth",
                     raw_data_path           = audiomoth_path,
@@ -55,10 +70,11 @@ def discover_measurement_points(config) -> list[MeasurementPoint]:
                 )
             )
         if sonometer_cfg.enabled and sonometer_path.exists():
-
+            if filter_device and filter_device != "sonometer": continue
             points.append(
                 MeasurementPoint(
                     name                    = point_root.name,
+                    source_id               = _build_source_id(point_root.name,"sonometer"),
                     root_path               = point_root,
                     device_type             = "sonometer",
                     raw_data_path           = sonometer_path,

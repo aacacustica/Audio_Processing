@@ -3,3 +3,8 @@ oca_limits:
     day: null
     evening: null
     night: null
+
+  OCA_INDUSTRIAL:
+    day: null
+    evening: null
+    night: null

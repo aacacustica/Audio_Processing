@@ -8,6 +8,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Make prediction with YAMNet model for audio files in a directory')
     parser.add_argument('-c', '--config', type=str, required=True, help='Ruta al archivo YAML de campaña.')
     parser.add_argument('--run',action='store_true',help='Ejecuta procesos reales. Por defecto solo hace dry-run.')
+    
     return parser.parse_args()
 
 def main():

@@ -7,3 +7,6 @@ plots:
   time_plot: true
   heatmap_hour: true
   heatmap_15_min: true
+  indicators_heatmap: true
+  day_evolution: true
+  period_evolution: true

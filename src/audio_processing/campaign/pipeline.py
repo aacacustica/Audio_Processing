@@ -1,26 +1,41 @@
-from audio_processing.campaign.discovery import (
-    discover_measurement_points,
-)
+from audio_processing.campaign.discovery import discover_measurement_points
+from audio_processing.common.logging import setup_logging
+
+from pathlib import Path
+
 
 class CampaignPipeline:
+
+    
     def __init__(self, config, dry_run: bool = True):
         self.config = config
         self.dry_run = dry_run
-
+        self.logger = setup_logging( Path(config.campaign.output_root) / "logs" )
+    
     def run(self) -> None:
-        points = discover_measurement_points(self.config)
+        sources = discover_measurement_points(self.config)
+        self.print_plan(self,sources)
 
-        print()
-        print("#----------PLAN DE EJECUCIÓN----------#")
+        if self.dry_run: return
 
-        if not points:
-            print("No se han encontrado puntos de medida.")
-            return
+        for source in sources:
+            self.run_source(source)
 
-        for point in points:
-            self.run_point(point)
+    def run_source(self,source) -> None:
 
-    def run_point(self, point) -> None:
+        if self.config.execution.run_spl and source.needs_spl: self.run_spl(source)
+        if self.config.execution.run_ai and source.needs_ai: self.run_ai(source)
+        if self.config.execution.run_visualization and source.needs_visualization: self.run_visualization(source)
+
+    def run_spl(self,source) -> None:
+        raise NotImplementedError(f"SPL todavía no se ha migrado")
+    def run_ai(self,source) -> None:
+        raise NotImplementedError(f"AI todavía no se ha migrado")
+    def run_visualization(self,source) -> None:
+        raise NotImplementedError(f"Visualization todavía no se ha migrado")
+        
+    def print_plan(self, point) -> None:
+        print(f"#----------Información del punto----------#")
         print()
         print(f"Punto:          {point.name}")
         print(f"Dispositivo:    {point.device_type}")
@@ -29,6 +44,7 @@ class CampaignPipeline:
         print(f"")
 
         if self.config.execution.run_spl and point.needs_spl:
+            print()
             print("#------------[SPL] Activo----------#")
             print(f"#----------Información SPL----------#")
             
@@ -36,8 +52,9 @@ class CampaignPipeline:
             print(f"Filtro campaña: {self.config.spl.filter_campaign}")
             print(f"Filtro punto: {self.config.spl.filter_point}")
             print(f"Carpeta de salida: {self.config.spl.output_subfolder}")
-            
-        if self.config.execution.run_ai and point.needs_ai: 
+            print()
+        if self.config.execution.run_ai and point.needs_ai:
+            print() 
             print("#------------[AI] Activo----------#")
             print(f"#----------Información IA----------#")
             
@@ -47,8 +64,9 @@ class CampaignPipeline:
             print(f"Guardar embeddings: {self.config.ai.save_embeddings}")
             print(f"Guardar espectrograma: {self.config.ai.save_spectrograms}")
             print(f"Filtro punto: {self.config.ai.filter_point}")
-
-        if ( self.config.execution.run_visualization and point.needs_visualization): 
+            print()
+        if ( self.config.execution.run_visualization and point.needs_visualization):
+            print() 
             print("#------------[Visualization] Activo----------#")
             print(f"#----------Información Visualization----------#")
             
@@ -60,6 +78,7 @@ class CampaignPipeline:
             print(f"Número de segundos borrados al inicio del archivo: {self.config.visualization.remove_start_seconds}")
             print(f"Número de segundos borrados al final del archivo: {self.config.visualization.remove_end_seconds}")
             print(f"Zona horaria de tenerife: {self.config.visualization.tenerife_timezone}")
+            print()
 
         if self.dry_run: return
 

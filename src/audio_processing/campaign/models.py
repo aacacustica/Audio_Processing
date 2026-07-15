@@ -19,6 +19,7 @@ DeviceType = Literal[
 @dataclass
 class MeasurementPoint:
     name: str
+    source_id: str
     root_path: Path
     device_type: DeviceType
     raw_data_path: Path

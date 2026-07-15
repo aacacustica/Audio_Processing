@@ -8,6 +8,7 @@ execution:
   run_ai: true
   run_visualization: true
   stop_on_error: false
+  dry_run: true
 
 discovery:
   filter_campaign: null
@@ -15,18 +16,22 @@ discovery:
 
 devices:
   audiomoth:
-    enabled: true
-    folder_name: "AUDIOMOTH"
-    needs_spl: true
-    needs_ai: true
-    visualize: true
+    folder_names: ["AUDIOMOTH"]
+    default_needs_spl: true
+    default_needs_ai: true
+    default_visualize: true
 
   sonometer:
-    enabled: true
-    folder_name: "SONOMETRO"
-    needs_spl: false
-    needs_ai: false
-    visualize: true
+    folder_names: ["SONOMETRO","SOMOETER"]
+    default_needs_spl: false
+    default_needs_ai: false
+    default_visualize: true
+
+  sv307:
+    folder_names: ['SV307']
+    default_needs_spl: false
+    default_needs_ai: false
+    default_visualize: true
 
 spl:
   enabled: true
@@ -53,6 +58,15 @@ visualization:
   remove_start_seconds: 900
   remove_end_seconds: 900
   tenerife_timezone: true
+
+outputs:
+  create_point_folder: true
+
+  subfolders:
+  spl: "SPL"
+  ai: "AI_MODEL"
+  visualization: "Visualization"
+  logs: "logs"
 
 points:
   example:

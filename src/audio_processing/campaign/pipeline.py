@@ -14,7 +14,8 @@ class CampaignPipeline:
     
     def run(self) -> None:
         sources = discover_measurement_points(self.config)
-        self.print_plan(self,sources)
+        
+        for source in sources: self.print_plan(self,source)
 
         if self.dry_run: return
 
@@ -33,8 +34,9 @@ class CampaignPipeline:
         raise NotImplementedError(f"AI todavía no se ha migrado")
     def run_visualization(self,source) -> None:
         raise NotImplementedError(f"Visualization todavía no se ha migrado")
-        
-    def print_plan(self, point) -> None:
+    
+    @staticmethod
+    def print_plan(point) -> None:
         print(f"#----------Información del punto----------#")
         print()
         print(f"Punto:          {point.name}")

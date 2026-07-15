@@ -51,10 +51,10 @@ def discover_measurement_points(config) -> list[MeasurementPoint]:
         audiomoth_cfg = config.devices.audiomoth
         sonometer_cfg = config.devices.sonometer
 
-        audiomoth_path = point_root / config.devices.audiomoth.folder_name
-        sonometer_path = point_root / config.devices.sonometer.folder_name
+        audiomoth_path = point_root / config.devices.audiomoth.folder_names[0]
+        sonometer_path = point_root / config.devices.sonometer.folder_names[0]
 
-        if audiomoth_cfg.enabled and audiomoth_path.exists():
+        if audiomoth_path.exists():
             if filter_device and filter_device != "audiomoth": continue
             points.append(
                 MeasurementPoint(
@@ -64,12 +64,12 @@ def discover_measurement_points(config) -> list[MeasurementPoint]:
                     device_type             = "audiomoth",
                     raw_data_path           = audiomoth_path,
                     output_path             = Path(config.campaign.output_root) / point_root.name,
-                    needs_spl               = audiomoth_cfg.needs_spl,
-                    needs_ai                = audiomoth_cfg.needs_ai,
-                    needs_visualization     = audiomoth_cfg.visualize
+                    needs_spl               = audiomoth_cfg.default_needs_spl,
+                    needs_ai                = audiomoth_cfg.default_needs_ai,
+                    needs_visualization     = audiomoth_cfg.default_visualize
                 )
             )
-        if sonometer_cfg.enabled and sonometer_path.exists():
+        if sonometer_path.exists():
             if filter_device and filter_device != "sonometer": continue
             points.append(
                 MeasurementPoint(
@@ -79,9 +79,9 @@ def discover_measurement_points(config) -> list[MeasurementPoint]:
                     device_type             = "sonometer",
                     raw_data_path           = sonometer_path,
                     output_path             = Path(config.campaign.output_root) / point_root.name,
-                    needs_spl               = sonometer_cfg.needs_spl,
-                    needs_ai                = sonometer_cfg.needs_ai,
-                    needs_visualization     = sonometer_cfg.visualize
+                    needs_spl               = sonometer_cfg.default_needs_spl,
+                    needs_ai                = sonometer_cfg.default_needs_ai,
+                    needs_visualization     = sonometer_cfg.default_visualize
                 )
             )
 

@@ -15,7 +15,7 @@ input_root
 """
 
 from pathlib import Path
-from audio_processing.campaign.models import MeasurementPoint
+from audio_processing.campaign.models import MeasurementSource
 
 def _build_source_id(point_name: str, device_type: str) -> str:
     normalized_point = (
@@ -27,9 +27,19 @@ def _build_source_id(point_name: str, device_type: str) -> str:
 
     return f"{normalized_point}__{device_type}"
 
-def discover_measurement_points(config) -> list[MeasurementPoint]:
+def _find_existing_folder(point_root: Path, folder_names: list[str]) -> Path | None:
+    
+    for folder_name in folder_names:
+        candidate = point_root / folder_name
+        if candidate.exists() and candidate.is_dir(): return candidate
+    return None
 
-    points: list[MeasurementPoint] = []
+def _device_allowed(filter_device: str | None, device_type: str) -> bool:
+    return filter_device is None or filter_device == device_type
+
+def discover_measurement_points(config) -> list[MeasurementSource]:
+
+    points: list[MeasurementSource] = []
 
     input_root = Path(config.campaign.input_root)
     output_root = Path(config.campaign.output_root)
@@ -51,15 +61,18 @@ def discover_measurement_points(config) -> list[MeasurementPoint]:
         audiomoth_cfg = config.devices.audiomoth
         sonometer_cfg = config.devices.sonometer
 
-        audiomoth_path = point_root / config.devices.audiomoth.folder_names[0]
-        sonometer_path = point_root / config.devices.sonometer.folder_names[0]
+        audiomoth_path = _find_existing_folder(point_root,audiomoth_cfg.folder_names)
+        sonometer_path = _find_existing_folder(point_root,sonometer_cfg.folder_names)
 
-        if audiomoth_path.exists():
-            if filter_device and filter_device != "audiomoth": continue
+        if audiomoth_path is not None and _device_allowed(filter_device,"audiomoth"):
+                  
             points.append(
-                MeasurementPoint(
-                    name                    = point_root.name,
-                    source_id               = _build_source_id(point_root.name,"audiomoth"),
+                
+                    MeasurementSource(
+                        name                    = point_root.name,
+                        source_id               = _build_source_id(point_root.name,"audiomoth")
+                    ),
+
                     root_path               = point_root,
                     device_type             = "audiomoth",
                     raw_data_path           = audiomoth_path,
@@ -68,13 +81,16 @@ def discover_measurement_points(config) -> list[MeasurementPoint]:
                     needs_ai                = audiomoth_cfg.default_needs_ai,
                     needs_visualization     = audiomoth_cfg.default_visualize
                 )
-            )
-        if sonometer_path.exists():
-            if filter_device and filter_device != "sonometer": continue
+            
+        if sonometer_path is not None and _device_allowed(filter_device,"sonometer"):
+                 
             points.append(
-                MeasurementPoint(
-                    name                    = point_root.name,
-                    source_id               = _build_source_id(point_root.name,"sonometer"),
+
+                    MeasurementSource(
+                        name                    = point_root.name,
+                        source_id               = _build_source_id(point_root.name,"sonometer")
+                    ),
+
                     root_path               = point_root,
                     device_type             = "sonometer",
                     raw_data_path           = sonometer_path,
@@ -83,6 +99,6 @@ def discover_measurement_points(config) -> list[MeasurementPoint]:
                     needs_ai                = sonometer_cfg.default_needs_ai,
                     needs_visualization     = sonometer_cfg.default_visualize
                 )
-            )
+            
 
     return points

@@ -13,5 +13,8 @@ def get_db_level(x, C):
 
     """
     pref = 0.000002
-    level = 10 * np.log10(np.mean(x ** 2) / pref ** 2) + C
-    return level
+    mean_square = np.mean(x ** 2)
+
+    if mean_square <= 0: return -np.inf
+    
+    return 10 * np.log10(mean_square / pref ** 2) + C

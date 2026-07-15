@@ -1,9 +1,19 @@
+from pathlib import Path
+
 import configparser
 import logging
+import yaml
 
+def read_calibration_constants(path: str | Path) -> dict[str,float]:
 
-def read_calibration_constants(ini_file):
-    config = configparser.ConfigParser()
-    config.read(ini_file)
-    logging.info(f"Reading calibration constants from {ini_file}")
-    return {key: float(value) for key, value in config['CalibrationConstants'].items()}
+    path = Path(path)
+
+    with path.open("r",encoding='utf-8') as file: data = yaml.safe_load(file) or {}
+
+    constants = data.get("calibration_constants",{})
+
+    result: dict[str,float] = {}
+
+    for device_id,device_data in constants.items(): result[device_id.lower()] = float(device_data['calibration_db'])
+
+    return result

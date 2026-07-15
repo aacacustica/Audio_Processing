@@ -5,9 +5,9 @@ from audio_processing.campaign.pipeline import CampaignPipeline
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='Make prediction with YAMNet model for audio files in a directory')
+    parser = argparse.ArgumentParser(description='Ejecuta o simula una campaña acústica desde un YAML')
     parser.add_argument('-c', '--config', type=str, required=True, help='Ruta al archivo YAML de campaña.')
-    parser.add_argument('--run',action='store_true',help='Ejecuta procesos reales. Por defecto solo hace dry-run.')
+    parser.add_argument('--run',action='store_true',help='Ejecuta procesos. Por defecto solo imprime el plan de ejecución.')
     
     return parser.parse_args()
 

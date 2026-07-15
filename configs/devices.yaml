@@ -9,8 +9,79 @@ devices:
   sonometer:
     default_correction_db: 0.0
 
+  
 calibration_constants:
   # Ejemplo:
   # "24F3190361CBDDE4":
   #   type: "audiomoth"
   #   calibration_db: -7.09
+
+  '24F3190361CBDDE4':
+    type: 'audiomoth'
+    calibration_db: -7.09
+
+  '249BC30461CBDE81':
+    type: 'audiomoth'
+    calibration_db: -8.1
+
+  '24E144025F5777C9':
+    type: 'audiomoth'
+    calibration_db: -13.5
+
+  '24F3190160370890':
+    type: 'audiomoth'
+    calibration_db: -14.29
+
+  '243B1F0663FA5A51':
+    type: 'audiomoth'
+    calibration_db: -13.43
+
+  '2453AC0263FAA205':
+    type: 'audiomoth'
+    calibration_db: -12.32
+
+  '2474750763FAA212':
+    type: 'audiomoth'
+    calibration_db: -12.06
+
+  '2453AC0263FA59F5':
+    type: 'audiomoth'
+    calibration_db: -13.51
+
+  '243B1F0663FA5A6C':
+    type: 'audiomoth'
+    calibration_db: -14.01
+
+  '24F3190863FAA254':
+    type: 'audiomoth'
+    calibration_db: 0
+
+  '2453AC0263FA5AAD':
+    type: 'audiomoth'
+    calibration_db: -14.08
+    
+  '24E1440163FAA22D':
+    type: 'audiomoth'
+    calibration_db: -12.25
+  
+  '2474750763FBD3A7':
+    type: 'audiomoth'
+    calibration_db: -12.81
+    
+  '24F3190863FAA27B':
+    type: 'audiomoth'
+    calibration_db: -12.47
+   
+
+   = 
+   = 
+   = 
+   = 
+   = 
+   = 
+   = 
+   = 
+   = 
+   = 
+   = 
+   = 

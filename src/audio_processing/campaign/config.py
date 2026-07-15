@@ -27,30 +27,23 @@ def validate_config(config) -> None:
     if not hasattr(config.devices,"audiomoth"): raise ValueError(f"Falta devices.audiomoth en la campaign.yaml")
     if not hasattr(config.devices,"sonometer"): raise ValueError(f"Falta devices.sonometer en la campaign.yaml")
 
-        
-
-@dataclass
-class AppConfig:
-    raw: dict[str, Any]
 
 def _to_namespace(value: Any) -> Any:
-    if isinstance(value, dict):
-        return SimpleNamespace(
-            **{
-                key: _to_namespace(item)
-                for key, item in value.items()
-            }
-        )
 
-    if isinstance(value, list):
-        return [
-            _to_namespace(item)
-            for item in value
-        ]
+    if isinstance(value,dict): return SimpleNamespace(**{key: _to_namespace(item) for key,item in value.items()})
+    if isinstance(value,list): return [_to_namespace(item) for item in value]
 
     return value
 
-def load_config(path: str | Path) -> AppConfig:
+def _resolve_relative_path(base_dir,value):
+
+    path = Path(value)
+
+    if path.is_absolute(): return path
+
+    return base_dir / path
+
+def load_config(path: str | Path):
     path = Path(path)
 
     with path.open("r",encoding="utf-8") as file:
@@ -61,5 +54,8 @@ def load_config(path: str | Path) -> AppConfig:
     
     config = _to_namespace(data)
     validate_config(config)
+
+    config._config_path     = path
+    config._config_dir      = path.parent
 
     return config

@@ -79,6 +79,7 @@ class CampaignPipeline:
         print(f"#----------Información del punto----------#")
         print()
         print(f"Punto:          {point.name}")
+        print(f"ID:             {point.source_id}")
         print(f"Dispositivo:    {point.device_type}")
         print(f"Ruta entrada:   {point.raw_data_path}")
         print(f"Ruta salida:    {point.output_path}")

@@ -193,7 +193,14 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
                     pass
 
                 name_split = file_name.split(".")[0]
-                start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
+                try:
+                    start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
+                except:
+                    #medidas cortas
+                    name_split = file_name.split(".", 1)[0]
+                    date_part, time_part = name_split.split("_")
+                    time_part = time_part.zfill(4)  # "012" -> "0012"
+                    start_timestamp = datetime.datetime.strptime(f"{date_part}_{time_part}", '%y%m%d_%H%M')
 
                 threshold = classifier.params.classification_threshold if args.threshold is None else args.threshold
                 logging.info(f"Classification threshold: {threshold}")
@@ -253,7 +260,11 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
 
         #generate summary file
         summary_filename = f"summary_{args.model}_threshold_{args.threshold}.txt"
-        subfolder_path = args.path.replace("3-Medidas","5-Resultados")
+        if "3-Medidas" in args.path:
+            subfolder_path = args.path.replace("3-Medidas","5-Resultados")
+        else:
+            subfolder_path = os.path.join(args.path,"5-Resultados")
+            
         output_summary_path = os.path.join(subfolder_path,subfolder_name,"AI_MODEL","Predictions")
         with open(os.path.join(output_summary_path, summary_filename),'w') as f:
 

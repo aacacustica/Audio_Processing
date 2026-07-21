@@ -53,6 +53,9 @@ def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, pl
                 combined_data = pd.concat([data_23, data_00_06])
                 night_data = pd.concat([night_data, combined_data])
 
+        if night_data.empty:
+            logger.warning(f"No hay una noche completa 23:00 - 07:00 para {plotname}. Se omite plot_night_evolution")
+            return
         night_data['plot_hour'] = night_data['hour'].replace({23: -1}).astype(int)
         night_data.sort_values(by=['date', 'plot_hour'], inplace=True)
         
@@ -140,6 +143,9 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
         #save to csv
         os.makedirs(folder_output_dir, exist_ok=True)
         
+        if night_data.empty:
+            logger.warning(f"No hay una noche completa para {plotname}. Se emite la evolución nocturna de 15 minutos")
+            return
         logger.info(f"Saving the data {plotname}_{indicador_noche}")
         night_data.to_csv(f"{folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.csv", index=False)
         logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution_{name_extension}.csv")
@@ -187,6 +193,7 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxonomy_
     try:
         # remove nan values
         df = df.dropna(subset=[columns_dict['LAEQ_COLUMN_COEFF']])
+
         logger.info(f"Using the columns_dict: {columns_dict}")
 
         # # check
@@ -201,7 +208,7 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxonomy_
         logger.info(f"Pred file: Start date {pred_start_date} and End date {pred_end_date}")
         pred_difference_between_first_days = df_Pred['date'].iloc[10] - df_Pred['date'].iloc[9]
         logger.info(f"Pred file: Difference between first and second date: {pred_difference_between_first_days}")
-
+        
         agg_funcs = {
             columns_dict['LAEQ_COLUMN_COEFF']: leq,
         }
@@ -238,7 +245,11 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxonomy_
         df_aligned = df_LAeq.merge(df_Pred, how='left', left_index=True, right_index=True)
         # remove rows with NaN values
         df_aligned.dropna(inplace=True)
-
+        
+        #laeq_column = columns_dict['LAEQ_COLUMN_COEFF']
+        #df_aligned = align_spl_predictins_1s(df = df,df_pred=df_Pred,laeq_column=laeq_column,logger=logger)
+        if df_aligned.empty: 
+            logger.warning(f"No aligned data available for {plotname}")
         # print(df_aligned)
         # set date_y as index
         if "date_y" in df_aligned.columns:
@@ -345,7 +356,7 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, ta
         logger.info(f"Pred file: Start date {pred_start_date} and End date {pred_end_date}")
         pred_difference_between_first_days = df_Pred['date'].iloc[10] - df_Pred['date'].iloc[9]
         logger.info(f"Pred file: Difference between first and second date: {pred_difference_between_first_days}")
-
+        """
         agg_funcs = {
             columns_dict['LAEQ_COLUMN_COEFF']: leq,
         }
@@ -384,6 +395,11 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv:pd.DataFrame, ta
         df_aligned = df_LAeq.merge(df_Pred, how='left', left_index=True, right_index=True)
         # remove rows with NaN values
         df_aligned.dropna(inplace=True)
+        """
+        laeq_column = columns_dict['LAEQ_COLUMN_COEFF']
+        df_aligned = align_spl_predictins_1s(df = df,df_pred=df_Pred,laeq_column=laeq_column,logger=logger)
+        if df_aligned.empty: 
+            logger.warning(f"No aligned data available for {plotname}")
 
         # set date_y as index
         if "date_y" in df_aligned.columns:
@@ -508,7 +524,7 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxono
         logger.info(f"Pred file: Start date {pred_start_date} and End date {pred_end_date}")
         pred_difference_between_first_days = df_Pred['date'].iloc[10] - df_Pred['date'].iloc[9]
         logger.info(f"Pred file: Difference between first and second date: {pred_difference_between_first_days}")
-
+        """
         agg_funcs = {columns_dict['LAEQ_COLUMN_COEFF']: leq}
 
         if pred_difference_between_first_days >= pd.Timedelta(minutes=15):
@@ -546,14 +562,17 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxono
         df_aligned = df_LAeq.merge(df_Pred, how='left', left_index=True, right_index=True)
         # remove rows with NaN values
         df_aligned.dropna(inplace=True)
-
-
+        """
+        laeq_column = columns_dict['LAEQ_COLUMN_COEFF']
+        df_aligned = align_spl_predictins_1s(df = df,df_pred=df_Pred,laeq_column=laeq_column,logger=logger)
+        if df_aligned.empty: 
+            logger.warning(f"No aligned data available for {plotname}")
         # set date_y as index
         if "date_y" in df_aligned.columns:
             df_aligned.set_index('date_y', inplace=True, drop=False)      
         else:
             df_aligned.set_index('date', inplace=True, drop=False)
-
+        """
         ####################################################################
         df_aligned['class_probability'] = df_aligned.apply(
             lambda x: (x['class'], x['probability']) if isinstance(x['class'], float) else list(zip(x['class'], x['probability'])),
@@ -563,7 +582,8 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv:pd.DataFrame, taxono
         df_exploded['class'] = df_exploded['class_probability'].apply(lambda x: x[0] if isinstance(x, tuple) else x)
         df_exploded['probability'] = df_exploded['class_probability'].apply(lambda x: x[1] if isinstance(x, tuple) else None)
         ####################################################################
-
+        """
+        df_exploded = df_aligned.copy()
         # create the df_all, merge with the audioset dataframe
         df_exploded['display_name'] = df_exploded['class']
         df_all = df_exploded.merge(yamnet_csv, how='left', on='display_name')
@@ -737,11 +757,12 @@ def plot_prediction_stack_bar(df_Pred:pd.DataFrame, yamnet_csv, taxonomy_map, fo
 
 
 
-def plot_prediction_map(df_Pred:pd.DataFrame, taxonomy_map, folder_output_dir: str, logger, plotname: str):
+def plot_prediction_map(df_Pred:pd.DataFrame, taxonomy_map,agg_period, folder_output_dir: str, logger, plotname: str):
     try:
         sns.set_style("white")
         sns.set_palette("tab10")
 
+        bin_size = agg_period
         # remove empty entries in class column
         df_Pred = df_Pred.dropna(subset=['class'])
 
@@ -773,7 +794,7 @@ def plot_prediction_map(df_Pred:pd.DataFrame, taxonomy_map, folder_output_dir: s
         # if plot_prediction_stack_bar is greater than 1 second
         if difference_between_first_days == pd.Timedelta(seconds=1):
             logger.info(f"Plotting the prediction map for {plotname} equal to 1 second")
-            resampled_df = df_exploded.resample('15min').agg({
+            resampled_df = df_exploded.resample(PERIODO_AGREGACION).agg({
                 'filename': 'first',  # taking the first filename in each bin
                 'class': 'first',
                 'probability': 'first', 
@@ -1275,14 +1296,24 @@ def plot_indicadores_heatmap(df, folder_output_dir: str, logger, plotname:str, i
             logger.info(f"Duration of {indicator} on the last day {last_day}: {duration_last_day[indicator]}")
 
         # apply filter based on duration and presence
-        for indicator in indicators_to_check:
-            if presence_first_day[indicator] and duration_first_day[indicator] <= LE_SECONDS:
-                df = df[~((df['date'] == first_day) & (df['indicador_str'] == indicator))]
-                logger.info(f"{indicator} indicator from first day {first_day} removed, less than {LE_SECONDS} seconds")
+        if not MEDIDAS_CORTAS:
+            for indicator in indicators_to_check:
+                if presence_first_day[indicator] and duration_first_day[indicator] <= LE_SECONDS:
+                    df = df[~((df['date'] == first_day) & (df['indicador_str'] == indicator))]
+                    logger.info(f"{indicator} indicator from first day {first_day} removed, less than {LE_SECONDS} seconds")
 
-            if presence_last_day[indicator] and duration_last_day[indicator] <= LE_SECONDS:
-                df = df[~((df['date'] == last_day) & (df['indicador_str'] == indicator))]
-                logger.info(f"{indicator} indicator from last day {last_day} removed, less than {LE_SECONDS} seconds")
+                if presence_last_day[indicator] and duration_last_day[indicator] <= LE_SECONDS:
+                    df = df[~((df['date'] == last_day) & (df['indicador_str'] == indicator))]
+                    logger.info(f"{indicator} indicator from last day {last_day} removed, less than {LE_SECONDS} seconds")
+        else:
+            for indicator in indicators_to_check:
+                if presence_first_day[indicator] and duration_first_day[indicator] <= LE_SECONDS_MEDIDAS_CORTAS:
+                    df = df[~((df['date'] == first_day) & (df['indicador_str'] == indicator))]
+                    logger.info(f"{indicator} indicator from first day {first_day} removed, less than {LE_SECONDS} seconds")
+
+                if presence_last_day[indicator] and duration_last_day[indicator] <= LE_SECONDS_MEDIDAS_CORTAS:
+                    df = df[~((df['date'] == last_day) & (df['indicador_str'] == indicator))]
+                    logger.info(f"{indicator} indicator from last day {last_day} removed, less than {LE_SECONDS} seconds")
         
 
 

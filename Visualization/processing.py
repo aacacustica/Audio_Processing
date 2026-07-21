@@ -76,10 +76,8 @@ def process_folder(folder_path, folder_date_time, folder_threshold, logger):
             
             if files == []:
                 files = [os.path.join(subfolder_path,'AI_MODEL','Predictions',f) for f in os.listdir(os.path.join(subfolder_path,'AI_MODEL','Predictions')) if f.endswith('.csv','.xlsx')]
-                logger.info(f"Files in {os.path.join(subfolder_path,'AI_MODEL','Predictions')}: {files}")
             
             if files:
-                logger.info(f"Files found: {files}")
                 return load_data(files, logger, new_date=new_date, new_time=new_time, new_threshold_date=new_threshold_date, new_threshold_time=new_threshold_time)
             else:
                 logger.warning(f"No measurement files found in {subfolder_path}")
@@ -88,13 +86,16 @@ def process_folder(folder_path, folder_date_time, folder_threshold, logger):
         
         new_date, new_time = folder_date_time.get(folder_path, (None, None))
         new_threshold_date, new_threshold_time  = folder_threshold.get(folder_path, (None, None))
-
+        
+        
+        
         files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith(('.csv', '.xlsx', '.CSV'))]
-        logger.info(f"Files found: {files}")
+        logger.info(f"Files in {folder_path}: {files}")
         
         if files == []:
-                files = [os.path.join(folder_path,'AI_MODEL','Predictions',f) for f in os.listdir(os.path.join(folder_path,'AI_MODEL','Predictions')) if f.endswith('.csv','.xlsx')]
-                logger.info(f"Files in {os.path.join(folder_path,'AI_MODEL','Predictions')}: {files}")
+                #files = [os.path.join(folder_path,'AI_MODEL','Predictions',f) for f in os.listdir(os.path.join(folder_path,'AI_MODEL','Predictions')) if f.endswith('.csv')]
+                files = [f for f in os.listdir(folder_path) if f.endswith('.csv')]
+                logger.info(f"Files in {folder_path}: {files}")
         
         if not files:
             logger.warning(f"No measurement files found in {folder_path}")
@@ -107,12 +108,14 @@ def process_folder(folder_path, folder_date_time, folder_threshold, logger):
 
 
 def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, sufix_string, folder_coefficients, folder_date_time, folder_threshold, oca_limits, oca_type, logger):
-    print()
+    
     stable_version = get_stable_version(logger)
 
     for folder in tqdm(folders, desc="Processing folders"): # \\192.168.205.117\AAC_Server\OCIO\24052_ZARAUTZ\CAMPAÑA_1\3-Medidas\ZARAUTZ_C1_P1\AUDIOMOTH
         
         reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
+        reg_folder = reg_folder.replace("5-Resultados","3-Medidas")
+        
         point_folder = os.path.basename(reg_folder)
         
         if "\\" in folder:
@@ -134,7 +137,7 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
             resultados_dir = os.path.join(*resultados_dir,result_dir_name)
         
         
-
+        
 
         ##############
         # find the oct file in the folder
@@ -150,6 +153,7 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
         folder_output_dir = os.path.join(resultados_dir,point_folder,spl_string, folder, graphics_string)
         
         logger.info(f"folder_output_dir: {folder_output_dir}")
+        
         if '3-Medidas' in folder_output_dir:
             folder_output_dir = folder_output_dir.replace('3-Medidas', '5-Resultados')
 
@@ -161,6 +165,15 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
         ##############################################################
         ########## GETTING PREDICTION FILE FOR EACH FOLDER ###########
         predictions_folder = os.path.join(folder.replace('3-Medidas', '5-Resultados'), "AI_MODEL", "Predictions")
+
+
+        logger.info(f"Resultados dir: {resultados_dir}")
+        logger.info(f"Reg folder: {reg_folder}")
+        logger.info(f"Predictions folder: {predictions_folder}")
+        logger.info(f"Folder: {folder}")
+
+
+        if 'AUDIOMOTH' in predictions_folder.split('\\'): predictions_folder = predictions_folder.replace('\AUDIOMOTH',"")
         prediction_csv_file = None
         if not os.path.exists(predictions_folder):
             logger.warning(f"Predictions folder not found: {predictions_folder}")
@@ -189,7 +202,7 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
             logger.info(f"Getting the data from the dataframes")
             
             df, slm_type, slm_dict = process_folder(reg_folder, folder_date_time, folder_threshold, logger)
-            
+            logger.info(f"Data loaded in dataframe as: {df}")
             if df is None:
                 logger.warning(f"df is None")
                 continue
@@ -234,7 +247,23 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
 
             
             try:
+
                 # drop the beginning and ending of the measurement (15min)
+                df = trim_dataframe(
+                    dataframe                   = df,
+                    start_timestamp             = start_date,
+                    end_timestamp               = end_date,
+                    requested_start_seconds     = REMOVE_START_TIME,
+                    requested_end_seconds       = REMOVE_END_TIME,
+                    logger                      = logger,
+                    dataframe_name              = "SPL df",
+                    max_trim_fraction           = 0.10
+                )
+
+                if df.empty:
+                    logger.warning(f"SPL dataframe empty. Skipping measurement")
+                    continue
+                """
                 df = df.loc[
                     start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):
                     end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')
@@ -244,8 +273,9 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
                     f"SPL df was trimmed, {REMOVE_START_TIME} secs from the beginning "
                     f"and {REMOVE_END_TIME} secs from the end"
                 )
-
+                """
                 if prediction_csv_file is not None:
+                    """
                     prediction_csv_file = prediction_csv_file.loc[
                         pred_start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):
                         pred_end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')
@@ -257,7 +287,18 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
                     )
 
                     logger.info(f"Prediction df shape after trimming: {prediction_csv_file.shape}")
+                    """
 
+                    prediction_csv_file = trim_dataframe(
+                        dataframe                   = prediction_csv_file,
+                        start_timestamp             = pred_start_date,
+                        end_timestamp               = pred_end_date,
+                        requested_start_seconds     = REMOVE_START_TIME,
+                        requested_end_seconds       = REMOVE_END_TIME,
+                        logger                      = logger,
+                        dataframe_name              = "Prediction df",
+                        max_trim_fraction           = 0.10
+                    )
                     if prediction_csv_file.empty:
                         logger.warning(
                             "Prediction df is empty after trimming. "
@@ -363,6 +404,7 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
                     
                     # assign the value to the folder
                     if (key in folder):
+                        print(f"Dataframe before db correction: {df}")
                         df = apply_db_correction(df, value, logger)
                         logger.info(
                             f"Apply {value} correction coefficient to the folder {folder}"
@@ -445,7 +487,7 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
             # Plotting prediction map
             if PLOT_PREDICTION_MAP:
                 logger.info(f"[7] Plotting PLOT_PREDICTION_MAP for folder {folder}")
-                plot_prediction_map(prediction_csv_file, taxonomy, predictions_visualization_folder, logger, plotname=folder)
+                plot_prediction_map(prediction_csv_file, taxonomy,PERIODO_AGREGACION, predictions_visualization_folder, logger, plotname=folder)
 
             
             # Plotting tree map

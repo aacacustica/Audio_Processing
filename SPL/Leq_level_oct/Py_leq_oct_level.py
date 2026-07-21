@@ -211,9 +211,16 @@ def main():
                 
 
                 name_split = audio_file.split(".")[0]
-                start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
+                
+                try:
+                    start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
+                except Exception:
+                    name_split = audio_file.rsplit(".", 1)[0]
+                    date_part, time_part = name_split.split("_")
+                    time_part = time_part.zfill(4)  # "012" -> "0012"
+                    start_timestamp = datetime.datetime.strptime(f"{date_part}_{time_part}", '%y%m%d_%H%M')
+
                 timestamps = [start_timestamp + datetime.timedelta(seconds=i) for i in range(db_levels.shape[0])]
-            
 
                 for row, timestamp in zip(db_levels, timestamps):
 

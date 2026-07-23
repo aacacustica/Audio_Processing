@@ -19,6 +19,9 @@ import matplotlib.pyplot as plt
 from config import *
 
 
+class SkipPlot(RuntimeError):
+    """Interrupción esperada: no hay datos válidos para crear una gráfica."""
+
 def calculate_duration(start_time, end_time):
     duration = end_time - start_time
     return duration.total_seconds()
@@ -177,7 +180,7 @@ def taxonomy_json():
     port_taxonomy_map = pd.read_json(port_taxonomy_map_path, typ='series').to_dict()
     return urban_taxonomy_map, port_taxonomy_map
 
-def align_spl_predictins_1s(df,df_pred,laeq_column,logger):
+def align_spl_predictions_1s(df,df_pred,laeq_column,logger):
 
     if df is None or df.empty:
         logger.warning("SPL dataframe is empty")
@@ -535,7 +538,7 @@ def safe_plot(function: Callable) -> Callable:
         finally:
             plt.close('all')
 
-        return wrapper
+    return wrapper
 
 @dataclass
 class PlotContext:
@@ -602,7 +605,7 @@ class PlotContext:
 
 def validate_dataframe(dataframe: Optional[pd.DataFrame], name: str, required_columns: Sequence[str] = (), min_rows: int = 1, datetime_index: bool = False) -> None:
 
-    missing = sorted(set(required_columns)) - set(dataframe.columns)
+    missing = sorted(set(required_columns) - set(dataframe.columns))
 
     if dataframe is None: raise SkipPlot("{} es None".format(name))
     if not isinstance(dataframe,pd.DataFrame): raise TypeError("{} debe ser pd.DataFrame, no {}".format(name,type(dataframe).__name__))
@@ -645,7 +648,7 @@ def prepare_dataframe(dataframe: pd.DataFrame, name: str,min_rows: int = 1,dedup
     for column in numeric_columns: 
         if column not in prepared.columns: raise SkipPlot("{} no contiene la columna numérica {}".format(name,column))
 
-        prepared[column] = pd.to_numeric(prepared[columns],errors='coerce')
+        prepared[column] = pd.to_numeric(prepared[column],errors='coerce')
 
     
     valid_dropna_columns = [column for column in dropna_columns if column in prepared.columns]
@@ -674,7 +677,7 @@ def estimate_sampling_period(dataframe_or_index: Any) -> Optional[pd.Timedelta]:
 
     if len(index) < 2: return None
 
-    differences  = (pd.Series(index).diff().dropna)
+    differences  = (pd.Series(index).diff().dropna())
     differences  = differences[differences > pd.Timedelta(0)]
 
     if differences.empty: return None
@@ -748,14 +751,14 @@ def normalize_predictions(dataframe: pd.DataFrame,logger: Any, date_column: str 
     predictions = prepare_dataframe(
         dataframe               = dataframe,
         name                    = "Prediction dataframe",
-        required_columns        = [date_column,class_column,probability_column]
+        required_columns        = [date_column,class_column,probability_column],
         datetime_column         = date_column,
         set_datetime_index      = True,
         min_rows                = 1
     )
    
-    predictions['classes'] = predictions[class_column].apply(_cell_to_list)
-    predictions['probabilities'] = predictions[probability_column].apply(_cell_to_list)
+    predictions['_classes'] = predictions[class_column].apply(_cell_to_list)
+    predictions['_probabilities'] = predictions[probability_column].apply(_cell_to_list)
 
     def build_pairs(row: pd.Series) -> List[Tuple[Any,Any]]:
 
@@ -767,17 +770,27 @@ def normalize_predictions(dataframe: pd.DataFrame,logger: Any, date_column: str 
         if len(classes) != len(probabilities):
             logger.warning("Se descartauna fila de predicciones:" "%s de clases y %s probabilidades en %s",len(classes),len(probabilities),row.name)
             return []
+        return list(zip(classes,probabilities))
 
     predictions['_class_probability'] = predictions.apply(build_pairs,axis=1)
 
     predictions = predictions.explode("_class_probability")
-    predictions = predictions.dropna(subset=['_clas_probability'])
+    predictions = predictions.dropna(subset=['_class_probability'])
 
     if predictions.empty: raise SkipPlot("No quedan predicciones después de expandir clases")
 
     predictions[class_column] = predictions["_class_probability"].apply(lambda value: value[0])
 
     predictions[probability_column] = predictions['_class_probability'].apply(lambda value: value[1])
+
+    predictions[class_column] = (predictions[class_column].astype('string').str.strip().replace({
+        "":pd.NA,
+        "[]":pd.NA,
+        "None":pd.NA,
+        "nan":pd.NA
+    }))
+
+    predictions[probability_column] = pd.to_numeric(predictions[probability_column],errors='coerce')
 
     predictions = predictions.dropna(subset=[class_column,probability_column])
     predictions = predictions.drop(columns=["_classes","_probabilities","_class_probability"])
@@ -786,11 +799,16 @@ def normalize_predictions(dataframe: pd.DataFrame,logger: Any, date_column: str 
 
     cadence = estimate_sampling_period(predictions.index)
     logger.info("Predicciones normalizadas: %s filas; cadencia mediana: %s",len(predictions),cadence)
-
+    logger.info("Tipo de probability tras normalización: %s",predictions[probability_column].dtype)
+    logger.info("Ejemplo probability: %s",predictions[probability_column].head().tolist())
+    
     return predictions.sort_index()
 
 
 def map_taxonomy(predictions: pd.DataFrame, taxonomy_map: Mapping[str,str], logger: Any, class_column: str = 'class', output_column: str = 'mapped_class') -> pd.DataFrame:
+
+    validate_dataframe(dataframe=predictions,name='Prediction dataframe',required_columns=[class_column])
+    if not isinstance(taxonomy_map, Mapping): raise TypeError("taxonomy_map debe ser un diccionario o mapping")
 
     mapped = predictions.copy()
     mapped[output_column] = mapped[class_column].map(taxonomy_map)
@@ -799,10 +817,11 @@ def map_taxonomy(predictions: pd.DataFrame, taxonomy_map: Mapping[str,str], logg
 
     if not unmapped.empty: logger.warning("%s detecciones no están en taxonomy_map. " "Ejemplos: %s", int(unmapped.sum()),unmapped.head(10).to_dict())
 
-    mapped = mapped.dropna(subset=output_column)
+    mapped = mapped.dropna(subset=[output_column])
 
     if mapped.empty: raise SkipPlot("Ninguna clase se pudo mapear a la taxonomía")
 
+    logger.info("Predicciones mapeadas a taxonomía:  %s de %s",len(mapped),len(predictions))
     return mapped
 
 def add_datetime_features(dataframe: pd.DataFrame) -> pd.DataFrame:
@@ -847,17 +866,17 @@ def align_spl_predictions(spl_dataframe: pd.DataFrame, prediction_dataframe: pd.
     No desplaza automáticamente horas. La corrección de zona horaria
     debe aplicarse a ambos DataFrames antes de llamar a esta función.
     """
-
-    spl = prepare_dataframe(
+    spl = prepare_dataframe(        
         dataframe                   = spl_dataframe,
         name                        = 'SPL dataframe',
         required_columns            = [laeq_column],
-        datetime_column             = (spl_date_column if spl_date_column in spl_dataframe.columns else None)
+        datetime_column             = (spl_date_column if spl_date_column in spl_dataframe.columns else None),
         set_datetime_index          = True,
         numeric_columns             = [laeq_column],
         dropna_columns              = [laeq_column],
-        deduplicate_index           = True
-    )
+        deduplicate_index           = True)
+
+    
 
     predictions = normalize_predictions(
         dataframe                   = prediction_dataframe,
@@ -874,7 +893,7 @@ def align_spl_predictions(spl_dataframe: pd.DataFrame, prediction_dataframe: pd.
     logger.info("Rango predicciones : %s -> %s", pred_start,pred_end)
 
     common_start = max(spl_start,pred_start)
-    common_end = min(spl_start,pred_end)
+    common_end = min(spl_end,pred_end)
 
     if common_start > common_end: raise SkipPlot("SPL y predicciones no tienen solapamiento espectral")
 
@@ -886,8 +905,8 @@ def align_spl_predictions(spl_dataframe: pd.DataFrame, prediction_dataframe: pd.
     spl_index_name = "__spl_timestmap"
     pred_index_name = "__prediction_timestamp"
 
-    spl_reset = spl.reset_index().rename(columns={spl.index.name or "index": spl_index_name})
-    pred_reset = predictions.reset_index().rename(columns={predictions.index.name or 'index': pred_index_name})
+    spl_reset = spl.rename_axis(spl_index_name).reset_index().sort_values(by=spl_index_name)
+    pred_reset = predictions.rename_axis(pred_index_name).reset_index().sort_values(by=pred_index_name)
 
     spl_reset = spl_reset.sort_values(spl_index_name)
     pred_reset = pred_reset.sort_values(pred_index_name)
@@ -995,13 +1014,196 @@ def aggregate_spl(
     if min_column: aggregations[min_column] = 'min'
 
     aggregated = dataframe.resample(rule).agg(aggregations)
-    aggregated = aggregations.dropna(how='all')
+    aggregated = aggregated.dropna(how='all')
 
     if aggregated.empty: raise SkipPlot("La agregación SPL no produjo datos.")
 
     return aggregated
 
 
+def find_frequency_columns(
+    dataframe: pd.DataFrame,
+) -> List[str]:
+    """
+    Detecta columnas de frecuencia por nombre.
+
+    Ejemplos admitidos:
+        20Hz, 31.5Hz, 1kHz, 1.25kHz, 1000Hz
+    """
+    import re
+
+    pattern = re.compile(
+        r"^\d+(?:\.\d+)?(?:k)?Hz$",
+        re.IGNORECASE,
+    )
+
+    columns = [
+        str(column)
+        for column in dataframe.columns
+        if pattern.fullmatch(str(column).strip())
+    ]
+
+    if not columns:
+        raise SkipPlot(
+            "El DataFrame no contiene columnas de bandas de frecuencia"
+        )
+
+    return columns
+
+
+def frequency_to_hz(column_name: str) -> float:
+    """Convierte 31.5Hz o 1.25kHz a un valor numérico en Hz."""
+
+    text = str(column_name).strip().lower()
+
+    if not text.endswith("hz"):
+        raise ValueError(
+            "{} no es una frecuencia válida".format(
+                column_name
+            )
+        )
+
+    value = text[:-2]
+
+    if value.endswith("k"):
+        return float(value[:-1]) * 1000.0
+
+    return float(value)
+
+def prepare_spectrogram_data(
+    dataframe: pd.DataFrame,
+    logger: Any,
+    datetime_column: Optional[str] = None,
+) -> Tuple[pd.DataFrame, List[str], np.ndarray]:
+    """
+    Prepara un DataFrame para el espectrograma y devuelve:
+        datos, nombres de bandas, frecuencias numéricas.
+    """
+    data = prepare_dataframe(
+        dataframe=dataframe,
+        name="Spectrogram dataframe",
+        datetime_column=datetime_column,
+        set_datetime_index=True,
+    )
+
+    frequency_columns = find_frequency_columns(data)
+
+    for column in frequency_columns:
+        data[column] = pd.to_numeric(
+            data[column],
+            errors="coerce",
+        )
+
+    data = data.dropna(
+        subset=frequency_columns,
+        how="all",
+    )
+
+    if data.empty:
+        raise SkipPlot(
+            "No quedan valores válidos en las bandas de frecuencia"
+        )
+
+    frequencies = np.array(
+        [
+            frequency_to_hz(column)
+            for column in frequency_columns
+        ],
+        dtype=float,
+    )
+
+    order = np.argsort(frequencies)
+    frequencies = frequencies[order]
+    frequency_columns = [
+        frequency_columns[index]
+        for index in order
+    ]
+
+    logger.info(
+        "Bandas detectadas: %s",
+        frequency_columns,
+    )
+
+    return data, frequency_columns, frequencies
+
+
+def select_night_data(
+    dataframe: pd.DataFrame,
+    complete_night: bool = False,
+    start_hour: int = 23,
+    end_hour: int = 7,
+) -> pd.DataFrame:
+    """
+    Selecciona datos nocturnos.
+
+    complete_night=False:
+        Devuelve cualquier fragmento disponible entre 23:00 y 07:00.
+
+    complete_night=True:
+        Solo conserva noches que contienen datos antes y después de
+        medianoche. Es apropiado para gráficas de noche completa.
+    """
+    validate_dataframe(
+        dataframe=dataframe,
+        name="Night dataframe",
+        datetime_index=True,
+    )
+
+    data = dataframe.copy()
+    mask = (
+        (data.index.hour >= start_hour)
+        | (data.index.hour < end_hour)
+    )
+    data = data.loc[mask]
+
+    if data.empty:
+        raise SkipPlot(
+            "No existen datos dentro del periodo nocturno"
+        )
+
+    # La fecha de noche es el día en que comienza el periodo a las 23:00.
+    night_date = pd.Series(
+        data.index.normalize(),
+        index=data.index,
+    )
+
+    after_midnight = data.index.hour < end_hour
+    night_date.loc[after_midnight] = (
+        night_date.loc[after_midnight]
+        - pd.Timedelta(days=1)
+    )
+
+    data["night_date"] = night_date.dt.date
+
+    if not complete_night:
+        return data
+
+    valid_nights: List[Any] = []
+
+    for current_night, group in data.groupby(
+        "night_date"
+    ):
+        has_before_midnight = (
+            group.index.hour >= start_hour
+        ).any()
+
+        has_after_midnight = (
+            group.index.hour < end_hour
+        ).any()
+
+        if has_before_midnight and has_after_midnight:
+            valid_nights.append(current_night)
+
+    data = data[
+        data["night_date"].isin(valid_nights)
+    ]
+
+    if data.empty:
+        raise SkipPlot(
+            "No hay ninguna noche completa que cruce medianoche"
+        )
+
+    return data
 
 
 

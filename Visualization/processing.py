@@ -11,6 +11,8 @@ import glob
 import json
 
 
+
+
 def load_data(files, logger, new_date=None, new_time=None, new_threshold_date=None, new_threshold_time=None):
     slm_type_function_mapping = {
         "audiomoth": (get_data_audiomoth, audiopost_dict),
@@ -111,13 +113,18 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
     
     stable_version = get_stable_version(logger)
 
+    agg_period = int(PERIODO_AGREGACION)
+    
+    if agg_period <=0: raise ValueError("PERIODO_AGREGACION debe ser mayor que cero")
+    logger.info("Using aggregation period: %s seconds",agg_period)
+
     for folder in tqdm(folders, desc="Processing folders"): # \\192.168.205.117\AAC_Server\OCIO\24052_ZARAUTZ\CAMPAÑA_1\3-Medidas\ZARAUTZ_C1_P1\AUDIOMOTH
         
         reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
         reg_folder = reg_folder.replace("5-Resultados","3-Medidas")
         
         point_folder = os.path.basename(reg_folder)
-        
+        print("Processing: %s",point_folder)
         if "\\" in folder:
             folder.split("\\")[-1]
             #folder = os.path.join('\\\\', *folder)
@@ -366,7 +373,7 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
                     logger.warning("There are nan values in the dataframe")
 
 
-                print(prediction_csv_file)
+                #print(prediction_csv_file)
 
                 # here has to be the prediction analysis
 
@@ -465,17 +472,17 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
             # Plotting LEq power average with predictions
             if PLOT_PREDIC_LAEQ_15_MIN:
                 logger.info(f"[3] Plotting PLOT_PREDIC_LAEQ for folder {folder}")
-                plot_predic_laeq_15_min(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
+                plot_predic_laeq_15_min(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder)
 
             
             if PLOT_PREDIC_LAEQ_15_MIN_PERIOD:
                 logger.info(f"[4] Plotting PLOT_PREDIC_LAEQ_15_MIN_PERIOD for folder {folder}")
-                plot_predic_laeq_15_min_period(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
+                plot_predic_laeq_15_min_period(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder)
 
 
             if PLOT_PREDIC_LAEQ_15_MIN_4H:
                 logger.info(f"[5] Plotting PLOT_PREDIC_LAEQ_4H for folder {folder}")
-                plot_predic_laeq_15_min_4h(df, yamnet_csv,taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
+                plot_predic_laeq_15_min_4h(df, yamnet_csv,taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder)
 
 
             # Plotting stack bar with predictions class
@@ -487,7 +494,7 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
             # Plotting prediction map
             if PLOT_PREDICTION_MAP:
                 logger.info(f"[7] Plotting PLOT_PREDICTION_MAP for folder {folder}")
-                plot_prediction_map(prediction_csv_file, taxonomy,PERIODO_AGREGACION, predictions_visualization_folder, logger, plotname=folder)
+                plot_prediction_map(prediction_csv_file, taxonomy,agg_period, predictions_visualization_folder, logger, plotname=folder)
 
             
             # Plotting tree map
@@ -499,7 +506,7 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
             # Plotting time plot
             if PLOT_MAKE_TIME_PLOT:
                 logger.info(f"[9] Plotting time plot for folder {folder}")
-                make_time_plot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder, percentiles=PERCENTILES)
+                make_time_plot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder, percentiles=PERCENTILES)
 
 
             # Plotting heatmap evolution hour

@@ -227,7 +227,9 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
                     adjusted_timestamp = start_timestamp if window_size is None else start_timestamp + datetime.timedelta(seconds=i*window_size)
                     
                     selected_class = sorted(filtered_classes)[0] if filtered_classes else  []
+
                     selected_prob = sorted(filtered_probabilities)[0] if filtered_probabilities else []
+                    
                     all_data_subfolder.append([
                         file_name, 
                         adjusted_timestamp.strftime('%Y-%m-%d %H:%M:%S'), 
@@ -275,7 +277,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
             f.write(f"Habiendo procesado un total de:          {len(audiomoth_folders)} archivos\n")
             f.write(f"Habiendo encontrado un total de:         {len(prediction_per_class_count)} clases con predicciones por encima del umbral\n")
             f.write(f"\n")
-            f.write("Clases con predicciones por encima del umbral:\n")
+            f.write("Clasescon predicciones por encima del umbral, y cantidad de identificaciones, :\n")
 
             for class_name, count in prediction_per_class_count.items():
                 f.write(f"{class_name}: {count}\n")

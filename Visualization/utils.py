@@ -60,22 +60,21 @@ def add_night_column(hour_column, day_col):
 def add_datetime_columns(df,logging, date_col):
     df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
 
-    #df['day_hour'] = df.apply(lambda x: str(x[date_col].day) + '-' + str(x[date_col].hour),axis=1)
     if df[date_col].dtype == 'datetime64[ns]':
         df['date'] = df[date_col].dt.date
         df['day'] = df[date_col].dt.day
         df['hour'] = df[date_col].dt.hour
         df['weekday'] = df[date_col].dt.weekday
         df['day_name'] = df[date_col].dt.day_name()
-    else:
-        logging.error(f"Failed to convert {date_col} to datetime in some rows.")
-    #df['min_sec_str'] = df.apply(lambda x: datetime.datetime.strftime(x[date_col],'%M:%S'),axis=1)
-    #df['min_sec_15_str'] = df.apply(lambda x: str(x[date_col].minute % 15) + '-'+str(x[date_col].second),axis=1)
+    else: logging.error(f"Failed to convert {date_col} to datetime in some rows.")
+        
+
+    logging.info(f"Columna temporal añadida correctamente")
     return df
 
 
 def add_datetime_columns_pred(df,logging, date_col):
-    logging.info(f"Adding datetime columns to {date_col}...")
+
     df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
 
     if df[date_col].dtype == 'datetime64[ns]':
@@ -84,9 +83,9 @@ def add_datetime_columns_pred(df,logging, date_col):
         df['hour'] = df[date_col].dt.hour
         df['weekday'] = df[date_col].dt.weekday
         df['day_name'] = df[date_col].dt.day_name()
-    else:
-        logging.error(f"Failed to convert {date_col} to datetime in some rows.")
-
+    else: logging.error(f"Failed to convert {date_col} to datetime in some rows.")
+        
+    logging.info(f"Columna temporal predicciones añadida correctamente")
     return df
 
 
@@ -285,8 +284,9 @@ def remove_row_out_timespan(df_LAeq, df_Pred):
 
 
 def apply_db_correction(df, coefficient, logger):
+
     if 'LA' in df.columns:
-        logger.info('Entering --> Entering LA')
+        logger.info('Corrección --> LA')
         df['LA_corrected'] = df['LA'] - coefficient
         df['LAmax_corrected'] = df['LAmax'] - coefficient
         df['LAmin_corrected'] = df['LAmin'] - coefficient
@@ -295,33 +295,30 @@ def apply_db_correction(df, coefficient, logger):
         logger.info('Entering --> LC-LA')
         df['LC-LA_corrected'] = df['LC-LA'] - coefficient
 
-
-
     elif 'LAeq' in df.columns:
-        logger.info('Entering --> LAeq')
+        logger.info('Corrección --> LAeq')
         df['LA_corrected'] = df['LAeq'] - coefficient
         df['LAmax_corrected'] = df['LAFmax'] - coefficient
         df['LAmin_corrected'] = df['LAFmin'] - coefficient
         # df['LC_corrected'] = df['LCeq'] - coefficient
 
-
-    
     elif 'LAFeq' in df.columns:
-        logger.info('Entering --> LAeq')
+        logger.info('Corrección --> LAeq')
         df['LA_corrected'] = df['LAFeq'] - coefficient
         df['LAmax_corrected'] = df['LAFmax'] - coefficient
         df['LAmin_corrected'] = df['LAFmin'] - coefficient
 
     elif 'Value' in df.columns:
-        logger.info('Entering --> Value')
+        logger.info('Corrección --> Value')
         df['LA_corrected'] = df['Value'] - coefficient
 
     elif '' in df.columns:
-        logger.info('Entering --> nothing in the apply_db_correction!!')
+        logger.info('Corrección --> ?')
         df['LA_corrected'] = df[''] - coefficient
 
     else:
         logger.error('No column found to apply the correction')
+
 
     return df
 
@@ -469,45 +466,32 @@ def trim_dataframe(dataframe,start_timestamp,end_timestamp,requested_start_secon
         logger.warning(f"{dataframe_name} is empty before trimming")
         return dataframe.copy()
     
-    duration_seconds = ( end_timestamp - start_timestamp).total_seconds()
+    duration_seconds                = ( end_timestamp - start_timestamp).total_seconds()
 
     if duration_seconds <= 0:
-        logger.warning(f"{dataframe_name} has an invalid duration: {duration_seconds} seconds. Using the complete dataframe")
+        logger.warning(f"{dataframe_name} tiene duracion invalida de: {duration_seconds} degundos. Se utilizará la tabla completa ...")
         return dataframe.copy()
 
-    max_trim_seconds = duration_seconds * max_trim_fraction
-    actual_start_trim = min(max(0,requested_start_seconds),max_trim_seconds)
-    actual_end_trim = min(max(0,requested_end_seconds),max_trim_seconds)
-    trim_start = start_timestamp + pd.Timedelta(actual_start_trim,unit="seconds")
-    trim_end = end_timestamp - pd.Timedelta(actual_end_trim,unit="seconds")
-
-    logger.info(f"{dataframe_name} duration: {duration_seconds:.2f} seconds")
-
-    logger.info(f"{dataframe_name} requested trimming: "
-                f"{requested_start_seconds}s from beggining"
-                f"{requested_end_seconds}s from end")
-    
-    logger.info(f"{dataframe_name} actual trimming: "
-                f"{actual_start_trim:.2f}s from beggining"
-                f"{actual_end_trim:.2f}s from end")
-    
-    logger.info(f"{dataframe_name} trimming range: "
-                f"{trim_start} -> {trim_end}")
+    max_trim_seconds                = duration_seconds * max_trim_fraction
+    actual_start_trim               = min(max(0,requested_start_seconds),max_trim_seconds)
+    actual_end_trim                 = min(max(0,requested_end_seconds),max_trim_seconds)
+    trim_start                      = start_timestamp + pd.Timedelta(actual_start_trim,unit="seconds")
+    trim_end                        = end_timestamp - pd.Timedelta(actual_end_trim,unit="seconds")
     
     if trim_start >= trim_end:
-        logger.warning(f"{dataframe_name} trimming range is invalid. Using the complete dataframe")
+        logger.warning(f"{dataframe_name} rango de recorte es inválido. Se utilizará la tabla completa ...")
         return dataframe.copy()
     
-    trimmed_dataframe = dataframe.loc[trim_start:trim_end].copy()
+    trimmed_dataframe               = dataframe.loc[trim_start:trim_end].copy()
 
     if trimmed_dataframe.empty:
-        logger.warning(f"{dataframe_name} is empty after trimming. This may indicate that its index does not match the provided timestamps. Using the complete dataframe")
+        logger.warning(f"{dataframe_name} está vacío despues de recortar. Esto puede indicar que el indice del dataframe es incorrecto. Se utilizará la tabla completa ...")
         return dataframe.copy()
     
-    logger.info(f"{dataframe_name} shape after trimming: {trimmed_dataframe.shape}")
-
     return trimmed_dataframe
 
+def normalize_path(path):
+    return os.path.normcase(os.path.normpath(path))
 
 def safe_plot(function: Callable) -> Callable:
     """
@@ -1077,7 +1061,7 @@ def prepare_spectrogram_data( dataframe: pd.DataFrame, logger: Any, datetime_col
 
     if data.empty: raise SkipPlot( "No quedan valores válidos en las bandas de frecuencia" )
         
-    frequencies = np.array([frequency_to_hz(column)for column in frequency_columns],type=float)
+    frequencies = np.array([frequency_to_hz(column)for column in frequency_columns],dtype=float)
     order = np.argsort(frequencies)
     frequencies = frequencies[order]
     frequency_columns = [ frequency_columns[index] for index in order ]

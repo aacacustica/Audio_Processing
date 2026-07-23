@@ -60,53 +60,50 @@ def load_data(files, logger, new_date=None, new_time=None, new_threshold_date=No
 
 
 def process_folder(folder_path, folder_date_time, folder_threshold, logger):
-    # folder contains a CESVA folder
+
     cesva_path = os.path.join(folder_path, 'CESVA')
+    
     if os.path.isdir(cesva_path):
-        # load the data from the CESVA folder
-        subfolders = [f for f in os.listdir(cesva_path) if os.path.isdir(os.path.join(cesva_path, f))]
-        new_date, new_time = folder_date_time.get(folder_path, (None, None))
+
+        subfolders                              = [f for f in os.listdir(cesva_path) if os.path.isdir(os.path.join(cesva_path, f))]
+        new_date, new_time                      = folder_date_time.get(folder_path, (None, None))
         new_threshold_date, new_threshold_time  = folder_threshold.get(folder_path, (None, None))
         
-        # CESVA folder contains subfolders
         for subfolder in subfolders:
-            #load the data from the first subfolder
+
             subfolder_path = os.path.join(cesva_path, subfolder)
-            
-            # subfolder contains measurement files
             files = [os.path.join(subfolder_path, f) for f in os.listdir(subfolder_path) if f.endswith(('.csv', '.xlsx', '.CSV', 'XLSX'))]
-            
-            if files == []:
-                files = [os.path.join(subfolder_path,'AI_MODEL','Predictions',f) for f in os.listdir(os.path.join(subfolder_path,'AI_MODEL','Predictions')) if f.endswith('.csv','.xlsx')]
-            
+
+            if files == []: files = [os.path.join(subfolder_path,'AI_MODEL','Predictions',f) for f in os.listdir(os.path.join(subfolder_path,'AI_MODEL','Predictions')) if f.endswith('.csv', '.xlsx', '.CSV', 'XLSX')]
             if files:
-                return load_data(files, logger, new_date=new_date, new_time=new_time, new_threshold_date=new_threshold_date, new_threshold_time=new_threshold_time)
-            else:
-                logger.warning(f"No measurement files found in {subfolder_path}")
+                return load_data(
+                    files               = files, 
+                    logger              = logger, 
+                    new_date            = new_date, 
+                    new_time            = new_time, 
+                    new_threshold_date  = new_threshold_date, 
+                    new_threshold_time  = new_threshold_time
+                    )
 
     else:
         
-        new_date, new_time = folder_date_time.get(folder_path, (None, None))
-        new_threshold_date, new_threshold_time  = folder_threshold.get(folder_path, (None, None))
-        
-        
-        
+        new_date, new_time                      = folder_date_time.get(folder_path, (None, None))
+        new_threshold_date, new_threshold_time  = folder_threshold.get(folder_path, (None, None)) 
         files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith(('.csv', '.xlsx', '.CSV'))]
-        logger.info(f"Files in {folder_path}: {files}")
-        
-        if files == []:
-                #files = [os.path.join(folder_path,'AI_MODEL','Predictions',f) for f in os.listdir(os.path.join(folder_path,'AI_MODEL','Predictions')) if f.endswith('.csv')]
-                files = [f for f in os.listdir(folder_path) if f.endswith('.csv')]
-                logger.info(f"Files in {folder_path}: {files}")
-        
-        if not files:
-            logger.warning(f"No measurement files found in {folder_path}")
-            return None, None, None
-        
-        return load_data(files, logger, new_date=new_date, new_time=new_time, new_threshold_date=new_threshold_date, new_threshold_time=new_threshold_time)
+
+        if files == []:files = [f for f in os.listdir(folder_path) if f.endswith('.csv')]                
+        if not files: return None, None, None
+
+        if files: 
+            return load_data(
+                files               = files, 
+                logger              = logger, 
+                new_date            = new_date, 
+                new_time            = new_time, 
+                new_threshold_date  = new_threshold_date, 
+                new_threshold_time  = new_threshold_time)
     
     return None, None, None 
-
 
 
 def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, sufix_string, folder_coefficients, folder_date_time, folder_threshold, oca_limits, oca_type, logger):
@@ -116,129 +113,103 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
     agg_period = int(PERIODO_AGREGACION)
     
     if agg_period <=0: raise ValueError("PERIODO_AGREGACION debe ser mayor que cero")
-    logger.info("Using aggregation period: %s seconds",agg_period)
+    
 
-    for folder in tqdm(folders, desc="Processing folders"): # \\192.168.205.117\AAC_Server\OCIO\24052_ZARAUTZ\CAMPAÑA_1\3-Medidas\ZARAUTZ_C1_P1\AUDIOMOTH
-        
-        reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
-        reg_folder = reg_folder.replace("5-Resultados","3-Medidas")
-        
-        point_folder = os.path.basename(reg_folder)
-        print("Processing: %s",point_folder)
-        if "\\" in folder:
-            folder.split("\\")[-1]
-            #folder = os.path.join('\\\\', *folder)
-        else:
-            folder = folder.split("/")[-1]
-        
-        logger.info(f"Entering folder: {folder}")
-        spl_string = "SPL"
-        graphics_string = f"Graphics_{sufix_string}"
-        result_dir_name = "5-Resultados"
-        
-        if "\\" in reg_folder: 
-            resultados_dir = reg_folder.split("\\")[:-3]
-            resultados_dir = os.path.join('\\\\', *resultados_dir, result_dir_name)
+    for folder in tqdm(folders, desc="Processing folders"): 
+
+        prediction_csv_file                 = None
+        df                                  = None
+        slm_type                            = None
+        slm_dict                            = None
+
+        result_dir_name                     = "5-Resultados"
+        spl_string                          = "SPL"
+        graphics_string                     = f"Graphics_{sufix_string}"
+
+        data_registers_folder               = os.path.join(input_folder, folder) 
+        data_registers_folder               = data_registers_folder.replace("5-Resultados","3-Medidas")
+        point_name                          = data_registers_folder.split("\\")[-2]
+
+        if "\\" in data_registers_folder: 
+            resultados_dir              = data_registers_folder.split("\\")[:-3]
+            resultados_dir              = os.path.join('\\\\', *resultados_dir, result_dir_name)
         else: 
-            resultados_dir = reg_folder.split("/")[:-3]
-            resultados_dir = os.path.join(*resultados_dir,result_dir_name)
-        
-        
-        
+            resultados_dir              = data_registers_folder.split("/")[:-3]
+            resultados_dir              = os.path.join(*resultados_dir,result_dir_name)    
 
-        ##############
-        # find the oct file in the folder
-        # oct_file = glob.glob(os.path.join(reg_folder, "leq_oct_*"))
-        # df_oct = pd.read_csv(oct_file[0])
-        ##############
-
-
+        folder_output_dir                   = os.path.join(data_registers_folder,spl_string, graphics_string)
+        predictions_folder                  = os.path.join(resultados_dir,point_name,"AI_MODEL","Predictions")
+        predictions_files                   = glob.glob(os.path.join(predictions_folder, "*.csv"))
+        predictions_visualization_folder    = predictions_folder.replace("Predictions", "Visualizations")
+       
         if not os.path.exists(resultados_dir):
             os.makedirs(resultados_dir)
             logger.info(f"Created output folder: {resultados_dir}")
-        
-        folder_output_dir = os.path.join(resultados_dir,point_folder,spl_string, folder, graphics_string)
-        
-        logger.info(f"folder_output_dir: {folder_output_dir}")
-        
-        if '3-Medidas' in folder_output_dir:
-            folder_output_dir = folder_output_dir.replace('3-Medidas', '5-Resultados')
 
-        if not os.path.exists(folder_output_dir):
-            os.makedirs(folder_output_dir)
-            logger.info(f"Created output folder: {folder_output_dir}")
+        if '3-Medidas' in folder_output_dir: folder_output_dir = folder_output_dir.replace('3-Medidas', '5-Resultados')
+
+        if not os.path.exists(folder_output_dir): os.makedirs(folder_output_dir)
+
+        if "\\" in folder:  folder = folder.split("\\")[-1]
+        else: folder = folder.split("/")[-1]
             
 
-        ##############################################################
-        ########## GETTING PREDICTION FILE FOR EACH FOLDER ###########
-        predictions_folder = os.path.join(folder.replace('3-Medidas', '5-Resultados'), "AI_MODEL", "Predictions")
+        if not os.path.exists(predictions_folder): logger.warning(f"Predictions folder not found: {predictions_folder}")
+            
 
-
-        logger.info(f"Resultados dir: {resultados_dir}")
-        logger.info(f"Reg folder: {reg_folder}")
-        logger.info(f"Predictions folder: {predictions_folder}")
-        logger.info(f"Folder: {folder}")
-
-
-        if 'AUDIOMOTH' in predictions_folder.split('\\'): predictions_folder = predictions_folder.replace('\AUDIOMOTH',"")
-        prediction_csv_file = None
-        if not os.path.exists(predictions_folder):
-            logger.warning(f"Predictions folder not found: {predictions_folder}")
-        if os.path.exists(predictions_folder):
-            # list csv files in the directory
-            predictions_files = glob.glob(os.path.join(predictions_folder, "*.csv"))
-            if predictions_files:
-                prediction_file = predictions_files[0]
-                prediction_csv_file = prediction_csv(prediction_file)
-            else:
-                logger.warning("No CSV files found in the predictions folder.")
+        else: logger.warning("No CSV files found in the predictions folder.")
+            
+                
         
-        predictions_visualization_folder = predictions_folder.replace("Predictions", "Visualizations")
-        if not os.path.exists(predictions_visualization_folder):
-            os.makedirs(predictions_visualization_folder)
-            logger.info(f"Created output folder: {predictions_visualization_folder}")
-        ##############################################################
+        if not os.path.exists(predictions_visualization_folder): os.makedirs(predictions_visualization_folder)
 
+        logger.info(f"Nombre del punto:                     {point_name}")
+        logger.info(f"Carpeta actual:                       {folder}")
+        logger.info(f"Fichero de registros acusticos:       {data_registers_folder}")
+        logger.info(f"Fichero de predicciones:              {predictions_folder}") 
 
+        logger.info(f"Carpeta de salida:                    {folder_output_dir}")
+        logger.info(f"Carpeta de salida de predicciones:    {predictions_visualization_folder}")
+        logger.info(f"Carpeta de resultados:                {resultados_dir}")    
+        logger.info(f"Graficando con periodo de agregación: {agg_period}\n")  
 
+        ####################################################################
+        # add datetime columns, sort by datetime and set datetime as index #
+        ####################################################################
 
+        logger.info(f"FOR SPL FILE: Añadiendo columna temporal, ordenando por esta y poniendola como índice de la tabla\n")
 
         try:
-            logger.info("")
-            logger.info(f"Processing folder {folder}") 
-            logger.info(f"Getting the data from the dataframes")
-            
-            df, slm_type, slm_dict = process_folder(reg_folder, folder_date_time, folder_threshold, logger)
-            logger.info(f"Data loaded in dataframe as: {df}")
-            if df is None:
-                logger.warning(f"df is None")
+
+            if os.path.exists(data_registers_folder): df, slm_type, slm_dict = process_folder(data_registers_folder, folder_date_time, folder_threshold, logger)
+            if os.path.exists(predictions_folder) and predictions_files: prediction_csv_file = prediction_csv(predictions_files[0])
+
+            if df is None: 
+                logger.warning(f"No se encontraron datos SPL en {data_registers_folder}")
                 continue
-            
-            
-            logger.info("\n")
-            if TENERIFE_TIMEZONE:
-                df['datetime'] = pd.to_datetime(df['datetime']) - pd.Timedelta(hours=1)
-                logger.info(f"Time zone was set to Tenerife")
+            if prediction_csv_file is None:
+                logger.warning(f"No se encontraron datos PRED en {predictions_files[0]}")
 
-            #take data from 06/05/2025  16:00:00
-            # df = df.loc[df['datetime'] >= '2025-05-06 16:00:00']
-
-            # add datetime columns, sort by datetime and set datetime as index
-            logger.info(f"FOR SPL FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
-            df = add_datetime_columns(df,logger, date_col='datetime')
-            df = df.sort_values('datetime')
-            df.set_index('datetime', inplace=True, drop=False)
-            start_date = df.index[0]
-            end_date = df.index[-1]
-
-            logger.info(f"Start date {start_date} and end date {end_date}")
-            logger.info(f"df was sorted by datetime and datetime was set as index")
+            if TENERIFE_TIMEZONE: 
+                timezone_offset = pd.Timedelta(hours=1)
+                df['datetime']                      = pd.to_datetime(df['datetime'],errors = 'coerce') - timezone_offset
+                prediction_csv_file['date']         = (pd.to_datetime(prediction_csv_file['date'],errors = 'coerce') - timezone_offset)
 
 
+            if df is not None:
+                df = add_datetime_columns(df,logger, date_col='datetime')
+                df = df.sort_values('datetime')
+                df.set_index('datetime', inplace=True, drop=False)
+                start_date = df.index[0]
+                end_date = df.index[-1]
 
-            # the same for the prediction file
+            else:
+                logger.warning(f"SPL file is None")
+                continue
+
+            logger.info(f"FOR PREDICTION FILE: Añadiendo columna temporal, ordenando por esta y poniendola como índice de la tabla")
+
             if prediction_csv_file is not None:
-                logger.info(f"FOR PREDICTION FILE: Adding datetime columns, sorting by datetime and setting datetime as index")
                 
                 prediction_csv_file = add_datetime_columns_pred(prediction_csv_file, logger, date_col='date')
                 prediction_csv_file = prediction_csv_file.sort_values('date')
@@ -246,306 +217,263 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
                 pred_start_date = prediction_csv_file.index[0]
                 pred_end_date = prediction_csv_file.index[-1]
 
-                logger.info(f"Start date {pred_start_date} and end date {pred_end_date}")
-                logger.info(f"df was sorted by datetime and datetime was set as index")
-            else:
+            else: 
                 logger.warning(f"prediction_csv_file is None")
-
-
-            
-            try:
-
-                # drop the beginning and ending of the measurement (15min)
-                df = trim_dataframe(
-                    dataframe                   = df,
-                    start_timestamp             = start_date,
-                    end_timestamp               = end_date,
-                    requested_start_seconds     = REMOVE_START_TIME,
-                    requested_end_seconds       = REMOVE_END_TIME,
-                    logger                      = logger,
-                    dataframe_name              = "SPL df",
-                    max_trim_fraction           = 0.10
-                )
-
-                if df.empty:
-                    logger.warning(f"SPL dataframe empty. Skipping measurement")
-                    continue
-                """
-                df = df.loc[
-                    start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):
-                    end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')
-                ]
-
-                logger.info(
-                    f"SPL df was trimmed, {REMOVE_START_TIME} secs from the beginning "
-                    f"and {REMOVE_END_TIME} secs from the end"
-                )
-                """
-                if prediction_csv_file is not None:
-                    """
-                    prediction_csv_file = prediction_csv_file.loc[
-                        pred_start_date + pd.Timedelta(REMOVE_START_TIME, unit='seconds'):
-                        pred_end_date - pd.Timedelta(REMOVE_END_TIME, unit='seconds')
-                    ]
-
-                    logger.info(
-                        f"Prediction df was trimmed, {REMOVE_START_TIME} secs from the beginning "
-                        f"and {REMOVE_END_TIME} secs from the end"
-                    )
-
-                    logger.info(f"Prediction df shape after trimming: {prediction_csv_file.shape}")
-                    """
-
-                    prediction_csv_file = trim_dataframe(
-                        dataframe                   = prediction_csv_file,
-                        start_timestamp             = pred_start_date,
-                        end_timestamp               = pred_end_date,
-                        requested_start_seconds     = REMOVE_START_TIME,
-                        requested_end_seconds       = REMOVE_END_TIME,
-                        logger                      = logger,
-                        dataframe_name              = "Prediction df",
-                        max_trim_fraction           = 0.10
-                    )
-                    if prediction_csv_file.empty:
-                        logger.warning(
-                            "Prediction df is empty after trimming. "
-                            "Skipping prediction analysis columns."
-                        )
-                        prediction_csv_file = None
-
-
-                # add indicators column
-                logger.info("Adding indicators column")
-
-                df['indicador_str'] = df['hour'].apply(evaluation_period_str)
-
-                if prediction_csv_file is not None:
-                    prediction_csv_file['indicador_str'] = prediction_csv_file['hour'].apply(
-                        evaluation_period_str
-                    )
-
-
-                # add nights column
-                logger.info("Adding nights column")
-
-                df['night_str'] = df.apply(
-                    lambda x: add_night_column(x['hour'], x['weekday']),
-                    axis=1
-                )
-
-                if prediction_csv_file is not None:
-                    prediction_csv_file['night_str'] = prediction_csv_file.apply(
-                        lambda x: add_night_column(x['hour'], x['weekday']),
-                        axis=1
-                    )
-
-
-                # add oca column
-                logger.info("Adding oca column")
-                logger.info(oca_limits)
-
-                df['oca'] = df['hour'].apply(
-                    lambda h: db_limit(h, **oca_limits)
-                )
-
-                # If prediction file also needs OCA, uncomment this:
-                # if prediction_csv_file is not None:
-                #     prediction_csv_file['oca'] = prediction_csv_file['hour'].apply(
-                #         lambda h: db_limit(h, **oca_limits)
-                #     )
-
-
-                # removing nan values
-                if prediction_csv_file is not None:
-                    prediction_csv_file = prediction_csv_file.dropna()
-                    logger.info("Removing nan values from prediction df")
-
-                    if prediction_csv_file.empty:
-                        logger.warning(
-                            "Prediction df is empty after dropna. "
-                            "Skipping prediction analysis."
-                        )
-                        prediction_csv_file = None
-
-
-                # check if there is nan values
-                if df.isnull().values.any():
-                    logger.warning("There are nan values in the dataframe")
-
-
-                #print(prediction_csv_file)
-
-                # here has to be the prediction analysis
-
-                #exit()
-
-
-                # just for now
-                # create LCeq column which is LC - LA = LC_LA.
-                # I know the LC_LA and the LA
-                # df['LCeq'] = df['LAeq'] + df['LCeq-LAeq']
-
-
-                #####################################################
-                ########## APPLYING DB CORRECTION TO THE DATA ########
-                #####################################################
-
-                tuple_folder_coeff = []
-                logger.info("Applying db correction")
-
-                for key, value in folder_coefficients.items():
-                    
-                    
-                    if "\\" in key: 
-                        key = key.split("\\")[-1]
-                        folder_name = key[-1]
-                        #key = os.path.join('\\\\', *key)
-                        
-                    else: 
-                        key = key.split("/")[-1]
-                        folder_name = key[-1]
-                    
-                    # save tuples folder name, coefficient value
-                    folder_name_coeff_value = (folder_name, value)
-                    tuple_folder_coeff.append(folder_name_coeff_value)
-                    
-                    # assign the value to the folder
-                    if (key in folder):
-                        print(f"Dataframe before db correction: {df}")
-                        df = apply_db_correction(df, value, logger)
-                        logger.info(
-                            f"Apply {value} correction coefficient to the folder {folder}"
-                        )
-
-
-            except Exception as e:
-                logger.error(f"An error occurred while trimming the dataframe {e}")
                 continue
 
+            logger.info(f"")
+            logger.info(f"SPL fecha de inicio:  {start_date}.")
+            logger.info(f"SPL fecha de fin:     {end_date}.")
+            logger.info(f"PRED  start date      {pred_start_date}.")
+            logger.info(f"PRED fecha de fin:    {pred_end_date}.")
+            logger.info(f"")
+
+        except Exception as e:
+            logger.warning(f"Error desconocido al añadir la columna temporal: {e}")    
+            continue
+
+
+        ####################################################################
+        # drop the beginning and ending of the measurement (15min)         #
+        ####################################################################
             
+        logger.info(f"SPL: Borrando {REMOVE_START_TIME} del principio de la tabla y {REMOVE_END_TIME} del final de la tabla ...")
+        logger.info(f"PRED: Borrando {REMOVE_START_TIME} del principio de la tabla y {REMOVE_END_TIME} del final de la tabla ...\n")
+
+        try:
+
+            df = trim_dataframe(
+                dataframe                   = df,
+                start_timestamp             = start_date,
+                end_timestamp               = end_date,
+                requested_start_seconds     = REMOVE_START_TIME,
+                requested_end_seconds       = REMOVE_END_TIME,
+                logger                      = logger,
+                dataframe_name              = "SPL df",
+                max_trim_fraction           = 0.10
+            )
+
+            prediction_csv_file = trim_dataframe(
+                dataframe                   = prediction_csv_file,
+                start_timestamp             = pred_start_date,
+                end_timestamp               = pred_end_date,
+                requested_start_seconds     = REMOVE_START_TIME,
+                requested_end_seconds       = REMOVE_END_TIME,
+                logger                      = logger,
+                dataframe_name              = "Prediction df",
+                max_trim_fraction           = 0.10
+            )
+
+            if df is None or df.empty:
+                logger.warning(f"El dataframe de datos acusticos quedó vacío tras el recorte")
+                continue
+
+            if prediction_csv_file is None or prediction_csv_file.empty: 
+                logger.warning(f"El dataframe de datos de predicciones quedó vacío tras el recorte")
+                continue
+
+            df['indicador_str']                     = df['hour'].apply(evaluation_period_str)
+            prediction_csv_file['indicador_str']    = prediction_csv_file['hour'].apply( evaluation_period_str )
+
+            logger.info(f"SPL: Eliminado {REMOVE_START_TIME} del principio de la tabla y {REMOVE_END_TIME} del final.")
+            logger.info(f"SPL: Formato de la tabla tras ajuste temporal: {df.shape}.")
+            logger.info(f"PRED: Eliminado {REMOVE_START_TIME} del principio de la tabla y {REMOVE_END_TIME} del final.")
+            logger.info(f"PRED: Formato de la tabla tras ajuste temporal: {prediction_csv_file.shape}.\n")
             
-            logger.info("")        
-            logger.info(f"PLOTTING SECTION")
-            if "\\" in folder: folder = folder.split("\\")[-1]
-            else: folder = folder.split("/")[-1]
+        except Exception as e:
+            logger.error(f"Ha ocurrido un error recortando el dataframe {REMOVE_START_TIME} desde el principio y {REMOVE_END_TIME} desde el final: {e}")
+            continue
+                
             
-            
-            # add slm_dict column LAEQ_COLUMN_COEFF: with the value of LA_corrected
-            slm_dict["LAEQ_COLUMN_COEFF"] = 'LA_corrected'
-            slm_dict["LAMAX_COLUMN_COEFF"] = 'LAmax_corrected'
-            slm_dict["LAMIN_COLUMN_COEFF"] = 'LAmin_corrected'
-            # just for now
-            # slm_dict["LCEQ_COLUMN_COEFF"] = 'LC_corrected'
+    
+        ####################################################################
+        # Adding nights column                                             #
+        ####################################################################
 
+        logger.info(f"Añadiendo columna de noche en ambas tablas\n")
 
-            # SAVE THE INFO IN A JSON FILE
-            info_dict = {
-                "PERIODO_AGREGACION": PERIODO_AGREGACION,
-                "PERCENTILES": PERCENTILES,
-                "folder_coeff": tuple_folder_coeff,
-                "stable_version": stable_version,
-                "slm_type": slm_type,
-                "oca_limits": oca_limits,
-                "oca_type": oca_type,
-                "tenerife_timezone": TENERIFE_TIMEZONE,
-            }
+        try:
 
-            # save the info in a json file
-            with open(os.path.join(folder_output_dir, "processing_parameters.json"), 'w') as f:
-                json.dump(info_dict, f)
-            logger.info(f"Saved processing_parameters.json in {folder_output_dir}")
+            df['night_str'] = df.apply( lambda x: add_night_column(x['hour'], x['weekday']), axis=1)
+            if prediction_csv_file is not None: prediction_csv_file['night_str'] = prediction_csv_file.apply( lambda x: add_night_column(x['hour'], x['weekday']),axis=1)
+
+            logger.info(f"SPL: Columna de noche añadida.")
+            logger.info(f"PRED: Columna de noche añadida.\n")
+
+        except Exception as e:
+            logger.error(f"Ha ocurrido un error añadiendo la columna de datos de noche a los dataframes SPL y Predicciones: {e}")
+            continue
 
 
 
+        ####################################################################
+        # Adding OCA column                                                #
+        ####################################################################
 
-            # Plotting night evolution
-            if PLOT_NIGHT_EVOLUTION:
-                logger.info(f"[1] Plotting night evolution for folder {folder}")
-                plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder, indicador_noche="Ln")
-            
-            # Plotting night evolution 15 min
-            if PLOT_NIGHT_EVOLUTION_15_MIN:
-                logger.info(f"[2] Plotting night evolution 15 min for folder {folder}")
-                plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder, indicador_noche="Ln")
+        logger.info(f"Añadiendo columna OCA a ambas tablas\n")
 
+        try:
+            df['oca'] = df['hour'].apply( lambda h: db_limit(h, **oca_limits))
 
-            # Plotting LEq power average with predictions
-            if PLOT_PREDIC_LAEQ_15_MIN:
-                logger.info(f"[3] Plotting PLOT_PREDIC_LAEQ for folder {folder}")
-                plot_predic_laeq_15_min(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder)
+            if prediction_csv_file is not None:
 
-            
-            if PLOT_PREDIC_LAEQ_15_MIN_PERIOD:
-                logger.info(f"[4] Plotting PLOT_PREDIC_LAEQ_15_MIN_PERIOD for folder {folder}")
-                plot_predic_laeq_15_min_period(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder)
+                prediction_csv_file = prediction_csv_file.dropna(subset=["date",'class','probability'])
+                if prediction_csv_file.empty: prediction_csv_file = None
+                    
+            if df.isnull().values.any(): logger.warning("There are nan values in the dataframe")  
+            logger.info(f"SPL: Columna OCA añadida.")
+            logger.info(f"PRED: Columna OCA añadida.\n")        
 
-
-            if PLOT_PREDIC_LAEQ_15_MIN_4H:
-                logger.info(f"[5] Plotting PLOT_PREDIC_LAEQ_4H for folder {folder}")
-                plot_predic_laeq_15_min_4h(df, yamnet_csv,taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder)
+        except Exception as e:
+            logger.error(f"Ha ocurrido un error añadiendo la columna OCA en los dataframes SPL y Predicciones: {e}")
+            continue
 
 
-            # Plotting stack bar with predictions class
-            if PLOT_PREDICTION_STACK_BAR:
-                logger.info(f"[6] Plotting PLOT_PREDICTION_STACK_BAR for folder {folder}")
-                plot_prediction_stack_bar(prediction_csv_file, yamnet_csv, taxonomy, predictions_visualization_folder, logger, plotname=folder)
-            
-
-            # Plotting prediction map
-            if PLOT_PREDICTION_MAP:
-                logger.info(f"[7] Plotting PLOT_PREDICTION_MAP for folder {folder}")
-                plot_prediction_map(prediction_csv_file, taxonomy,agg_period, predictions_visualization_folder, logger, plotname=folder)
-
-            
-            # Plotting tree map
-            if PLOT_TREE_MAP:
-                logger.info(f"[8] Plotting PLOT_TREE_MAP for folder {folder}")
-                plot_tree_map(prediction_csv_file,taxonomy,predictions_visualization_folder, logger, plotname=folder)
-
-            
-            # Plotting time plot
-            if PLOT_MAKE_TIME_PLOT:
-                logger.info(f"[9] Plotting time plot for folder {folder}")
-                make_time_plot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder, percentiles=PERCENTILES)
 
 
-            # Plotting heatmap evolution hour
-            if PLOT_HEATMAP_EVOLUTION_HOUR:
-                logger.info(f"[10] Plotting heatmap for folder {folder}")
-                plot_heatmap_evolution_hour(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN_COEFF'], agg_func=leq,plotname=folder)
-            
-            
-            # Plotting heatmap evolution 15 min
-            if PLOT_HEATMAP_EVOLUTION_15_MIN:
-                logger.info(f"[11] Plotting heatmap 15 min for folder {folder}")
-                plot_heatmap_evolution_15_min(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN_COEFF'], agg_func=leq,plotname=folder)
-            
+        ####################################################################
+        # Applying DB Correction to the data                               #
+        ####################################################################
 
-            # Plotting individual heatmap
-            if PLOT_INDICADORES_HEATMAP:
-                logger.info(f"[12] Plotting indicadores heatmap for folder {folder}")
-                plot_indicadores_heatmap(df, folder_output_dir, logger, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN_COEFF"])
+        logger.info(f"Aplicando corrección de decibelios en ambas tablas \n")
+        
+        try:
 
+            tuple_folder_coeff = list(folder_coefficients.items())
+            current_paths = {normalize_path(data_registers_folder),normalize_path(data_registers_folder.replace('3-Medidas','5-Resultados'))}
+            matching_coefficients = [(configured_path,value) for configured_path,value in folder_coefficients.items() if normalize_path(configured_path) in current_paths]
 
-            # Plotting day evolution
-            if PLOT_DAY_EVOLUTION:
-                logger.info(f"[13] Plotting day evolution for folder {folder}")
-                plot_day_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder)
-            
+            if not matching_coefficients: logger.warning("No existe un coeficiente configurado para %s",data_registers_folder)
+            else:
 
-            # Plotting period evolution
-            if PLOT_PERIOD_EVOLUTION:
-                logger.info(f"[14] Plotting period evolution (1) Ld (2) Le for folder {folder}")
-                plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder)
-            
+                coefficient_values = {float(value) for _,value in matching_coefficients}
+                if len(coefficient_values) >1: raise ValueError(f"Hay coeficientes diferentes configurados para la misma medida: {matching_coefficients}")
+                coefficient = coefficient_values.pop()
 
-            # I dont know why I commented this out
-            if PLOT_SPECTROGRAM_1_3:
-                logger.info(f"[15] Plotting spectrogram for folder {folder}")
-                # plt_spectrogram(df_oct, folder_output_dir, logger, plotname=folder)
-                plt_spectrogram(df, folder_output_dir, sufix_string, logger, plotname=folder)
+                df = apply_db_correction(df,coefficient,logger)
 
+                logger.info("Corrección de %.3f dB aplicada una vez a %s",coefficient,data_registers_folder)
 
 
         except Exception as e:
-            logger.error(f"An error occurred while processing folder {folder}: {e}")
+            logger.error(f"Ha ocurrido un error al aplicar la corrección de decibelios en los datos: {e}")            
+            continue     
+
+
+        if "\\" in folder: folder = folder.split("\\")[-1]
+        else: folder = folder.split("/")[-1]
+
+        ####################################################################
+        # Plotting                                                         #
+        ####################################################################          
+
+        slm_dict["LAEQ_COLUMN_COEFF"] = 'LA_corrected'
+        slm_dict["LAMAX_COLUMN_COEFF"] = 'LAmax_corrected'
+        slm_dict["LAMIN_COLUMN_COEFF"] = 'LAmin_corrected'
+
+        # Plotting night evolution
+        if PLOT_NIGHT_EVOLUTION:
+            logger.info(f"[1] Plotting night evolution for folder {folder}\n")
+            plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder, indicador_noche="Ln")
+        
+        # Plotting night evolution 15 min
+        if PLOT_NIGHT_EVOLUTION_15_MIN:
+            logger.info(f"\n[2] Plotting night evolution 15 min for folder {folder}\n")
+            plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder, indicador_noche="Ln")
+
+
+        # Plotting LEq power average with predictions
+        if PLOT_PREDIC_LAEQ_15_MIN:
+            logger.info(f"\n[3] Plotting PLOT_PREDIC_LAEQ for folder {folder}\n")
+            plot_predic_laeq_15_min(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder)
+
+        
+        if PLOT_PREDIC_LAEQ_15_MIN_PERIOD:
+            logger.info(f"\n[4] Plotting PLOT_PREDIC_LAEQ_15_MIN_PERIOD for folder {folder}\n")
+            plot_predic_laeq_15_min_period(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder)
+
+
+        if PLOT_PREDIC_LAEQ_15_MIN_4H:
+            logger.info(f"\n[5] Plotting PLOT_PREDIC_LAEQ_4H for folder {folder}\n")
+            plot_predic_laeq_15_min_4h(df, yamnet_csv,taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder)
+
+
+        # Plotting stack bar with predictions class
+        if PLOT_PREDICTION_STACK_BAR:
+            logger.info(f"\n[6] Plotting PLOT_PREDICTION_STACK_BAR for folder {folder}\n")
+            plot_prediction_stack_bar(prediction_csv_file, yamnet_csv, taxonomy, predictions_visualization_folder, logger, plotname=folder)
+        
+
+        # Plotting prediction map
+        if PLOT_PREDICTION_MAP:
+            logger.info(f"\n[7] Plotting PLOT_PREDICTION_MAP for folder {folder}\n")
+            plot_prediction_map(prediction_csv_file, taxonomy,agg_period, predictions_visualization_folder, logger, plotname=folder)
+
+        
+        # Plotting tree map
+        if PLOT_TREE_MAP:
+            logger.info(f"\n[8] Plotting PLOT_TREE_MAP for folder {folder}\n")
+            plot_tree_map(prediction_csv_file,taxonomy,predictions_visualization_folder, logger, plotname=folder)
+
+        
+        # Plotting time plot
+        if PLOT_MAKE_TIME_PLOT:
+            logger.info(f"[9] Plotting time plot for folder {folder}\n")
+            make_time_plot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder, percentiles=PERCENTILES)
+
+
+        # Plotting heatmap evolution hour
+        if PLOT_HEATMAP_EVOLUTION_HOUR:
+            logger.info(f"\n[10] Plotting heatmap for folder {folder}\n")
+            plot_heatmap_evolution_hour(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN_COEFF'], agg_func=leq,plotname=folder)
+        
+        
+        # Plotting heatmap evolution 15 min
+        if PLOT_HEATMAP_EVOLUTION_15_MIN:
+            logger.info(f"\n[11] Plotting heatmap 15 min for folder {folder}\n")
+            plot_heatmap_evolution_15_min(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN_COEFF'], agg_func=leq,plotname=folder)
+        
+
+        # Plotting individual heatmap
+        if PLOT_INDICADORES_HEATMAP:
+            logger.info(f"\n[12] Plotting indicadores heatmap for folder {folder}\n")
+            plot_indicadores_heatmap(df, folder_output_dir, logger, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN_COEFF"])
+
+
+        # Plotting day evolution
+        if PLOT_DAY_EVOLUTION:
+            logger.info(f"\n[13] Plotting day evolution for folder {folder}\n")
+            plot_day_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder)
+        
+
+        # Plotting period evolution
+        if PLOT_PERIOD_EVOLUTION:
+            logger.info(f"\n[14] Plotting period evolution (1) Ld (2) Le for folder {folder}\n")
+            plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder)
+        
+
+        # I dont know why I commented this out
+        if PLOT_SPECTROGRAM_1_3:
+            logger.info(f"\n[15] Plotting spectrogram for folder {folder}\n")
+            # plt_spectrogram(df_oct, folder_output_dir, logger, plotname=folder)
+            plt_spectrogram(df, folder_output_dir, sufix_string, logger, plotname=folder)
+
+
+
+        try:
+
+            info_dict = {
+                "PERIODO_AGREGACION":       PERIODO_AGREGACION,
+                "PERCENTILES":              PERCENTILES,
+                "folder_coeff":             tuple_folder_coeff,
+                "stable_version":           stable_version,
+                "slm_type":                 slm_type,
+                "oca_limits":               oca_limits,
+                "oca_type":                 oca_type,
+                "tenerife_timezone":        TENERIFE_TIMEZONE,
+            }
+        
+            with open(os.path.join(folder_output_dir, "processing_parameters.json"), 'w') as f: json.dump(info_dict, f)
+            logger.info(f"Saved processing_parameters.json in {folder_output_dir}\n")
+        except Exception as e:
+            logger.error(f"Ha ocurrido un error al crear y guardar el fichero resumen: {e}")

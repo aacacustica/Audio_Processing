@@ -288,7 +288,7 @@ def plot_night_evolution(df,folder_output_dir: str,logger,laeq_column: str,plotn
         end_hour           = 7,
     )
 
-    # Conserva el comportamiento original: una posición por hora.
+    # Una posición por hora.
     night_data["plot_hour"] = (night_data.index.hour.astype(int))
     night_data.loc[night_data["plot_hour"] == 23,"plot_hour"] = -1
     night_data = night_data.sort_values(["night_date", "plot_hour"])
@@ -361,7 +361,7 @@ def plot_night_evolution_15_min(df, folder_output_dir: str, logger, name_extensi
     night_data["date"] = night_data.index.date
     night_data["time"] = night_data.index.time
 
-    # Mantiene el eje original: el timestamp representa el comienzo del bloque,
+    # El timestamp representa el comienzo del bloque,
     # pero la etiqueta se desplaza 15 minutos.
     night_data["plot_time"] = [((time_value.hour * 60 + time_value.minute - 15) - (23 * 60)) if time_value.hour >= 23 else (time_value.hour * 60 + time_value.minute - 15 + 60) for time_value in night_data["time"]]
 

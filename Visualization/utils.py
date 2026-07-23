@@ -1002,10 +1002,10 @@ def aggregate_spl(
     if min_column: required.append(min_column)
 
     validate_dataframe(
-        dataframe=dataframe,
-        name='SPL dataframe',
-        required_columns=required,
-        datetime_index=True
+        dataframe           = dataframe,
+        name                = 'SPL dataframe',
+        required_columns    = required,
+        datetime_index      = True
     )
 
     aggregations: Dict[str, Any] = {laeq_column: energy_mean}
@@ -1032,21 +1032,11 @@ def find_frequency_columns(
     """
     import re
 
-    pattern = re.compile(
-        r"^\d+(?:\.\d+)?(?:k)?Hz$",
-        re.IGNORECASE,
-    )
+    pattern = re.compile(r"^\d+(?:\.\d+)?(?:k)?Hz$",re.IGNORECASE,)
 
-    columns = [
-        str(column)
-        for column in dataframe.columns
-        if pattern.fullmatch(str(column).strip())
-    ]
+    columns = [str(column) for column in dataframe.columns if pattern.fullmatch(str(column).strip())]
 
-    if not columns:
-        raise SkipPlot(
-            "El DataFrame no contiene columnas de bandas de frecuencia"
-        )
+    if not columns: raise SkipPlot( "El DataFrame no contiene columnas de bandas de frecuencia")
 
     return columns
 
@@ -1056,83 +1046,49 @@ def frequency_to_hz(column_name: str) -> float:
 
     text = str(column_name).strip().lower()
 
-    if not text.endswith("hz"):
-        raise ValueError(
-            "{} no es una frecuencia válida".format(
-                column_name
-            )
-        )
-
+    if not text.endswith("hz"): raise ValueError( "{} no es una frecuencia válida".format( column_name ) )
+        
     value = text[:-2]
 
-    if value.endswith("k"):
-        return float(value[:-1]) * 1000.0
-
+    if value.endswith("k"): return float(value[:-1]) * 1000.0
+        
     return float(value)
 
-def prepare_spectrogram_data(
-    dataframe: pd.DataFrame,
-    logger: Any,
-    datetime_column: Optional[str] = None,
-) -> Tuple[pd.DataFrame, List[str], np.ndarray]:
+def prepare_spectrogram_data( dataframe: pd.DataFrame, logger: Any, datetime_column: Optional[str] = None ) -> Tuple[pd.DataFrame, List[str], np.ndarray]:
+    
     """
     Prepara un DataFrame para el espectrograma y devuelve:
         datos, nombres de bandas, frecuencias numéricas.
     """
+
     data = prepare_dataframe(
-        dataframe=dataframe,
-        name="Spectrogram dataframe",
-        datetime_column=datetime_column,
-        set_datetime_index=True,
+        dataframe           = dataframe,
+        name                = "Spectrogram dataframe",
+        datetime_column     = datetime_column,
+        set_datetime_index  = True,
     )
 
     frequency_columns = find_frequency_columns(data)
 
-    for column in frequency_columns:
-        data[column] = pd.to_numeric(
-            data[column],
-            errors="coerce",
-        )
+    for column in frequency_columns: data[column] = pd.to_numeric( data[column], errors="coerce")
+        
+    data = data.dropna( subset=frequency_columns, how="all")
 
-    data = data.dropna(
-        subset=frequency_columns,
-        how="all",
-    )
 
-    if data.empty:
-        raise SkipPlot(
-            "No quedan valores válidos en las bandas de frecuencia"
-        )
-
-    frequencies = np.array(
-        [
-            frequency_to_hz(column)
-            for column in frequency_columns
-        ],
-        dtype=float,
-    )
-
+    if data.empty: raise SkipPlot( "No quedan valores válidos en las bandas de frecuencia" )
+        
+    frequencies = np.array([frequency_to_hz(column)for column in frequency_columns],type=float)
     order = np.argsort(frequencies)
     frequencies = frequencies[order]
-    frequency_columns = [
-        frequency_columns[index]
-        for index in order
-    ]
-
-    logger.info(
-        "Bandas detectadas: %s",
-        frequency_columns,
-    )
-
+    frequency_columns = [ frequency_columns[index] for index in order ]
+        
+    logger.info( "Bandas detectadas: %s", frequency_columns)
+        
     return data, frequency_columns, frequencies
 
 
-def select_night_data(
-    dataframe: pd.DataFrame,
-    complete_night: bool = False,
-    start_hour: int = 23,
-    end_hour: int = 7,
-) -> pd.DataFrame:
+def select_night_data( dataframe: pd.DataFrame, complete_night: bool = False, start_hour: int = 23, end_hour: int = 7) -> pd.DataFrame:
+    
     """
     Selecciona datos nocturnos.
 
@@ -1143,65 +1099,42 @@ def select_night_data(
         Solo conserva noches que contienen datos antes y después de
         medianoche. Es apropiado para gráficas de noche completa.
     """
+
     validate_dataframe(
-        dataframe=dataframe,
-        name="Night dataframe",
-        datetime_index=True,
+        dataframe       = dataframe,
+        name            = "Night dataframe",
+        datetime_index  = True,
     )
 
     data = dataframe.copy()
-    mask = (
-        (data.index.hour >= start_hour)
-        | (data.index.hour < end_hour)
-    )
+    mask = ((data.index.hour >= start_hour) | (data.index.hour < end_hour))
+
     data = data.loc[mask]
 
-    if data.empty:
-        raise SkipPlot(
-            "No existen datos dentro del periodo nocturno"
-        )
+    if data.empty: raise SkipPlot("No existen datos dentro del periodo nocturno")
 
     # La fecha de noche es el día en que comienza el periodo a las 23:00.
-    night_date = pd.Series(
-        data.index.normalize(),
-        index=data.index,
-    )
+    night_date = pd.Series( data.index.normalize(), index=data.index,)
 
     after_midnight = data.index.hour < end_hour
-    night_date.loc[after_midnight] = (
-        night_date.loc[after_midnight]
-        - pd.Timedelta(days=1)
-    )
-
+    night_date.loc[after_midnight] = ( night_date.loc[after_midnight ]- pd.Timedelta(days=1) )
     data["night_date"] = night_date.dt.date
 
-    if not complete_night:
-        return data
+    if not complete_night: return data
+        
 
     valid_nights: List[Any] = []
 
-    for current_night, group in data.groupby(
-        "night_date"
-    ):
-        has_before_midnight = (
-            group.index.hour >= start_hour
-        ).any()
+    for current_night, group in data.groupby("night_date"):
 
-        has_after_midnight = (
-            group.index.hour < end_hour
-        ).any()
+        has_before_midnight = ( group.index.hour >= start_hour ).any()
+        has_after_midnight = ( group.index.hour < end_hour ).any()
+            
+        if has_before_midnight and has_after_midnight: valid_nights.append(current_night)
+            
+    data = data[ data["night_date"].isin(valid_nights)]
 
-        if has_before_midnight and has_after_midnight:
-            valid_nights.append(current_night)
-
-    data = data[
-        data["night_date"].isin(valid_nights)
-    ]
-
-    if data.empty:
-        raise SkipPlot(
-            "No hay ninguna noche completa que cruce medianoche"
-        )
+    if data.empty: raise SkipPlot( "No hay ninguna noche completa que cruce medianoche")
 
     return data
 

@@ -1,85 +1,85 @@
 campaign:
-  name: "CAMPAÑA TEST ACLIMA"
-  input_root: "/home/martin/Campañas de test/ACLIMA/C1/3-Medidas"
-  output_root: "/home/martin/Campañas de test/ACLIMA/C1/5-Resultados"
+  name:               "CAMPAÑA TEST ACLIMA"
+  input_root:         "/home/martin/Campañas de test/ACLIMA/C1/3-Medidas"
+  output_root:        "/home/martin/Campañas de test/ACLIMA/C1/5-Resultados"
 
 execution:
-  run_spl: true
-  run_ai: false
-  run_visualization: false
-  stop_on_error: false
-  dry_run: false
+  run_spl:              true
+  run_ai:               false
+  run_visualization:    false
+  stop_on_error:        false
+  dry_run:              false
 
 discovery:
-  filter_campaign: null
-  filter_point: 'P3 - test'
-  filter_device: 'audiomoth'
+  filter_campaign:      null
+  filter_point:         'P3 - test'
+  filter_device:        'audiomoth'
 
 devices:
   audiomoth:
-    folder_names: ["AUDIOMOTH"]
-    default_needs_spl: true
-    default_needs_ai: true
-    default_visualize: true
+    folder_names:       ["AUDIOMOTH"]
+    default_needs_spl:  true
+    default_needs_ai:   true
+    default_visualize:  true
 
   sonometer:
-    folder_names: ["SONOMETRO","SONOMETER"]
-    default_needs_spl: false
-    default_needs_ai: false
-    default_visualize: true
+    folder_names:       ["SONOMETRO","SONOMETER"]
+    default_needs_spl:  false
+    default_needs_ai:   false
+    default_visualize:  true
 
   sv307:
-    folder_names: ['SV307']
-    default_needs_spl: false
-    default_needs_ai: false
-    default_visualize: true
+    folder_names:       ['SV307']
+    default_needs_spl:  false
+    default_needs_ai:   false
+    default_visualize:  true
 
 spl:
-  enabled: true
-  calibration_file: "configs/devices.yaml"
-  filter_campaign: null
-  filter_point: null
-  output_subfolder: "SPL"
+  enabled:              true
+  calibration_file:     "configs/devices.yaml"
+  filter_campaign:      null
+  filter_point:         null
+  output_subfolder:     "SPL"
 
 ai:
-  enabled: true
-  model: "urban"
-  window_seconds: 5
-  threshold: 0.30
-  save_embeddings: false
-  save_spectrograms: false
+  enabled:              true
+  model:                "urban"
+  window_seconds:       5
+  threshold:            0.30
+  save_embeddings:      false
+  save_spectrograms:    false
   filter_point: null
 
 visualization:
-  enabled: true
-  taxonomy: "urban"
-  aggregation_seconds: 900
-  percentiles: [90, 10]
-  oca_type: "OCA_RESIDENTIAL"
+  enabled:              true
+  taxonomy:             "urban"
+  aggregation_seconds:  900
+  percentiles:          [90, 10]
+  oca_type:             "OCA_RESIDENTIAL"
   remove_start_seconds: 900
-  remove_end_seconds: 900
-  tenerife_timezone: true
+  remove_end_seconds:   900
+  tenerife_timezone:    true
 
 outputs:
-  create_point_folder: true
+  create_point_folder:  true
 
   subfolders:
-  spl: "SPL"
-  ai: "AI_MODEL"
-  visualization: "Visualization"
-  logs: "logs"
+    spl:                  "SPL"
+    ai:                   "AI_MODEL"
+    visualization:        "Visualization"
+    logs:                 "logs"
 
 points:
   example:
-    correction_db: 0.0
-    new_date: null
-    new_time: null
-    threshold_date: null
-    threshold_time: null
+    correction_db:      0.0
+    new_date:           null
+    new_time:           null
+    threshold_date:     null
+    threshold_time:     null
 
   ZARAUTZ_C1_P1:
-    correction_db: -1.2
-    new_date: null
-    new_time: null
-    threshold_date: null
-    threshold_time: null
+    correction_db:      -1.2
+    new_date:           null
+    new_time:           null
+    threshold_date:     null
+    threshold_time:     null

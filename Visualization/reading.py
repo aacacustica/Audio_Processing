@@ -103,6 +103,7 @@ def get_data_824(file_path: str,logger, new_date=None, new_time=None, new_thresh
 def read_SV307(file_path: str, logger):
     df = None  
     read_attempts = [
+        {"header": 3, "sep": ";", "label": "header 19"},
         {"header": 14, "sep": ";", "label": "header 14"},
         {"header": 13, "sep": None, "label": "header 13 without ';'"},
         {"header": 18, "sep": None, "label": "header 18"},
@@ -110,95 +111,106 @@ def read_SV307(file_path: str, logger):
     ]
     for attempt in read_attempts:
         try:
-            df = pd.read_csv(
+            logger.info(f"Reading SV307 file with {attempt['label']}")
+            df_temp = pd.read_csv(
                 file_path,
                 header=attempt["header"],
                 sep=attempt["sep"],
                 skipfooter=8,
-                usecols=range(9),
                 engine='python'
             )
-            logger.info(f"Reading SV307 file with {attempt['label']}")
-            
-            if "Time" not in df.columns:
-                logger.warning("'Time' column not found in this format.")
-            break
 
+            df_temp.columns = [str(col).strip() for col in df_temp.columns]
+
+            logger.info(f"Correctly read SV307 file with {attempt['label']}")
+            logger.info(f"Columns found: {df_temp.columns.tolist()}")
+
+            column_lookup = {str(col).strip().lower(): col for col in df_temp.columns}
+
+            if "time" in column_lookup or "Time" in column_lookup: datetime_col = column_lookup['date & time']
+            elif "date & time" in column_lookup: datetime_col = column_lookup['date & time']
+            else: 
+                logger.warning(f"Neither 'Time' nor 'Date & Time' found using {attempt['label']}")
+                continue
+
+            df = df_temp
+            logger.info(f"Valid SV307 format found with {attempt['label']} | datetime column:  {datetime_col}")
+            break
 
         except Exception as e:
             logger.warning(f"Failed attempt with {attempt['label']}: {e}")
             continue
 
 
+    if df is None: 
+        logger.error(f"Could not find a valid SV307 format for: {file_path}")
+        return None
 
-    if df is not None and 'LAeq (Ch1, P1) [dB]' not in df.columns:
-            try:
-                df = pd.read_csv(
-                    file_path,
-                    header=18,
-                    sep=';',
-                    skipfooter=8,
-                    usecols=range(9),
-                    engine='python'
-                )
-                logger.info("Reading SV307 file with header 18 and sep=';' (fallback for missing 'LAeq (Ch1, P1) [dB]')")
-            except Exception as e:
-                logger.error("Fallback read with header 18 and sep=';' also failed")
-                logger.error(f"Error: {e}")
-                return None
-            
     logger.info(f"Length of the file: {len(df)}")
 
-    # try:
-    #     df = pd.read_csv(file_path,header=14,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
-    #     logger.info("Reading SV307 file with header 14")
+    # ============================================================
+    # NORMALIZE THIS SV307 FORMAT
+    # ============================================================
 
-    #     #checking if there is the "Time column"
-    #     # if not "Time" in df.columns:
-            
-            
-    # except A:
-    #     df = pd.read_csv(file_path,header=13,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
-    #     logger.info("Reading SV307 file with header 13 without ';'")
-    
-    # except B:
-    #     df = pd.read_csv(file_path,header=18,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
-    #     logger.info("Reading SV307 file with header 18")
-    
-    # except C:
-    #     df = pd.read_csv(file_path,header=6,sep=';',skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python')
-    #     logger.info("Reading SV307 file with header 6")
-    
-    # except Exception as e:
-    #     logger.error(f"Error reading file: {file_path}")
-    #     logger.error(f"Error: {e}")
+    rename_map = {}
 
-    # logger.info(f"Lenght of the file: {len(df)}")
+    if 'Unnamed: 2' in df.columns: rename_map["Unnamed: 2"] = "LAFmax (TH) [dB]"
+    if "Unnamed: 3" in df.columns: rename_map['Unnamed: 3'] = "LAFmin (TH) [dB]"
+    if "Unnamed: 4" in df.columns: rename_map['Unnamed: 4'] = "LAeq (TH) [dB]"
 
-    # print(df)
-    # exit()
+    if rename_map:
+        df = df.rename(columns=rename_map)
+        
+        logger.info(f"Renamed SV307 columns: {rename_map}")
 
+    df.rename(
+        columns = {
+            # Formato SV307 antiguo
+            'LAeq (Ch1, P1) [dB]': 'LAeq',
+            'LAFmax (Ch1, P1) [dB]': 'LAFmax',
+            'LAFmin (Ch1, P1) [dB]': 'LAFmin',
 
-    # if not 'LAeq (Ch1, P1) [dB]' in df.columns:
-    #     df = pd.read_csv(file_path,header=18,skipfooter=8,usecols=[0,1,2,3,4,5,6,7,8], engine='python', sep=';')
-    #     logger.info("Reading SV307 file with header 18 and sep=';'")
+            # Formato SV307 nuevo / TH
+            'LAeq (TH) [dB]': 'LAeq',
+            'LAFmax (TH) [dB]': 'LAFmax',
+            'LAFmin (TH) [dB]': 'LAFmin',
+        }, inplace  = True
+    )
+    logger.info(  f"SV307 final acoustic columns: " f"{[c for c in ['LAeq', 'LAFmax', 'LAFmin'] if c in df.columns]}")
+    # ================================= ===========================
+    # DATETIME
+    # ============================================================
 
     try:
-        df = df[pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S', errors='coerce').notnull()]
-        df['datetime'] = pd.to_datetime(df['Time'], format='%d/%m/%Y %H:%M:%S')
-        logger.info("Converting 'Time' column to datetime")
-    except Exception as e:
-        logger.info(f"Error {e}")
-    return df
+        logger.info(f"Trying to change '{datetime_col}' column to 'datetime' column")
 
+        parsed_datetime = pd.to_datetime(df[datetime_col],format="%d/%m/%Y %H:%M:%S",errors='coerce')
+        invalid_dates = int(parsed_datetime.isna().sum())
+
+        if invalid_dates > 0: logger.warning(f"Dropping {invalid_dates} rows with invalid datetime")
+
+        valid_mask = parsed_datetime.notna()
+
+        df = df.loc[valid_mask].copy()
+
+        df['datetime'] = (parsed_datetime.loc[valid_mask])
+
+        logger.info(f"Converted '{datetime_col}' column to datetime.")
+        logger.info(f"SV307 datetime range: {df['datetime'].min()} -> {df['datetime'].max()}")
+
+    except Exception as e:
+        logger.error(f"Error converting SV307 datetime: {e}")
+        return None
+
+    return df
 
 
 def get_data_SV307(file_path: str,logger, new_date=None, new_time=None, new_threshold_date=None, new_threshold_time=None):
     logger.info("Testing how many SV307 files are in the folder")
     # testing if there are more than 1 csv file in the folder
-    folder_path = file_path.split('\\')[:-1]
+    folder_path = file_path.split('/')[:-1]
     # joining the elements
-    folder_path = '\\'.join(folder_path)
+    folder_path = '/'.join(folder_path)
 
     # counting how many csv files are in the folder:
     csv_files = [f for f in os.listdir(folder_path) if f.endswith('.csv')]

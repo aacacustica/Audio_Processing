@@ -1,7 +1,7 @@
 # relative path to the yamnet class map, urban taxonomy and port taxonomy
-RELATIVE_PATH_YAMNET_MAP = r"\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\AAC_IA_Puerto\yamnet_class_AAC_v3_0.csv"
-RELATIVE_PATH_TAXONOMY_URBAN = r"\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\taxonomies_json\urban_taxonomy_map_v1_0.json"
-RELATIVE_PATH_TAXONOMY_PORT = r"\AAC - CENTRO DE ACUSTICA APLICADA, S.L\I + D + i - Documentos\Modelos_IA\taxonomies_json\port_1_taxonomy_mapping_v2.0.json"
+RELATIVE_PATH_YAMNET_MAP = r"/home/martin/AI files/yamnet_class_AAC_v3_0.csv"
+RELATIVE_PATH_TAXONOMY_URBAN = r"/home/martin/AI files/urban_taxonomy_map_v1_0.json"
+RELATIVE_PATH_TAXONOMY_PORT = r"/home/martin/AI files/port_1_taxonomy_mapping_v2.0.json"
 
 
 # Remove start time and end time

@@ -1,25 +1,29 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import os
-plt.style.use("bmh")
+
+
 from visualization import *
 from reading import *
 from utils import *
 from config import *
 from tqdm import tqdm
+
+import os
 import glob
 import json
 
 
+plt.style.use("bmh")
+
 def load_data(file_path, logger, new_date=None, new_time=None, new_threshold_date=None, new_threshold_time=None):
     slm_type_function_mapping = {
+        "SV307": (get_data_SV307, sv307_dict),
         "audiomoth": (get_data_audiomoth, audiopost_dict),
         "814": (get_data_814, larson814_dict),
         "824": (get_data_824, larson824_dict),
         "lx_ES": (get_data_lx_ES, larsonlx_dict),
         "lx_EN": (get_data_lx_EN, larsonlx_dict),
         "cesva": (get_data_cesva, cesva_dict),
-        "SV307": (get_data_SV307, sv307_dict),
         "sono-bilbo": (get_data_bilbo, sonometer_bilbo_dict),
         "bruel&kjaer": (get_data_bruel_kjaer, bruel_kjaer_dict),
     } # SLM stands for Sound Level Meter
@@ -87,24 +91,17 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
     print()
     stable_version = get_stable_version(logger)
 
-    for folder in tqdm(folders, desc="Processing folders"): # \\192.168.205.117\AAC_Server\OCIO\24052_ZARAUTZ\CAMPAÑA_1\3-Medidas\ZARAUTZ_C1_P1\AUDIOMOTH
-        reg_folder = os.path.join(input_folder, folder) # \\192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
-        folder = folder.split("\\")[:-1]
-        folder = os.path.join('\\\\', *folder)
+    for folder in tqdm(folders, desc="Processing folders"): # /192.168.205.117\AAC_Server\OCIO\24052_ZARAUTZ\CAMPAÑA_1\3-Medidas\ZARAUTZ_C1_P1\AUDIOMOTH
+
+        reg_folder = os.path.join(input_folder, folder) # /192.168.205.117\AAC_Server\INDUSTRIA\23132-IRUÑA_OCA_CANTERA\5-Resultados\FAA205-P1_CAMPAÑA1\SPL
+        folder = folder.split("/")[:-1]
+        folder = os.path.join('//', *folder)
         logger.info(f"Entering folder: {folder}")
         spl_string = "SPL"
         graphics_string = f"Graphics_{sufix_string}"
         result_dir_name = "5-Resultados"
-        resultados_dir = reg_folder.split("\\")[:-3]
-        resultados_dir = os.path.join('\\\\', *resultados_dir, result_dir_name)
-
-
-        ##############
-        # find the oct file in the folder
-        # oct_file = glob.glob(os.path.join(reg_folder, "leq_oct_*"))
-        # df_oct = pd.read_csv(oct_file[0])
-        ##############
-
+        resultados_dir = reg_folder.split("/")[:-3]
+        resultados_dir = os.path.join('//', *resultados_dir, result_dir_name)
 
         if not os.path.exists(resultados_dir):
             os.makedirs(resultados_dir)
@@ -238,9 +235,6 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 print(prediction_csv_file)
 
                 # here has to be the prediction analysis
-
-                exit()
-
                 
                 # just for now
                 # create LCeq column which is LC - LA = LC_LA. I know the LC_LA and the LA
@@ -253,21 +247,20 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 tuple_folder_coeff = []
                 logger.info(f"Applying db correction")
                 for key, value in folder_coefficients.items():
-                    key = key.split("\\")[:-1]
-                    folder_name = key[-1]
+                    key_normalized = os.path.normpath(key)
+                    reg_folder_normalized = os.path.normpath(reg_folder)
+                    folder_name = os.path.basename( os.path.dirname(key_normalized))
 
-                    # save tupples folder name, coefficient value
-                    folder_name_coeff_value = (folder_name, value)
+                    tuple_folder_coeff.append( (folder_name, value) ) 
 
-                    tuple_folder_coeff.append(folder_name_coeff_value)
+                    logger.info(  "Correction paths | key=%s | reg_folder=%s",  key_normalized,  reg_folder_normalized)
 
-                    key = os.path.join('\\\\', *key)
+                    if key_normalized == reg_folder_normalized:
+                        logger.info( "Applying correction %.2f dB",  value)
 
-                    # assign the value to the folder
-                    if folder == key:
-                        df = apply_db_correction(df, value, logger)
-                        logger.info(f"Apply {value} correction coefficient to the folder {folder}")
+                        df = apply_db_correction(df,value,logger)
 
+                        logger.info("Correction applied. LA_corrected exists: %s" , "LA_corrected" in df.columns )
 
             except Exception as e:
                 logger.error(f"An error occurred while trimming the dataframe {e}")
@@ -277,7 +270,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
             
             logger.info("")        
             logger.info(f"PLOTTING SECTION")
-            folder = folder.split("\\")[-1]
+            folder = folder.split("/")[-1]
             
             # add slm_dict column LAEQ_COLUMN_COEFF: with the value of LA_corrected
             slm_dict["LAEQ_COLUMN_COEFF"] = 'LA_corrected'
@@ -308,6 +301,7 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
 
 
             # Plotting night evolution
+           
             if PLOT_NIGHT_EVOLUTION:
                 logger.info(f"[1] Plotting night evolution for folder {folder}")
                 plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder, indicador_noche="Ln")
@@ -317,35 +311,36 @@ def process_all_folders(input_folder, folders, PERIODO_AGREGACION, PERCENTILES, 
                 logger.info(f"[2] Plotting night evolution 15 min for folder {folder}")
                 plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder, indicador_noche="Ln")
 
+            if prediction_csv_file is not None:
+                # Plotting LEq power average with predictions
+                if PLOT_PREDIC_LAEQ_15_MIN:
+                    logger.info(f"[3] Plotting PLOT_PREDIC_LAEQ for folder {folder}")
+                    plot_predic_laeq_15_min(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
 
-            # Plotting LEq power average with predictions
-            if PLOT_PREDIC_LAEQ_15_MIN:
-                logger.info(f"[3] Plotting PLOT_PREDIC_LAEQ for folder {folder}")
-                plot_predic_laeq_15_min(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
-
-            
-            if PLOT_PREDIC_LAEQ_15_MIN_PERIOD:
-                logger.info(f"[4] Plotting PLOT_PREDIC_LAEQ_15_MIN_PERIOD for folder {folder}")
-                plot_predic_laeq_15_min_period(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
-
-
-            if PLOT_PREDIC_LAEQ_15_MIN_4H:
-                logger.info(f"[5] Plotting PLOT_PREDIC_LAEQ_4H for folder {folder}")
-                plot_predic_laeq_15_min_4h(df, yamnet_csv,taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
+                
+                if PLOT_PREDIC_LAEQ_15_MIN_PERIOD:
+                    logger.info(f"[4] Plotting PLOT_PREDIC_LAEQ_15_MIN_PERIOD for folder {folder}")
+                    plot_predic_laeq_15_min_period(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
 
 
-            # Plotting stack bar with predictions class
-            if PLOT_PREDICTION_STACK_BAR:
-                logger.info(f"[6] Plotting PLOT_PREDICTION_STACK_BAR for folder {folder}")
-                plot_prediction_stack_bar(prediction_csv_file, yamnet_csv, taxonomy, predictions_visualization_folder, logger, plotname=folder)
-            
+                if PLOT_PREDIC_LAEQ_15_MIN_4H:
+                    logger.info(f"[5] Plotting PLOT_PREDIC_LAEQ_4H for folder {folder}")
+                    plot_predic_laeq_15_min_4h(df, yamnet_csv,taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=PERIODO_AGREGACION, plotname=folder)
 
-            # Plotting prediction map
-            if PLOT_PREDICTION_MAP:
-                logger.info(f"[7] Plotting PLOT_PREDICTION_MAP for folder {folder}")
-                plot_prediction_map(prediction_csv_file, taxonomy, predictions_visualization_folder, logger, plotname=folder)
 
-            
+                # Plotting stack bar with predictions class
+                if PLOT_PREDICTION_STACK_BAR:
+                    logger.info(f"[6] Plotting PLOT_PREDICTION_STACK_BAR for folder {folder}")
+                    plot_prediction_stack_bar(prediction_csv_file, yamnet_csv, taxonomy, predictions_visualization_folder, logger, plotname=folder)
+                
+
+                # Plotting prediction map
+                if PLOT_PREDICTION_MAP:
+                    logger.info(f"[7] Plotting PLOT_PREDICTION_MAP for folder {folder}")
+                    plot_prediction_map(prediction_csv_file, taxonomy, predictions_visualization_folder, logger, plotname=folder)
+
+            else:
+                logger.info(f"No prediction CSV available. Skipping AI plots.")
             # Plotting tree map
             if PLOT_TREE_MAP:
                 logger.info(f"[8] Plotting PLOT_TREE_MAP for folder {folder}")

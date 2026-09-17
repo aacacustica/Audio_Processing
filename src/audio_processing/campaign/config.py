@@ -13,7 +13,8 @@ REQUIRED_TOP_LEVEL_KEYS = {
     "spl",
     "ai",
     "visualization",
-    "points"
+    "points",
+    "outputs"
 }
 
 def validate_config(config) -> None:

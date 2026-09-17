@@ -29,70 +29,153 @@ custom_color_scale.append([1, hex_colors[-1]])
 
 
 
-def plot_night_evolution(df, folder_output_dir: str, logger, laeq_column:str, plotname:str, indicador_noche:str):
+def plot_night_evolution(
+    df,
+    folder_output_dir: str,
+    logger,
+    laeq_column: str,
+    plotname: str,
+    indicador_noche: str
+):
+
     try:
-        df = df.dropna(subset=[laeq_column])
-        logger.info(f"Using the laeq_column: {laeq_column}")
+
+        # =====================================================
+        # KEEP ONLY NEEDED COLUMNS
+        # =====================================================
+
+        required_cols = [ "night_str", "date", "hour",  laeq_column]
+        df = df.loc[ df[laeq_column].notna(), required_cols].copy()
+
+        logger.info(f"Using the laeq_column: {laeq_column}" )
+
+        logger.info( f"Night plot input rows: {len(df)}")
+
+        df["Día"] = df["night_str"]
+
+        df["date"] = pd.to_datetime( df["date"])
+
+        df.sort_values( by=["date", "hour"],inplace=True)
+
+        # =====================================================
+        # SELECT NIGHT DATA
+        # =====================================================
+
+        night_data = df[ (df["hour"] >= 23) | (df["hour"] <= 6)].copy()
+
+        night_data["plot_hour"] = ( night_data["hour"].replace({23: -1}).astype(int))
+
+        # Remove rows which are not assigned to a night
+        night_data = night_data[night_data["Día"].notna() & (night_data["Día"] != "")].copy()
+
+        logger.info( f"Night rows before aggregation: "f"{len(night_data)}")
+
+        # =====================================================
+        # IMPORTANT:
+        # AGGREGATE BEFORE SEABORN
+        # =====================================================
+
+        plot_data = (night_data.groupby(["Día", "plot_hour"],observed=True)[laeq_column].apply(leq).reset_index())
+
+        logger.info(f"Night rows after aggregation: "f"{len(plot_data)}")
+
+        # =====================================================
+        # SAVE AGGREGATED DATA
+        # =====================================================
+
+        os.makedirs(folder_output_dir,exist_ok=True)
+
+        csv_path = os.path.join(folder_output_dir,f"{plotname}_{indicador_noche}_evolution.csv")
+
+        plot_data.to_csv(csv_path,index=False)
+
+        logger.info(f"Night evolution data saved to {csv_path}")
+  
+        # =====================================================
+        # PLOT
+        # =====================================================
+
         sns.set_style("whitegrid")
         sns.set_palette("tab10")
-        
-        df['Día'] = df['night_str']
-        
-        df['date'] = pd.to_datetime(df['date'])
-        df.sort_values(by=['date', 'hour'], inplace=True)
-
-        night_data = pd.DataFrame()
-        unique_dates = df['date'].dt.date.unique()
-
-        for current_date in unique_dates:
-            next_date = current_date + pd.Timedelta(days=1)
-            data_23 = df[(df['date'].dt.date == current_date) & (df['hour'] == 23)]
-            data_00_06 = df[(df['date'].dt.date == next_date) & (df['hour'].isin(range(0, 7)))]
-
-            if not data_23.empty and not data_00_06.empty:
-                combined_data = pd.concat([data_23, data_00_06])
-                night_data = pd.concat([night_data, combined_data])
-
-        night_data['plot_hour'] = night_data['hour'].replace({23: -1}).astype(int)
-        night_data.sort_values(by=['date', 'plot_hour'], inplace=True)
-        
-        # save to excel
-        os.makedirs(folder_output_dir, exist_ok=True)
-        night_data.to_csv(f"{folder_output_dir}/{plotname}_{indicador_noche}_evolution.csv", index=False)
-        logger.info(f"Night evolution data saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution.csv")
 
         fig = sns.relplot(
-            data=night_data, 
-            x="plot_hour", 
-            y=laeq_column, 
-            kind="line", 
+            data=plot_data,
+            x="plot_hour",
+            y=laeq_column,
+            kind="line",
             hue="Día",
-            estimator=leq, 
+
+            # Ya hemos agregado nosotros
+            estimator=None,
+            errorbar=None,
+
             aspect=1.3,
             palette=C_MAP_WEEKDAY_NIGHT
         )
-        
-        plt.xticks(range(-1, 7), ['23:00', '00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00'])
-        plt.yticks(range(DB_RANGE_BOTTOM, DB_RANGE_TOP, BD_RANGE_STEP), [str(level) for level in range(DB_RANGE_BOTTOM, DB_RANGE_TOP, BD_RANGE_STEP)])
 
-        plt.xlim(-1.5, 6.5)
+        plt.xticks(
+            range(-1, 7),
+            [
+                "23:00",
+                "00:00",
+                "01:00",
+                "02:00",
+                "03:00",
+                "04:00",
+                "05:00",
+                "06:00"
+            ]
+        )
+
+        plt.yticks(
+            range(
+                DB_RANGE_BOTTOM,
+                DB_RANGE_TOP,
+                BD_RANGE_STEP
+            )
+        )
+
+        plt.xlim(
+            -1.5,
+            6.5
+        )
 
         for ax in fig.axes.flat:
-            ax.spines['top'].set_visible(True)
-            ax.spines['right'].set_visible(True)
+            ax.spines["top"].set_visible(True)
+            ax.spines["right"].set_visible(True)
 
-        plt.title(f'Evolución {indicador_noche}')
-        plt.ylabel('dB(A)')
-        plt.xlabel('Hora')
+        plt.title(
+            f"Evolución {indicador_noche}"
+        )
 
-        os.makedirs(folder_output_dir, exist_ok=True)
+        plt.ylabel("dB(A)")
+        plt.xlabel("Hora")
 
-        logger.info(f"Saving the plot {plotname}_{indicador_noche}")
-        fig.savefig(f"{folder_output_dir}/{plotname}_{indicador_noche}_evolution.png", dpi=150)
-        logger.info(f"Night evolution plot saved to {folder_output_dir}/{plotname}_{indicador_noche}_evolution.png")
-    
-    except Exception as e:
-        logger.error(f"Error in plot_night_evolution: {e}")
+        output_path = os.path.join(
+            folder_output_dir,
+            f"{plotname}_{indicador_noche}_evolution.png"
+        )
+
+        logger.info(
+            f"Saving plot {output_path}"
+        )
+
+        fig.savefig(
+            output_path,
+            dpi=150
+        )
+
+        plt.close(fig)
+
+        logger.info(
+            f"Night evolution plot saved to "
+            f"{output_path}"
+        )
+
+    except Exception:
+        logger.exception(
+            "Error in plot_night_evolution"
+        )
 
 
 

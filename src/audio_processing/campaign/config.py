@@ -44,7 +44,7 @@ def _resolve_relative_path(base_dir,value):
 
     return base_dir / path
 
-def load_config(path: str | Path):
+def load_config(path: str | Path = "Audio_Processing/configs/campaign.example.yaml"):
     path = Path(path)
 
     with path.open("r",encoding="utf-8") as file:

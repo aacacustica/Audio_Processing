@@ -2,7 +2,7 @@ import os
 import pandas as pd
 
 
-def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, model_type, logging, window_size=None, stable_version=None):
+def save_predictions_to_csv(all_data_subfolder, col_names, subfolder_name, subfolder, model_type, logging,medidas_folder,resultados_folder,general_AI_folder,predictions_folder, window_size=None, stable_version=None):
     logging.info("")
     if window_size is not None:
         if model_type == "port":

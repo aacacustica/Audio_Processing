@@ -83,6 +83,11 @@ outputs:
 
     logs:                 "logs"
 
+database:
+  enabled:                true
+  url_env:                "DATABASE_URL"
+  echo:                   false
+
 points:
   example:
     correction_db:      0.0

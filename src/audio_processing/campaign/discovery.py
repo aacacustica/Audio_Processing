@@ -27,11 +27,11 @@ def _build_source_id(point_name: str, device_type: str) -> str:
 
     return f"{normalized_point}__{device_type}"
 
-def _find_existing_folder(point_root: Path, folder_names: list[str]) -> Path | None:
+def _find_existing_folder(point_root: Path, folder_name: str) -> Path | None:
     
-    for folder_name in folder_names:
-        candidate = point_root / folder_name
-        if candidate.exists() and candidate.is_dir(): return candidate
+    
+    candidate = point_root / folder_name
+    if candidate.exists() and candidate.is_dir(): return candidate
     return None
 
 def _device_allowed(filter_device: str | None, device_type: str) -> bool:
@@ -58,8 +58,8 @@ def discover_measurement_points(config) -> list[MeasurementSource]:
         audiomoth_cfg = config.devices.audiomoth
         sonometer_cfg = config.devices.sonometer
 
-        audiomoth_path = _find_existing_folder(point_root,audiomoth_cfg.folder_names)
-        sonometer_path = _find_existing_folder(point_root,sonometer_cfg.folder_names)
+        audiomoth_path = _find_existing_folder(point_root,audiomoth_cfg.folder_name)
+        sonometer_path = _find_existing_folder(point_root,sonometer_cfg.folder_name)
 
         if audiomoth_path is not None and _device_allowed(filter_device,"audiomoth"):
                   

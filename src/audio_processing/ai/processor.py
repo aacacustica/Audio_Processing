@@ -4,13 +4,15 @@ import datetime
 
 import numpy as np
 
-from utils_ai import find_audiomoth_folders,save_embeddings_funct,assign_prediction_class,save_predictions_to_csv
+from utils_ai import find_audiomoth_folders,save_embeddings_funct,assign_prediction_class
+from audio_processing.ai.writers import save_predictions_to_csv
 from audio_processing.campaign.config import load_config
 from audio_processing.common.filesystem import get_audiofiles,get_metadata_audio
 
-config = load_config()
 
-def process_audio_files(classifier, base_path, window_size, threshold, stable_version, save_embeddings, save_spectrogram, model_type,logging):
+def run_ai_for_source(source,config,logging=None):
+
+    
 
     col_names               = ['filename','date','class','probability']
     audiomoth_folders       = [find_audiomoth_folders(base_path,config.devices.audiomoth.folder_names)]
@@ -84,16 +86,16 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
 
             else: logging.warning(f"No data to save for folder {subfolder}")
 
-            summary_filename    = f"summary_{config.ai.model}_threshold_{config.ai.threshold}.txt"
+            summary_filename    = f"summary_{model_type}_threshold_{threshold}.txt"
             subfolder_path      = base_path.replace(config.outputs.subfolders.general.medidas_folder,config.outputs.subfolders.general.resultados_folder_name)
             output_summary_path = os.path.join(subfolder_path,subfolder_name,config.outputs.subfolders.ai.general_folder_name,config.outputs.subfolders.ai.predictions_folder_name)
 
             with open(os.path.join(output_summary_path, summary_filename),'w') as f:
             
-                        f.write(f"Resumen de precciones del modelo:        {config.ai.model}\n")
+                        f.write(f"Resumen de precciones del modelo:        {model_type}\n")
                         f.write(f"Del archivo:                             {subfolder}\n")
-                        f.write(f"Usando un umbral de:                     {config.ai.threshold}\n")
-                        f.write(f"Aplicando una ventana de predicciones de:{config.ai.window_seconds if (config.ai.window_seconds != 0 ) else 'Full audio'} segundos \n")
+                        f.write(f"Usando un umbral de:                     {threshold}\n")
+                        f.write(f"Aplicando una ventana de predicciones de:{window_size if (window_size != 0 ) else 'Full audio'} segundos \n")
                         f.write(f"Habiendo procesado un total de:          {len(audiomoth_folders)} archivos\n")
                         f.write(f"Habiendo encontrado un total de:         {len(prediction_per_class_count)} clases con predicciones por encima del umbral\n")
                         f.write(f"\n")

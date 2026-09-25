@@ -35,9 +35,9 @@ class CampaignPipeline:
 
     def _setup_runtime(self) -> None:
 
-        self.logger = setup_logging( 
-            log_dir = Path(self.config.campaign.output_root)/self.config.outputs.subfolders.logs
-            )
+        self.logger = setup_logging( log_dir = Path(self.config.campaign.output_root)/self.config.outputs.subfolders.logs )
+            
+           
     
     def run_source(self,source) -> None:
 
@@ -54,12 +54,22 @@ class CampaignPipeline:
             logger = self.logger
         )
 
-        if output_path is None: self.logger.warning(f"SPL no generó salida para {source.source_id}")
-        else: self.logger.info(f"SPL guardado en {output_path}")
+        if output_path is None: self.logger.warning(f"SPL no generó salida para {source.source_id}.")
+        else: self.logger.info(f"SPL guardado en {output_path}.")
 
 
     def run_ai(self,source) -> None:
-        raise NotImplementedError(f"AI todavía no se ha migrado")
+        from audio_processing.ai.processor import run_ai_for_source
+
+        output_path = run_ai_for_source(
+            source = source,
+            config = self.config,
+            logger = self.logger,
+        )
+
+        if output_path is None: self.logger.warning(f"AI no generó salida para {source.source_id}.")
+        else: self.logger.info(f"AI guardado en {output_path}")
+
     def run_visualization(self,source) -> None:
         raise NotImplementedError(f"Visualization todavía no se ha migrado")
     
@@ -88,41 +98,41 @@ class CampaignPipeline:
     def print_spl_plan(self):
 
         print()
-        print("#------------[SPL] Activo----------#")
+        print("#------------[SPL] Funcionando----------#")
         print(f"#----------Información SPL----------#")
         
-        print(f"Archivo de calibración: {self.config.spl.calibration_file}")
-        print(f"Filtro campaña: {self.config.spl.filter_campaign}")
-        print(f"Filtro punto: {self.config.spl.filter_point}")
-        print(f"Carpeta de salida: {self.config.spl.output_subfolder}")
+        print(f"Archivo de calibración:     {self.config.spl.calibration_file}")
+        print(f"Filtro campaña:             {self.config.spl.filter_campaign}")
+        print(f"Filtro punto:               {self.config.spl.filter_point}")
+        print(f"Carpeta de salida:          {self.config.spl.output_subfolder}")
         print()
 
     def print_ai_plan(self):
 
         print() 
-        print("#------------[AI] Activo----------#")
+        print("#------------[AI] Funcionando----------#")
         print(f"#----------Información IA----------#")
         
-        print(f"Modelo: {self.config.ai.model}")
-        print(f"Tamaño ventana: {self.config.ai.window_seconds}")
-        print(f"Umbral: {self.config.ai.threshold}")
-        print(f"Guardar embeddings: {self.config.ai.save_embeddings}")
-        print(f"Guardar espectrograma: {self.config.ai.save_spectrograms}")
-        print(f"Filtro punto: {self.config.ai.filter_point}")
+        print(f"Modelo:                     {self.config.ai.model}")
+        print(f"Tamaño ventana:             {self.config.ai.window_seconds}")
+        print(f"Umbral:                     {self.config.ai.threshold}")
+        print(f"Guardar embeddings:         {self.config.ai.save_embeddings}")
+        print(f"Guardar espectrograma:      {self.config.ai.save_spectrograms}")
+        print(f"Filtro punto:               {self.config.ai.filter_point}")
         print()
 
     def print_visualization_plan(self):    
 
         print() 
-        print("#------------[Visualization] Activo----------#")
+        print("#------------[Visualization] Funcionando----------#")
         print(f"#----------Información Visualization----------#")
         
-        print(f"Activo: {self.config.visualization.enabled}")
-        print(f"Taxonomía: {self.config.visualization.taxonomy}")
-        print(f"Segundos de agregación: {self.config.visualization.aggregation_seconds}")
-        print(f"Percentiles: {self.config.visualization.percentiles}")
-        print(f"OCA: {self.config.visualization.oca_type}")
-        print(f"Número de segundos borrados al inicio del archivo: {self.config.visualization.remove_start_seconds}")
-        print(f"Número de segundos borrados al final del archivo: {self.config.visualization.remove_end_seconds}")
-        print(f"Zona horaria de tenerife: {self.config.visualization.tenerife_timezone}")
+        print(f"Activo:                                             {self.config.visualization.enabled}")
+        print(f"Taxonomía:                                          {self.config.visualization.taxonomy}")
+        print(f"Segundos de agregación:                             {self.config.visualization.aggregation_seconds}")
+        print(f"Percentiles:                                        {self.config.visualization.percentiles}")
+        print(f"OCA:                                                {self.config.visualization.oca_type}")
+        print(f"Número de segundos borrados al inicio del archivo:  {self.config.visualization.remove_start_seconds}")
+        print(f"Número de segundos borrados al final del archivo:   {self.config.visualization.remove_end_seconds}")
+        print(f"Zona horaria de tenerife:                           {self.config.visualization.tenerife_timezone}")
         print()

@@ -62,17 +62,30 @@ class Contexto(Base):
 
     __table_args__ = ( Index("ix_contexto_punto_campania_dispositivo","id_punto","id_campania","id_dispositivo"))
 
-    id_contexto: Mapped[int] = mapped_column(Integer,primary_key=True)
+    id_contexto:                Mapped[int]             = mapped_column(Integer,primary_key=True)
 
-    id_punto: Mapped[int] = mapped_column(ForeignKey("punto.id_punto"),nullable=False)
-    id_dispositivo: Mapped[int] = mapped_column(ForeignKey("dispositivo.id_dispositivo"),nullable=False)
-    id_campania: Mapped[int] = mapped_column(ForeignKey("campania.id_campania"),nullable=False)
+    id_punto:                   Mapped[int]             = mapped_column(ForeignKey("punto.id_punto"),nullable=False)
+    id_dispositivo:             Mapped[int]             = mapped_column(ForeignKey("dispositivo.id_dispositivo"),nullable=False)
+    id_campania:                Mapped[int]             = mapped_column(ForeignKey("campania.id_campania"),nullable=False)
 
-    altura: Mapped[float | None] = mapped_column(Float)
-    soporte: Mapped[str | None] = mapped_column(String(255))
-    fecha_inicio: Mapped[DateTime | None] = mapped_column(DateTime(timezone=True))
-    fecha_fin: Mapped[DateTime | None] = mapped_column(DateTime(timezone=True))
+    altura:                     Mapped[float | None]    = mapped_column(Float)
+    soporte:                    Mapped[str | None]      = mapped_column(String(255))
+    fecha_inicio:               Mapped[DateTime | None] = mapped_column(DateTime(timezone=True))
+    fecha_fin:                  Mapped[DateTime | None] = mapped_column(DateTime(timezone=True))
 
-    point: Mapped[Punto] = relationship()
-    device: Mapped[Device] = relationship()
-    campaign: Mapped[Campaign] = relationship()
+    point:                      Mapped[Punto]           = relationship()
+    device:                     Mapped[Device]          = relationship()
+    campaign:                   Mapped[Campaign]        = relationship()
+
+
+class SourceFile(Base):
+
+    __tablename__ = "archivo"
+
+    id_archivo:             Mapped[int]                 = mapped_column(Integer,primary_key=True)
+
+    id_contexto:            Mapped[int]                 = mapped_column(ForeignKey("contexto.id_contexto"),nullable=False)
+    filename:               Mapped[str]                 = mapped_column(String(1024),nullable=False)
+    hash:                   Mapped[str | None]          = mapped_column(String(1024))
+    duracion_seconds:       Mapped[float | None]        = (mapped_column(Float))
+    sample_rate_hz:         Mapped[int | None]          = (mapped_column(Integer))

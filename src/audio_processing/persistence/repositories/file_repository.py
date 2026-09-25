@@ -1,8 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
-from audio_processing.persistence.models import ( MeasurementContext)
-
+from audio_processing.persistence.models import SourceFile
 
 class FileRepository:
 

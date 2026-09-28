@@ -29,7 +29,7 @@ class Device(Base):
     __tablename__ = "dispositivo"
 
     id_dispositivo:             Mapped[int]             = mapped_column(Integer,primary_key=True)
-    nombre:                     Mapped[str]             = mapped_column(Integer,primary_key=True)
+    nombre:                     Mapped[str]             = mapped_column(String(256),nullable=False)
     requiere_calibracion:       Mapped[bool]            = mapped_column(Boolean,nullable=False,default=False)
     valor_calibracion:          Mapped[float | None]    = (mapped_column(Float))
     fecha_calibracion:          Mapped[datetime | None] = (mapped_column(DateTime(timezone=True)))
@@ -60,7 +60,7 @@ class Contexto(Base):
 
     __tablename__ = "contexto"
 
-    __table_args__ = ( Index("ix_contexto_punto_campania_dispositivo","id_punto","id_campania","id_dispositivo"))
+    __table_args__ = ( Index("ix_contexto_punto_campania_dispositivo","id_punto","id_campania","id_dispositivo"),)
 
     id_contexto:                Mapped[int]             = mapped_column(Integer,primary_key=True)
 
@@ -70,8 +70,8 @@ class Contexto(Base):
 
     altura:                     Mapped[float | None]    = mapped_column(Float)
     soporte:                    Mapped[str | None]      = mapped_column(String(255))
-    fecha_inicio:               Mapped[DateTime | None] = mapped_column(DateTime(timezone=True))
-    fecha_fin:                  Mapped[DateTime | None] = mapped_column(DateTime(timezone=True))
+    fecha_inicio:               Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    fecha_fin:                  Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     point:                      Mapped[Punto]           = relationship()
     device:                     Mapped[Device]          = relationship()
@@ -88,4 +88,5 @@ class SourceFile(Base):
     filename:               Mapped[str]                 = mapped_column(String(1024),nullable=False)
     hash:                   Mapped[str | None]          = mapped_column(String(1024))
     duracion_seconds:       Mapped[float | None]        = (mapped_column(Float))
+    datetime_inicio:        Mapped[datetime | None]     = (mapped_column(DateTime(timezone=True)))
     sample_rate_hz:         Mapped[int | None]          = (mapped_column(Integer))

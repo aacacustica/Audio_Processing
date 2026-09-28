@@ -14,7 +14,9 @@ REQUIRED_TOP_LEVEL_KEYS = {
     "ai",
     "visualization",
     "points",
-    "outputs"
+    "outputs",
+    
+
 }
 
 def validate_config(config) -> None:
@@ -44,7 +46,7 @@ def _resolve_relative_path(base_dir,value):
 
     return base_dir / path
 
-def load_config(path: str | Path = "Audio_Processing/configs/campaign.example.yaml"):
+def load_config(path: str = "/home/martin/Proyectos/Audio_Processing/configs/campaign.example.yaml"):
     path = Path(path)
 
     with path.open("r",encoding="utf-8") as file:

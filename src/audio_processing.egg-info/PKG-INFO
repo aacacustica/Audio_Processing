@@ -11,4 +11,6 @@ Requires-Dist: scipy
 Requires-Dist: matplotlib
 Requires-Dist: soundfile
 Requires-Dist: tqdm
+Requires-Dist: audio-metadata
+Requires-Dist: pyfilterbank
 Dynamic: license-file

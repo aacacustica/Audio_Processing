@@ -18,6 +18,7 @@ src/audio_processing/campaign/discovery.py
 src/audio_processing/campaign/models.py
 src/audio_processing/campaign/pipeline.py
 src/audio_processing/cli/run_campaign.py
+src/audio_processing/cli/test_database.py
 src/audio_processing/common/filesystem.py
 src/audio_processing/common/git_version.py
 src/audio_processing/common/logging.py

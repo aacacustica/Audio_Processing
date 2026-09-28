@@ -7,3 +7,6 @@ soundfile
 tqdm
 audio-metadata
 pyfilterbank
+sqlalchemy<3,>=2.0
+psycopg[binary]<4,>=3.1
+alembic<2,>=1.13

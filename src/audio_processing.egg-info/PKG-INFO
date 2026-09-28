@@ -13,4 +13,7 @@ Requires-Dist: soundfile
 Requires-Dist: tqdm
 Requires-Dist: audio-metadata
 Requires-Dist: pyfilterbank
+Requires-Dist: sqlalchemy<3,>=2.0
+Requires-Dist: psycopg[binary]<4,>=3.1
+Requires-Dist: alembic<2,>=1.13
 Dynamic: license-file

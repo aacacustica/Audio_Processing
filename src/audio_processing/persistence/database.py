@@ -10,8 +10,6 @@ from sqlalchemy.orm import Session, sessionmaker
 
 DEFAULT_DATABASE_URL_ENV = "AUDIO_PROCESSING_DATABASE_URL"
 
-DEFAULT_DATABASE_URL_ENV = "AUDIO_PROCESSING_DATABASE_URL"
-
 class Database:
 
     def __init__(self,url:str,*,echo:bool = False):
@@ -39,30 +37,7 @@ class Database:
         else:
             env_name = ""
         if not url: raise ValueError("No se ha configurado la URL de la base de datos.")
-
-        print("ENV NAME:", repr(env_name))
-        print("DATABASE URL:", repr(url))
-        print("TYPE URL:", type(url))
         return cls(url=url,echo=getattr(db_config,"echo",False))
-
-    @classmethod 
-    def create_table_punto():
-
-        None
-
-    @classmethod
-    def create_table_dispositivo():
-
-        None
-
-    @classmethod
-    def create_table_campaña():
-
-        None
-
-    
-    
-
 
     @contextmanager
     def session(self) -> Generator[Session]:

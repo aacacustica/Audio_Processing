@@ -1,67 +1,38 @@
+from datetime import datetime, timezone
+
 from audio_processing.campaign.config import load_config
-
 from audio_processing.persistence.database import Database
-
-from audio_processing.persistence.repositories.context_repository import (
-    ContextRepository
-)
-
-from audio_processing.persistence.repositories.file_repository import (
-    FileRepository
+from audio_processing.persistence.repositories.measurement_repository import (
+    MeasurementRepository,
 )
 
 
 def main():
 
-    config = load_config(
-        
-    )
-
-    db = Database.from_config(
-        config
-    )
+    config = load_config()
+    db = Database.from_config(config)
 
     with db.session() as session:
 
-        context_repo = ContextRepository(
-            session
-        )
+        repo = MeasurementRepository(session)
 
-        file_repo = FileRepository(
-            session
-        )
-
-        context = context_repo.get_required(
-            1
-        )
-
-        files = file_repo.list_by_context(
-            context.id_contexto
-        )
-
-        print(
-            "Punto:",
-            context.point.nombre
+        measurement = repo.add(
+            context_id=1,
+            file_id=1,
+            timestamp=datetime.now(timezone.utc),
+            aggregation_seconds=1.0,
+            la_db=63.2,
+            lc_db=68.4,
+            lz_db=70.1,
+            la_max_db=67.8,
+            la_min_db=58.4,
+            lc_la_db=5.2,
         )
 
         print(
-            "Dispositivo:",
-            context.device.nombre
+            "Medición creada:",
+            measurement.id_medicion,
         )
-
-        print(
-            "Campaña:",
-            context.campaign.nombre
-        )
-
-        print()
-        print("Archivos:")
-
-        for file in files:
-            print(
-                "-",
-                file.filename
-            )
 
 
 if __name__ == "__main__":

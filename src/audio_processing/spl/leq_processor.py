@@ -11,6 +11,7 @@ import pandas as pd
 from pyfilterbank.splweighting import a_weighting_coeffs_design, c_weighting_coeffs_design
 from scipy.signal import lfilter
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 
 from audio_processing.common.git_version import get_stable_version
@@ -24,8 +25,6 @@ from audio_processing.spl.spl_model import LeqLevelOctave
 from audio_processing.spl.utils_acoustics import * 
 
 from audio_processing.campaign.config import load_config
-
-config = load_config()
 
 
 def run_leq_for_source(source,config,logger=None) -> Path | None:
@@ -95,13 +94,59 @@ def run_leq_for_source(source,config,logger=None) -> Path | None:
 
 def run_leq_for_file(audio_file: Path, calibration_constants: dict, config,logger=None) -> list[AcousticLevelResult]:
 
-    metadata = audio_metadata.load(audio_file)
+    audio_file = Path(audio_file)
 
-    fs = int(metadata.streaminfo.sample_rate)
-    device_id = get_device_id(metadata)
-    calibration = calibration_constants.get(device_id,calibration_constants.get("songmeter"))
+    try:
 
-    
+        metadata = audio_metadata.load(audio_file)
+        fs = int(metadata.streaminfo.sample_rate)
+        device_id = get_device_id(metadata)
+        
+        calibration = calibration_constants.get(device_id,calibration_constants.get("songmeter",-10.16))
+
+        calculator = LeqLevelOctave(
+            fs                      = fs,
+            calibration_constant    = calibration,
+            window_size             = fs,
+            third_octave_fmin       = config.spl.third_octave.fmin,
+            third_octave_fmax       = config.spl.third_octave.fmax)
+        
+
+        audio_data, _ = sf.read(audio_file)
+        db_levels = calculator.calculate_spl_levels(audio_data)
+        start_timestamp = timestamp_from_filename(audio_file)
+
+        if start_timestamp.tzinfo is None: start_timestamp = start_timestamp.replace(tzinfo=ZoneInfo(config.campaign.timezone))
+
+        results: list[AcousticLevelResult] = []
+
+        for index,row in enumerate(db_levels):
+
+            la_db,lc_db,lz_db,lc_la_db,la_max_db,la_min_db = row
+
+            result = AcousticLevelResult(
+                timestamp           = start_timestamp + datetime.timedelta(seconds = index),
+                la_db               = float(la_db),
+                lc_db               = float(lc_db),
+                lz_db               = float(lz_db),
+                lc_la_db            = float(lc_la_db),
+                la_max_db           = float(la_max_db),
+                la_min_db           = float(la_min_db),
+                aggregation_seconds = 1.0
+            )
+
+            results.append(result)
+
+        return results
+
+    except Exception as e:
+
+        if logger: logger.exception(f"Error procesando SPL de {audio_file}")
+        raise
+
+
+
+
 
                 
 

@@ -1,9 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import select,delete
 from sqlalchemy.orm import Session
 
 from audio_processing.persistence.models import AcousticMeasurement
+from audio_processing.spl.models import AcousticLevelResult
 
 
 class MeasurementRepository:
@@ -42,4 +43,51 @@ class MeasurementRepository:
         )
 
         return list(self.session.scalars(statement).all())
-        
+
+    def add_many(self,*,context_id:int,file_id: int | None, results: list[AcousticLevelResult]) -> list[AcousticMeasurement]:
+
+        measurements = [ AcousticMeasurement(
+            id_contexto = context_id,
+            id_archivo = file_id,
+            datetime = result.timestamp,
+            aggregation_seconds = result.aggregation_seconds,
+            la_db = result.la_db,
+            lc_db = result.lc_db,
+            lz_db = result.lz_db,
+            la_max_db = result.la_max_db,
+            la_min_db = result.la_min_db,
+            lc_la_db = result.lc_la_db
+            ) for result in results
+        ]
+
+        self.session.add_all(measurements)
+        self.session.flush()
+
+        return measurements
+
+    def replace_for_file(self,*,context_id: int,file_id: int,results: list[AcousticLevelResult]) -> list[AcousticMeasurement]:
+
+        self.session.execute(
+            delete(AcousticMeasurement)
+            .where(AcousticMeasurement.id_archivo == file_id)
+        )
+
+        measurements = [ AcousticMeasurement(
+                    id_contexto = context_id,
+                    id_archivo = file_id,
+                    datetime = result.timestamp,
+                    aggregation_seconds = result.aggregation_seconds,
+                    la_db = result.la_db,
+                    lc_db = result.lc_db,
+                    lz_db = result.lz_db,
+                    la_max_db = result.la_max_db,
+                    la_min_db = result.la_min_db,
+                    lc_la_db = result.lc_la_db
+                    ) for result in results
+        ]
+
+        self.session.add_all(measurements)
+        self.session.flush()
+
+        return measurements
+

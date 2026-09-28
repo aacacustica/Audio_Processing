@@ -36,7 +36,7 @@ devices:
 
 spl:
   enabled:              true
-  calibration_file:     "configs/devices.yaml"
+  calibration_file:     "devices.yaml"
   filter_campaign:      null
   filter_point:         null
   output_subfolder:     "SPL"
@@ -85,7 +85,6 @@ outputs:
 
 database:
   enabled:                true
-  url:                    "postgresql+psycopg://local_admin:local_admin@localhost:5432/audio_processing_test"
   url_env:                "DATABASE_URL"
   echo:                   false
 

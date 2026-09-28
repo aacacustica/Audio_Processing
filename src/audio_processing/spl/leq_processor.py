@@ -62,7 +62,7 @@ def run_leq_for_source(source,config,logger=None) -> Path | None:
             device_id = get_device_id(metadata)
 
             calibration = calibration_constants.get(device_id,calibration_constants.get("songmeter",-10.16))
-            calculator = LeqLevelOctave(fs = fs,calibration_constant=calibration,window_size=fs)
+            calculator = LeqLevelOctave(fs = fs,calibration_constant=calibration,window_size=fs,third_octave_fmax=config.third_octave.fmax,third_octave_fmin=config.third_octave.fmin)
 
             audio_data,_ = sf.read(audio_file)
             db_levels = calculator.calculate_spl_levels(audio_data)

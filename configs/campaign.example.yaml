@@ -85,6 +85,7 @@ outputs:
 
 database:
   enabled:                true
+  url:                    "postgresql+psycopg://local_admin:local_admin@localhost:5432/audio_processing_test"
   url_env:                "DATABASE_URL"
   echo:                   false
 

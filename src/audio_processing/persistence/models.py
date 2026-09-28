@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean,DateTime,Float,ForeignKey,Integer,String,Index
+from sqlalchemy import Boolean,DateTime,Float,ForeignKey,Integer,String,Index,UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase,Mapped,mapped_column,relationship
 
 
@@ -67,6 +67,8 @@ class Contexto(Base):
 class SourceFile(Base):
 
     __tablename__ = "archivo"
+
+    __table_args__ = (UniqueConstraint("id_contexto","filename",name="uq_archivo_contexto_filename"),)
 
     id_archivo:             Mapped[int]                 = mapped_column(Integer,primary_key=True)
 

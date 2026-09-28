@@ -32,7 +32,6 @@ def main():
             return
 
         point = Punto(
-            id_punto=1,
             nombre="P3 - test",
             municipio="Vitoria-Gasteiz",
             latitud=None,
@@ -40,7 +39,6 @@ def main():
         )
 
         device = Device(
-            id_dispositivo=1,
             nombre="Audiomoth test",
             requiere_calibracion=True,
             valor_calibracion=-10.16,
@@ -48,7 +46,6 @@ def main():
         )
 
         campaign = Campaign(
-            id_campania=1,
             nombre="CAMPAÑA TEST ACLIMA",
             referencia_interna="ACLIMA_TEST",
             fecha_inicio=datetime(
@@ -70,7 +67,6 @@ def main():
         session.flush()
 
         context = Contexto(
-            id_contexto=1,
             id_punto=point.id_punto,
             id_dispositivo=device.id_dispositivo,
             id_campania=campaign.id_campania,
@@ -91,7 +87,6 @@ def main():
         session.flush()
 
         source_file = SourceFile(
-            id_archivo=1,
             id_contexto=context.id_contexto,
             filename="20260928_080000.WAV",
             hash=None,

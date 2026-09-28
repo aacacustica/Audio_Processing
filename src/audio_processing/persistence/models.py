@@ -85,8 +85,29 @@ class SourceFile(Base):
     id_archivo:             Mapped[int]                 = mapped_column(Integer,primary_key=True)
 
     id_contexto:            Mapped[int]                 = mapped_column(ForeignKey("contexto.id_contexto"),nullable=False)
+
     filename:               Mapped[str]                 = mapped_column(String(1024),nullable=False)
     hash:                   Mapped[str | None]          = mapped_column(String(1024))
     duracion_seconds:       Mapped[float | None]        = (mapped_column(Float))
     datetime_inicio:        Mapped[datetime | None]     = (mapped_column(DateTime(timezone=True)))
     sample_rate_hz:         Mapped[int | None]          = (mapped_column(Integer))
+
+
+class AcousticMeasurement(Base):
+
+    __tablename__ = "medicion_acustica"
+
+    id_medicion: Mapped[int] = mapped_column(Integer,primary_key=True)
+
+    id_contexto: Mapped[int] = mapped_column(ForeignKey("contexto.id_contexto"),nullable=False,index=True)
+    id_archivo: Mapped[int] = mapped_column(ForeignKey("archivo.id_archivo"),nullable=False,index=True)
+
+    datetime: Mapped[datetime] = mapped_column(DateTime(timezone=True),nullable=False,index=True)
+    aggregation_seconds: Mapped[float] = mapped_column(Float,nullable=False)
+
+    la_db: Mapped[float | None] = mapped_column(Float)
+    lc_db: Mapped[float | None] = mapped_column(Float)
+    lz_db: Mapped[float | None] = mapped_column(Float)
+    la_max_db: Mapped[float | None] = mapped_column(Float)
+    la_min_db: Mapped[float | None] = mapped_column(Float)
+    lc_la_db: Mapped[float | None] = mapped_column(Float)

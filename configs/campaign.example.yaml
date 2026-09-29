@@ -2,6 +2,7 @@ campaign:
   name:               "CAMPAÑA TEST ACLIMA"
   input_root:         "/home/martin/Campañas de test/ACLIMA/C1/3-Medidas"
   output_root:        "/home/martin/Campañas de test/ACLIMA/C1/5-Resultados"
+  timezone:           "Europe/Madrid"
 
 execution:
   run_spl:              true

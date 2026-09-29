@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt
-
+from audio_processing.spl.utils_acoustics import get_db_level
 
 
 def third_octave_filter(x, fs, order=6, limits=[12, 20000], show=False, sigbands=False, calibration_coeff=None):
@@ -51,7 +51,7 @@ def third_octave_filter(x, fs, order=6, limits=[12, 20000], show=False, sigbands
             # Filter the band
             y = signal.sosfilt(sos[idx], sd)
             # Compute the SPL for the band (using 20 µPa as reference)
-            spl[idx] = 20 * np.log10(np.std(y) / 2e-5)
+            spl[idx] = get_db_level(np.asarray(y),0.0)
             # Reconstruct signal at original sampling rate
             xb.append(signal.resample_poly(y, factor[idx], 1))
             # Apply calibration if provided
@@ -72,7 +72,7 @@ def third_octave_filter(x, fs, order=6, limits=[12, 20000], show=False, sigbands
         for idx in range(len(freq)):
             sd = signal.resample(x, round(len(x) / factor[idx]))
             y = signal.sosfilt(sos[idx], sd)
-            spl[idx] = 20 * np.log10(np.std(y) / 2e-5)
+            spl[idx] = get_db_level(np.asarray(y),0.0)
             # if calibration_coeff is not None:
             #     spl[idx] += calibration_coeff[idx]
 

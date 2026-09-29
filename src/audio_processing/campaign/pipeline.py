@@ -2,8 +2,8 @@ from audio_processing.campaign.discovery import discover_measurement_points
 from audio_processing.common.logging import setup_logging
 
 from audio_processing.persistence.database import Database
-from audio_processing.persistence.repositories import ContextRepository,FileRepository,MeasurementRepository
-from audio_processing.spl.leq_processor import run_leq_for_file,run_leq_for_source
+from audio_processing.persistence.repositories import ContextRepository,FileRepository,MeasurementRepository,ThirdOctaveRepository
+from audio_processing.spl.leq_processor import run_leq_for_file,run_leq_for_source,run_third_octave_for_file
 from audio_processing.spl.utils_acoustics import get_audiofiles,read_calibration_constants,timestamp_from_filename
 
 from pathlib import Path
@@ -66,36 +66,44 @@ class CampaignPipeline:
 
     def run_spl_database(self,source) -> None:
 
-        if self.db is None: raise RuntimeError(f"La base de datos debe estar habilitada para persistir los resultados SPL.")
-
-        audio_files =  get_audiofiles(Path(source.raw_data_path))
-
+        audio_files             = get_audiofiles(Path(source.raw_data_path))
+        results_globales        = []
+        results_tercios         = []
+        campaign_name           = self.config.campaign.name
+        point_name              = source.name
+        device_type             = source.device_type
+        calibration_file        = Path(self.config.spl.calibration_file)
+        
         if not audio_files: 
             self.logger.warning(f"No hay archivos WAV en {source.raw_data_path}")
             return
 
+        if self.db is None: 
+            raise RuntimeError(f"La base de datos debe estar habilitada para persistir los resultados SPL.")
+
+        if not calibration_file.is_absolute(): 
+            calibration_file = Path(self.config._config_dir) / calibration_file
+            
+        calibration_constants   = read_calibration_constants(calibration_file)
+
         with self.db.session() as session:
 
             context_repository = ContextRepository(session)
+            file_repository = FileRepository(session)
+            measurement_repository = MeasurementRepository(session)
+            third_octave_repository = ThirdOctaveRepository(session)
 
             context = context_repository.get_for_source(
-                campaign_name       = self.config.campaign.name,
-                point_name          = source.name,
-                device_type         = source.device_type
+                campaign_name       = campaign_name,
+                point_name          = point_name,
+                device_type         = device_type
             )
 
             context_id = context.id_contexto
 
             self.logger.info(f"Contexto {context_id} para {source.source_id}")
 
-            calibration_file  = Path(self.config.spl.calibration_file)
-
-            if not calibration_file.is_absolute(): calibration_file = Path(self.config._config_dir) / calibration_file
-
-            calibration_constants = read_calibration_constants(calibration_file)
-
             for audio_file in audio_files:
-
                 try:
 
                     info = sf.info(audio_file)
@@ -105,50 +113,46 @@ class CampaignPipeline:
 
                     duration_seconds = info.frames / info.samplerate
 
-                    results =  run_leq_for_file(
+                    results_globales =  run_leq_for_file(
                         audio_file              = audio_file,
                         calibration_constants   = calibration_constants,
                         config                  = self.config,
                         logger                  = self.logger
                     )
 
-                    with self.db.session() as sessio:
+                    if self.config.spl.third_octave.enabled:
+                        results_tercios = run_third_octave_for_file(
+                            audio_file              = audio_file,
+                            calibration_constants   = calibration_constants,
+                            config                  = self.config,
+                            logger                  = self.logger
+                        )
 
-                        file_repository = FileRepository(session)
-                        measurement_repository = MeasurementRepository(session)
-                        
+                    with self.db.session() as session:
+
                         source_file = file_repository.register(
                             context_id          = context_id,
                             filename            = audio_file.name,
                             datetime_inicio     = timestamp,
                             duracion_seconds    = duration_seconds,
-                            sample_rate_hz      = info.samplerate
-                        )
-
+                            sample_rate_hz      = info.samplerate)
+                        
                         measurements = measurement_repository.replace_for_file(
-                            context_id  = context_id,
-                            file_id     = source_file.id_archivo,
-                            results     = results
-                        )
+                            context_id          = context_id,
+                            file_id             = source_file.id_archivo,
+                            results             = results_globales)
 
-                        self.logger.info(
-                                "SPL %s: archivo=%s, "
-                                "id_archivo=%s, mediciones=%s",
-                                source.source_id,
-                                audio_file.name,
-                                source_file.id_archivo,
-                                len(measurements),
-                            )
-
+                        third_octave_measurements = third_octave_repository.add_for_measurements(
+                            measurements        = measurements,
+                            results             = results_tercios)
+                        
+                        self.logger.info("SPL %s: archivo=%s, ""id_archivo=%s, ""mediciones=%s, ""tercios=%s",source.source_id,audio_file.name,source_file.id_archivo,len(measurements),len(third_octave_measurements), )
+                        
                 except Exception as e:
 
                     self.logger.exception(f"Error procesando {audio_file}")
                     if self.config.execution.stop_on_error: raise
 
-
-
-
-        
     def run_ai(self,source) -> None:
         from audio_processing.ai.processor import run_ai_for_source
 

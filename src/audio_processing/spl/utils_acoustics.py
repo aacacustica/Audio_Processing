@@ -8,6 +8,7 @@ import yaml
 import datetime
 
 from pyfilterbank.splweighting import a_weighting_coeffs_design,c_weighting_coeffs_design
+from audio_processing.spl.models import THIRD_OCTAVE_NOMINAL_BANDS
 
 def read_calibration_constants(path: str | Path) -> dict[str,float]:
 
@@ -67,3 +68,8 @@ def design_a_weighting(fs):
 
 def design_c_weighting(fs):
     return c_weighting_coeffs_design(fs)
+
+
+def normalize_third_octave_band(frequency_hz: float) -> float:
+
+    return min(THIRD_OCTAVE_NOMINAL_BANDS,key=lambda nominal: abs(frequency_hz - nominal),)

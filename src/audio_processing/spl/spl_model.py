@@ -29,9 +29,11 @@ class LeqLevelOctave:
 
 
     def calculate_spl_levels(self, audio_data):
+        
         db_levels = []
         
         for fstart in range(0, len(audio_data) - self.window_size + 1, self.window_size):
+            
             frame = audio_data[fstart:fstart + self.window_size]
             yA = lfilter(self.bA, self.aA, frame)
             yC = lfilter(self.bC, self.aC, frame)
@@ -40,8 +42,8 @@ class LeqLevelOctave:
             LC = get_db_level(yC, self.C)
             LZ = get_db_level(frame, self.C)
 
-            fast_levels = [get_db_level(yA[idx:idx + self.fast_samples], self.C)
-                           for idx in range(0, len(frame) - self.fast_samples + 1, self.fast_samples)]
+            fast_levels = [get_db_level(yA[idx:idx + self.fast_samples], self.C) for idx in range(0, len(frame) - self.fast_samples + 1, self.fast_samples)]
+                           
             Lmax = np.max(fast_levels)
             Lmin = np.min(fast_levels)
 
@@ -49,20 +51,30 @@ class LeqLevelOctave:
             LC_LA = LC - LA
 
             db_levels.append([LA, LC, LZ, LC_LA, Lmax, Lmin])
+
         return np.round(db_levels, 2)
 
-    def calculate_third_octave_levels(self,audio_data):
+    def calculate_third_octave_levels(self,audio_data) -> tuple[np.ndarray,np.ndarray]:
+
+        all_levels = []
+        frequencies = None
 
         fmin_octaves = self.fmin_octaves
         fmax_octaves = self.fmax_octaves
-
-        freq_labels = None
+        calibration_coeff = self.C
 
         for fstart in range(0,len(audio_data) - self.window_size + 1, self.window_size):
+            
             frame = audio_data[fstart:fstart + self.window_size]
-            levels, freqs = third_octave_filter(frame,self.fs, order=6, limits=[fmin_octaves,fmax_octaves],show=0,sigbands=0)
+            levels, freqs = third_octave_filter(frame,self.fs, order=6, limits=[fmin_octaves,fmax_octaves],show=0,sigbands=0,calibration_coeff=calibration_coeff)
 
-            if freq_labels is None: freq_labels = [f"{round(freq, 1)}Hz" for freq in freqs]
+            if frequencies is None: frequencies = np.asarray(freqs,dtype=float)
+
+            all_levels.append(levels)
+
+        
+        if frequencies is None: return (np.empty((0,0)),np.empty(0))
 
 
-        return np.round(levels, 2)
+
+        return (np.round(np.vstack(all_levels), 2),frequencies)

@@ -20,7 +20,7 @@ from audio_processing.common.paths import get_spl_output_dir
 
 from audio_processing.spl.writers import write_leq_csv
 from audio_processing.spl.PyOctaveBand_reduced import * 
-from audio_processing.spl.models import AcousticLevelResult
+from audio_processing.spl.models import AcousticLevelResult,ThirdOctaveResult
 from audio_processing.spl.spl_model import LeqLevelOctave
 from audio_processing.spl.utils_acoustics import * 
 
@@ -146,6 +146,52 @@ def run_leq_for_file(audio_file: Path, calibration_constants: dict, config,logge
 
 
 
+def run_third_octave_for_file(audio_file: Path, calibration_constants: dict, config, logger=None) -> list[ThirdOctaveResult]:
+
+    audio_file = Path(audio_file)
+
+    try:
+
+        metadata            = audio_metadata.load(audio_file)
+        fs                  = int(metadata.streaminfo.sample_rate)
+        device_id           = get_device_id(metadata)
+        calibration         = calibration_constants.get(device_id,calibration_constants.get("songmeter",-10.16))
+        third_octave_fmin   = config.spl.third_octave.fmin
+        third_octave_fmax   = config.spl.third_octave.fmax
+        audio_data, _       = sf.read(audio_file)
+        start_timestamp     = timestamp_from_filename(audio_file)
+        results:             list[ThirdOctaveResult] = []
+
+        
+        if start_timestamp.tzinfo is None: start_timestamp  = start_timestamp.replace(tzinfo=ZoneInfo(config.campaign.timezone))
+            
+        calculator = LeqLevelOctave(
+            fs                      = fs,
+            calibration_constant    = calibration,
+            window_size             = fs,
+            third_octave_fmin       = third_octave_fmin,
+            third_octave_fmax       = third_octave_fmax
+        )
+
+        
+        levels, frequencies = calculator.calculate_third_octave_levels(audio_data)
+
+        for index,row in enumerate(levels):
+
+            bands_db = { normalize_third_octave_band(float(frequency)) : float(level) for frequency,level in zip(frequencies,row) }
+            
+            results.append(
+                ThirdOctaveResult(
+                    timestamp           = (start_timestamp + datetime.timedelta(seconds=index)),
+                    aggregation_seconds = 1.0,
+                    bands_db            = bands_db)
+            )
+
+        return results
+
+    except Exception as e:
+        if logger: logger.exception(f"Error calculando tercios de octava para: {audio_file}")
+        raise
 
 
                 

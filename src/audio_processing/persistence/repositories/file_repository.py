@@ -51,10 +51,10 @@ class FileRepository:
 
         else:
 
-            source_file.hash = file_hash
-            source_file.datetime_inicio = datetime_inicio
-            source_file.duracion_seconds = duracion_seconds
-            source_file.sample_rate_hz = sample_rate_hz
+            source_file.hash                = file_hash
+            source_file.datetime_inicio     = datetime_inicio
+            source_file.duracion_seconds    = duracion_seconds
+            source_file.sample_rate_hz      = sample_rate_hz
 
         self.session.flush()
 

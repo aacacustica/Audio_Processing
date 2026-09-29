@@ -16,6 +16,7 @@ class Device(Base):
 
     id_dispositivo:             Mapped[int]             = mapped_column(Integer,primary_key=True)
     nombre:                     Mapped[str]             = mapped_column(String(256),nullable=False)
+    tipo:                       Mapped[str]             = mapped_column(String(64),nullable=False,index=True)
     requiere_calibracion:       Mapped[bool]            = mapped_column(Boolean,nullable=False,default=False)
     valor_calibracion:          Mapped[float | None]    = mapped_column(Float)
     fecha_calibracion:          Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

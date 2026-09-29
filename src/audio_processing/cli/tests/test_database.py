@@ -17,8 +17,7 @@ def main():
         repo = MeasurementRepository(session)
 
         measurement = repo.add(
-            context_id=1,
-            file_id=1,
+            file_id =1,
             timestamp=datetime.now(timezone.utc),
             aggregation_seconds=1.0,
             la_db=63.2,

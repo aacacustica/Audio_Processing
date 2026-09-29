@@ -5,7 +5,7 @@ import soundfile as sf
 
 from audio_processing.campaign.config import load_config
 from audio_processing.persistence.database import Database
-from audio_processing.persistence.repositories import MeasurementRepository,FileRepository
+from audio_processing.persistence.repositories import MeasurementRepository,FileRepository,ContextRepository
     
 from audio_processing.spl.leq_processor import run_leq_for_file
 from audio_processing.spl.utils_acoustics import read_calibration_constants, timestamp_from_filename
@@ -37,15 +37,27 @@ def main():
 
     with db.session() as session:
 
+        context_repository = ContextRepository( session)
         repository = FileRepository( session ) 
-        measurement = (MeasurementRepository(session))
+        measurement = MeasurementRepository(session)
+
+        context = context_repository.get_for_source(
+            campaign_name   = config.campaign.name,
+            point_name      = "P3 - test",
+            device_type     = "audiomoth"
+        )
+
+        print(
+            "Contexto encontrado:",
+            context.id_contexto
+        )
 
         source_file = repository.register(
-            context_id=1,
-            filename=audio_file.name,
-            datetime_inicio=timestamp,
-            duracion_seconds=duration_seconds,
-            sample_rate_hz=info.samplerate
+            context_id      = context.id_contexto,
+            filename        = audio_file.name,
+            datetime_inicio = timestamp,
+            duracion_seconds= duration_seconds,
+            sample_rate_hz  = info.samplerate
         )
 
         print(
@@ -55,9 +67,9 @@ def main():
         )
 
         measurements = measurement.replace_for_file(
-            context_id=source_file.id_contexto,
-            file_id = source_file.id_archivo,
-            results = results
+            context_id      = context.id_contexto,
+            file_id         = source_file.id_archivo,
+            results         = results
         )
 
         print(

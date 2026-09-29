@@ -40,6 +40,7 @@ def main():
 
         device = Device(
             nombre                  = "Audiomoth test",
+            tipo                    = "audiomoth",
             requiere_calibracion    = True,
             valor_calibracion       = -10.16,
             fecha_calibracion       = None,
@@ -48,7 +49,7 @@ def main():
         campaign = Campaign(
             nombre                  = "CAMPAÑA TEST ACLIMA",
             referencia_interna      = "ACLIMA_TEST",
-            fecha_inicio            = datetime(2926,9,28,tzingo=timezone.utc),
+            fecha_inicio            = datetime(2926,9,28,tzinfo=timezone.utc),
             fecha_fin               = None,
             descripcion             = "Campaña de prueba para desarrollo.",
         )

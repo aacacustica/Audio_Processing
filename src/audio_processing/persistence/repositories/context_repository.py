@@ -58,6 +58,7 @@ class ContextRepository:
         contexts = list(self.session.scalars(statement).all())
 
         if not contexts: raise LookupError(f"No existe contexto para: campaña = {campaign_name},punto = {point_name},dispositivo = {device_type}")
+        if len(contexts) > 1: raise LookupError(f"Hay varios contextos para: campaña = {campaign_name},punto = {point_name},dispositivo = {device_type}")
 
         return contexts[0]
 

@@ -20,7 +20,7 @@ from audio_processing.common.paths import get_spl_output_dir
 
 from audio_processing.spl.writers import write_leq_csv
 from audio_processing.spl.PyOctaveBand_reduced import * 
-from audio_processing.spl.models import AcousticLevelResult,ThirdOctaveResult
+from audio_processing.spl.models import AcousticLevelResult,ThirdOctaveResult,AcousticFileResult
 from audio_processing.spl.spl_model import LeqLevelOctave
 from audio_processing.spl.utils_acoustics import * 
 
@@ -195,4 +195,82 @@ def run_third_octave_for_file(audio_file: Path, calibration_constants: dict, con
 
 
                 
+
+def run_acoustic_for_file(audio_file:Path,calibration_constants: dict, config,logger=None) -> AcousticLevelResult:
+
+    audio_file = Path(audio_file)
+
+    try:
+
+        metadata                    = audio_metadata.load(audio_file)
+        fs                          = int(metadata.streaminfo.sample_rate)
+        device_id                   = get_device_id(metadata)
+        calibration                 = calibration_constants.get(device_id,calibration_constants.get("songmenter",-10,16))
+        start_timestamp             = timestamp_from_filename(audio_file)
+        levels_results:             list[AcousticLevelResult] = []
+        thirds_results:             list[ThirdOctaveResult] = []
+        third_octave_fmin           = config.spl.third_octave.fmin
+        third_octave_fmax           = config.spl.third_octave.fmax
+        audio_data                  = sf.read(audio_file)
+        
+        calculator = LeqLevelOctave(
+            fs                      = fs,
+            calibration_constant    = calibration,
+            window_size             = fs,
+            third_octave_fmin       = third_octave_fmin,
+            third_octave_fmax       = third_octave_fmax,
+        )
+
+        if start_timestamp.tzinfo is None: start_timestamp = start_timestamp.replace(tzinfo=ZoneInfo(config.campaign.timezone))
+
+        
+        db_levels = calculator.calculate_spl_levels(audio_data)
+        
+        
+        for index,row in enumerate(db_levels):
+
+            la_db,lc_db,lz_db,lc_la_db,la_max_db,la_min_db = row
+
+            levels_results.append(
+                AcousticLevelResult(
+                    timestamp           = start_timestamp + datetime.timedelta(seconds = index),
+                    la_db               = float(la_db),
+                    lc_db               = float(lc_db),
+                    lz_db               = float(lz_db),
+                    lc_la_db            = float(lc_la_db),
+                    la_max_db           = float(la_max_db),
+                    la_min_db           = float(la_min_db),
+                    aggregation_seconds = 1.0
+            ))
+
+
+        if config.spl.third_octave.enabled: 
+
+            levels, frequencies = calculator.calculate_third_octave_levels(audio_data)
+
+            for index,row in enumerate(levels):
+
+                bands_db = { normalize_third_octave_band(float(frequency)):float(level) for frequency,level in zip(frequencies,row)}
+                
+                thirds_results.append(
+                    ThirdOctaveResult(
+                        timestamp               = start_timestamp + datetime.timedelta(seconds=index),
+                        aggregation_seconds     = 1.0,
+                        bands_db                = bands_db
+                ))
+    except Exception as e:
+        logger.error(f"Error procesando el archivo {audio_file}")
+        raise
+
+    
+    return AcousticFileResult( levels=levels_results, third_octaves=thirds_results )
+
+
+
+        
+
+            
+
+
+
 

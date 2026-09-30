@@ -25,3 +25,8 @@ class ThirdOctaveResult:
     timestamp:              datetime
     aggregation_seconds:    float
     bands_db:               dict[float,float]
+
+@dataclass(frozen=True)
+class AcousticFileResult:
+    levels: list[AcousticLevelResult]
+    third_octaves: list[ThirdOctaveResult]

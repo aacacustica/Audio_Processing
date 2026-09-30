@@ -10,6 +10,7 @@ def setup_logging( log_dir: str | Path, name: str = "audio_processing") -> loggi
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
     logger.handlers.clear()
+    logger.propagate = False
 
     formatter = logging.Formatter( "%(asctime)s | %(levelname)s | %(name)s | %(message)s" )
         

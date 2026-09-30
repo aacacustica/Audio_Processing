@@ -3,9 +3,11 @@ from audio_processing.common.logging import setup_logging
 
 
 from audio_processing.persistence.database import Database
-from audio_processing.persistence.repositories import ContextRepository,FileRepository,MeasurementRepository,ThirdOctaveRepository
+from audio_processing.persistence.repositories import ContextRepository,FileRepository,MeasurementRepository,ThirdOctaveRepository,PredictionRepository
 from audio_processing.spl.leq_processor import run_acoustic_for_file
 from audio_processing.spl.utils_acoustics import get_audiofiles,read_calibration_constants,timestamp_from_filename
+from audio_processing.ai.ai_model import AudioClassifier
+from audio_processing.ai.processor import run_ai_for_file
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -21,6 +23,7 @@ class CampaignPipeline:
         self.dry_run = dry_run
         self.logger = None
         self.db: Database | None = None
+        self.ai_classifier: AudioClassifier | None = None
     
     def run(self) -> None:
 
@@ -45,7 +48,9 @@ class CampaignPipeline:
     def _setup_runtime(self) -> None:
 
         self.logger = setup_logging( log_dir = Path(self.config.campaign.output_root)/self.config.outputs.subfolders.logs )
+        
         if self.config.database.enabled: self.db = Database.from_config(self.config)
+        if self.config.execution.run_ai: self.ai_classifier = AudioClassifier()
                        
     
     def run_source(self,source) -> None:
@@ -140,19 +145,86 @@ class CampaignPipeline:
                 if self.config.execution.stop_on_error: raise
 
     def run_ai(self,source) -> None:
-        from audio_processing.ai.processor import run_ai_for_source
 
-        output_path = run_ai_for_source(
-            source = source,
-            config = self.config,
-            logger = self.logger,
-        )
+        audio_files = get_audiofiles(Path(source.raw_data_path))
 
-        if output_path is None: self.logger.warning(f"AI no generó salida para {source.source_id}.")
-        else: self.logger.info(f"AI guardado en {output_path}")
+        if self.db is None: raise RuntimeError("La base de datos debe de estar habilitada para persistir IA.")
+        if self.ai_classifier is None: raise RuntimeError("AudioClassifier no está inicializado.")
 
-    def run_visualization(self,source) -> None:
-        raise NotImplementedError(f"Visualization todavía no se ha migrado")
+        if not audio_files:
+            self.logger.warning(f"No hay archivos WAV en {source.raw_data_path}")
+            return
+
+        with self.db.session() as session:
+
+            context_repository = ContextRepository(session)
+            context = context_repository.get_for_source(
+                campaign_name   = self.config.campaign.name,
+                point_name      = source.name,
+                device_type     = source.device_type
+            )
+
+            context_id = context.id_contexto
+
+        for audio_file in audio_files:
+
+            try:
+
+                info = sf.info(audio_file)
+                timestamp = timestamp_from_filename(audio_file)
+
+                if timestamp.tzinfo is None: timestamp = timestamp.replace(tzinfo=ZoneInfo(self.config.campaign.timezone))
+
+                duration_seconds = info.frames / info.samplerate
+
+                prediction_results = run_ai_for_file(
+                    audio_file      = audio_file,
+                    classifier      = self.ai_classifier,
+                    config          = self.config,
+                    logger          = self.logger
+                )
+
+                with self.db.session() as session:
+
+                    file_repository = FileRepository(session)
+
+                    measurement_repository = MeasurementRepository(session)
+                    prediction_repository = PredictionRepository(session)
+
+                    source_file = file_repository.register(
+
+                        context_id          = context_id,
+                        filename            = audio_file.name,
+                        datetime_inicio     = timestamp,
+                        duracion_seconds    = duration_seconds,
+                        sample_rate_hz      = info.samplerate
+                    )
+
+                    measurements = measurement_repository.list_by_file(source_file.id_archivo)
+
+                    if not measurements: raise RuntimeError(f"No existen mediciones acústicas para enlazar IA del archivo: {audio_file.name}")
+
+                    (predictions,links) = prediction_repository.sync_for_file(
+                        file_id         = source_file.id_archivo,
+                        measurements    = measurements,
+                        results         = prediction_results,
+                        model_name      = str(self.config.ai.model),
+                        threshold       = float(self.config.ai.threshold)
+                    )
+
+                    file_id = source_file.id_archivo
+                    prediction_count = len(predictions)
+                    link_count = len(links)
+            
+                self.logger.info(f"IA {source.source_id}: archivo = {audio_file.name} ,id_archivo = {file_id} predicciones = {prediction_count}, enlaces_medicion = {link_count}")    
+
+            except Exception as e:
+
+                self.logger.exception(f"Error procesando IA de {audio_file}")
+
+                if self.config.execution.stop_on_error: raise
+
+        
     
     
     def print_plan(self,point) -> None:

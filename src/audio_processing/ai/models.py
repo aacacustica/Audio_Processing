@@ -9,5 +9,6 @@ class PredictionResult:
     window_seconds: float
     class_name: str
     probability: float
-
     
+    rank: int
+

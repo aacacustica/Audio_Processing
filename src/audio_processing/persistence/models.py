@@ -142,4 +142,30 @@ class AcousticThirdOctaveMeasurements(Base):
     band_12500_db:          Mapped[float | None]        = mapped_column(Float)
     band_16000_db:          Mapped[float | None]        = mapped_column(Float)
     band_20000_db:          Mapped[float | None]        = mapped_column(Float)
+
+
+class AIPrediction(Base):
+
+    __tablename__ = "prediccion_ia"
+
+    __table_args__ = (UniqueConstraint("id_archivo","datetime_inicio","window_seconds","class_name","model_name",name="uq_prediccion_archivo_ventana_clase_modelo"),)
+
+    id_prediccion:          Mapped[int]                 = mapped_column(Integer,primary_key=True)
+    id_archivo:             Mapped[int]                 = mapped_column(ForeignKey("archivo.id_archivo",ondelete="CASCADE"),nullable=False,index=True)
+    datetime_inicio:        Mapped[datetime]            = mapped_column(DateTime(timezone=True),nullable=False,index=True)
+    window_seconds:         Mapped[float]               = mapped_column(Float,nullable=False)
+    class_name:             Mapped[str]                 = mapped_column(String(255),nullable=False)
+    probability:            Mapped[float]               = mapped_column(Float,nullable=False)
+    model_name:             Mapped[str]                 = mapped_column(String(128),nullable=False)
+    threshold:              Mapped[float]               = mapped_column(Float,nullable=False)
+    prediction_rank:        Mapped[int]                 = mapped_column(Integer,nullable=False)
+
+
+class AIPredictionMeasurement(Base):
+
+    __tablename__ = "prediccion_ia_medicion"
+
+    id_prediccion:          Mapped[int]                 = mapped_column(ForeignKey("prediccion_ia.id_prediccion",ondelete="CASCADE"),primary_key=True)
+    id_medicion:            Mapped[int]                 = mapped_column(ForeignKey("medicion_acustica.id_medicion",ondelete="CASCADE"),primary_key=True,index=True)
+
         

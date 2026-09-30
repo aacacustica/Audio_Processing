@@ -3,108 +3,68 @@ import os
 import datetime
 
 import numpy as np
+import soundfile as sf
+from pathlib import Path
+from zoneinfo import ZoneInfo
 
-from utils_ai import find_audiomoth_folders,save_embeddings_funct,assign_prediction_class
+from audio_processing.ai.utils_ai import find_audiomoth_folders,save_embeddings_funct,assign_prediction_class
 from audio_processing.ai.writers import save_predictions_to_csv
 from audio_processing.campaign.config import load_config
 from audio_processing.common.filesystem import get_audiofiles,get_metadata_audio
+from audio_processing.spl.utils_acoustics import timestamp_from_filename
+
+from audio_processing.ai.ai_model import AudioClassifier
+from audio_processing.ai.models import PredictionResult
 
 
-def run_ai_for_source(source,config,logging=None):
+def run_ai_for_file(audio_file: Path,*,classifier: AudioClassifier,config,logger=None) -> list[PredictionResult]:
 
+    audio_file          = Path(audio_file)
+    results             : list[PredictionResult] = []
+    start_timestamp     = timestamp_from_filename(audio_file)
+    info                = sf.info(audio_file)
+    file_duration       = info.frames / info.samplerate
+    window_seconds      = float(config.ai.window_seconds)
+    threshold           = float(config.ai.threshold)
+    top_k               = int(getattr(config.ai,"top_k",3))
+    predictions         = classifier.predict_file(audio_file,window_seconds=window_seconds,logger=logger)
     
 
-    col_names               = ['filename','date','class','probability']
-    audiomoth_folders       = [find_audiomoth_folders(base_path,config.devices.audiomoth.folder_names)]
+    if start_timestamp.tzinfo is None: start_timestamp = start_timestamp.replace(tzinfo=ZoneInfo(config.campaign.timezone))
+        
 
-    for subfolder in tqdm.tqdm(audiomoth_folders, desc='Processing audiomoth folder'):
+    
+    for window_index,prediction in enumerate(predictions):
 
-        subfolder_name  = os.path.basename(subfolder)
-        audio_path      = os.path.join(subfolder,'AUDIOMOTH')
+        offset_seconds = window_index * window_seconds
+        actual_window_seconds = min(window_seconds,file_duration - offset_seconds)
 
-        if not os.path.exists(audio_path):
-            logging.warning(f"Skipping {subfolder},{config.devices.audiomoth.folder_names} folder not found")
-            continue
+        if actual_window_seconds <= 0: continue
 
-        audio_files = get_audiofiles(audio_path)
+        timestamp = start_timestamp + datetime.timedelta(seconds = offset_seconds)
+        top_indices = np.argsort(prediction)[::-1][:top_k]
 
-        if audio_files: 
-            logging.info(f"Found { len(audio_files)} audio files.")
-        else:
-            logging.warning(f"No audio files found in {audio_files}. Skipping.")
-            continue
+        for rank,class_index in enumerate(top_indices,start=1):
 
-        valid_audio_files = get_metadata_audio(audio_files,audio_path,logging)
+            probability = float(prediction[class_index])
 
-        all_data_subfolder          = []
-        prediction_per_class_count  = []
+            if probability < threshold: continue
 
-        for file in tqdm.tqdm(valid_audio_files,desc='Processing audio files...'):
+            results.append(
+                PredictionResult(
+                    timestamp       = timestamp,
+                    window_seconds  = actual_window_seconds,
+                    class_name      = str(classifier.yamnet_classes[class_index]),
+                    probability     = probability,
+                    rank            = rank
+                )
+            )
 
-            prediction_per_file_per_class_count = {}
-
-            try:
-                full_path                   = os.path.join(audio_path,file)
-                predictions_list,embeddings = classifier.process_single_file(full_path,window_size,save_embeddings,save_spectrogram)
-
-                if save_embeddings:
-                    save_embeddings_funct(embeddings,subfolder_name,subfolder,logging)
-                    pass
-
-                name_split = file.split(".")[0]
-                start_timestamp = datetime.datetime.strptime(name_split, '%Y%m%d_%H%M%S')
-
-                logging.info(f"Classification threshold: {threshold}")
-
-                all_data_subfolder = assign_prediction_class(
-                    predictions_list                    =   predictions_list,
-                    threshold                           =   threshold,
-                    classifier                          =   classifier,
-                    prediction_per_class_count          =   prediction_per_class_count,
-                    prediction_per_file_per_class_count =   prediction_per_file_per_class_count,
-                    start_timestamp                     =   start_timestamp,
-                    window_size                         =   window_size,
-                    all_data_subfolder                  =   all_data_subfolder,
-                    file_name                           =   file)
-
-            except Exception as e:
-                logging.error(f"Error processing {file}")
-                continue
+    return results
 
 
-            if all_data_subfolder: 
-                                save_predictions_to_csv(
-                                all_data_subfolder  = all_data_subfolder,
-                                col_names           = col_names,
-                                subfolder_name      = subfolder_name,
-                                subfolder           = subfolder,
-                                model_type          = model_type,
-                                logging             = logging,
-                                window_size         = window_size,
-                                stable_version      = stable_version
-                                )
 
-            else: logging.warning(f"No data to save for folder {subfolder}")
-
-            summary_filename    = f"summary_{model_type}_threshold_{threshold}.txt"
-            subfolder_path      = base_path.replace(config.outputs.subfolders.general.medidas_folder,config.outputs.subfolders.general.resultados_folder_name)
-            output_summary_path = os.path.join(subfolder_path,subfolder_name,config.outputs.subfolders.ai.general_folder_name,config.outputs.subfolders.ai.predictions_folder_name)
-
-            with open(os.path.join(output_summary_path, summary_filename),'w') as f:
-            
-                        f.write(f"Resumen de precciones del modelo:        {model_type}\n")
-                        f.write(f"Del archivo:                             {subfolder}\n")
-                        f.write(f"Usando un umbral de:                     {threshold}\n")
-                        f.write(f"Aplicando una ventana de predicciones de:{window_size if (window_size != 0 ) else 'Full audio'} segundos \n")
-                        f.write(f"Habiendo procesado un total de:          {len(audiomoth_folders)} archivos\n")
-                        f.write(f"Habiendo encontrado un total de:         {len(prediction_per_class_count)} clases con predicciones por encima del umbral\n")
-                        f.write(f"\n")
-                        f.write("Clases con predicciones por encima del umbral:\n")
-                        
-                        for class_name, count in prediction_per_class_count.items():
-                            f.write(f"{class_name}: {count}\n")
-            
-            logging.info(f"Summary file saved to: {os.path.join(output_summary_path, summary_filename)}")
+    
 
         
 

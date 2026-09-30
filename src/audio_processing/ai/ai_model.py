@@ -3,6 +3,7 @@ import resampy
 import numpy as np
 import soundfile as sf
 
+from pathlib import Path
 
 import audio_processing.ai.yamnet as yamnet_model
 import audio_processing.ai.params as yamnet_params
@@ -13,12 +14,6 @@ from audio_processing.ai.utils_ai import save_spectrogram_w_funct
 
 config = load_config()
 
-AI_MODEL                = config.ai.model
-AI_WINDOW_SECONDS       = config.ai.window_seconds
-AI_THRESHOLD            = config.ai.threshold
-AI_SAVE_EMBEDDINGS      = config.ai.save_embeddings
-AI_SAVE_ESPECTROGRAMS   = config.ai.save_espectrograms
-AI_FILTER_POINT         = config.ai.filter_point
 
 class AudioClassifier:
 
@@ -27,8 +22,47 @@ class AudioClassifier:
         self.params = yamnet_params.Params()
         self.yamnet = yamnet_model.yamnet_frames_model(self.params)
 
-        self.yamnet.load_weights('yamnet.h5')
-        self.yamnet_classes = yamnet_model.class_names('yamnet_class_map.csv')
+        self.yamnet.load_weights('src/audio_processing/ai/yamnet.h5')
+        self.yamnet_classes = yamnet_model.class_names('src/audio_processing/common/yamnet_class_map.csv')
+
+        ai_dir = (Path(__file__)).resolve().parent
+        weights_path = (ai_dir / "yament.h5")
+        class_map_path = (ai_dir.parent / "common" / "yamnet_class_map.csv")
+
+    def predict_file(self,file_path: Path,window_seconds:float,*,logger=None) -> list[np.ndarray]:
+
+        waveform,sample_rate = sf.read(file_path,dtype = "float32")
+        target_sample_rate = int(self.params.sample_rate) 
+        predictions = []
+
+        if waveform.ndim > 1:
+
+            waveform = np.mean(waveform,axis = 1)
+
+            if logger: logger.warning(f"Audio multicanal {file_path} se usará en la media.")
+
+        if sample_rate != target_sample_rate:
+
+            if logger: logger.info(f"Resampling {file_path}: {sample_rate} -> {target_sample_rate}")
+
+            waveform = resampy.resample(waveform,sample_rate,target_sample_rate)
+            sample_rate = target_sample_rate
+
+        window_samples = int(window_seconds * sample_rate)
+
+        for start in range(0,len(waveform),window_samples):
+
+            window = waveform[start:start + window_samples]
+
+            if len(window) == 0: continue
+
+            scores, _ , _ = self.yamnet(window)
+
+            prediction = np.mean(scores.numpy(),axis = 0)
+
+            predictions.append(prediction)
+
+        return predictions
 
     def process_single_file(self, file_path,logging):
 

@@ -3,7 +3,7 @@ from audio_processing.common.logging import setup_logging
 
 from audio_processing.persistence.database import Database
 from audio_processing.persistence.repositories import ContextRepository,FileRepository,MeasurementRepository,ThirdOctaveRepository
-from audio_processing.spl.leq_processor import run_leq_for_file,run_leq_for_source,run_third_octave_for_file
+from audio_processing.spl.leq_processor import run_leq_for_file,run_leq_for_source,run_third_octave_for_file,run_acoustic_for_file
 from audio_processing.spl.utils_acoustics import get_audiofiles,read_calibration_constants,timestamp_from_filename
 
 from pathlib import Path
@@ -89,9 +89,6 @@ class CampaignPipeline:
         with self.db.session() as session:
 
             context_repository = ContextRepository(session)
-            file_repository = FileRepository(session)
-            measurement_repository = MeasurementRepository(session)
-            third_octave_repository = ThirdOctaveRepository(session)
 
             context = context_repository.get_for_source(
                 campaign_name       = campaign_name,
@@ -113,22 +110,18 @@ class CampaignPipeline:
 
                     duration_seconds = info.frames / info.samplerate
 
-                    results_globales =  run_leq_for_file(
+                    acoustic_result = run_acoustic_for_file(
                         audio_file              = audio_file,
                         calibration_constants   = calibration_constants,
                         config                  = self.config,
                         logger                  = self.logger
                     )
 
-                    if self.config.spl.third_octave.enabled:
-                        results_tercios = run_third_octave_for_file(
-                            audio_file              = audio_file,
-                            calibration_constants   = calibration_constants,
-                            config                  = self.config,
-                            logger                  = self.logger
-                        )
-
                     with self.db.session() as session:
+
+                        file_repository = FileRepository(session)
+                        measurement_repository = MeasurementRepository(session)
+                        third_octave_repository = ThirdOctaveRepository(session)
 
                         source_file = file_repository.register(
                             context_id          = context_id,
@@ -140,11 +133,13 @@ class CampaignPipeline:
                         measurements = measurement_repository.replace_for_file(
                             context_id          = context_id,
                             file_id             = source_file.id_archivo,
-                            results             = results_globales)
+                            results             = acoustic_result.levels)
 
-                        third_octave_measurements = third_octave_repository.add_for_measurements(
-                            measurements        = measurements,
-                            results             = results_tercios)
+                        if acoustic_result.third_octaves:
+
+                            third_octave_measurements = third_octave_repository.add_for_measurements(
+                                measurements        = measurements,
+                                results             = acoustic_result.third_octaves)
                         
                         self.logger.info("SPL %s: archivo=%s, ""id_archivo=%s, ""mediciones=%s, ""tercios=%s",source.source_id,audio_file.name,source_file.id_archivo,len(measurements),len(third_octave_measurements), )
                         

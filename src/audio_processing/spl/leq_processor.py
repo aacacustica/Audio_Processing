@@ -196,7 +196,7 @@ def run_third_octave_for_file(audio_file: Path, calibration_constants: dict, con
 
                 
 
-def run_acoustic_for_file(audio_file:Path,calibration_constants: dict, config,logger=None) -> AcousticLevelResult:
+def run_acoustic_for_file(audio_file:Path,calibration_constants: dict, config,logger=None) -> AcousticFileResult:
 
     audio_file = Path(audio_file)
 
@@ -205,13 +205,13 @@ def run_acoustic_for_file(audio_file:Path,calibration_constants: dict, config,lo
         metadata                    = audio_metadata.load(audio_file)
         fs                          = int(metadata.streaminfo.sample_rate)
         device_id                   = get_device_id(metadata)
-        calibration                 = calibration_constants.get(device_id,calibration_constants.get("songmenter",-10,16))
+        calibration                 = calibration_constants.get(device_id,calibration_constants.get("songmeter",-10.16))
         start_timestamp             = timestamp_from_filename(audio_file)
         levels_results:             list[AcousticLevelResult] = []
         thirds_results:             list[ThirdOctaveResult] = []
         third_octave_fmin           = config.spl.third_octave.fmin
         third_octave_fmax           = config.spl.third_octave.fmax
-        audio_data                  = sf.read(audio_file)
+        audio_data,_                  = sf.read(audio_file)
         
         calculator = LeqLevelOctave(
             fs                      = fs,
@@ -258,8 +258,11 @@ def run_acoustic_for_file(audio_file:Path,calibration_constants: dict, config,lo
                         aggregation_seconds     = 1.0,
                         bands_db                = bands_db
                 ))
+    
+    
+    
     except Exception as e:
-        logger.error(f"Error procesando el archivo {audio_file}")
+        if logger is not None: logger.error(f"Error procesando el archivo {audio_file}")
         raise
 
     

@@ -168,4 +168,5 @@ class AIPredictionMeasurement(Base):
     id_prediccion:          Mapped[int]                 = mapped_column(ForeignKey("prediccion_ia.id_prediccion",ondelete="CASCADE"),primary_key=True)
     id_medicion:            Mapped[int]                 = mapped_column(ForeignKey("medicion_acustica.id_medicion",ondelete="CASCADE"),primary_key=True,index=True)
 
+
         

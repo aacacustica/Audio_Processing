@@ -1,9 +1,10 @@
 from audio_processing.campaign.discovery import discover_measurement_points
 from audio_processing.common.logging import setup_logging
 
+
 from audio_processing.persistence.database import Database
 from audio_processing.persistence.repositories import ContextRepository,FileRepository,MeasurementRepository,ThirdOctaveRepository
-from audio_processing.spl.leq_processor import run_leq_for_file,run_leq_for_source,run_third_octave_for_file,run_acoustic_for_file
+from audio_processing.spl.leq_processor import run_acoustic_for_file
 from audio_processing.spl.utils_acoustics import get_audiofiles,read_calibration_constants,timestamp_from_filename
 
 from pathlib import Path
@@ -53,16 +54,6 @@ class CampaignPipeline:
         if self.config.execution.run_ai and source.needs_ai: self.run_ai(source)
         if self.config.execution.run_visualization and source.needs_visualization: self.run_visualization(source)
 
-    def run_spl(self,source) -> None:
-
-        output_path = run_leq_for_source(
-            source = source,
-            config = self.config,
-            logger = self.logger
-        )
-
-        if output_path is None: self.logger.warning(f"SPL no generó salida para {source.source_id}.")
-        else: self.logger.info(f"SPL guardado en {output_path}.")
 
     def run_spl_database(self,source) -> None:
 
@@ -100,53 +91,53 @@ class CampaignPipeline:
 
             self.logger.info(f"Contexto {context_id} para {source.source_id}")
 
-            for audio_file in audio_files:
-                try:
+        for audio_file in audio_files:
+            try:
 
-                    info = sf.info(audio_file)
-                    timestamp = timestamp_from_filename(audio_file)
+                info = sf.info(audio_file)
+                timestamp = timestamp_from_filename(audio_file)
 
-                    if timestamp.tzinfo is None: timestamp = timestamp.replace(tzinfo=ZoneInfo(self.config.campaign.timezone))
+                if timestamp.tzinfo is None: timestamp = timestamp.replace(tzinfo=ZoneInfo(self.config.campaign.timezone))
 
-                    duration_seconds = info.frames / info.samplerate
+                duration_seconds = info.frames / info.samplerate
 
-                    acoustic_result = run_acoustic_for_file(
-                        audio_file              = audio_file,
-                        calibration_constants   = calibration_constants,
-                        config                  = self.config,
-                        logger                  = self.logger
-                    )
+                acoustic_result = run_acoustic_for_file(
+                    audio_file              = audio_file,
+                    calibration_constants   = calibration_constants,
+                    config                  = self.config,
+                    logger                  = self.logger
+                )
 
-                    with self.db.session() as session:
+                with self.db.session() as session:
 
-                        file_repository = FileRepository(session)
-                        measurement_repository = MeasurementRepository(session)
-                        third_octave_repository = ThirdOctaveRepository(session)
+                    file_repository = FileRepository(session)
+                    measurement_repository = MeasurementRepository(session)
+                    third_octave_repository = ThirdOctaveRepository(session)
 
-                        source_file = file_repository.register(
-                            context_id          = context_id,
-                            filename            = audio_file.name,
-                            datetime_inicio     = timestamp,
-                            duracion_seconds    = duration_seconds,
-                            sample_rate_hz      = info.samplerate)
-                        
-                        measurements = measurement_repository.replace_for_file(
-                            context_id          = context_id,
-                            file_id             = source_file.id_archivo,
-                            results             = acoustic_result.levels)
+                    source_file = file_repository.register(
+                        context_id          = context_id,
+                        filename            = audio_file.name,
+                        datetime_inicio     = timestamp,
+                        duracion_seconds    = duration_seconds,
+                        sample_rate_hz      = info.samplerate)
+                    
+                    results_globales = measurement_repository.replace_for_file(
+                        context_id          = context_id,
+                        file_id             = source_file.id_archivo,
+                        results             = acoustic_result.levels)
 
-                        if acoustic_result.third_octaves:
+                    if acoustic_result.third_octaves:
 
-                            third_octave_measurements = third_octave_repository.add_for_measurements(
-                                measurements        = measurements,
-                                results             = acoustic_result.third_octaves)
-                        
-                        self.logger.info("SPL %s: archivo=%s, ""id_archivo=%s, ""mediciones=%s, ""tercios=%s",source.source_id,audio_file.name,source_file.id_archivo,len(measurements),len(third_octave_measurements), )
-                        
-                except Exception as e:
+                        results_tercios = third_octave_repository.add_for_measurements(
+                            measurements        = results_globales,
+                            results             = acoustic_result.third_octaves)
+                    
+                    self.logger.info("SPL %s: archivo=%s, ""id_archivo=%s, ""mediciones=%s, ""tercios=%s",source.source_id,audio_file.name,source_file.id_archivo,len(results_globales),len(results_tercios), )
+                    
+            except Exception as e:
 
-                    self.logger.exception(f"Error procesando {audio_file}")
-                    if self.config.execution.stop_on_error: raise
+                self.logger.exception(f"Error procesando {audio_file}")
+                if self.config.execution.stop_on_error: raise
 
     def run_ai(self,source) -> None:
         from audio_processing.ai.processor import run_ai_for_source

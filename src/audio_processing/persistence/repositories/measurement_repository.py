@@ -65,29 +65,51 @@ class MeasurementRepository:
 
         return measurements
 
-    def replace_for_file(self,*,context_id: int,file_id: int,results: list[AcousticLevelResult]) -> list[AcousticMeasurement]:
+    def sync_for_file(self,*,context_id: int, file_id: int, results: list[AcousticLevelResult]) -> list[AcousticMeasurement]:
 
-        self.session.execute(
-            delete(AcousticMeasurement)
-            .where(AcousticMeasurement.id_archivo == file_id)
-        )
+        existing_measurements   = self.list_by_file(file_id)
+        synced_measurements     = []
+        existing                = {(measurement.datetime,measurement.aggregation_seconds):measurement for measurement in existing_measurements}
+        seen_keys               = set()
 
-        measurements = [ AcousticMeasurement(
-                    id_contexto = context_id,
-                    id_archivo = file_id,
-                    datetime = result.timestamp,
-                    aggregation_seconds = result.aggregation_seconds,
-                    la_db = result.la_db,
-                    lc_db = result.lc_db,
-                    lz_db = result.lz_db,
-                    la_max_db = result.la_max_db,
-                    la_min_db = result.la_min_db,
-                    lc_la_db = result.lc_la_db
-                    ) for result in results
-        ]
+        for result in results:
 
-        self.session.add_all(measurements)
+            key = (result.timestamp,result.aggregation_seconds)
+
+            measurement = existing.get(key)
+
+            if measurement is None:
+
+                measurement = AcousticMeasurement(
+                    id_contexto         = context_id,
+                    id_archivo          = file_id,
+                    datetime            = result.timestamp,
+                    aggregation_Seconds = result.aggregation_seconds
+                )
+
+                self.session.add(measurement)
+
+            measurement.id_contexto = context_id
+            measurement.id_archivo = file_id
+
+            measurement.la_db = result.la_db
+            measurement.lc_db = result.lc_db
+            measurement.lz_db = result.lz_db
+            measurement.la_max_db = result.la_max_db
+            measurement.la_min_db = result.la_min_db
+            measurement.lc_la_db = result.lc_la_db
+
+            synced_measurements.append(measurement)
+            seen_keys.add(key)
+
+        for key,measurement in existing.items():
+
+            if key not in seen_keys: self.session.delete(measurement)
+
         self.session.flush()
 
-        return measurements
+        return synced_measurements
+
+
+
 

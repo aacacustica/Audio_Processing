@@ -86,6 +86,8 @@ class AcousticMeasurement(Base):
 
     __tablename__ = "medicion_acustica"
 
+    __table_args__ = (UniqueConstraint("id_archivo","datetime","aggregation_seconds",name="uq_medicion_archivo_datetime_aggregation"),)
+
     id_medicion:            Mapped[int]                 = mapped_column(Integer,primary_key=True)
 
     id_contexto:            Mapped[int]                 = mapped_column(ForeignKey("contexto.id_contexto"),nullable=False,index=True)

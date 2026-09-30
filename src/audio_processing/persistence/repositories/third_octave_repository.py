@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 from audio_processing.persistence.models import AcousticMeasurement,AcousticThirdOctaveMeasurements
 from audio_processing.spl.models import ThirdOctaveResult
@@ -47,21 +48,40 @@ class ThirdOctaveRepository:
 
         self.session = session
 
-    def add_for_measurements(self,*,measurements: list[AcousticMeasurement],results: list[ThirdOctaveResult]) -> list[AcousticThirdOctaveMeasurements]:
+    def sync_for_measurements(self,*,measurements: list[AcousticMeasurement],results: list[ThirdOctaveResult]) -> list[AcousticThirdOctaveMeasurements]:
 
         if len(measurements) != len(results): raise ValueError("Número de mediciones y resultados de tercios diferente:" f"{len(measurements)} != {len(results)}")
 
+        measurements_ids    = [measurement.id_medicion for measurement in measurements]
+        statement           = (select(AcousticThirdOctaveMeasurements)
+                            .where(AcousticThirdOctaveMeasurements.id_medicion.in_(measurements_ids)))
+
+        existing            = {row.id_medicion:row for row in self.session.scalars(statement).all()}
         rows = []
 
         for measurement, result in zip(measurements,results):
            
             if measurement.datetime != result.timestamp: raise ValueError(f"Timestamp SPL/tercios no coincide: {measurement.datetime} != {result.timestamp}")
 
-            values = {column_name: result.bands_db.get(frequency) for frequency,column_name in BAND_COLUMNS.items()}
+            row = existing.get(measurement.id_medicion)
 
-            row = AcousticThirdOctaveMeasurements(id_medicion = measurement.id_medicion, **values)
+            if row is None:
+                row = (AcousticThirdOctaveMeasurements(id_medicion=(measurement.id_medicion)))
+                self.session.add(row)
 
+            for (frequency,column_name) in BAND_COLUMNS.items():
+
+                setattr(row,column_name,result.bands_db.get(frequency))
+            
             rows.append(row)
+
+
+        self.session.flush()
+        return rows
+
+            
+
+            
 
         self.session.add_all(rows)
         self.session.flush()

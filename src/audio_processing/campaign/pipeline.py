@@ -121,14 +121,14 @@ class CampaignPipeline:
                         duracion_seconds    = duration_seconds,
                         sample_rate_hz      = info.samplerate)
                     
-                    results_globales = measurement_repository.replace_for_file(
+                    results_globales = measurement_repository.sync_for_file(
                         context_id          = context_id,
                         file_id             = source_file.id_archivo,
                         results             = acoustic_result.levels)
 
                     if acoustic_result.third_octaves:
 
-                        results_tercios = third_octave_repository.add_for_measurements(
+                        results_tercios = third_octave_repository.sync_for_measurements(
                             measurements        = results_globales,
                             results             = acoustic_result.third_octaves)
                     

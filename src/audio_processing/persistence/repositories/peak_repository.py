@@ -14,20 +14,23 @@ class PeakRepository:
 
     def sync_for_context(self,*,context_id: int, measurements: list[AcousticMeasurement],results: list[PeakResult]) -> tuple[list[AcousticPeak],list[AcousticPeakMeasurement]]:
 
+        if not measurements: return [], []
+        
         for measurement in measurements:
 
             if measurement.id_contexto != context_id: raise ValueError(f"Hay mediciones que no pertenecen al contexto {context_id}")
 
-            measurement_by_datetime = {measurement.datetime: measurement for measurement in measurements}
+        
+        measurement_by_datetime = {measurement.datetime: measurement for measurement in measurements}
 
-            statement = (select(AcousticPeak)
-                         .where(AcousticPeak.id_contexto == context_id))
+        statement = (select(AcousticPeak)
+                        .where(AcousticPeak.id_contexto == context_id))
 
-            existing_rows = list(self.session.scalars(statement).all())
-            existing = {row.id_medicion_pico: row for row in existing_rows}
+        existing_rows = list(self.session.scalars(statement).all())
+        existing = {row.id_medicion_pico: row for row in existing_rows}
 
-            seen_measurement_ids = set()
-            peak_rows = []
+        seen_measurement_ids = set()
+        peak_rows = []
 
         for result in results:
 

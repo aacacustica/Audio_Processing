@@ -233,21 +233,42 @@ class CampaignPipeline:
         if self.db is None: raise RuntimeError("La base de datos debe estar habilitada para persistir picos.")
 
         try:
+            
+            audio_files = get_audiofiles(Path(source.raw_data_path))
+            
+            if not audio_files: 
+                self.logger.warning(f"No hay archivos WAV para calcular picos de {source.source_id}")
+                return
+            
 
             with self.db.session() as session:
 
                 context_repository = ContextRepository(session)
                 measurement_repository = MeasurementRepository(session)
                 peak_repository = PeakRepository(session)
-
+                file_repository = FileRepository(session)
                 context = context_repository.get_for_source(
-                    campaign_name=self.config.campaign.name,
-                    point_name=source.name,
-                    device_type=source.device_type)
+                    campaign_name       = self.config.campaign.name,
+                    point_name          = source.name,
+                    device_type         = source.device_type)
 
                 context_id = context.id_contexto
 
-                measurements = measurement_repository.list_by_context(context_id)
+                source_files = []
+
+                for audio_file in audio_files:
+
+                    source_file = (file_repository.get_by_context_and_filename(context_id=context_id,filename=audio_file.name))
+
+                    if source_file is None: 
+                        self.logger.warning(f"El archivo {audio_file.name} no está registrado en la base de datos")
+                        continue
+
+                    source_files.append(source_file)
+
+                file_ids = [source_file.id_archivo for source_file in source_files]
+
+                measurements = measurement_repository.list_by_files(file_ids)
 
                 if not measurements: 
                     self.logger.warning(f"No existen mediciones acústicas para calcular picos de {source.source_id}")
@@ -258,19 +279,19 @@ class CampaignPipeline:
 
                 for measurement in measurements:
 
-                    local_datetime = (measurement.datetime.astimezone(timezone))
-                    hour_key = local_datetime.replace(minute=0,second=0,microsecond=0)
+                    local_datetime  = (measurement.datetime.astimezone(timezone))
+                    hour_key        = local_datetime.replace(minute=0,second=0,microsecond=0)
                     measurements_by_hour[hour_key].append(measurement)
 
                 peak_result = []
                 for hour_key in sorted(measurements_by_hour):
                     hourly_measurement = (measurements_by_hour[hour_key])
                     hourly_results = detect_peaks(
-                        measurements=hourly_measurement,
-                        window_size=self.config.peaks.window_size,
-                        adding_threshold=self.config.peaks.adding_threshold,
-                        width=self.config.peaks.width,
-                        prominence=self.config.peaks.prominence
+                        measurements        = hourly_measurement,
+                        window_size         = self.config.peaks.window_size,
+                        adding_threshold    = self.config.peaks.adding_threshold,
+                        width               = self.config.peaks.width,
+                        prominence          = self.config.peaks.prominence
                         )
 
                     peak_result.extend(hourly_results)
@@ -362,6 +383,7 @@ class CampaignPipeline:
         print(f"Ventana mediana:             "f"{self.config.peaks.window_size}")
         print(f"Umbral añadido:              "f"{self.config.peaks.adding_threshold}")
         print(f"Anchura mínima:              "f"{self.config.peaks.width}")
+        print(f"Prominencia:                 "f"{self.config.peaks.prominence}")
 
 
     def print_visualization_plan(self):    

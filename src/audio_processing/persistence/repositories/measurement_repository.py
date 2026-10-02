@@ -44,6 +44,16 @@ class MeasurementRepository:
 
         return list(self.session.scalars(statement).all())
 
+    def list_by_files(self,file_ids: int) -> list[AcousticMeasurement]:
+
+        if not file_ids: return []
+
+        statement = (select(AcousticMeasurement)
+                     .where(AcousticMeasurement.id_archivo.in_(file_ids))
+                     .order_by(AcousticMeasurement.datetime))
+
+        return list(self.session.scalars(statement).all())
+
     def list_by_context(self,context_id: int) -> list[AcousticMeasurement]:
 
         statement = (select(AcousticMeasurement)

@@ -17,13 +17,14 @@ def detect_peaks(measurements,*,window_size: int , adding_threshold: float, widt
 
     if not measurements: return []
 
-    measurements = sorted(measurements, key=lambda m: m.datetime)
-    la = pd.Series([measurement.la_db for measurement in measurements],dtype='float64')
-    dynamic_threshold = (la.rolling(window=window_size,min_periods=1).median() + adding_threshold)
+    measurements        = sorted(measurements, key=lambda m: m.datetime)
+    la                  = pd.Series([measurement.la_db for measurement in measurements],dtype='float64')
+    dynamic_threshold   = (la.rolling(window=window_size,min_periods=1).median() + adding_threshold)
+    results             = []
 
     peak_indices, properties = find_peaks(la.to_numpy(),prominence=prominence,width=width)
 
-    results = []
+    
 
     for peak_idx, left_ip, right_ip, peak_prominence in zip(peak_indices, properties["left_ips"],properties["right_ips"],properties["prominences"]):
 

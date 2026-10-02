@@ -44,6 +44,14 @@ class MeasurementRepository:
 
         return list(self.session.scalars(statement).all())
 
+    def list_by_context(self,context_id: int) -> list[AcousticMeasurement]:
+
+        statement = (select(AcousticMeasurement)
+                     .where(AcousticMeasurement.id_contexto == context_id)
+                     .order_by(AcousticMeasurement.datetime))
+
+        return list(self.session.scalars(statement).all())
+
     def add_many(self,*,context_id:int,file_id: int | None, results: list[AcousticLevelResult]) -> list[AcousticMeasurement]:
 
         measurements = [ AcousticMeasurement(

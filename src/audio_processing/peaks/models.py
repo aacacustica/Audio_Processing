@@ -7,7 +7,7 @@ class PeakResult:
 
     peak_timestamp: datetime
 
-    start_time:datetime
+    start_time: datetime
     end_time: datetime
 
     duration_seconds: float
@@ -17,4 +17,5 @@ class PeakResult:
     leq_db: float
     prominence_db: float
 
-    
+    la_values: list[float]
+

@@ -169,4 +169,29 @@ class AIPredictionMeasurement(Base):
     id_medicion:            Mapped[int]                 = mapped_column(ForeignKey("medicion_acustica.id_medicion",ondelete="CASCADE"),primary_key=True,index=True)
 
 
-        
+class AcousticPeak(Base):
+
+    __tablename__ = "pico_acustico"
+
+    __table_args__ = (UniqueConstraint("id_medicion_pico",name="uq_pico_medicion_pico"),)
+
+    id_pico:                Mapped[int]                 = mapped_column(Integer,primary_key=True)
+    id_contexto:            Mapped[int]                 = mapped_column(ForeignKey("contexto.id_contexto",ondelete="CASCADE"))
+    id_archivo_pico:        Mapped[int | None]          = mapped_column(ForeignKey("archivo.id_archivo",ondelete="SET NULL"),nullable=True,index=True)
+    id_medicion_pico:       Mapped[int]                 = mapped_column(ForeignKey("medicion_acustica.id_medicion",ondelete="CASCADE"),nullable=False,index=True)
+
+    datetime_pico:          Mapped[datetime]            = mapped_column(DateTime(timezone=True),nullable=False,index=True)
+    start_time:             Mapped[datetime]            = mapped_column(DateTime(timezone=True),nullable=False)
+    end_time:               Mapped[datetime]            = mapped_column(DateTime(timezone=True),nullable=False)
+    duration_seconds:       Mapped[float]               = mapped_column(Float,nullable=False)
+    peak_la_db:             Mapped[float]               = mapped_column(Float,nullable=False)
+    leq_db:                 Mapped[float]               = mapped_column(Float,nullable=False)
+    prominence_db:          Mapped[float]               = mapped_column(Float,nullable=False)
+
+
+class AcousticPeakMeasurement(Base):
+
+    __tablename__ = "pico_acustico_medicion"
+
+    id_pico:                Mapped[int]                 = mapped_column(ForeignKey("pico_acustico.id_pico",ondelete="CASCADE"),primary_key=True)
+    id_medicion:            Mapped[int]                 = mapped_column(ForeignKey("medicion_acustica.id_medicion",ondelete="CASCADE"),primary_key=True,index=True)

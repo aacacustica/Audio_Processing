@@ -57,6 +57,14 @@ ai:
   save_spectrograms:    false
   filter_point: null
 
+peaks:
+
+  enabled:              true
+  window_size: 30
+  adding_threshold: 5
+  width: 2
+  prominence: 3
+
 visualization:
   enabled:              true
   taxonomy:             "urban"

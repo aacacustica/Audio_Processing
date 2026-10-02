@@ -59,7 +59,7 @@ class PeakRepository:
 
             if measurement_id not in seen_measurement_ids: self.session.delete(row)
 
-        self.session().flush()
+        self.session.flush()
         peak_ids = [row.id_pico for row in peak_rows]
 
         if peak_ids: 

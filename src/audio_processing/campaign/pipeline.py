@@ -3,14 +3,16 @@ from audio_processing.common.logging import setup_logging
 
 
 from audio_processing.persistence.database import Database
-from audio_processing.persistence.repositories import ContextRepository,FileRepository,MeasurementRepository,ThirdOctaveRepository,PredictionRepository
+from audio_processing.persistence.repositories import ContextRepository,FileRepository,MeasurementRepository,ThirdOctaveRepository,PredictionRepository,PeakRepository
 from audio_processing.spl.leq_processor import run_acoustic_for_file
 from audio_processing.spl.utils_acoustics import get_audiofiles,read_calibration_constants,timestamp_from_filename
 from audio_processing.ai.ai_model import AudioClassifier
 from audio_processing.ai.processor import run_ai_for_file
+from audio_processing.peaks.processor import detect_peaks
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
+from collections import defaultdict
 
 import soundfile as sf
 
@@ -57,8 +59,9 @@ class CampaignPipeline:
 
         if self.config.execution.run_spl and source.needs_spl: self.run_spl_database(source)
         if self.config.execution.run_ai and source.needs_ai: self.run_ai(source)
+        if self.config.execution.run_peaks and self.config.peaks.enabled: self.run_peaks(source)
         if self.config.execution.run_visualization and source.needs_visualization: self.run_visualization(source)
-
+        
 
     def run_spl_database(self,source) -> None:
 
@@ -225,7 +228,82 @@ class CampaignPipeline:
                 if self.config.execution.stop_on_error: raise
 
         
-    
+    def run_peaks(self,source):
+
+        if self.db is None: raise RuntimeError("La base de datos debe estar habilitada para persistir picos.")
+
+        try:
+
+            with self.db.session() as session:
+
+                context_repository = ContextRepository(session)
+                measurement_repository = MeasurementRepository(session)
+                peak_repository = PeakRepository(session)
+
+                context = context_repository.get_for_source(
+                    campaign_name=self.config.campaign.name,
+                    point_name=source.name,
+                    device_type=source.device_type)
+
+                context_id = context.id_contexto
+
+                measurements = measurement_repository.list_by_context(context_id)
+
+                if not measurements: 
+                    self.logger.warning(f"No existen mediciones acústicas para calcular picos de {source.source_id}")
+                    return
+
+                timezone = ZoneInfo(self.config.campaign.timezone)
+                measurements_by_hour = defaultdict(list)
+
+                for measurement in measurements:
+
+                    local_datetime = (measurement.datetime.astimezone(timezone))
+                    hour_key = local_datetime.replace(minute=0,second=0,microsecond=0)
+                    measurements_by_hour[hour_key].append(measurement)
+
+                peak_result = []
+                for hour_key in sorted(measurements_by_hour):
+                    hourly_measurement = (measurements_by_hour[hour_key])
+                    hourly_results = detect_peaks(
+                        measurements=hourly_measurement,
+                        window_size=self.config.peaks.window_size,
+                        adding_threshold=self.config.peaks.adding_threshold,
+                        width=self.config.peaks.width,
+                        prominence=self.config.peaks.prominence
+                        )
+
+                    peak_result.extend(hourly_results)
+                    self.logger.info(
+                            "PEAKS %s: hora=%s, "
+                            "mediciones=%s, picos=%s",
+                            source.source_id,
+                            hour_key,
+                            len(hourly_measurement),
+                            len(hourly_results),
+                    )
+
+                peaks, links = peak_repository.sync_for_context(
+                    context_id      = context_id,
+                    measurements    = measurements,
+                    results         = peak_result,
+                )
+
+                self.logger.info(
+                    "PEAKS %s: contexto=%s, "
+                    "mediciones=%s, "
+                    "picos=%s, "
+                    "enlaces_medicion=%s",
+                    source.source_id,
+                    context_id,
+                    len(measurements),
+                    len(peaks),
+                    len(links),
+                )
+
+        except Exception as e:
+            self.logger.exception(f"Error procesando picos de {source.source_id}")
+            if self.config.execution.stop_on_error: raise
     
     def print_plan(self,point) -> None:
         
@@ -233,7 +311,9 @@ class CampaignPipeline:
 
         if self.config.execution.run_spl and point.needs_spl: self.print_spl_plan()
         if self.config.execution.run_ai and point.needs_ai: self.print_ai_plan()
+        if self.config.execution.run_peaks and self.config.peaks.enabled: self.print_peaks_plan()
         if self.config.execution.run_visualization and point.needs_visualization: self.print_visualization_plan()
+
 
         if self.dry_run: return
 
@@ -252,7 +332,7 @@ class CampaignPipeline:
 
         print()
         print("#------------[SPL] Funcionando----------#")
-        print(f"#----------Información SPL----------#")
+        print(f"#------------Información SPL----------#")
         
         print(f"Archivo de calibración:     {self.config.spl.calibration_file}")
         print(f"Filtro campaña:             {self.config.spl.filter_campaign}")
@@ -274,11 +354,21 @@ class CampaignPipeline:
         print(f"Filtro punto:               {self.config.ai.filter_point}")
         print()
 
+    def print_peaks_plan(self):
+
+        print()
+        print("#------------[PEAKS] Funcionando----------#")
+        print("#-------------Información picos-----------#")
+        print(f"Ventana mediana:             "f"{self.config.peaks.window_size}")
+        print(f"Umbral añadido:              "f"{self.config.peaks.adding_threshold}")
+        print(f"Anchura mínima:              "f"{self.config.peaks.width}")
+
+
     def print_visualization_plan(self):    
 
         print() 
         print("#------------[Visualization] Funcionando----------#")
-        print(f"#----------Información Visualization----------#")
+        print(f"#------------Información Visualization----------#")
         
         print(f"Activo:                                             {self.config.visualization.enabled}")
         print(f"Taxonomía:                                          {self.config.visualization.taxonomy}")

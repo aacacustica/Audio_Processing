@@ -92,7 +92,7 @@ class MeasurementRepository:
                     id_contexto         = context_id,
                     id_archivo          = file_id,
                     datetime            = result.timestamp,
-                    aggregation_Seconds = result.aggregation_seconds
+                    aggregation_seconds = result.aggregation_seconds
                 )
 
                 self.session.add(measurement)

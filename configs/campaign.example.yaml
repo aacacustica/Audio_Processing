@@ -7,6 +7,7 @@ campaign:
 execution:
   run_spl:              true
   run_ai:               true
+  run_peaks:            true
   run_visualization:    false
   stop_on_error:        false
   dry_run:              false
@@ -60,10 +61,10 @@ ai:
 peaks:
 
   enabled:              true
-  window_size: 30
-  adding_threshold: 5
-  width: 2
-  prominence: 3
+  window_size:          30
+  adding_threshold:     5
+  width:                2
+  prominence:           3
 
 visualization:
   enabled:              true

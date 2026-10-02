@@ -12,10 +12,12 @@ REQUIRED_TOP_LEVEL_KEYS = {
     "devices",
     "spl",
     "ai",
+    "peaks",
     "visualization",
     "points",
     "outputs",
     "database"
+    
 }
 
 DEFAULT_CONFIG_PATH = (

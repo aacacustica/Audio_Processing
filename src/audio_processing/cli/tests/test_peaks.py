@@ -1,7 +1,8 @@
 from audio_processing.campaign.config import load_config
 from audio_processing.peaks.processor import detect_peaks
 from audio_processing.persistence.database import Database
-from audio_processing.persistence.repositories import MeasurementRepository
+from audio_processing.persistence.repositories import MeasurementRepository,PeakRepository
+
 
 
 def main():
@@ -30,6 +31,23 @@ def main():
             ),
             width=config.peaks.width,
             prominence=config.peaks.prominence,
+        )
+        peak_repository = PeakRepository(session)
+
+        context_id = measurements[0].id_contexto
+
+        peaks,links = peak_repository.sync_for_context(
+            context_id=context_id,
+            measurements=measurements,
+            results=results
+        )
+
+        print(
+            f"Picos persistidos: {len(peaks)}"
+        )
+
+        print(
+            f"Enlaces persistidos: {len(links)}"
         )
 
         print(

@@ -184,6 +184,7 @@ class AcousticPeak(Base):
     start_time:             Mapped[datetime]            = mapped_column(DateTime(timezone=True),nullable=False)
     end_time:               Mapped[datetime]            = mapped_column(DateTime(timezone=True),nullable=False)
     duration_seconds:       Mapped[float]               = mapped_column(Float,nullable=False)
+    sample_count:           Mapped[int]                 = mapped_column(Integer,nullable=False)
     peak_la_db:             Mapped[float]               = mapped_column(Float,nullable=False)
     leq_db:                 Mapped[float]               = mapped_column(Float,nullable=False)
     prominence_db:          Mapped[float]               = mapped_column(Float,nullable=False)

@@ -12,6 +12,23 @@ execution:
   stop_on_error:        false
   dry_run:              false
 
+profiles:
+
+  manual:
+    run_spl: true
+    run_ai: true
+    run_peaks: false
+    run_alarms: false
+    run_basic_visualization: true
+    run_advanced_visualization: false
+  hourly:
+    run_spl: true
+    run_ai: true
+    run_peaks: true
+    run_alarms: true
+    run_basic_visualization: false
+    run_advanced_visualization: true
+
 discovery:
   filter_campaign:      null
   filter_point:         'P3 - test'

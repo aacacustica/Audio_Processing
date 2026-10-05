@@ -79,11 +79,18 @@ class ThirdOctaveRepository:
         self.session.flush()
         return rows
 
-            
+    def list_by_measurements(self,measurement_ids: list[int]) -> list[AcousticThirdOctaveMeasurements]:
 
-            
+        if not measurement_ids: return []
 
-        self.session.add_all(rows)
-        self.session.flush()
+        statement = (
+            select(AcousticThirdOctaveMeasurements)
+            .where(
+                AcousticThirdOctaveMeasurements.id_medicion.in_(measurement_ids)
+            )
+            .order_by(
+                AcousticThirdOctaveMeasurements.id_medicion
+            )
+        )
 
-        return rows
+        return list(self.session.scalars(statement).all())

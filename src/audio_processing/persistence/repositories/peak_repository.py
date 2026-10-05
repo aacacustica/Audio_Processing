@@ -15,16 +15,22 @@ class PeakRepository:
     def sync_for_context(self,*,context_id: int, measurements: list[AcousticMeasurement],results: list[PeakResult]) -> tuple[list[AcousticPeak],list[AcousticPeakMeasurement]]:
 
         if not measurements: return [], []
-        
+        measurement_by_datetime = {}
+
         for measurement in measurements:
 
             if measurement.id_contexto != context_id: raise ValueError(f"Hay mediciones que no pertenecen al contexto {context_id}")
 
         
-        measurement_by_datetime = {measurement.datetime: measurement for measurement in measurements}
-
+        for measurement in measurements:
+            if measurement in measurement_by_datetime:raise ValueError(f"Existe mas de una medición para {measurement.datetime} dentro del conjunto seleccionado")
+            measurement_by_datetime[measurement.datetime] = measurement
+                
+        measurement_ids = [measurement.id_medicion for measurement in measurements]
+        
         statement = (select(AcousticPeak)
-                        .where(AcousticPeak.id_contexto == context_id))
+                        .where(AcousticPeak.id_contexto == context_id,
+                               AcousticPeak.id_medicion_pico.in_(measurement_ids),))
 
         existing_rows = list(self.session.scalars(statement).all())
         existing = {row.id_medicion_pico: row for row in existing_rows}
@@ -83,5 +89,17 @@ class PeakRepository:
         self.session.flush()
 
         return (peak_rows,links)
-                
+
+    def list_apex_measurement_ids(self,*,context_id:int,measurement_ids:list[int]) -> set[int]:
+
+        if not measurement_ids: return set()
+
+        statement = (select(AcousticPeak.id_medicion_pico)
+                     .where(
+                         AcousticPeak.id_contexto == context_id,
+                         AcousticPeak.id_medicion_pico.in_(measurement_ids)
+                         )
+                    )
+
+        return set(self.session.scalars(statement).all())
 

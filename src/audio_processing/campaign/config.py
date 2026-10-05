@@ -14,6 +14,7 @@ REQUIRED_TOP_LEVEL_KEYS = {
     "ai",
     "peaks",
     "visualization",
+    "alarms",
     "points",
     "outputs",
     "database",

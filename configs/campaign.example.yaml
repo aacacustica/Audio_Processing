@@ -82,6 +82,31 @@ peaks:
   width:                2
   prominence:           3
 
+alarms:
+
+  enabled:              true
+  mode:                 urban
+  oca_limit:            OCA_RESIDENTIAL
+  aggregation_seconds:  3600
+  probability_threshold: 0.30
+
+  lmax:
+    threshold_db:           95
+
+  lc_la:
+    normative_threshold_db: 10
+    dynamic_threshsold_db:  3
+
+  l90:
+    threshold_db:           5
+    rolling_window:         3
+
+  frequency_composition:
+    jump_threshold_db:      5
+
+  tonal:
+    enabled:                true
+  
 visualization:
   enabled:              true
   taxonomy:             "urban"

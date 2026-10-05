@@ -15,15 +15,16 @@ def parse_arguments():
 def main():
     args = parse_arguments()
 
-    if args.config: config = args.config
-    else: raise ValueError(f"El argumento de ruta al archivo YAML de campaña es obligatorio.")
+    config = load_config(
+        args.config,
+        profile_name=args.profile,
+    )
 
-    if args.profile: profile = args.profile
+    pipeline = CampaignPipeline(
+        config=config,
+        dry_run=not args.run,
+    )
 
-
-    config = load_config(config,profile)
-
-    pipeline = CampaignPipeline(config = config, dry_run=not args.run)
     pipeline.run()
 
 if __name__ == "__main__":

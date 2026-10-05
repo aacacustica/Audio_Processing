@@ -51,7 +51,7 @@ def leq_safe(values) -> float | None:
 
     return float(10.0 * np.log10(np.mean(10.0 ** (values / 10.0))))
 
-def aggregate_measurements(measurements: list[AcousticMeasurement],*,third_octaves: list[AcousticThirdOctaveMeasurements],peak_apex_measurement_ids: set[int],aggregation_seconds: int) -> list[AlarmAggregation]:
+def aggregate_measurements(measurements: list[AcousticMeasurement],*,third_octaves: list[AcousticThirdOctaveMeasurements],peak_apex_measurement_ids: set[int],aggregation_seconds: int,timezone: str) -> list[AlarmAggregation]:
 
     if not measurements: return []
 
@@ -65,7 +65,7 @@ def aggregate_measurements(measurements: list[AcousticMeasurement],*,third_octav
 
         row = {
             "datetime" :    measurement.datetime,
-            "id_medicion" : measurement.id_medicion,
+            "id_medicion":  measurement.id_medicion,
             "LA":           measurement.la_db,
             "LC":           measurement.lc_db,
             "LZ":           measurement.lz_db,
@@ -84,7 +84,7 @@ def aggregate_measurements(measurements: list[AcousticMeasurement],*,third_octav
 
     df = pd.DataFrame(rows)
     
-    df['datetime'] = pd.to_datetime(df['datetime'],utc=True)
+    df['datetime'] = pd.to_datetime(df['datetime'],utc=True).dt.tz_convert(timezone)
     
     df = df.sort_values("datetime")
     df = df.set_index("datetime")

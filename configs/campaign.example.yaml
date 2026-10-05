@@ -5,23 +5,32 @@ campaign:
   timezone:           "Europe/Madrid"
 
 execution:
-  run_spl:              true
-  run_ai:               true
-  run_peaks:            true
-  run_visualization:    false
+  profile:              manual
   stop_on_error:        false
   dry_run:              false
+
+config.runtime
+    run_spl:
+    run_ai:
+    run_peaks:
+    run_alarms:
+    run_basic_visualization:
+    run_advanced_visualization:
+
 
 profiles:
 
   manual:
+
     run_spl: true
     run_ai: true
     run_peaks: false
     run_alarms: false
     run_basic_visualization: true
     run_advanced_visualization: false
+
   hourly:
+
     run_spl: true
     run_ai: true
     run_peaks: true

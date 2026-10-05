@@ -23,7 +23,7 @@ class PeakRepository:
 
         
         for measurement in measurements:
-            if measurement in measurement_by_datetime:raise ValueError(f"Existe mas de una medición para {measurement.datetime} dentro del conjunto seleccionado")
+            if measurement.datetime in measurement_by_datetime:raise ValueError(f"Existe mas de una medición para {measurement.datetime} dentro del conjunto seleccionado")
             measurement_by_datetime[measurement.datetime] = measurement
                 
         measurement_ids = [measurement.id_medicion for measurement in measurements]

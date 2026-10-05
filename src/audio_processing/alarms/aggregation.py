@@ -51,6 +51,13 @@ def leq_safe(values) -> float | None:
 
     return float(10.0 * np.log10(np.mean(10.0 ** (values / 10.0))))
 
+def round_optional(value: float | None, digits: int = 1) -> float | None:
+
+    if value is None: return None
+
+    return round(float(value),digits)
+
+
 def aggregate_measurements(measurements: list[AcousticMeasurement],*,third_octaves: list[AcousticThirdOctaveMeasurements],peak_apex_measurement_ids: set[int],aggregation_seconds: int,timezone: str) -> list[AlarmAggregation]:
 
     if not measurements: return []
@@ -104,20 +111,20 @@ def aggregate_measurements(measurements: list[AcousticMeasurement],*,third_octav
 
             value = leq_safe(group[frequency])
 
-            if value is not None: third_octaves_db[frequency] = value
+            if value is not None: third_octaves_db[frequency] = round_optional(value)
 
         results.append(AlarmAggregation(
             start_time              = start_time.to_pydatetime(),
             end_time                = (start_time + pd.Timedelta(seconds = aggregation_seconds)).to_pydatetime(),
             aggregation_seconds     = float(aggregation_seconds),
             measurement_ids         = measurement_ids,
-            la_db                   = leq_safe(group['LA']),
-            lc_db                   = leq_safe(group['LC']),
-            lz_db                   = leq_safe(group['LZ']),
-            la_max_db               = leq_safe(group['LAmax']),
-            la_min_db               = leq_safe(group['LAmin']),
-            percentile_90_db        = float(np.percentile(la_values,90)) if la_values.size else None,
-            lc_la_mean_db           = float(group['LC-LA'].dropna().mean()) if group['LC-LA'].notna().any() else None,
+            la_db                   = round_optional(leq_safe(group['LA'])),
+            lc_db                   = round_optional(leq_safe(group['LC'])),
+            lz_db                   = round_optional(leq_safe(group['LZ'])),
+            la_max_db               = round_optional(leq_safe(group['LAmax'])),
+            la_min_db               = round_optional(leq_safe(group['LAmin'])),
+            percentile_90_db        = round_optional(float(np.percentile(la_values,90))) if la_values.size else None,
+            lc_la_mean_db           = round_optional(float(group['LC-LA'].dropna().mean())) if group['LC-LA'].notna().any() else None,
             n_peaks                 = int(group['is_peak'].fillna(False).astype(bool).sum()),
             third_octaves_db        = third_octaves_db
 

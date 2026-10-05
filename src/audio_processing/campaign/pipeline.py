@@ -52,15 +52,16 @@ class CampaignPipeline:
         self.logger = setup_logging( log_dir = Path(self.config.campaign.output_root)/self.config.outputs.subfolders.logs )
         
         if self.config.database.enabled: self.db = Database.from_config(self.config)
-        if self.config.execution.run_ai: self.ai_classifier = AudioClassifier()
+        if self.config.runtime.run_ai: self.ai_classifier = AudioClassifier()
                        
     
     def run_source(self,source) -> None:
 
-        if self.config.execution.run_spl and source.needs_spl: self.run_spl_database(source)
-        if self.config.execution.run_ai and source.needs_ai: self.run_ai(source)
-        if self.config.execution.run_peaks and self.config.peaks.enabled: self.run_peaks(source)
-        if self.config.execution.run_visualization and source.needs_visualization: self.run_visualization(source)
+        runtime = self.config.runtime
+
+        if runtime.run_spl and source.needs_spl: self.run_spl_database(source)
+        if runtime.run_ai and source.needs_ai: self.run_ai(source)
+        if runtime.run_peaks and self.config.peaks.enabled: self.run_peaks(source)
         
 
     def run_spl_database(self,source) -> None:
@@ -330,11 +331,9 @@ class CampaignPipeline:
         
         self.print_source_plan(point)
 
-        if self.config.execution.run_spl and point.needs_spl: self.print_spl_plan()
-        if self.config.execution.run_ai and point.needs_ai: self.print_ai_plan()
-        if self.config.execution.run_peaks and self.config.peaks.enabled: self.print_peaks_plan()
-        if self.config.execution.run_visualization and point.needs_visualization: self.print_visualization_plan()
-
+        if self.config.runtime.run_spl and point.needs_spl: self.print_spl_plan()
+        if self.config.runtime.run_ai and point.needs_ai: self.print_ai_plan()
+        if self.config.runtime.run_peaks and self.config.peaks.enabled: self.print_peaks_plan()
 
         if self.dry_run: return
 

@@ -7,16 +7,6 @@ campaign:
 execution:
   profile:              manual
   stop_on_error:        false
-  dry_run:              false
-
-config.runtime
-    run_spl:
-    run_ai:
-    run_peaks:
-    run_alarms:
-    run_basic_visualization:
-    run_advanced_visualization:
-
 
 profiles:
 

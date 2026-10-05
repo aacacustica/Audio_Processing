@@ -16,7 +16,7 @@ REQUIRED_TOP_LEVEL_KEYS = {
     "visualization",
     "points",
     "outputs",
-    "database"
+    "database",
     "profiles"
     
 }
@@ -66,21 +66,38 @@ def _resolve_relative_path(base_dir,value):
 
     return base_dir / path
 
-def load_config(path: str | Path = DEFAULT_CONFIG_PATH):
+def resolve_profile(config,profile_name: str | None = None):
+
+    selected = (profile_name or config.execution.profile)
+
+    if not hasattr(config.profiles,selected): raise ValueError(f"Perfil desconocido: {selected}")
+
+    profile = getattr(config.profiles,selected)
+
+    required_flags = ("run_spl","run_ai","run_peaks","run_alarms","run_basic_visualization","run_advanced_visualization")
+
+    for flag in required_flags: 
+        if not hasattr(profile,flag): raise ValueError(f"Falta profiles.{selected}.{flag}")
+
+    config.runtime = profile
+    config.execution.profile = selected
+
+    return config
+
+
+def load_config(path: str | Path = DEFAULT_CONFIG_PATH, profile_name: str | None = None):
 
     path = Path(path)
 
-    with path.open("r",encoding="utf-8") as file:
-        data = yaml.safe_load(file)
+    with path.open("r",encoding="utf-8") as file: data = yaml.safe_load(file)
 
-    if data is None:
+    if data is None: 
         raise ValueError(f"El archivo de configuración está vacío: {path}")
-    
+
     config = _to_namespace(data)
     validate_config(config)
 
-    config._config_path     = path
-    config._config_dir      = path.parent
-    config = resolve_profile(config)
+    config._config_path = path
+    config._config_dir = path.parent
 
-    return config
+    return resolve_profile(config,profile_name)

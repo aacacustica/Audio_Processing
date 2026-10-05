@@ -19,7 +19,7 @@ def main():
     else: raise ValueError(f"El argumento de ruta al archivo YAML de campaña es obligatorio.")
 
     if args.profile: profile = args.profile
-    else: raise ValueError(f"El argumento de perfil de ejecución es obligatorio.")
+
 
     config = load_config(config,profile)
 

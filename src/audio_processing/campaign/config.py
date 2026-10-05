@@ -27,18 +27,6 @@ DEFAULT_CONFIG_PATH = (
     / "campaign.example.yaml"
 )
 
-def resolve_profile(config,profile_name: str | None = None):
-
-    selected = profile_name or config.execution.profile
-
-    if not hasattr(config.profiles,selected): raise ValueError(f"Perfil desconocido en la configuración: {selected}")
-
-    config.runtime = getattr(config.profiles,selected)
-
-    config.execution.profile =  selected
-
-    return config
-
 def validate_config(config) -> None:
 
     for key in REQUIRED_TOP_LEVEL_KEYS: 

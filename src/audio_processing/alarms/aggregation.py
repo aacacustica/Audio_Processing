@@ -51,7 +51,7 @@ def leq_safe(values) -> float | None:
 
     return float(10.0 * np.log10(np.mean(10.0 ** (values / 10.0))))
 
-def aggregate_measurements(measurements: list[AcousticMeasurement],*,third_octaves: list[AcousticThirdOctaveMeasurements],peak_measurement_ids: set[int],aggregation_seconds: int) -> list[AlarmAggregation]:
+def aggregate_measurements(measurements: list[AcousticMeasurement],*,third_octaves: list[AcousticThirdOctaveMeasurements],peak_apex_measurement_ids: set[int],aggregation_seconds: int) -> list[AlarmAggregation]:
 
     if not measurements: return []
 
@@ -59,7 +59,7 @@ def aggregate_measurements(measurements: list[AcousticMeasurement],*,third_octav
 
     rows = []
     results = []
-    rule = (f"{int(aggregation_seconds)}")
+    rule = (f"{int(aggregation_seconds)}s")
 
     for measurement in measurements:
 
@@ -72,16 +72,13 @@ def aggregate_measurements(measurements: list[AcousticMeasurement],*,third_octav
             "LAmax":        measurement.la_max_db,
             "LAmin":        measurement.la_min_db,
             "LC-LA":        measurement.lc_la_db,
-            "is_peak":      measurement.id_medicion in peak_measurement_ids
+            "is_peak":      measurement.id_medicion in peak_apex_measurement_ids
         }
 
         octave = octave_by_measurement.get(measurement.id_medicion)
 
         if octave is not None:
-
-            for frequency,column_name in THIRD_OCTAVE_COLUMNS.items():
-
-                row[frequency] = getattr(octave,column_name)
+            for frequency,column_name in THIRD_OCTAVE_COLUMNS.items(): row[frequency] = getattr(octave,column_name)
 
         rows.append(row)
 
@@ -111,16 +108,16 @@ def aggregate_measurements(measurements: list[AcousticMeasurement],*,third_octav
 
         results.append(AlarmAggregation(
             start_time              = start_time.to_pydatetime(),
-            end_time                = start_time + pd.Timedelta(seconds = aggregation_seconds).to_pydatetime(),
+            end_time                = (start_time + pd.Timedelta(seconds = aggregation_seconds)).to_pydatetime(),
             aggregation_seconds     = float(aggregation_seconds),
             measurement_ids         = measurement_ids,
             la_db                   = leq_safe(group['LA']),
             lc_db                   = leq_safe(group['LC']),
-            lz_db                   = leq_safe(group('LZ')),
+            lz_db                   = leq_safe(group['LZ']),
             la_max_db               = leq_safe(group['LAmax']),
             la_min_db               = leq_safe(group['LAmin']),
             percentile_90_db        = float(np.percentile(la_values,90)) if la_values.size else None,
-            lc_la_mean_db           = float(group['LC-LA']).dropna().mean() if group['LC-LA'].notna().any() else None,
+            lc_la_mean_db           = float(group['LC-LA'].dropna().mean()) if group['LC-LA'].notna().any() else None,
             n_peaks                 = int(group['is_peak'].fillna(False).astype(bool).sum()),
             third_octaves_db        = third_octaves_db
 

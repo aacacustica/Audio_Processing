@@ -15,6 +15,7 @@ from audio_processing.persistence.repositories import (
 
 from audio_processing.alarms.processor import detect_lmax_alarms,detect_l90_dynamic_alarms,detect_lc_la_alarms,detect_oca_alarms,detect_frequency_composition_alarms,detect_tonal_alarm
 from audio_processing.alarms.processor import LOW_FREQUENCIES,MEDIUM_FREQUENCIES,HIGH_FREQUENCIES,TONAL_FREQUENCIES,TONAL_HIGH_FREQUENCIES,TONAL_LOW_FREQUENCIES,TONAL_MEDIUM_FREQUENCIES,TONAL_THRESHOLDS
+from audio_processing.persistence.repositories import AlarmRepository
 
 from dataclasses import replace
 from datetime import timedelta
@@ -189,6 +190,60 @@ l90_alarms = detect_l90_dynamic_alarms(aggregations,threshold_db=5,rolling_windo
 oca_alarms = detect_oca_alarms(aggregations,oca_type='OCA_RESIDENTIAL')
 lc_la_alarms = detect_lc_la_alarms(aggregations,normative_threshold_db=10,dynamic_threshold_db=3)
 frequency_alarms = detect_frequency_composition_alarms(aggregations,jump_threshold_db=config.alarms.frequency_composition.jump_threshold_db)
+
+alarm_results = (
+    oca_alarms
+    + lmax_alarms
+    + lc_la_alarms
+    + l90_alarms
+    + frequency_alarms
+)
+with db.session() as session:
+
+    measurement_repository = (
+        MeasurementRepository(session)
+    )
+
+    alarm_repository = (
+        AlarmRepository(session)
+    )
+
+    measurements_for_persistence = (
+        measurement_repository
+        .list_by_file(FILE_ID)
+    )
+
+    measurement_ids_for_persistence = {
+        measurement.id_medicion
+        for measurement
+        in measurements_for_persistence
+    }
+
+    alarm_rows, alarm_links = (
+        alarm_repository
+        .sync_for_measurements(
+            context_id=CONTEXT_ID,
+            measurements=(
+                measurements_for_persistence
+            ),
+            results=alarm_results,
+            scope_measurement_ids=(
+                measurement_ids_for_persistence
+            ),
+        )
+    )
+
+    print(
+        "Alarmas persistidas:",
+        len(alarm_rows),
+    )
+
+    print(
+        "Enlaces alarma-medición:",
+        len(alarm_links),
+    )
+    
+
 flat_octaves = {
     frequency: 50.0
     for frequency in TONAL_FREQUENCIES
@@ -286,6 +341,32 @@ synthetic_frequency_alarms = (
         ],
         jump_threshold_db=5,
     )
+)
+
+alarm_repository = AlarmRepository(
+    session
+)
+
+alarm_rows, alarm_links = (
+    alarm_repository
+    .sync_for_measurements(
+        context_id=CONTEXT_ID,
+        measurements=measurements,
+        results=oca_alarms,
+        scope_measurement_ids=set(
+            measurement_ids
+        ),
+    )
+)
+
+print(
+    "Alarmas persistidas:",
+    len(alarm_rows),
+)
+
+print(
+    "Enlaces alarma-medición:",
+    len(alarm_links),
 )
 
 print(

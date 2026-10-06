@@ -3,12 +3,14 @@ from audio_processing.common.logging import setup_logging
 
 
 from audio_processing.persistence.database import Database
-from audio_processing.persistence.repositories import ContextRepository,FileRepository,MeasurementRepository,ThirdOctaveRepository,PredictionRepository,PeakRepository
+from audio_processing.persistence.repositories import ContextRepository,FileRepository,MeasurementRepository,ThirdOctaveRepository,PredictionRepository,PeakRepository,AlarmRepository
 from audio_processing.spl.leq_processor import run_acoustic_for_file
 from audio_processing.spl.utils_acoustics import get_audiofiles,read_calibration_constants,timestamp_from_filename
 from audio_processing.ai.ai_model import AudioClassifier
 from audio_processing.ai.processor import run_ai_for_file
 from audio_processing.peaks.processor import detect_peaks
+from audio_processing.alarms.aggregation import aggregate_measurements
+from audio_processing.alarms.processor import detect_oca_alarms,detect_lmax_alarms,detect_lc_la_alarms,detect_l90_dynamic_alarms,detect_frequency_composition_alarms,detect_tonal_alarm
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -62,6 +64,7 @@ class CampaignPipeline:
         if runtime.run_spl and source.needs_spl: self.run_spl_database(source)
         if runtime.run_ai and source.needs_ai: self.run_ai(source)
         if runtime.run_peaks and self.config.peaks.enabled: self.run_peaks(source)
+        if runtime.run_alarms and self.config.alarms.enabled: self.run_alarms(source)
         
 
     def run_spl_database(self,source) -> None:
@@ -326,6 +329,141 @@ class CampaignPipeline:
         except Exception as e:
             self.logger.exception(f"Error procesando picos de {source.source_id}")
             if self.config.execution.stop_on_error: raise
+
+
+    def run_alarms(self,source) -> None:
+
+        if self.db is None: raise RuntimeError("La base de datos ha de estar habilitada para calcular alarmas.")
+
+        try:
+
+            with self.db.session() as session:
+
+                context_repository          = ContextRepository(session)
+                measurement_repository      = MeasurementRepository(session)
+                third_octave_repository     = ThirdOctaveRepository(session)
+                peak_repository             = PeakRepository(session)
+                alarm_repository            = AlarmRepository(session)
+
+
+                context = (context_repository.get_for_source(
+                    campaign_name=self.config.campaign.name,
+                    point_name = source.name,
+                    device_type = source.device_type
+                ))
+
+                context_id = context.id_contexto
+
+                audio_files                 = get_audiofiles(Path(source.raw_data_path))
+                file_repository             = FileRepository(session)
+                source_files                = []
+
+                for audio_file in audio_files:
+                    source_file = file_repository.get_by_context_and_filename(context_id=context_id,filename=audio_file.name)
+                    if audio_file is None: 
+                        self.logger.warning(f"El archivo {audio_file.name} no está registrado en la base de datos")
+                        continue
+                    source_files.append(source_file)
+
+                file_ids                    = [source_file.id_archivo for source_file in source_files]
+                measurements                = (measurement_repository.list_by_files(file_ids))
+
+                if not measurements: self.logger.warning(f"No existen mediciones para calcular alarmas de {source.source_id}")
+
+                measurement_ids = [measurement.id_medicion for measurement in measurements]
+                third_octaves   = (third_octave_repository.list_by_measurements(measurement_ids))
+                peak_apex_ids   = (peak_repository.list_apex_measurement_ids(context_id=context_id,measurement_ids=measurement_ids))
+                
+                aggregations = (aggregate_measurements(
+                    measurements                = measurements,
+                    third_octaves               = third_octaves,
+                    peak_apex_measurement_ids   = peak_apex_ids,
+                    aggregation_seconds         = self.config.alarms.aggregation_seconds,
+                    timezone                    = self.config.campaign.timezone
+                ))
+
+                if not aggregations: 
+                    self.logger.warning(f"No se han generado agregados para alarmas de {source.source_id}")
+                    return
+
+
+            # -----------------------------------------
+            # Separar por día LOCAL
+            # -----------------------------------------
+            # 
+            aggregations_by_day = defaultdict(list)
+
+            for aggregation in aggregations:
+
+                local_day = aggregation.start_time.date()
+                aggregations_by_day[local_day].append(aggregation)
+
+            alarm_results = []
+
+            for day in sorted(aggregations_by_day):
+
+                daily_aggregations = aggregations_by_day[day]
+                daily_results = []
+                
+                daily_results.extend(detect_oca_alarms(
+                    aggregations=daily_aggregations,
+                    oca_type=self.config.alarms.oca_limit
+                ))
+
+                daily_results.extend(detect_lmax_alarms(
+                    aggregations=daily_aggregations,
+                    threshold_db=self.config.alarms.lmax.threshold_db
+                ))          
+                
+                daily_results.extend(detect_lc_la_alarms(
+                    aggregations=daily_aggregations,
+                    normative_threshold_db=self.config.alarms.lc_la.normative_threshold_db,
+                    dynamic_threshold_db=self.config.alarms.lc_la.dynamic_threshold_db
+                ))
+
+                daily_results.extend(detect_l90_dynamic_alarms(
+                    aggregations=daily_aggregations,
+                    threshold_db=self.config.alarms.l90.threshold_db,
+                    rolling_window=self.config.alarms.l90.rolling_window
+                ))
+
+                daily_results.extend(detect_frequency_composition_alarms(
+                    aggregations=daily_aggregations,
+                    jump_threshold_db=self.config.alarms.frequency_composition.jump_threshold_db
+                ))
+
+                if(self.config.alarms.tonal.enabled):
+                    daily_results.extend(detect_tonal_alarm(
+                        aggregations=daily_aggregations
+                    ))
+
+                alarm_results.extend(daily_results)
+
+                self.logger.info(f"ALARMS {source.source_id}"
+                                 f"día: {day}"
+                                 f"agregados: {len(daily_aggregations)}"
+                                 f"alarmas: {len(daily_results)}")
+
+            alarm_rows,alarm_links = (alarm_repository.sync_for_measurements(
+                context_id=context_id,
+                measurements=measurements,
+                results=alarm_results,
+                scope_measurement_ids=set(measurement_ids)
+            ))
+
+            self.logger.info(f"ALARMS {source.source_id}:"
+                             f"contexto= {context_id}"
+                             f"mediciones={len(measurements)}"
+                             f"agregados={len(aggregations)}"
+                             f"alarmas={len(alarm_rows)}"
+                             f"enlaces={len(alarm_links)}")
+                    
+
+        except Exception as e:
+
+            self.logger.exception(f"Error {e} procesando alarmas de {source.source_id}")
+
+            if self.config.execution.stop_on_error: raise
     
     def print_plan(self,point) -> None:
         
@@ -334,6 +472,7 @@ class CampaignPipeline:
         if self.config.runtime.run_spl and point.needs_spl: self.print_spl_plan()
         if self.config.runtime.run_ai and point.needs_ai: self.print_ai_plan()
         if self.config.runtime.run_peaks and self.config.peaks.enabled: self.print_peaks_plan()
+        if self.config.runtime.run_alarms and self.config.alarms.enabled: self.print_alarms_plan()
 
         if self.dry_run: return
 
@@ -400,3 +539,17 @@ class CampaignPipeline:
         print(f"Número de segundos borrados al final del archivo:   {self.config.visualization.remove_end_seconds}")
         print(f"Zona horaria de tenerife:                           {self.config.visualization.tenerife_timezone}")
         print()
+
+    def print_alarms_plan(self):
+
+        print()
+        print("#------------[ALARMS] Funcionando----------#")
+        print("#-------------Información alarmas-----------#")
+        print("Agregación:             "f"{self.config.alarms.aggregation_seconds}s")
+        print("OCA:                    "f"{self.config.alarms.oca_limit}")
+        print("Lmax:                   "f"{self.config.alarms.lmax.threshold_db} dB")
+        print("LC-LA normativo:        "f"{self.config.alarms.lc_la.normative_threshold_db} dB")
+        print("LC-LA dinámico:         "f"{self.config.alarms.lc_la.dynamic_threshold_db} dB")
+        print("L90 dinámico:           "f"{self.config.alarms.l90.threshold_db} dB")
+        print("Salto frecuencial:      "f"{self.config.alarms.frequency_composition.jump_threshold_db} dB")
+        print("Tonal:                  "f"{self.config.alarms.tonal.enabled}")

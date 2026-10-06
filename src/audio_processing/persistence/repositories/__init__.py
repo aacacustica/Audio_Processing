@@ -7,6 +7,7 @@ from audio_processing.persistence.repositories.measurement_repository import Mea
 from audio_processing.persistence.repositories.third_octave_repository import ThirdOctaveRepository
 from audio_processing.persistence.repositories.prediction_repository import PredictionRepository
 from audio_processing.persistence.repositories.peak_repository import PeakRepository
+from audio_processing.persistence.repositories.alarm_repository import AlarmRepository
 
 __all__ = [
     "ContextRepository",
@@ -14,5 +15,6 @@ __all__ = [
     "MeasurementRepository",
     "ThirdOctaveRepository",
     "PredictionRepository",
-    "PeakRepository"
+    "PeakRepository",
+    "AlarmRepository"
 ]

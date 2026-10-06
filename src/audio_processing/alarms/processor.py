@@ -135,10 +135,10 @@ def _detect_tonal_components(aggregation: AlarmAggregation) -> list[dict]:
             "frequency_hz": frequency,
             "value_db": float(current_value),
             "previous_frequency_hz":previous_frequency,
-            "previous_value_hz":previous_value,
+            "previous_value_db":previous_value,
             "previous_diff_db":previous_diff,
             "next_frequency_hz":next_frequency,
-            "next_value_hz":next_value,
+            "next_value_db":next_value,
             "next_diff_db": next_diff,
             "threshold_db":threshold
         })

@@ -15,8 +15,10 @@ from audio_processing.persistence.models import (
     Contexto,
     Device,
     Punto,
+    SourceFile,
+    SourceFileProcessing,
 )
-from audio_processing.persistence.repositories import AlarmRepository
+from audio_processing.persistence.repositories import AlarmRepository,FileRepository
 
 
 class TestAlarmRepository(unittest.TestCase):
@@ -163,6 +165,7 @@ class TestAlarmRepository(unittest.TestCase):
         outside_row = next(
             row for row in rows if row.alarm_type == "outside_scope"
         )
+
         outside_links = self.session.scalars(
             select(AcousticAlarmMeasurement).where(
                 AcousticAlarmMeasurement.id_alarma == outside_row.id_alarma
@@ -173,6 +176,36 @@ class TestAlarmRepository(unittest.TestCase):
             {link.id_medicion for link in outside_links},
             {ids[1]},
         )
+
+    def test_file_stage_completion_matches_content_hash(self):
+
+        source_file = SourceFile(id_contexto=self.context_id,filename="stage-test.wav")
+
+        self.session.add(source_file)
+        self.session.flush()
+
+        repository = FileRepository(self.session)
+        
+        old_hash = "a" * 64
+        new_hash = "b" * 64
+
+        self.assertFalse(repository.is_stage_complete(file_id=source_file.id_archivo,stage="spl",content_hash=old_hash))
+
+        repository.mark_stage_complete(file_id=source_file.id_archivo,stage='spl',content_hash=old_hash)
+
+        self.assertTrue(repository.is_stage_complete(file_id=source_file.id_archivo,stage="spl",content_hash=old_hash))
+
+        repository.mark_stage_complete(file_id=source_file.id_archivo,stage='spl',content_hash=new_hash)
+
+        self.assertFalse(repository.is_stage_complete(file_id=source_file.id_archivo,stage='spl',content_hash=old_hash))
+
+        self.assertTrue(repository.is_stage_complete(file_id=source_file.id_archivo,stage='spl',content_hash=new_hash))
+
+        records = self.session.scalars(select(SourceFileProcessing)
+                                       .where(SourceFileProcessing.id_archivo == source_file.id_archivo)).all()
+        self.assertEqual(len(records),1)
+        
+
 
 
 if __name__ == "__main__":

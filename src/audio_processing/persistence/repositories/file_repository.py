@@ -1,9 +1,9 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime,timezone
 
 
-from audio_processing.persistence.models import SourceFile
+from audio_processing.persistence.models import SourceFile,SourceFileProcessing
 
 class FileRepository:
 
@@ -11,6 +11,21 @@ class FileRepository:
 
         self.session = session
 
+    def is_stage_complete(self,*,file_id: int, stage: str, content_hash: str) -> bool:
+
+        record = self.session.get(SourceFileProcessing,(file_id,stage))
+        return record is not None and record.content_hash == content_hash
+
+    def mark_stage_complete(self,*,file_id: int,stage: str, content_hash: str) -> None:
+
+        record = self.session.get(SourceFileProcessing,(file_id,stage))
+
+        if record is None:
+            record = SourceFileProcessing(id_archivo=file_id,stage=stage,content_hash=content_hash)
+            self.session.add(record)
+        else:
+            record.content_hash = content_hash
+            record.completed_at = datetime.now(timezone.utc)
 
     def list_by_context(self,context_id: int) -> list[SourceFile]:
 

@@ -1,8 +1,20 @@
 import os
 import audio_metadata
 import tqdm
+import hashlib
 
 from pathlib import Path
+
+def sha256_file(path: str | Path) -> str:
+
+    digest = hashlib.sha256()
+
+    with open(path,"rb") as file:
+        for block in iter(lambda: file.read(1024 * 1024),b""):
+            digest.update(block)
+
+    return digest.hexdigest()
+
 
 def get_audiofiles(path):
     """

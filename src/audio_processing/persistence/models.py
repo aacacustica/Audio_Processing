@@ -1,8 +1,7 @@
 from __future__ import annotations
-
 from datetime import datetime
 
-from sqlalchemy import Boolean,DateTime,Float,ForeignKey,Integer,String,Index,UniqueConstraint
+from sqlalchemy import Boolean,DateTime,Float,ForeignKey,Integer,String,Index,UniqueConstraint,func
 from sqlalchemy.orm import DeclarativeBase,Mapped,mapped_column,relationship
 
 from sqlalchemy.dialects.postgresql import JSONB
@@ -81,6 +80,17 @@ class SourceFile(Base):
     duracion_seconds:       Mapped[float | None]        = mapped_column(Float)
     datetime_inicio:        Mapped[datetime | None]     = mapped_column(DateTime(timezone=True))
     sample_rate_hz:         Mapped[int | None]          = mapped_column(Integer)
+
+
+class SourceFileProcessing(Base):
+
+    __tablename__ = "archivo_procesamiento"
+
+    id_archivo:             Mapped[int]                 = mapped_column(ForeignKey("archivo.id_archivo",ondelete='CASCADE'),primary_key=True)
+    stage:                  Mapped[str]                 = mapped_column(String(64),primary_key=True)
+    content_hash:           Mapped[str]                 = mapped_column(String(64),nullable=False)
+    completed_at:           Mapped[datetime]            = mapped_column(DateTime(timezone=True),nullable=False,server_default=func.now())
+
 
 
 class AcousticMeasurement(Base):
@@ -204,22 +214,22 @@ class AcousticAlarm(Base):
 
     __table_args__ = (UniqueConstraint("id_contexto","alarm_type","start_time","end_time",name="uq_alarma_contexto_tipo_intervalo"),)
 
-    id_alarma: Mapped[int] = mapped_column(Integer,primary_key=True,autoincrement=True)
-    id_contexto: Mapped[int] = mapped_column(ForeignKey("contexto.id_contexto",ondelete='CASCADE'),nullable=False,index=True)
+    id_alarma:              Mapped[int]                 = mapped_column(Integer,primary_key=True,autoincrement=True)
+    id_contexto:            Mapped[int]                 = mapped_column(ForeignKey("contexto.id_contexto",ondelete='CASCADE'),nullable=False,index=True)
 
-    alarm_type: Mapped[str] = mapped_column(String(50),nullable=False)
-    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True),nullable=False)
-    end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True),nullable=False)
-    value: Mapped[float | None] = mapped_column(Float,nullable=True)
-    threshold: Mapped[float | None] = mapped_column(Float,nullable=True)
-    category: Mapped[str | None] = mapped_column(String(100),nullable=True)
-    aggregation_seconds: Mapped[float] = mapped_column(Float,nullable=False)
-    details : Mapped[dict | None] = mapped_column(JSONB,nullable=True)
+    alarm_type:             Mapped[str]                 = mapped_column(String(50),nullable=False)
+    start_time:             Mapped[datetime]            = mapped_column(DateTime(timezone=True),nullable=False)
+    end_time:               Mapped[datetime]            = mapped_column(DateTime(timezone=True),nullable=False)
+    value:                  Mapped[float | None]        = mapped_column(Float,nullable=True)
+    threshold:              Mapped[float | None]        = mapped_column(Float,nullable=True)
+    category:               Mapped[str | None]          = mapped_column(String(100),nullable=True)
+    aggregation_seconds:    Mapped[float]               = mapped_column(Float,nullable=False)
+    details :               Mapped[dict | None]         = mapped_column(JSONB,nullable=True)
 
 
 class AcousticAlarmMeasurement(Base):
 
     __tablename__ = "alarma_acustica_medicion"
 
-    id_alarma: Mapped[int] = mapped_column(ForeignKey("alarma_acustica.id_alarma",ondelete='CASCADE'),primary_key=True)
-    id_medicion: Mapped[int] = mapped_column(ForeignKey("medicion_acustica.id_medicion",ondelete='CASCADE'),primary_key=True)
+    id_alarma:              Mapped[int]                 = mapped_column(ForeignKey("alarma_acustica.id_alarma",ondelete='CASCADE'),primary_key=True)
+    id_medicion:            Mapped[int]                 = mapped_column(ForeignKey("medicion_acustica.id_medicion",ondelete='CASCADE'),primary_key=True)

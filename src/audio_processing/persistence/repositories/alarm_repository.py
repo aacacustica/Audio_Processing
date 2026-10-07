@@ -160,7 +160,7 @@ class AlarmRepository:
 
         for row,result in zip(alarm_rows,results):
 
-            result_measurement_ids = (dict.fromkeys(result_measurement_ids))
+            result_measurement_ids = dict.fromkeys(result.measurement_ids)
 
             for measurement_id in result_measurement_ids:
 

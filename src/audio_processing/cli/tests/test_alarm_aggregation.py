@@ -218,30 +218,6 @@ with db.session() as session:
         for measurement
         in measurements_for_persistence
     }
-
-    alarm_rows, alarm_links = (
-        alarm_repository
-        .sync_for_measurements(
-            context_id=CONTEXT_ID,
-            measurements=(
-                measurements_for_persistence
-            ),
-            results=alarm_results,
-            scope_measurement_ids=(
-                measurement_ids_for_persistence
-            ),
-        )
-    )
-
-    print(
-        "Alarmas persistidas:",
-        len(alarm_rows),
-    )
-
-    print(
-        "Enlaces alarma-medición:",
-        len(alarm_links),
-    )
     
 
 flat_octaves = {
@@ -347,27 +323,6 @@ alarm_repository = AlarmRepository(
     session
 )
 
-alarm_rows, alarm_links = (
-    alarm_repository
-    .sync_for_measurements(
-        context_id=CONTEXT_ID,
-        measurements=measurements,
-        results=oca_alarms,
-        scope_measurement_ids=set(
-            measurement_ids
-        ),
-    )
-)
-
-print(
-    "Alarmas persistidas:",
-    len(alarm_rows),
-)
-
-print(
-    "Enlaces alarma-medición:",
-    len(alarm_links),
-)
 
 print(
     "Alarmas composición sintéticas:",

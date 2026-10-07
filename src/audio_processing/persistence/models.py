@@ -213,6 +213,7 @@ class AcousticAlarm(Base):
     value: Mapped[float | None] = mapped_column(Float,nullable=True)
     threshold: Mapped[float | None] = mapped_column(Float,nullable=True)
     category: Mapped[str | None] = mapped_column(String(100),nullable=True)
+    aggregation_seconds: Mapped[float] = mapped_column(Float,nullable=False)
     details : Mapped[dict | None] = mapped_column(JSONB,nullable=True)
 
 

@@ -360,7 +360,7 @@ class CampaignPipeline:
 
                 for audio_file in audio_files:
                     source_file = file_repository.get_by_context_and_filename(context_id=context_id,filename=audio_file.name)
-                    if audio_file is None: 
+                    if source_file is None: 
                         self.logger.warning(f"El archivo {audio_file.name} no está registrado en la base de datos")
                         continue
                     source_files.append(source_file)
@@ -368,7 +368,9 @@ class CampaignPipeline:
                 file_ids                    = [source_file.id_archivo for source_file in source_files]
                 measurements                = (measurement_repository.list_by_files(file_ids))
 
-                if not measurements: self.logger.warning(f"No existen mediciones para calcular alarmas de {source.source_id}")
+                if not measurements: 
+                    self.logger.warning(f"No existen mediciones para calcular alarmas de {source.source_id}")
+                    return
 
                 measurement_ids = [measurement.id_medicion for measurement in measurements]
                 third_octaves   = (third_octave_repository.list_by_measurements(measurement_ids))
@@ -439,24 +441,38 @@ class CampaignPipeline:
 
                 alarm_results.extend(daily_results)
 
-                self.logger.info(f"ALARMS {source.source_id}"
-                                 f"día: {day}"
-                                 f"agregados: {len(daily_aggregations)}"
-                                 f"alarmas: {len(daily_results)}")
+                self.logger.info(
+                    "ALARMS %s: día=%s, agregados=%s, alarmas=%s",
+                    source.source_id,
+                    day,
+                    len(daily_aggregations),
+                    len(daily_results),
+                )
+                
+            with self.db.session() as session:
 
-            alarm_rows,alarm_links = (alarm_repository.sync_for_measurements(
-                context_id=context_id,
-                measurements=measurements,
-                results=alarm_results,
-                scope_measurement_ids=set(measurement_ids)
-            ))
+                alarm_repository = AlarmRepository(session)
 
-            self.logger.info(f"ALARMS {source.source_id}:"
-                             f"contexto= {context_id}"
-                             f"mediciones={len(measurements)}"
-                             f"agregados={len(aggregations)}"
-                             f"alarmas={len(alarm_rows)}"
-                             f"enlaces={len(alarm_links)}")
+                alarm_rows,alarm_links = alarm_repository.sync_for_measurements(
+                    context_id=context_id,
+                    measurements=measurements,
+                    results=alarm_results,
+                    scope_measurement_ids=set(measurement_ids)
+                )
+
+                alarm_count = len(alarm_rows)
+                link_count = len(alarm_links)
+
+            self.logger.info(
+                "ALARMS %s: contexto=%s, mediciones=%s, agregados=%s, "
+                "alarmas=%s, enlaces=%s",
+                source.source_id,
+                context_id,
+                len(measurements),
+                len(aggregations),
+                len(alarm_rows),
+                len(alarm_links),
+            )
                     
 
         except Exception as e:

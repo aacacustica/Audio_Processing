@@ -1,6 +1,6 @@
 from audio_processing.campaign.discovery import discover_measurement_points
 from audio_processing.common.logging import setup_logging
-
+from audio_processing.common.filesystem import sha256_file
 
 from audio_processing.persistence.database import Database
 from audio_processing.persistence.repositories import ContextRepository,FileRepository,MeasurementRepository,ThirdOctaveRepository,PredictionRepository,PeakRepository,AlarmRepository
@@ -106,6 +106,13 @@ class CampaignPipeline:
         for audio_file in audio_files:
             try:
 
+                content_hash = sha256_file(audio_file)
+
+                if self._is_file_stage_complete(context_id,audio_file,"spl",content_hash):
+                    self.logger.info(f"SPL {source.source_id}: archivo: {audio_file.name} omitido, hash sin cambios.")
+                    continue
+
+
                 info = sf.info(audio_file)
                 timestamp = timestamp_from_filename(audio_file)
 
@@ -120,6 +127,9 @@ class CampaignPipeline:
                     logger                  = self.logger
                 )
 
+                if sha256_file(audio_file) != content_hash: raise RuntimeError(f"El archivo {audio_file.name} cambió durante el cálculo SPL; se reintentará en la siguiente ejecución.")
+                    
+
                 with self.db.session() as session:
 
                     file_repository = FileRepository(session)
@@ -131,7 +141,8 @@ class CampaignPipeline:
                         filename            = audio_file.name,
                         datetime_inicio     = timestamp,
                         duracion_seconds    = duration_seconds,
-                        sample_rate_hz      = info.samplerate)
+                        sample_rate_hz      = info.samplerate,
+                        file_hash           = content_hash)
                     
                     results_globales = measurement_repository.sync_for_file(
                         context_id          = context_id,
@@ -143,6 +154,12 @@ class CampaignPipeline:
                         results_tercios = third_octave_repository.sync_for_measurements(
                             measurements        = results_globales,
                             results             = acoustic_result.third_octaves)
+
+                    file_repository.mark_stage_complete(
+                        file_id             = source_file.id_archivo,
+                        stage               = "spl",
+                        content_hash        = content_hash
+                    )
                     
                     self.logger.info("SPL %s: archivo=%s, ""id_archivo=%s, ""mediciones=%s, ""tercios=%s",source.source_id,audio_file.name,source_file.id_archivo,len(results_globales),len(results_tercios), )
                     
@@ -151,6 +168,16 @@ class CampaignPipeline:
                 self.logger.exception(f"Error procesando {audio_file}")
                 if self.config.execution.stop_on_error: raise
 
+    def _is_file_stage_complete(self,*,context_id: int,audio_file: Path,stage: str,content_hash: str) -> bool:
+
+        if self.db is None: raise RuntimeError(f"La base de datos debe de estar habilitada")
+
+        with self.db.session() as session:
+            file_repository = FileRepository(session)
+            source_file = file_repository.get_by_context_and_filename(context_id,audio_file.name)
+            return (source_file is not None and file_repository.is_stage_complete(source_file.id_archivo,stage,content_hash))
+
+        
     def run_ai(self,source) -> None:
 
         audio_files = get_audiofiles(Path(source.raw_data_path))
@@ -177,6 +204,12 @@ class CampaignPipeline:
 
             try:
 
+                content_hash = sha256_file(audio_file)
+
+                if self._is_file_stage_complete(context_id,audio_file,"ai",content_hash):
+                    self.logger.info(f"IA {source.soure_id}: archivo= {audio_file.name}, hash sin cambios")
+                    continue
+
                 info = sf.info(audio_file)
                 timestamp = timestamp_from_filename(audio_file)
 
@@ -191,6 +224,8 @@ class CampaignPipeline:
                     logger          = self.logger
                 )
 
+                if sha256_file(audio_file) != content_hash: raise RuntimeError(f" El archivo {audio_file.name} cambió durante la inferencia IA; se reintentará en la siguiente ejecución.")
+
                 with self.db.session() as session:
 
                     file_repository = FileRepository(session)
@@ -204,7 +239,8 @@ class CampaignPipeline:
                         filename            = audio_file.name,
                         datetime_inicio     = timestamp,
                         duracion_seconds    = duration_seconds,
-                        sample_rate_hz      = info.samplerate
+                        sample_rate_hz      = info.samplerate,
+                        file_hash           = content_hash
                     )
 
                     measurements = measurement_repository.list_by_file(source_file.id_archivo)
@@ -217,6 +253,12 @@ class CampaignPipeline:
                         results         = prediction_results,
                         model_name      = str(self.config.ai.model),
                         threshold       = float(self.config.ai.threshold)
+                    )
+
+                    file_repository.mark_stage_complete(
+                        file_id         = source_file.id_archivo,
+                        stage           = 'ai',
+                        content_hash    = content_hash
                     )
 
                     file_id = source_file.id_archivo

@@ -90,6 +90,7 @@ class SourceFileProcessing(Base):
     stage:                  Mapped[str]                 = mapped_column(String(64),primary_key=True)
     content_hash:           Mapped[str]                 = mapped_column(String(64),nullable=False)
     completed_at:           Mapped[datetime]            = mapped_column(DateTime(timezone=True),nullable=False,server_default=func.now())
+    software_version:       Mapped[str | None]          = mapped_column(String(128),nullable=True)
 
 
 

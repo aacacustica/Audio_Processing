@@ -4,6 +4,7 @@ from datetime import datetime,timezone
 
 
 from audio_processing.persistence.models import SourceFile,SourceFileProcessing
+from audio_processing.common.git_version import get_stable_version
 
 class FileRepository:
 
@@ -19,13 +20,19 @@ class FileRepository:
     def mark_stage_complete(self,*,file_id: int,stage: str, content_hash: str) -> None:
 
         record = self.session.get(SourceFileProcessing,(file_id,stage))
+        software_version = get_stable_version()
 
         if record is None:
-            record = SourceFileProcessing(id_archivo=file_id,stage=stage,content_hash=content_hash)
+            record = SourceFileProcessing(
+                id_archivo          = file_id,
+                stage               = stage,
+                content_hash        = content_hash,
+                software_version    = software_version)
             self.session.add(record)
         else:
-            record.content_hash = content_hash
-            record.completed_at = datetime.now(timezone.utc)
+            record.content_hash     = content_hash
+            record.completed_at     = datetime.now(timezone.utc)
+            record.software_version = software_version
 
     def list_by_context(self,context_id: int) -> list[SourceFile]:
 

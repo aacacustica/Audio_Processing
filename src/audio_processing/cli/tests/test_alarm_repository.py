@@ -203,7 +203,9 @@ class TestAlarmRepository(unittest.TestCase):
 
         records = self.session.scalars(select(SourceFileProcessing)
                                        .where(SourceFileProcessing.id_archivo == source_file.id_archivo)).all()
+        
         self.assertEqual(len(records),1)
+        self.assertTrue(records[0].software_version)
         
 
 

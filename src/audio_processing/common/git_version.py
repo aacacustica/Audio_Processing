@@ -10,13 +10,12 @@ def list_git_tags():
     except subprocess.CalledProcessError:
         return None
     
-def get_stable_version(default: str = "dev") -> str:
-
-    tags = list_git_tags()
-    if len(tags) >= 2: return tags[-2].replace(".","_")
-        
-    if len(tags) == 1: return tags[-1].replace(".","_")
-    
-
-
-    return default
+def get_stable_version(default: str = "unknown") -> str:
+    try:
+        return subprocess.check_output(
+            ["git", "describe", "--tags", "--always", "--dirty"],
+            stderr=subprocess.DEVNULL,
+            text=True,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return default

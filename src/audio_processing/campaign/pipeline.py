@@ -108,7 +108,7 @@ class CampaignPipeline:
 
                 content_hash = sha256_file(audio_file)
 
-                if self._is_file_stage_complete(context_id,audio_file,"spl",content_hash):
+                if self._is_file_stage_complete(context_id=context_id,audio_file=audio_file,stage="spl",content_hash=content_hash):
                     self.logger.info(f"SPL {source.source_id}: archivo: {audio_file.name} omitido, hash sin cambios.")
                     continue
 
@@ -174,8 +174,8 @@ class CampaignPipeline:
 
         with self.db.session() as session:
             file_repository = FileRepository(session)
-            source_file = file_repository.get_by_context_and_filename(context_id,audio_file.name)
-            return (source_file is not None and file_repository.is_stage_complete(source_file.id_archivo,stage,content_hash))
+            source_file = file_repository.get_by_context_and_filename(context_id=context_id,filename=audio_file.name)
+            return (source_file is not None and file_repository.is_stage_complete(file_id=source_file.id_archivo,stage=stage,content_hash=content_hash))
 
         
     def run_ai(self,source) -> None:
@@ -207,7 +207,7 @@ class CampaignPipeline:
                 content_hash = sha256_file(audio_file)
 
                 if self._is_file_stage_complete(context_id,audio_file,"ai",content_hash):
-                    self.logger.info(f"IA {source.soure_id}: archivo= {audio_file.name}, hash sin cambios")
+                    self.logger.info(f"IA {source.source_id}: archivo= {audio_file.name}, hash sin cambios")
                     continue
 
                 info = sf.info(audio_file)

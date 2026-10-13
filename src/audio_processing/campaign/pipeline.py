@@ -66,7 +66,7 @@ class CampaignPipeline:
         if runtime.run_ai and source.needs_ai: self.run_ai(source)
         if runtime.run_peaks and self.config.peaks.enabled: self.run_peaks(source)
         if runtime.run_alarms and self.config.alarms.enabled: self.run_alarms(source)
-        if(runtime.run_basic_visualization and self.config.visualziation.enabled and source.needs_visualization): self.run_basic_visualization(source)
+        if(runtime.run_basic_visualization and self.config.visualization.enabled and source.needs_visualization): self.run_basic_visualization(source)
         
 
     def run_spl_database(self,source) -> None:
@@ -547,7 +547,7 @@ class CampaignPipeline:
                 point_config    = getattr(self.config.points, source.name, None)
                 correction_db   = getattr(point_config,"correction_db",0.0) if point_config is not None else 0.0
                 timezone_name   = "Atlantic/Canary" if self.config.visualization.tenerife_timezone else self.config.campaign.timezone
-                output_dir      = Path(source.output_path) / self.config.outputs.subfolders.spl.general_folder_names / self.config.outputs.subfolders.spl.visualization_folder_name
+                output_dir      = Path(source.output_path) / self.config.outputs.subfolders.spl.general_folder_name / self.config.outputs.subfolders.spl.visualization_folder_name
                 
                 paths = render_time_plot(
                     measurements        = measurements,
@@ -565,7 +565,7 @@ class CampaignPipeline:
                     return
 
                 self.logger.info(f"Visualización básica {source.source_id}: PNG = {paths[0]}, CSV = {paths[1]}")
-                
+
         except Exception as e:
             self.logger.exception("Error generando la visualización básica para: %s",source.source_id)
             if self.config.execution.stop_on_error: raise

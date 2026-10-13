@@ -57,7 +57,7 @@ def render_time_plot(measurements,output_dir: Path,plot_name: str, aggregation_s
     if not records: return None
 
     df = pd.DataFrame(records)
-
+    df['datetime'] = pd.to_datetime(df["datetime"],utc=True).dt.tz_convert(timezone_name)
     df = df.dropna(subset=['la_db']).sort_values("datetime")
 
     if df.empty: return None
@@ -101,14 +101,15 @@ def render_time_plot(measurements,output_dir: Path,plot_name: str, aggregation_s
         ax.plot(aggregated.index, aggregated['oca'], color="#00B0F0", label="OCA")
 
         for percentile in percentiles:
-
-            ax.plot(aggregated.index,aggregated[f"L{percentile}"],linewidth=0.0,label=f"L{percentile}")
+            quantile = (100.0 - percentile) / 100.0
+            aggregated[f"L{percentile}"] = (df['la_db'].resample(frequency).quantile(quantile))
 
         ax.set_ylim(30,105)
         ax.set_ylabel("dB(A)")
         ax.set_xlabel("Hora")
         ax.set_title(f"{plot_name} - Nivel equivalente cada {aggregation_seconds}")
         ax.xaxis.set_major_locator(mdates.HourLocator(interval=5,tz=timezone_name))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%d-%m-%y %H:%M", tz=timezone_name))
         ax.tick_params(axis='x',labelrotation=90)
         ax.legend(loc='upper left',bbox_to_anchor=(1.02,1))
         fig.tight_layout()

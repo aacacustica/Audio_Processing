@@ -54,11 +54,14 @@ class MeasurementRepository:
 
         return list(self.session.scalars(statement).all())
 
-    def list_by_context(self,context_id: int) -> list[AcousticMeasurement]:
+    def list_by_context(self,context_id:int,*,start_datetime: datetime | None = None,end_datetime: datetime | None = None) -> list[AcousticMeasurement]:
 
-        statement = (select(AcousticMeasurement)
-                     .where(AcousticMeasurement.id_contexto == context_id)
-                     .order_by(AcousticMeasurement.datetime))
+        statement = select(AcousticMeasurement).where(AcousticMeasurement.id_contexto == context_id)
+
+        if start_datetime is not None: statement = statement.where(AcousticMeasurement.datetime >= start_datetime)
+        if end_datetime is not None: statement = statement.where(AcousticMeasurement.datetime < end_datetime)
+
+        statement = statement.order_by(AcousticMeasurement.datetime)
 
         return list(self.session.scalars(statement).all())
 

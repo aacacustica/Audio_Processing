@@ -1,10 +1,10 @@
 import datetime
-
+from datetime import datetime
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from audio_processing.ai.models import PredictionResult
-from audio_processing.persistence.models import AcousticMeasurement,AIPrediction,AIPredictionMeasurement
+from audio_processing.persistence.models import AcousticMeasurement,AIPrediction,AIPredictionMeasurement,SourceFile
 
 
 class PredictionRepository:
@@ -80,3 +80,18 @@ class PredictionRepository:
         self.session.flush()
 
         return (prediction_rows,links)
+
+    def list_by_context(self,context_id: int, * , start_datetime: datetime | None = None,end_datetime: datetime | None = None) -> list[AIPrediction]:
+
+        statement = select(AIPrediction).join(SourceFile,SourceFile.id_archivo == AIPrediction.id_archivo).where(SourceFile.id_contexto == context_id)
+
+        if start_datetime is not None: statement = statement.where(AIPrediction.datetime_inicio >= start_datetime)
+        if end_datetime is not None: statement = statement.where(AIPrediction.datetime_inicio < end_datetime)
+
+        statement = statement.order_by(AIPrediction.datetime_inicio)
+
+        return list(self.session.scalars(statement).all())
+
+
+
+    

@@ -209,7 +209,7 @@ class CampaignPipeline:
                 content_hash = sha256_file(audio_file)
 
                 if self._is_file_stage_complete(context_id=context_id,audio_file=audio_file,stage="ai",content_hash=content_hash):
-                    self.logger.info(f"IA {source.source_id}: archivo= {audio_file.name}, hash sin cambios")
+                    self.logger.info(f"IA {source.source_id}: archivo= {audio_file.name} omitido, hash sin cambios")
                     continue
 
                 info = sf.info(audio_file)

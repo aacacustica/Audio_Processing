@@ -78,11 +78,18 @@ def render_time_plot(measurements,output_dir: Path,plot_name: str, aggregation_s
         }
     )
 
+    bin_times = aggregated.index + pd.to_timedelta(aggregation_seconds / 2, unit ="s")
+
+    
+    
+    
+    
+
     for percentile in percentiles:
 
         quantile = (100.0 - percentile) / 100.0
-
         aggregated[f"L{percentile}"] = (df['la_db'].resample(frequency).quantile(quantile))
+        
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True,exist_ok=True)
@@ -95,23 +102,58 @@ def render_time_plot(measurements,output_dir: Path,plot_name: str, aggregation_s
 
     try:
         ax.set_facecolor("white")
-        ax.plot(aggregated.index, aggregated['la_db'], linewidth=3, color='red', label='LAeq')
-        ax.plot(aggregated.index, aggregated['la_max_db'], linewidth=1, color="#FF99FF", label="Lmax")
-        ax.plot(aggregated.index, aggregated['la_min_db'], linewidth=1, color="#92D050", label="Lmin")
-        ax.plot(aggregated.index, aggregated['oca'], color="#00B0F0", label="OCA")
+
+        series = [
+            ("la_db",       "LAeq", "red", 3),
+            ("la_max_db",   "Lmax", "#FF99FF", 1),
+            ("la_min_db",   "Lmin", "#92D050", 1),
+            ("oca",         "OCA", "#00B0F0", 1),
+        ]
+
+        for column, label, color, linewidth in series:
+            ax.plot(
+                bin_times,
+                aggregated[column],
+                marker="o",
+                markersize=5,
+                linewidth=linewidth,
+                color=color,
+                label=label,
+            )
 
         for percentile in percentiles:
-            quantile = (100.0 - percentile) / 100.0
-            aggregated[f"L{percentile}"] = (df['la_db'].resample(frequency).quantile(quantile))
+            column = f"L{percentile}"
+            if column in aggregated.columns:
+                ax.plot(
+                    bin_times,
+                    aggregated[column],
+                    marker="o",
+                    markersize=5,
+                    linewidth=0.8,
+                    label=column,
+                )
 
-        ax.set_ylim(30,105)
+        ax.set_ylim(30, 105)
         ax.set_ylabel("dB(A)")
         ax.set_xlabel("Hora")
-        ax.set_title(f"{plot_name} - Nivel equivalente cada {aggregation_seconds}")
-        ax.xaxis.set_major_locator(mdates.HourLocator(interval=5,tz=timezone_name))
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%d-%m-%y %H:%M", tz=timezone_name))
-        ax.tick_params(axis='x',labelrotation=90)
-        ax.legend(loc='upper left',bbox_to_anchor=(1.02,1))
+        ax.set_title(
+            f"{plot_name} - Nivel equivalente cada {aggregation_seconds}"
+        )
+
+        ax.set_xlim(
+            aggregated.index.min(),
+            aggregated.index.max() + pd.Timedelta(seconds=aggregation_seconds),
+        )
+        locator = mdates.AutoDateLocator(
+            minticks=3, maxticks=8, tz=timezone_name
+        )
+        ax.xaxis.set_major_locator(locator)
+        ax.xaxis.set_major_formatter(
+            mdates.ConciseDateFormatter(locator, tz=timezone_name)
+        )
+        ax.tick_params(axis="x", labelrotation=90)
+        ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1))
+        
         fig.tight_layout()
         fig.savefig(png_path,dpi=300)
 

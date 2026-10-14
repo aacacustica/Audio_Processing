@@ -12,7 +12,7 @@ def _prepare_complete_nights(measurements,timezone_name):
 
     records = [{"datetime": row.datetime, "la_db": row.la_db} for row in measurements if row.datetime is not None and row.la_db is not None]
 
-    if not records: return pd.DataFrame
+    if not records: return pd.DataFrame()
 
     df = pd.DataFrame(records)
     
@@ -31,7 +31,7 @@ def _prepare_complete_nights(measurements,timezone_name):
 
     df.loc[after_midnight, 'night_date'] -= pd.Timedelta(days=1)
 
-    weekday = df['night_date'].dt.dayoftheweek
+    weekday = df['night_date'].dt.dayofweek
 
     df['Día'] = weekday.map(lambda day: NIGHT_LABELS[day])
 
@@ -134,7 +134,7 @@ def render_night_evolution_15min(measurements, output_dir: Path, plot_name: str,
     night_data['datetime']  = night_data.index   
     night_data['date']      = night_data.index.date
     night_data['time']      = night_data.index.time
-    night_data['plot_time'] = [((time.hour * 60 + time.minute - 15) - (23 * 60)) if time.hour >= 23 else (time-hour * 60 + time.minute - 15 + 60) for time in night_data['time']]
+    night_data['plot_time'] = [((time.hour * 60 + time.minute - 15) - (23 * 60)) if time.hour >= 23 else (time.hour * 60 + time.minute - 15 + 60) for time in night_data['time']]
 
     grid = sns.relplot(
         data        = night_data,
@@ -150,7 +150,7 @@ def render_night_evolution_15min(measurements, output_dir: Path, plot_name: str,
 
     axis = grid.axes.flat[0]
 
-    x_labels = ([f"2:{minute:02d}" for minute in range(0,60,15)] + [f"{hour:02d}:{minute:02d}" for hour in range(7) for minute in range(0,60,15)])
+    x_labels = ([f"20:{minute:02d}" for minute in range(0,60,15)] + [f"{hour:02d}:{minute:02d}" for hour in range(7) for minute in range(0,60,15)])
 
     axis.set_xticks(list(range(-15, 465, 15)))
     axis.set_xticklabels(x_labels, rotation=90)

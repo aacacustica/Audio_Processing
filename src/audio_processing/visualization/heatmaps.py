@@ -7,6 +7,7 @@ import pandas as pd
 
 from .configs import *
 from .time_plot import _leq
+from matplotlib.colors import ListedColormap
 
 def heatmap(matrix,suffix,labels,title,annotate,output_dir,safe_name): 
 
@@ -19,10 +20,11 @@ def heatmap(matrix,suffix,labels,title,annotate,output_dir,safe_name):
 
     try:
 
-        image = ax.imshow(np.ma.masked_invalid(values),aspect='auto',interpolation='nearest', cmap="RdYlBu_r",vmin=30,vmax=85)
+        image = ax.imshow(np.ma.masked_invalid(values),aspect='auto',interpolation='nearest', cmap=ListedColormap(LEGACY_CMAP),vmin=30,vmax=85)
 
-        ax.set_xticks(range(len(labels)))
-        ax.set_xticklabels(labels, rotation=90)
+        column_labels = [str(column) for column in matrix.columns]
+        ax.set_xticks(range(len(column_labels)))
+        ax.set_xticklabels(column_labels, rotation=90)
         ax.set_yticks(range(len(matrix.index)))
         ax.set_yticklabels(matrix.index)
         ax.set_xlabel("Hora")
@@ -64,7 +66,7 @@ def render_acoustic_heatmaps(measurements,output_dir: Path, plot_name: str, time
     df['date_day'] = dt.dt.strftime("%Y-%m-%d") + " " + df["Día"]
     
     df['hour_label'] = dt.dt.strftime("%H:00")
-    df['quarter_label'] = (dt.dt.strftime("%H:") + (dt.dt.minute // 16 * 15).map(lambda minute: f"{minute:02d}"))
+    df['quarter_label'] = (dt.dt.strftime("%H:") + (dt.dt.minute // 15* 15).map(lambda minute: f"{minute:02d}"))
 
     hourly = (pd.pivot_table(df,values='la_db',index='date_day',columns='hour_label',aggfunc=_leq).round(1))
     quarter_hourly = (pd.pivot_table(df,values='la_db',index='date_day',columns='quarter_label',aggfunc=_leq).round(1))

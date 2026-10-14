@@ -612,7 +612,7 @@ class CampaignPipeline:
                 if night_result:
                     png_path = night_result[0]
                     csv_path = night_result[1]
-                    self.logger.info(f"Night evolution {kind} {source.name}: PNG: {png_path}, CSV = {csv_path}")
+                    self.logger.info(f"Night evolution {source.name}: PNG: {png_path}, CSV = {csv_path}")
 
                 night_result = render_night_evolution_15min(
                     measurements        = measurements,
@@ -623,7 +623,7 @@ class CampaignPipeline:
                 if night_result:
                     png_path = night_result[0]
                     csv_path = night_result[1]
-                    self.logger.info(f"Night evolution 15min period {kind} {source.name}: PNG: {png_path}, CSV = {csv_path}")
+                    self.logger.info(f"Night evolution 15min period {source.name}: PNG: {png_path}, CSV = {csv_path}")
 
                 
 

@@ -60,19 +60,19 @@ def render_day_evolution(measurements,output_dir: Path,plot_name: str, timezone_
 
             ax.plot(day_data['hour'],day_data['LAeq'],marker='o',markersize=5,label=day_name)
 
-            for hour in (7,19,23):
-                ax.axvline(hour,color='gray',linestyle='--',linewidth=0.8)
+        for hour in (7,19,23):
+            ax.axvline(hour,color='gray',linestyle='--',linewidth=0.8)
 
-            ax.set(xlim=(-0.5,23.5),ylim=(30,105),xlabel='Hora',ylabel='dB(A)',title=f"Evolución diaria - {plot_name}")
-            ax.set_xticks(range(24))
-            ax.set_xticklabels([f"{hour:02d}:00" for hour in range(24)],rotation=90)
-            ax.grid(True,axis="y",alpha=0.3)
-            ax.legend(title='Día')
-            
-            fig.tight_layout()
-            fig.savefig(png_path,dpi=150)
+        ax.set(xlim=(-0.5,23.5),ylim=(30,105),xlabel='Hora',ylabel='dB(A)',title=f"Evolución diaria - {plot_name}")
+        ax.set_xticks(range(24))
+        ax.set_xticklabels([f"{hour:02d}:00" for hour in range(24)],rotation=90)
+        ax.grid(True,axis="y",alpha=0.3)
+        ax.legend(title='Día')
+        
+        fig.tight_layout()
+        fig.savefig(png_path,dpi=150)
 
-            profile.to_csv(csv_path,index=False)
+        profile.to_csv(csv_path,index=False)
 
     finally:
         plt.close(fig)

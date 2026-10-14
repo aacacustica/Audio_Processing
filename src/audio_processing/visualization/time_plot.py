@@ -5,14 +5,9 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from .configs import *
 
-OCA_LIMITS = {
-    "OCA_RESIDENTIAL": {"ld": 65.0, "le": 65.0, "ln": 55.0},
-    "OCA_LEISURE":     {"ld": 73.0, "le": 73.0, "ln": 63.0},
-    "OCA_OFFICE":      {"ld": 70.0, "le": 70.0, "ln": 65.0},
-    "OCA_INDUSTRIAL":  {"ld": 75.0, "le": 75.0, "ln": 65.0},
-    "OCA_CULTURE":     {"ld": 60.0, "le": 60.0, "ln": 50.0},
-}
+
 
 def _leq(levels: pd.Series) -> float:
 
@@ -111,46 +106,24 @@ def render_time_plot(measurements,output_dir: Path,plot_name: str, aggregation_s
         ]
 
         for column, label, color, linewidth in series:
-            ax.plot(
-                bin_times,
-                aggregated[column],
-                marker="o",
-                markersize=5,
-                linewidth=linewidth,
-                color=color,
-                label=label,
-            )
+            ax.plot(bin_times,aggregated[column],marker="o",markersize=5,linewidth=linewidth,color=color,label=label,)
 
         for percentile in percentiles:
             column = f"L{percentile}"
             if column in aggregated.columns:
-                ax.plot(
-                    bin_times,
-                    aggregated[column],
-                    marker="o",
-                    markersize=5,
-                    linewidth=0.8,
-                    label=column,
-                )
+                ax.plot(bin_times,aggregated[column],marker="o",markersize=5,linewidth=0.8,label=column,)
 
         ax.set_ylim(30, 105)
         ax.set_ylabel("dB(A)")
         ax.set_xlabel("Hora")
-        ax.set_title(
-            f"{plot_name} - Nivel equivalente cada {aggregation_seconds}"
-        )
+        ax.set_title(f"{plot_name} - Nivel equivalente cada {aggregation_seconds}")
+        ax.set_xlim(aggregated.index.min(),aggregated.index.max() + pd.Timedelta(seconds=aggregation_seconds))
 
-        ax.set_xlim(
-            aggregated.index.min(),
-            aggregated.index.max() + pd.Timedelta(seconds=aggregation_seconds),
-        )
-        locator = mdates.AutoDateLocator(
-            minticks=3, maxticks=8, tz=timezone_name
-        )
+        locator = mdates.AutoDateLocator(minticks=3, maxticks=8, tz=timezone_name)
+
         ax.xaxis.set_major_locator(locator)
-        ax.xaxis.set_major_formatter(
-            mdates.ConciseDateFormatter(locator, tz=timezone_name)
-        )
+        ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(locator, tz=timezone_name))
+
         ax.tick_params(axis="x", labelrotation=90)
         ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1))
         

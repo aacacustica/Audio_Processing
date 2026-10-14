@@ -11,7 +11,11 @@ from audio_processing.ai.processor import run_ai_for_file
 from audio_processing.peaks.processor import detect_peaks
 from audio_processing.alarms.aggregation import aggregate_measurements
 from audio_processing.alarms.processor import detect_oca_alarms,detect_lmax_alarms,detect_lc_la_alarms,detect_l90_dynamic_alarms,detect_frequency_composition_alarms,detect_tonal_alarm
+
 from audio_processing.visualization.time_plot import render_time_plot
+from audio_processing.visualization.day_evolution import render_day_evolution,render_period_evolution
+from audio_processing.visualization.heatmaps import render_acoustic_heatmaps
+from audio_processing.visualization.night_evolution import render_night_evolution,render_night_evolution_15min
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -549,7 +553,7 @@ class CampaignPipeline:
                 timezone_name   = "Atlantic/Canary" if self.config.visualization.tenerife_timezone else self.config.campaign.timezone
                 output_dir      = Path(source.output_path) / self.config.outputs.subfolders.spl.general_folder_name / self.config.outputs.subfolders.spl.visualization_folder_name
                 
-                paths = render_time_plot(
+                time_plot = render_time_plot(
                     measurements        = measurements,
                     output_dir          = output_dir,
                     plot_name           = source.name,
@@ -560,11 +564,68 @@ class CampaignPipeline:
                     timezone_name       = timezone_name
                 )
 
-                if paths is None: 
-                    self.logger.warning(f"No hay valores LA válidos para visualizar {source.source_id}")
-                    return
+                if time_plot:
+                    time_png,time_csv = time_plot
+                    self.logger.info(f"Visualización básica {source.source_id}: PNG = {time_png}, CSV = {time_csv}")
 
-                self.logger.info(f"Visualización básica {source.source_id}: PNG = {paths[0]}, CSV = {paths[1]}")
+                day_result = render_day_evolution(
+                    measurements        = measurements,
+                    output_dir          = output_dir,
+                    plot_name           = source.name,
+                    timezone_name       = timezone_name
+                )
+
+                if day_result:
+                    day_png,day_csv = day_result
+                    self.logger.info(f"Evolución diaria: {source.source_id}: PNG = {day_png}, CSV = {day_csv}")
+
+                period_outputs = render_period_evolution(
+                    measurements        = measurements,
+                    output_dir          = output_dir,
+                    plot_name           = source.name,
+                    timezone_name       = timezone_name
+                )
+
+                if period_outputs:
+                    for period, (png_path,csv_path) in period_outputs.items():
+
+                        self.logger.info(f"Evolución {period} {source.name}: PNG = {png_path}, CSV = {csv_path}")
+
+
+                heatmapts_outputs = render_acoustic_heatmaps(
+                    measurements        = measurements,
+                    output_dir          = output_dir,
+                    plot_name           = source.name,
+                    timezone_name       = timezone_name
+                )
+
+                for kind, (png_path,csv_path) in heatmapts_outputs.items():
+                    self.logger.info(f"Heatmap {kind} {source.name}: PNG: {png_path}, CSV = {csv_path}")
+
+                night_result = render_night_evolution(
+                    measurements        = measurements,
+                    output_dir          = output_dir,
+                    plot_name           = source.name,
+                    timezone_name       = timezone_name
+                )
+
+                if night_result:
+                    png_path = night_result[0]
+                    csv_path = night_result[1]
+                    self.logger.info(f"Night evolution {kind} {source.name}: PNG: {png_path}, CSV = {csv_path}")
+
+                night_result = render_night_evolution_15min(
+                    measurements        = measurements,
+                    output_dir          = output_dir,
+                    plot_name           = source.name,
+                    timezone_name       = timezone_name
+                )
+                if night_result:
+                    png_path = night_result[0]
+                    csv_path = night_result[1]
+                    self.logger.info(f"Night evolution 15min period {kind} {source.name}: PNG: {png_path}, CSV = {csv_path}")
+
+                
 
         except Exception as e:
             self.logger.exception("Error generando la visualización básica para: %s",source.source_id)

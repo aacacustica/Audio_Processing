@@ -12,7 +12,7 @@ def setup_logging( log_dir: str | Path, name: str = "audio_processing") -> loggi
     logger.handlers.clear()
     logger.propagate = False
 
-    formatter = logging.Formatter( "%(asctime)s | %(levelname)s | %(name)s | %(message)s" )
+    formatter = logging.Formatter( "%(asctime)s | %(levelname)s | %(message)s" )
         
 
     console_handler = logging.StreamHandler()

@@ -150,7 +150,7 @@ def render_night_evolution_15min(measurements, output_dir: Path, plot_name: str,
 
     axis = grid.axes.flat[0]
 
-    x_labels = ([f"20:{minute:02d}" for minute in range(0,60,15)] + [f"{hour:02d}:{minute:02d}" for hour in range(7) for minute in range(0,60,15)])
+    x_labels = ([f"23:{minute:02d}" for minute in range(0,60,15)] + [f"{hour:02d}:{minute:02d}" for hour in range(7) for minute in range(0,60,15)])
 
     axis.set_xticks(list(range(-15, 465, 15)))
     axis.set_xticklabels(x_labels, rotation=90)

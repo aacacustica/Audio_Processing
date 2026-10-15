@@ -16,6 +16,7 @@ from audio_processing.visualization.time_plot import render_time_plot
 from audio_processing.visualization.day_evolution import render_day_evolution,render_period_evolution
 from audio_processing.visualization.heatmaps import render_acoustic_heatmaps
 from audio_processing.visualization.night_evolution import render_night_evolution,render_night_evolution_15min
+from audio_processing.visualization.indicators_heatmap import render_indicator_heatmap
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -624,6 +625,17 @@ class CampaignPipeline:
                     png_path = night_result[0]
                     csv_path = night_result[1]
                     self.logger.info(f"Night evolution 15min period {source.name}: PNG: {png_path}, CSV = {csv_path}")
+
+                indicators_outputs = render_indicator_heatmap(
+                    measurements        = measurements,
+                    output_dir          = output_dir,
+                    plot_name           = source.name,
+                    timezone_name       = timezone_name
+                )
+
+                if indicators_outputs:
+                    indicator_png,indicator_csv,general_csv = indicators_outputs
+                    self.logger.info(f"Mapa de indicadores {source.name}: PNG: {indicator_png}, CSV = {indicator_csv},resumen = {general_csv}")
 
                 
 

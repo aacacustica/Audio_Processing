@@ -2,6 +2,8 @@ import seaborn as sns
 
 WEEKDAYS_ES = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"]
 NIGHT_LABELS = ["Lunes-Martes","Martes-Miércoles","Miércoles-Jueves","Jueves-Viernes","Viernes-Sábado","Sábado-Domingo","Domingo-Lunes"]
+LE_SECONDS = 7200
+INDICATOR_ORDER = ["Ln", "Ld", "Le"]
 
 LEGACY_CMAP = sns.color_palette(
     palette=[

@@ -93,5 +93,18 @@ class PredictionRepository:
         return list(self.session.scalars(statement).all())
 
 
+    def list_with_measurements_for_context(self,context_id:int):
+
+        statement = (select(AIPrediction, AcousticMeasurement)
+                     .join(AIPredictionMeasurement,AIPredictionMeasurement.id_prediccion == AIPrediction.id_prediccion)
+                     .join(AcousticMeasurement,AcousticMeasurement.id_medicion == AIPredictionMeasurement.id_medicion)
+                     .join(SourceFile,SourceFile.id_archivo == AIPrediction.id_archivo)
+                     .where(SourceFile.id_contexto == context_id)
+                     .order_by(AIPrediction.datetime_inicio,AIPrediction.prediction_rank))
+
+        return list(self.session.execute(statement).all())
+                               
+
+
 
     

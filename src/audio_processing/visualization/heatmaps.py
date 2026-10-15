@@ -94,14 +94,14 @@ def render_acoustic_heatmaps(measurements,output_dir: Path, plot_name: str, time
 
         "15_min": heatmap(
             matrix          = quarter_hourly,
-            suffix          = "heatmap_evolución_15min",
+            suffix          = "heatmap_evolucion_15min",
             title           = f"{plot_name} Nivel equivalente 15 minutos",
-            annotate        = True,
+            annotate        = False,
             output_dir      = output_dir,
             safe_name       = safe_name,
             axis_fontsize   = 24,
             title_fontsize  = 30,
-            dpi             = 350,
+            dpi             = 150,
             csv_index       = False 
         )
     }

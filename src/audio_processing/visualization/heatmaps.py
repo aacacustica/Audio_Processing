@@ -4,41 +4,42 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 from .configs import *
 from .time_plot import _leq
 from matplotlib.colors import ListedColormap
 
-def heatmap(matrix,suffix,labels,title,annotate,output_dir,safe_name): 
+def heatmap(matrix,suffix,title,annotate,output_dir,safe_name,axis_fontsize,title_fontsize,dpi,csv_index): 
 
     png_path = output_dir / f"{safe_name}_{suffix}.png"
     csv_path = output_dir / f"{safe_name}_{suffix}.csv"
 
-    values = matrix.to_numpy(dtype=float)
-
-    fig,ax = plt.subplots(figsize=(max(14,len(labels) * 0.25),max(4,len(matrix) * 0.45)))
+    sns.set_style('white')
+    fig,ax = plt.subplots(figsize=(20,10))
 
     try:
 
-        image = ax.imshow(np.ma.masked_invalid(values),aspect='auto',interpolation='nearest', cmap=ListedColormap(LEGACY_CMAP),vmin=30,vmax=85)
-
-        column_labels = [str(column) for column in matrix.columns]
-        ax.set_xticks(range(len(column_labels)))
-        ax.set_xticklabels(column_labels, rotation=90)
-        ax.set_yticks(range(len(matrix.index)))
-        ax.set_yticklabels(matrix.index)
-        ax.set_xlabel("Hora")
-        ax.set_ylabel("Día")
-        ax.set_title(title)
-        fig.colorbar(image, ax=ax, label="dB(A)")
+        options = {'annot': annotate}
 
         if annotate:
-            for row,column in zip(*np.where(np.isfinite(values))):
-                ax.text(column,row,f"{values[row,column]:.1f}",ha='center',va='center',fontsize=8)
+            options['fmt'] = '.1f'
+            options['annot_kws'] = {'size':20}
+
+        plot = sns.heatmap(matrix,vmin=30,vmax=85,cmap=LEGACY_CMAP,ax=ax,**options)
+
+        ax.set_xlabel("Hora",fontsize=axis_fontsize)
+        ax.set_ylabel("Día",fontsize=axis_fontsize)
+        ax.set_title(title,fontsize=title_fontsize)
+        ax.set_yticklabels(ax.get_yticklabels(),rotation=0,fontsize=axis_fontsize)
+        ax.set_xticklabels(ax.get_xticklabels(),rotation=90,fontsize=axis_fontsize)
+
+        plot.collections[0].colorbar.ax.tick_params(labelsize=axis_fontsize)
 
         fig.tight_layout()
-        fig.savefig(png_path,dpi=150)
-        matrix.to_csv(csv_path,index_label='fecha_día')
+        fig.savefig(png_path,dpi=dpi)
+
+        matrix.to_csv(csv_path,index=csv_index,index_label='date_day' if csv_index else None)
 
     finally:
         plt.close(fig)
@@ -81,22 +82,29 @@ def render_acoustic_heatmaps(measurements,output_dir: Path, plot_name: str, time
 
     return {
         "hourly": heatmap(
-            matrix      = hourly,
-            suffix      = "heatmap_evolución",
-            labels      = [f"{hour:02d}:00" for hour in range(24)],
-            title       = f"{plot_name} - Nivel equivalente por hora",
-            annotate    = True,
-            output_dir  = output_dir,
-            safe_name   = safe_name
+            matrix          = hourly,
+            suffix          = "heatmap_evolución",
+            title           = f"{plot_name} Nivel equivalente",
+            annotate        = True,
+            output_dir      =output_dir,
+            safe_name       =safe_name,
+            axis_fontsize   = 22,
+            title_fontsize  = 22,
+            dpi             = 350,
+            csv_index       = True  
         ),
+
         "15_min": heatmap(
-            matrix      = quarter_hourly,
-            suffix      = "heatmap_evolución_15min",
-            labels      = [f"{slot // 4:02d}:{(slot % 4) * 15:02d}" for slot in range(96)],
-            title       = f"{plot_name} - Nivel equivalente cada 15 minutos",
-            annotate    = False,
-            output_dir  = output_dir,
-            safe_name   = safe_name
+            matrix          = quarter_hourly,
+            suffix          = "heatmap_evolución_15min",
+            title           = f"{plot_name} Nivel equivalente 15 minutos",
+            annotate        = True
+            output_dir      = output_dir,
+            safe_name       = safe_name,
+            axis_fontsize   = 24,
+            title_fontsize  = 30,
+            dpi             = 350,
+            csv_index       = False 
         )
     }
 

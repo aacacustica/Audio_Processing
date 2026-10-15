@@ -2,13 +2,11 @@ from pathlib import Path
 import re
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 
 from .configs import *
 from .time_plot import _leq
-from matplotlib.colors import ListedColormap
 
 def heatmap(matrix,suffix,title,annotate,output_dir,safe_name,axis_fontsize,title_fontsize,dpi,csv_index): 
 
@@ -83,7 +81,7 @@ def render_acoustic_heatmaps(measurements,output_dir: Path, plot_name: str, time
     return {
         "hourly": heatmap(
             matrix          = hourly,
-            suffix          = "heatmap_evolución",
+            suffix          = "heatmap_evolucion",
             title           = f"{plot_name} Nivel equivalente",
             annotate        = True,
             output_dir      =output_dir,
@@ -98,7 +96,7 @@ def render_acoustic_heatmaps(measurements,output_dir: Path, plot_name: str, time
             matrix          = quarter_hourly,
             suffix          = "heatmap_evolución_15min",
             title           = f"{plot_name} Nivel equivalente 15 minutos",
-            annotate        = True
+            annotate        = True,
             output_dir      = output_dir,
             safe_name       = safe_name,
             axis_fontsize   = 24,

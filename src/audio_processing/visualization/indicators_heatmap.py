@@ -38,7 +38,7 @@ def render_indicator_heatmap(measurements,output_dir: Path, plot_name: str, time
     durations['seconds'] = (durations['last'] - durations['first']).dt.total_seconds()
 
     boundary_dates = {df['date'].min(), df['date'].max()}
-    excluded = [ (date,period) for (date,period), row in durations.iterrow() if date in boundary_dates and row['seconds'] <= LE_SECONDS]
+    excluded = [ (date,period) for (date,period), row in durations.iterrows() if date in boundary_dates and row['seconds'] <= LE_SECONDS]
 
     for date,period in excluded:
         df = df[~((df["date"] == date) & (df["period"] == period))]
@@ -51,7 +51,7 @@ def render_indicator_heatmap(measurements,output_dir: Path, plot_name: str, time
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True,exist_ok=True)
-    safe_name = re.sub( r"[^A-Za-z0-9._-]+", "_", plot_name).strip()
+    safe_name = re.sub( r"[^A-Za-z0-9._-]+", "_", plot_name).strip("_")
 
     png_path = output_dir / f"{safe_name}_indicadores.png"
     csv_path = output_dir / f"{safe_name}_indicadores.csv"

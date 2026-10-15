@@ -94,7 +94,7 @@ def render_acoustic_heatmaps(measurements,output_dir: Path, plot_name: str, time
 
         "15_min": heatmap(
             matrix          = quarter_hourly,
-            suffix          = "heatmap_evolucion_15min",
+            suffix          = "heatmap_evolucion_15_min",
             title           = f"{plot_name} Nivel equivalente 15 minutos",
             annotate        = False,
             output_dir      = output_dir,

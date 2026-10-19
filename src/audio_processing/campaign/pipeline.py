@@ -17,6 +17,7 @@ from audio_processing.visualization.day_evolution import render_day_evolution,re
 from audio_processing.visualization.heatmaps import render_acoustic_heatmaps
 from audio_processing.visualization.night_evolution import render_night_evolution,render_night_evolution_15min
 from audio_processing.visualization.indicators_heatmap import render_indicator_heatmap
+from audio_processing.visualization.prediction_laeq_class import render_prediction_laeq_class
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -543,7 +544,12 @@ class CampaignPipeline:
                     device_type     = source.device_type
                 )
 
-                measurements = MeasurementRepository(session).list_by_context(context.id_contexto)
+                measurements = MeasurementRepository(session).list_by_context(
+                    context_id      = context.id_contexto)
+
+                prediction_measurements = PredictionRepository(session).list_with_measurements_for_context(
+                    context_id      = context.id_contexto
+                )
 
                 if not measurements:
                     self.logger.warning(f"No hay mediciones para visualizar en: {source.source_id}")
@@ -553,6 +559,7 @@ class CampaignPipeline:
                 correction_db   = getattr(point_config,"correction_db",0.0) if point_config is not None else 0.0
                 timezone_name   = "Atlantic/Canary" if self.config.visualization.tenerife_timezone else self.config.campaign.timezone
                 output_dir      = Path(source.output_path) / self.config.outputs.subfolders.spl.general_folder_name / self.config.outputs.subfolders.spl.visualization_folder_name
+                class_map_path = Path(self.config.visualization.class_map_csv)
                 
                 time_plot = render_time_plot(
                     measurements        = measurements,
@@ -636,6 +643,20 @@ class CampaignPipeline:
                 if indicators_outputs:
                     indicator_png,indicator_csv,general_csv = indicators_outputs
                     self.logger.info(f"Mapa de indicadores {source.name}: PNG: {indicator_png}, CSV = {indicator_csv},resumen = {general_csv}")
+
+                prediction_outputs = render_prediction_laeq_class(
+                    prediction_measurements = prediction_measurements,
+                    class_map_path          = class_map_path,
+                    output_dir              = output_dir,
+                    taxonomy                = self.config.visualization.taxonomy,
+                    plot_name               = source.name,
+                    
+                )
+
+                if prediction_outputs:
+                    html_path,csv_path = prediction_outputs
+                    self.logger.info(f"Treemap LAeq por clases {source.name}: HTML = {html_path}, CSV = {csv_path}")
+                
 
                 
 

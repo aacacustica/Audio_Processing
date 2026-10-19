@@ -22,15 +22,37 @@ OCA_LIMITS = {
     "OCA_CULTURE":     {"ld": 60.0, "le": 60.0, "ln": 50.0},
 }
 
-
-
 NIGHT_PALETTE = {
-    "Lunes-Martes":      "#cc0000",
-    "Martes-Miércoles":  "#8e7cc3",
-    "Miércoles-Jueves":  "#9b5f00",
-    "Jueves-Viernes":    "#2986cc",
-    "Viernes-Sábado":    "#ffa500",
-    "Sábado-Domingo":    "#6aa84f",
-    "Domingo-Lunes":     "#d172a4",
+    "Lunes-Martes":          "#cc0000",
+    "Martes-Miércoles":      "#8e7cc3",
+    "Miércoles-Jueves":      "#9b5f00",
+    "Jueves-Viernes":        "#2986cc",
+    "Viernes-Sábado":        "#ffa500",
+    "Sábado-Domingo":        "#6aa84f",
+    "Domingo-Lunes":         "#d172a4",
 }
 
+URBAN_COLORS = {
+    "Other human":          "#2986cc",
+    "Electro-mechanical":   "#cc0000",
+    "Voice":                 "#6aa84f",
+    "Motorised transport":   "#ffa500",
+    "Geonature":             "#8e7cc3",
+    "Animal":                "#9b5f00",
+    "Music":                 "#d172a4",
+    "Background":            "#000000",
+    "Other Sounds":          "#c9d631",
+    "Social/communal":       "#d8cbf8",
+    "Human movement":        "#40b674",
+}
+
+PORT_COLORS = {
+    "Siren":                "#2986cc",
+    "Sound Event":          "#cc0000",
+    "Transport":            "#6aa84f",
+    "Human":                "#ffa500",
+    "Nature":               "#8e7cc3",
+    "Animal":               "#9b5f00",
+    "Music":                "#d172a4",
+    "Engine":               "#000000",
+}

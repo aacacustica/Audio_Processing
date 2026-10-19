@@ -19,6 +19,7 @@ from audio_processing.visualization.night_evolution import render_night_evolutio
 from audio_processing.visualization.indicators_heatmap import render_indicator_heatmap
 from audio_processing.visualization.prediction_laeq_class import render_prediction_laeq_class
 from audio_processing.visualization.prediction_stack_bar import render_prediciton_stack_bar
+from audio_processing.visualization.prediciton_map import render_prediction_map
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -677,6 +678,21 @@ class CampaignPipeline:
                 if prediction_outputs:
                     html_path,csv_path = prediction_outputs
                     self.logger.info(f"Stack bar LAeq por clases {source.name}: HTML = {html_path}, CSV = {csv_path}")
+
+                prediction_outputs = render_prediction_map(
+                    prediction_measurements = prediction_measurements,
+                    class_map_path          = class_map_path,
+                    output_dir              = prediction_output_dir,
+                    taxonomy                = self.config.visualization.taxonomy,
+                    plot_name               = source.name,
+                    aggregation_seconds     = int(self.config.visualization.aggregation_seconds),
+                    timezone_name           = timezone_name 
+                )
+
+                if prediction_outputs:
+                    png_path,csv_path = prediction_outputs
+                    self.logger.info(f"Prediction map {source.name}: PNG = {png_path}, CSV = {csv_path}")
+                
                 
 
         except Exception as e:

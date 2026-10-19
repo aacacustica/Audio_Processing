@@ -561,7 +561,10 @@ class CampaignPipeline:
                 output_dir              = Path(source.output_path) / self.config.outputs.subfolders.spl.general_folder_name / self.config.outputs.subfolders.spl.visualization_folder_name
                 class_map_path          = Path(self.config.visualization.class_map_csv)
 
-                prediction_output_dir   = Path(source.output_path) / self.config.outputs.subfolders.ai.genneral_folder_name / self.config.outputs.subfolders.ai.visualization_folder_name
+                prediction_output_dir   = Path(source.output_path) / self.config.outputs.subfolders.ai.general_folder_name / self.config.outputs.subfolders.ai.visualization_folder_name
+
+                if not class_map_path.is_absolute():
+                    class_map_path = Path(self.config._config_dir) / class_map_path
                 
                 time_plot = render_time_plot(
                     measurements        = measurements,
@@ -653,6 +656,7 @@ class CampaignPipeline:
                     output_dir              = prediction_output_dir,
                     taxonomy                = self.config.visualization.taxonomy,
                     plot_name               = source.name,
+                    correction_db           = float(correction_db)
                     
                 )
 

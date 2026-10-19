@@ -14,6 +14,7 @@ from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 
 from config import *
+
 from utils import (
     PlotContext,
     SkipPlot,
@@ -31,6 +32,9 @@ from utils import (
     prepare_spectrogram_data,
     safe_plot,
     select_night_data,
+    _taxonomy_settings,
+    enrich_predictions,
+    _prepare_taxonomy_detail
 )
 
 
@@ -146,14 +150,14 @@ def _resolve_agg_func(agg_func: Any) -> Any:
 
     return agg_func
 
-
+"""
 def _taxonomy_settings( taxonomy_map: Mapping[str, str], dataframe: pd.DataFrame,logger: Any,) -> Tuple[str, Mapping[str, str]]:
 
 
-    """
+    
     Mantiene el criterio original para urban/port, pero evita fallar cuando
     la columna de la ontología no está disponible.
-    """
+    
 
     if "Siren" in set(taxonomy_map.values()):
         desired_column  = "NoisePort_Level_1"
@@ -225,7 +229,7 @@ def _enrich_predictions( predictions: pd.DataFrame,yamnet_csv: pd.DataFrame,taxo
 
     return enriched.sort_index()
 
-
+"""
 def _prepare_aligned_predictions(df: pd.DataFrame,df_pred: pd.DataFrame,yamnet_csv: Optional[pd.DataFrame],taxonomy_map: Mapping[str, str],laeq_column: str,logger: Any)-> pd.DataFrame:
 
     aligned = align_spl_predictions(
@@ -246,7 +250,7 @@ def _prepare_aligned_predictions(df: pd.DataFrame,df_pred: pd.DataFrame,yamnet_c
     if not isinstance(aligned.index,pd.DatetimeIndex): raise SkipPlot("Las predicciones alineadas no tienen un DatetimeIndex.")
     logger.info("Datos preparados: filas=%s, índice=%s, probabilidad=%s",len(aligned),type(aligned.index).__name__,aligned['probability'].dtype) 
 
-    return _enrich_predictions(predictions=aligned,taxonomy_map=taxonomy_map,logger=logger,yamnet_csv=yamnet_csv)
+    return enrich_predictions(predictions=aligned,taxonomy_map=taxonomy_map,logger=logger,yamnet_csv=yamnet_csv)
 
 
 def _palette_color(palette: Mapping[str, str],category: Any) -> str:
@@ -423,17 +427,17 @@ def plot_predic_laeq_15_min(df: pd.DataFrame, yamnet_csv: pd.DataFrame, taxonomy
         logger       = logger,
     )
 
-    class_to_plot, color_palette = _taxonomy_settings(taxonomy_map, aligned, logger,)
+    parent_class, detail_class , color_palette = _taxonomy_settings(taxonomy_map, aligned, logger)
 
-    grouped_df = (aligned.dropna(subset=[class_to_plot, laeq_column]).groupby(class_to_plot, observed=True).agg(number=("class", "size"), LAeq=(laeq_column, energy_mean), probability_mean=("probability", "mean"),).reset_index())
+    grouped_df = (aligned.dropna(subset=[parent_class,detail_class,laeq_column]).groupby([parent_class,detail_class], observed=True).agg(number=("class", "size"), LAeq=(laeq_column, energy_mean), probability_mean=("probability", "mean"),).reset_index())
 
     context.require(not grouped_df.empty, "No quedan clases para calcular LAeq",)
 
     fig = px.treemap(
         grouped_df,
-        path               = [class_to_plot],
+        path               = [parent_class,detail_class],
         values             = "number",
-        color              = class_to_plot,
+        color              = parent_class,
         color_discrete_map = color_palette,
         custom_data        = ["LAeq", "probability_mean"],
     )
@@ -471,14 +475,15 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv: pd.DataFrame, t
         logger       = logger,
     )
 
-    class_to_plot, color_palette = _taxonomy_settings(taxonomy_map, aligned, logger,)
+    parent_class, detail_class , color_palette = _taxonomy_settings(taxonomy_map, aligned, logger)
 
+    aligned = _prepare_taxonomy_detail(aligned,parent_class,detail_class)
     aligned["time_of_day"] = [categorize_time_of_day(hour) for hour in aligned.index.hour]
 
     period_order = ["Ld", "Le", "Ln"]
     aligned["time_of_day"] = pd.Categorical(aligned["time_of_day"], categories=period_order, ordered=True,)
 
-    grouped_df = (aligned.dropna(subset=[class_to_plot, "time_of_day", laeq_column,]).groupby([class_to_plot, "time_of_day"], observed=True,).agg(number=("class", "size"), LAeq=(laeq_column, energy_mean), probability_mean=("probability", "mean"),).reset_index())
+    grouped_df = (aligned.dropna(subset=[parent_class,detail_class,"time_of_day",laeq_column]).groupby([parent_class,detail_class,"time_of_day"], observed=True).agg(number=("class", "size"), LAeq=(laeq_column, energy_mean), probability_mean=("probability", "mean"),).reset_index())
 
     context.require(not grouped_df.empty, "No hay datos agrupados por periodo",)
 
@@ -491,9 +496,9 @@ def plot_predic_laeq_15_min_period(df: pd.DataFrame, yamnet_csv: pd.DataFrame, t
 
         fig = px.treemap(
             period_df,
-            path               = [px.Constant(period), class_to_plot],
+            path               = [px.Constant(period), parent_class,detail_class],
             values             = "number",
-            color              = class_to_plot,
+            color              = parent_class,
             color_discrete_map = color_palette,
             custom_data        = ["LAeq", "probability_mean"],
         )
@@ -533,7 +538,8 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv: pd.DataFrame, taxon
         logger       = logger,
     )
 
-    class_to_plot, color_palette = _taxonomy_settings(taxonomy_map, aligned, logger,)
+    parent_class, detail_class , color_palette = _taxonomy_settings(taxonomy_map, aligned, logger)
+    aligned = _prepare_taxonomy_detail(aligned,parent_class,detail_class)
 
     aligned["time_of_day"] = [categorize_time_of_day_4(hour) for hour in aligned.index.hour]
 
@@ -541,7 +547,8 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv: pd.DataFrame, taxon
 
     aligned["time_of_day"] = pd.Categorical(aligned["time_of_day"], categories=period_order, ordered=True,)
 
-    grouped_df = (aligned.dropna(subset=[class_to_plot, "time_of_day", laeq_column,]).groupby([class_to_plot, "time_of_day"], observed=True,).agg(number=("class", "size"), LAeq=(laeq_column, energy_mean), probability_mean=("probability", "mean"),).reset_index())
+     
+    grouped_df = (aligned.dropna(subset=[parent_class,detail_class, "time_of_day", laeq_column,]).groupby([parent_class,detail_class, "time_of_day"], observed=True,).agg(number=("class", "size"), LAeq=(laeq_column, energy_mean), probability_mean=("probability", "mean"),).reset_index())
 
     context.require(not grouped_df.empty, "No hay datos agrupados en periodos de 4 horas",)
 
@@ -554,9 +561,9 @@ def plot_predic_laeq_15_min_4h(df: pd.DataFrame, yamnet_csv: pd.DataFrame, taxon
 
         fig = px.treemap(
             period_df,
-            path               = [px.Constant(period), class_to_plot],
+            path               = [px.Constant(period), parent_class,detail_class],
             values             = "number",
-            color              = class_to_plot,
+            color              = parent_class,
             color_discrete_map = color_palette,
             custom_data        = ["LAeq", "probability_mean"],
         )
@@ -590,7 +597,7 @@ def plot_prediction_stack_bar(df_Pred: pd.DataFrame, yamnet_csv, taxonomy_map, f
         probability_column = "probability",
     )
 
-    enriched = _enrich_predictions(
+    enriched = enrich_predictions(
         predictions  = predictions,
         taxonomy_map = taxonomy_map,
         logger       = logger,
@@ -600,16 +607,16 @@ def plot_prediction_stack_bar(df_Pred: pd.DataFrame, yamnet_csv, taxonomy_map, f
     enriched = _with_time_features(enriched)
     enriched["Día"] = enriched["date_day"]
 
-    class_to_plot, color_palette = _taxonomy_settings(taxonomy_map, enriched, logger,)
+    parent_class,detail_class = _taxonomy_settings(taxonomy_map, enriched, logger,)
 
-    grouped = (enriched.dropna(subset=[class_to_plot, "Día"]).groupby(["Día", class_to_plot], observed=True,).size().reset_index(name="Distribución de clases"))
+    grouped = (enriched.dropna(subset=[detail_class, "Día"]).groupby(["Día", detail_class], observed=True,).size().reset_index(name="Distribución de clases"))
 
     context.require(not grouped.empty, "No hay predicciones para la barra apilada",)
 
     day_order = list(pd.unique(enriched["Día"]))
     grouped["Día"] = pd.Categorical(grouped["Día"], categories=day_order, ordered=True,)
 
-    fig = px.bar(grouped, x="Día", y="Distribución de clases", color=class_to_plot, title=f"{plotname} | Clases por Día", color_discrete_sequence=px.colors.qualitative.Alphabet, color_discrete_map=color_palette, height=900, width=2000,)
+    fig = px.bar(grouped, x="Día", y="Distribución de clases", color=detail_class, title=f"{plotname} | Clases por Día", color_discrete_sequence=px.colors.qualitative.Alphabet, height=900, width=2000,)
 
     context.save_plotly(fig, suffix="prediction_stack_map",)
     context.save_dataframe(grouped, suffix="prediction_stack_map", index=False,)
@@ -620,7 +627,8 @@ def plot_prediction_stack_bar(df_Pred: pd.DataFrame, yamnet_csv, taxonomy_map, f
 # ---------------------------------------------------------------------------
 
 @safe_plot
-def plot_prediction_map(df_Pred: pd.DataFrame, taxonomy_map, agg_period, folder_output_dir: str, logger, plotname: str,):
+def plot_prediction_map(df_Pred: pd.DataFrame,yamnet_csv, taxonomy_map, agg_period, folder_output_dir: str, logger, plotname: str,):
+
     context = _context(
         folder_output_dir,
         plotname,
@@ -635,20 +643,23 @@ def plot_prediction_map(df_Pred: pd.DataFrame, taxonomy_map, agg_period, folder_
         class_column       = "class",
         probability_column = "probability",
     )
+    predictions = enrich_predictions(predictions=predictions,yamnet_csv=yamnet_csv,taxonomy_map=taxonomy_map,logger=logger)
+    parent_class,detail_class,_ = _taxonomy_settings(taxonomy_map,predictions,logger)
+    predictions = _prepare_taxonomy_detail(predictions,parent_class,detail_class)
 
     predictions = map_taxonomy(predictions=predictions, taxonomy_map=taxonomy_map, logger=logger, class_column="class", output_column="mapped_class",)
 
-    dominant = dominant_category_per_bin(dataframe=predictions, category_column="mapped_class", rule=context.resample_rule,)
+    dominant = dominant_category_per_bin(dataframe=predictions, category_column=detail_class, rule=context.resample_rule,)
 
     dominant = _with_time_features(dominant)
 
-    category_order = list(pd.unique(dominant["mapped_class"]))
+    category_order = list(pd.unique(dominant[detail_class]))
 
     context.require(bool(category_order), "No quedan categorías para el mapa",)
 
     class_to_num = {category: index + 1 for index, category in enumerate(category_order)}
 
-    dominant["class_num"] = (dominant["mapped_class"].map(class_to_num))
+    dominant["class_num"] = (dominant[detail_class].map(class_to_num))
 
     day_class = pd.pivot_table(
         data    = dominant,
@@ -660,10 +671,8 @@ def plot_prediction_map(df_Pred: pd.DataFrame, taxonomy_map, agg_period, folder_
 
     context.require(not day_class.empty and not day_class.isna().all().all(), "La tabla del mapa de predicciones está vacía",)
 
-    if "Siren" in set(taxonomy_map.values()):
-        color_palette = COLOR_PALLET_PORT_L1
-    else:
-        color_palette = COLOR_PALLET_URBAN
+    detail_colors = sns.color_palette("husl",n_colors=len(category_order)).as_hex()
+    color_palette = dict(zip(category_order,detail_colors))
 
     colors = [_palette_color(color_palette, category) for category in category_order]
 
@@ -705,7 +714,7 @@ def plot_prediction_map(df_Pred: pd.DataFrame, taxonomy_map, agg_period, folder_
 # ---------------------------------------------------------------------------
 
 @safe_plot
-def plot_tree_map(df_Pred: pd.DataFrame, taxonomy_map, folder_output_dir: str, logger, plotname: str,):
+def plot_tree_map(df_Pred: pd.DataFrame, yamnet_csv,taxonomy_map, folder_output_dir: str, logger, plotname: str,):
     tree_output = (Path(folder_output_dir) / "Prediction_Tree_Map")
 
     context = _context(
@@ -722,18 +731,7 @@ def plot_tree_map(df_Pred: pd.DataFrame, taxonomy_map, folder_output_dir: str, l
         probability_column = "probability",
     )
 
-    # Se conserva la lectura del mapa YAMNet configurado en el proyecto.
-    home_dir = Path.home()
-    yamnet_path = (home_dir / RELATIVE_PATH_YAMNET_MAP.lstrip("\\/"))
-
-    yamnet_csv: Optional[pd.DataFrame] = None
-
-    if yamnet_path.is_file():
-        yamnet_csv = pd.read_csv(yamnet_path, sep=";",)
-    else:
-        logger.warning("No existe el mapa YAMNet en %s; " "se usará taxonomy_map", yamnet_path,)
-
-    enriched = _enrich_predictions(
+    enriched = enrich_predictions(
         predictions  = predictions,
         taxonomy_map = taxonomy_map,
         logger       = logger,
@@ -742,17 +740,17 @@ def plot_tree_map(df_Pred: pd.DataFrame, taxonomy_map, folder_output_dir: str, l
 
     enriched = _with_time_features(enriched)
 
-    class_to_plot, color_palette = _taxonomy_settings(taxonomy_map, enriched, logger,)
+    parent_class,detail_class,color_palette = _taxonomy_settings(taxonomy_map, enriched, logger,)
 
-    plot_data = (enriched.dropna(subset=[class_to_plot, "class"]).groupby([class_to_plot, "class"], observed=True,).size().reset_index(name="number"))
+    plot_data = (enriched.dropna(subset=[parent_class,detail_class, "class"]).groupby([parent_class,detail_class, "class"], observed=True,).size().reset_index(name="number"))
 
     context.require(not plot_data.empty, "No hay datos para el treemap",)
 
     fig = px.treemap(
         plot_data,
-        path               = [class_to_plot, "class"],
+        path               = [parent_class,detail_class, "class"],
         values             = "number",
-        color              = class_to_plot,
+        color              = parent_class,
         color_discrete_map = color_palette,
     )
     fig.update_layout(title=f"{plotname} | Clases")
@@ -766,7 +764,7 @@ def plot_tree_map(df_Pred: pd.DataFrame, taxonomy_map, folder_output_dir: str, l
         if day_source.empty:
             continue
 
-        day_plot_data = (day_source.dropna(subset=[class_to_plot, "class"]).groupby([class_to_plot, "class"], observed=True,).size().reset_index(name="number"))
+        day_plot_data = (day_source.dropna(subset=[parent_class,detail_class, "class"]).groupby([parent_class,detail_class, "class"], observed=True,).size().reset_index(name="number"))
 
         if day_plot_data.empty:
             logger.info("No hay datos de treemap para el día %s", day,)
@@ -774,9 +772,9 @@ def plot_tree_map(df_Pred: pd.DataFrame, taxonomy_map, folder_output_dir: str, l
 
         day_fig = px.treemap(
             day_plot_data,
-            path               = [class_to_plot, "class"],
+            path               = [parent_class,detail_class, "class"],
             values             = "number",
-            color              = class_to_plot,
+            color              = parent_class,
             color_discrete_map = color_palette,
         )
 
@@ -796,6 +794,7 @@ def plot_tree_map(df_Pred: pd.DataFrame, taxonomy_map, folder_output_dir: str, l
 
 @safe_plot
 def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dict: dict, agg_period: int, plotname: str, percentiles: list,):
+
     context = _context(
         folder_output_dir,
         plotname,
@@ -846,8 +845,8 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
     axis.set_facecolor("white")
 
     axis.plot(aggregated.index, aggregated[laeq_column], linewidth=3, color="red", label="LAeq",)
-    axis.plot(aggregated.index, aggregated[max_column], linewidth=1, color="#FF99FF", label="Lmax",)
-    axis.plot(aggregated.index, aggregated[min_column], linewidth=1, color="#92D050", label="Lmin",)
+    axis.plot(aggregated.index, aggregated[max_column],  linewidth=1, color="#FF99FF", label="Lmax",)
+    axis.plot(aggregated.index, aggregated[min_column],  linewidth=1, color="#92D050", label="Lmin",)
 
     if oca is not None:
         axis.plot(oca.index, oca, color="#00B0F0", label="OCA",)
@@ -1202,6 +1201,7 @@ def plot_day_evolution(df, folder_output_dir: str, logger, laeq_column: str, plo
 
 @safe_plot
 def plot_period_evolution(df, folder_output_dir: str, logger, laeq_column: str, plotname: str,):
+
     context = _context(
         folder_output_dir,
         plotname,

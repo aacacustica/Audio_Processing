@@ -300,6 +300,7 @@ def main():
 
             process_all_folders(
                 input_folder,
+                filter_point,
                 spl_sonometer_folders,
                 PERIODO_AGREGACION,
                 PERCENTILES,

@@ -109,7 +109,7 @@ def process_folder(folder_path, folder_date_time, folder_threshold, logger):
 def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, PERCENTILES, taxonomy, yamnet_csv, sufix_string, folder_coefficients, folder_date_time, folder_threshold, oca_limits, oca_type, logger):
     
     stable_version = get_stable_version(logger)
-
+    
     agg_period = int(PERIODO_AGREGACION)
     
     if agg_period <=0: raise ValueError("PERIODO_AGREGACION debe ser mayor que cero")
@@ -154,24 +154,24 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
         else: folder = folder.split("/")[-1]
             
 
-        if not os.path.exists(predictions_folder): logger.warning(f"Predictions folder not found: {predictions_folder}")
-            
+        predictions_files = sorted(glob.glob(os.path.join(predictions_folder,"*.csv")))
 
-        else: logger.warning("No CSV files found in the predictions folder.")
+        if not os.path.isdir(predictions_folder): logger.info("No existe la carpeta de predicciones %s para %s. Se procesarán únicamente los datos SPL.",predictions_folder,point_name)
+        elif not predictions_files: logger.info("La carpeta de predicciones de %s está vacía. Se procesarán únicamente los datos SPL.",point_name)
             
                 
         
         if not os.path.exists(predictions_visualization_folder): os.makedirs(predictions_visualization_folder)
 
-        logger.info(f"Nombre del punto:                     {point_name}")
-        logger.info(f"Carpeta actual:                       {folder}")
-        logger.info(f"Fichero de registros acusticos:       {data_registers_folder}")
-        logger.info(f"Fichero de predicciones:              {predictions_folder}") 
+        logger.info(f"Nombre del punto:                                                     {point_name}")
+        logger.info(f"Carpeta actual:                                                       {folder}")
+        logger.info(f"Fichero de registros acusticos:                                       {data_registers_folder}")
+        logger.info(f"Fichero de predicciones:                                              {predictions_folder}") 
 
-        logger.info(f"Carpeta de salida:                    {folder_output_dir}")
-        logger.info(f"Carpeta de salida de predicciones:    {predictions_visualization_folder}")
-        logger.info(f"Carpeta de resultados:                {resultados_dir}")    
-        logger.info(f"Graficando con periodo de agregación: {agg_period}\n")  
+        logger.info(f"Carpeta de salida:                                                    {folder_output_dir}")
+        logger.info(f"Carpeta de salida de predicciones:                                    {predictions_visualization_folder}")
+        logger.info(f"Carpeta de resultados:                                                {resultados_dir}")    
+        logger.info(f"Graficando con periodo de agregación:                                 {agg_period}\n")  
 
         ####################################################################
         # add datetime columns, sort by datetime and set datetime as index #
@@ -185,10 +185,10 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
             if os.path.exists(predictions_folder) and predictions_files: prediction_csv_file = prediction_csv(predictions_files[0])
 
             if df is None: 
-                logger.warning(f"No se encontraron datos SPL en {data_registers_folder}")
+                logger.warning(f"No se encontraron datos SPL en                             {data_registers_folder}")
                 continue
             if prediction_csv_file is None:
-                logger.warning(f"No se encontraron datos PRED en {predictions_files[0]}")
+                logger.warning(f"No se encontraron datos PRED en                            {predictions_folder}")
 
             if TENERIFE_TIMEZONE: 
                 timezone_offset = pd.Timedelta(hours=1)
@@ -219,17 +219,17 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
 
             else: 
                 logger.warning(f"prediction_csv_file is None")
-                continue
+                
 
             logger.info(f"")
             logger.info(f"SPL fecha de inicio:  {start_date}.")
             logger.info(f"SPL fecha de fin:     {end_date}.")
-            logger.info(f"PRED  start date      {pred_start_date}.")
-            logger.info(f"PRED fecha de fin:    {pred_end_date}.")
+            if prediction_csv_file is not None:     logger.info(f"PRED  start date      {pred_start_date}.")
+            if prediction_csv_file is not None:     logger.info(f"PRED fecha de fin:    {pred_end_date}.")
             logger.info(f"")
 
         except Exception as e:
-            logger.warning(f"Error desconocido al añadir la columna temporal: {e}")    
+            logger.warning(f"Error desconocido al añadir la columna temporal:               {e}")    
             continue
 
 
@@ -237,8 +237,10 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
         # drop the beginning and ending of the measurement (15min)         #
         ####################################################################
             
-        logger.info(f"SPL: Borrando {REMOVE_START_TIME} del principio de la tabla y {REMOVE_END_TIME} del final de la tabla ...")
-        logger.info(f"PRED: Borrando {REMOVE_START_TIME} del principio de la tabla y {REMOVE_END_TIME} del final de la tabla ...\n")
+        logger.info(f"SPL: Borrando del principio de la tabla:                              {REMOVE_START_TIME}")
+        logger.info(f"SPL: Borrando del final de la tabla:                                  {REMOVE_END_TIME}" )
+        logger.info(f"PRED: Borrando del principio de la tabla:                             {REMOVE_START_TIME}")
+        logger.info(f"PRED: Borrando del final de la tabla:                                 {REMOVE_END_TIME}" )  
 
         try:
 
@@ -252,17 +254,17 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
                 dataframe_name              = "SPL df",
                 max_trim_fraction           = 0.10
             )
-
-            prediction_csv_file = trim_dataframe(
-                dataframe                   = prediction_csv_file,
-                start_timestamp             = pred_start_date,
-                end_timestamp               = pred_end_date,
-                requested_start_seconds     = REMOVE_START_TIME,
-                requested_end_seconds       = REMOVE_END_TIME,
-                logger                      = logger,
-                dataframe_name              = "Prediction df",
-                max_trim_fraction           = 0.10
-            )
+            if prediction_csv_file is not None:
+                prediction_csv_file = trim_dataframe(
+                    dataframe                   = prediction_csv_file,
+                    start_timestamp             = pred_start_date,
+                    end_timestamp               = pred_end_date,
+                    requested_start_seconds     = REMOVE_START_TIME,
+                    requested_end_seconds       = REMOVE_END_TIME,
+                    logger                      = logger,
+                    dataframe_name              = "Prediction df",
+                    max_trim_fraction           = 0.10
+                )
 
             if df is None or df.empty:
                 logger.warning(f"El dataframe de datos acusticos quedó vacío tras el recorte")
@@ -270,15 +272,17 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
 
             if prediction_csv_file is None or prediction_csv_file.empty: 
                 logger.warning(f"El dataframe de datos de predicciones quedó vacío tras el recorte")
-                continue
+                
 
             df['indicador_str']                     = df['hour'].apply(evaluation_period_str)
-            prediction_csv_file['indicador_str']    = prediction_csv_file['hour'].apply( evaluation_period_str )
+            if prediction_csv_file is not None: prediction_csv_file['indicador_str']    = prediction_csv_file['hour'].apply( evaluation_period_str )
 
-            logger.info(f"SPL: Eliminado {REMOVE_START_TIME} del principio de la tabla y {REMOVE_END_TIME} del final.")
-            logger.info(f"SPL: Formato de la tabla tras ajuste temporal: {df.shape}.")
-            logger.info(f"PRED: Eliminado {REMOVE_START_TIME} del principio de la tabla y {REMOVE_END_TIME} del final.")
-            logger.info(f"PRED: Formato de la tabla tras ajuste temporal: {prediction_csv_file.shape}.\n")
+            logger.info(f"SPL: Eliminado del principio de la tabla:                         {REMOVE_START_TIME}")
+            logger.info(f"SPL: Eliminado del final de la tabla:                             {REMOVE_END_TIME}")
+            logger.info(f"SPL: Formato de la tabla tras ajuste temporal:                    {df.shape}.")
+            logger.info(f"PRED: Eliminado del principio de la tabla:                        {REMOVE_START_TIME}")
+            logger.info(f"PRED: Eliminado del final de la tabla:                            {REMOVE_END_TIME}")
+            if prediction_csv_file is not None: logger.info(f"PRED: Formato de la tabla tras ajuste temporal:                   {prediction_csv_file.shape}.\n")
             
         except Exception as e:
             logger.error(f"Ha ocurrido un error recortando el dataframe {REMOVE_START_TIME} desde el principio y {REMOVE_END_TIME} desde el final: {e}")
@@ -364,99 +368,99 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
         else: folder = folder.split("/")[-1]
 
         ####################################################################
-        # Plotting                                                         #
+        # Creando grafico                                                         #
         ####################################################################          
 
         slm_dict["LAEQ_COLUMN_COEFF"] = 'LA_corrected'
         slm_dict["LAMAX_COLUMN_COEFF"] = 'LAmax_corrected'
         slm_dict["LAMIN_COLUMN_COEFF"] = 'LAmin_corrected'
 
-        # Plotting night evolution
+        # Creando grafico night evolution
         if PLOT_NIGHT_EVOLUTION:
-            logger.info(f"[1] Plotting night evolution for folder {folder}\n")
-            plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder, indicador_noche="Ln")
+            logger.info(f"[1] Creando grafico night evolution en fichero:  {folder}\n")
+            plot_night_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=point_name, indicador_noche="Ln")
         
-        # Plotting night evolution 15 min
+        # Creando grafico night evolution 15 min
         if PLOT_NIGHT_EVOLUTION_15_MIN:
-            logger.info(f"\n[2] Plotting night evolution 15 min for folder {folder}\n")
-            plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder, indicador_noche="Ln")
+            logger.info(f"\n[2] Creando grafico night evolution 15 min en fichero:  {folder}\n")
+            plot_night_evolution_15_min(df, folder_output_dir, logger, name_extension="15_min", laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=point_name, indicador_noche="Ln")
 
 
-        # Plotting LEq power average with predictions
-        if PLOT_PREDIC_LAEQ_15_MIN:
-            logger.info(f"\n[3] Plotting PLOT_PREDIC_LAEQ for folder {folder}\n")
-            plot_predic_laeq_15_min(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder)
-
-        
-        if PLOT_PREDIC_LAEQ_15_MIN_PERIOD:
-            logger.info(f"\n[4] Plotting PLOT_PREDIC_LAEQ_15_MIN_PERIOD for folder {folder}\n")
-            plot_predic_laeq_15_min_period(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder)
-
-
-        if PLOT_PREDIC_LAEQ_15_MIN_4H:
-            logger.info(f"\n[5] Plotting PLOT_PREDIC_LAEQ_4H for folder {folder}\n")
-            plot_predic_laeq_15_min_4h(df, yamnet_csv,taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder)
-
-
-        # Plotting stack bar with predictions class
-        if PLOT_PREDICTION_STACK_BAR:
-            logger.info(f"\n[6] Plotting PLOT_PREDICTION_STACK_BAR for folder {folder}\n")
-            plot_prediction_stack_bar(prediction_csv_file, yamnet_csv, taxonomy, predictions_visualization_folder, logger, plotname=folder)
-        
-
-        # Plotting prediction map
-        if PLOT_PREDICTION_MAP:
-            logger.info(f"\n[7] Plotting PLOT_PREDICTION_MAP for folder {folder}\n")
-            plot_prediction_map(prediction_csv_file, taxonomy,agg_period, predictions_visualization_folder, logger, plotname=folder)
+        # Creando grafico LEq power average with predictions
+        if PLOT_PREDIC_LAEQ_15_MIN and prediction_csv_file is not None:
+            logger.info(f"\n[3] Creando grafico PLOT_PREDIC_LAEQ en fichero:  {folder}\n")
+            plot_predic_laeq_15_min(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=point_name)
 
         
-        # Plotting tree map
-        if PLOT_TREE_MAP:
-            logger.info(f"\n[8] Plotting PLOT_TREE_MAP for folder {folder}\n")
-            plot_tree_map(prediction_csv_file,taxonomy,predictions_visualization_folder, logger, plotname=folder)
+        if PLOT_PREDIC_LAEQ_15_MIN_PERIOD and prediction_csv_file is not None:
+            logger.info(f"\n[4] Creando grafico PLOT_PREDIC_LAEQ_15_MIN_PERIOD en fichero:  {folder}\n")
+            plot_predic_laeq_15_min_period(df, yamnet_csv, taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=point_name)
+
+
+        if PLOT_PREDIC_LAEQ_15_MIN_4H and prediction_csv_file is not None:
+            logger.info(f"\n[5] Creando grafico PLOT_PREDIC_LAEQ_4H en fichero:  {folder}\n")
+            plot_predic_laeq_15_min_4h(df, yamnet_csv,taxonomy, prediction_csv_file, predictions_visualization_folder, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=point_name)
+
+
+        # Creando grafico stack bar with predictions class
+        if PLOT_PREDICTION_STACK_BAR and prediction_csv_file is not None:
+            logger.info(f"\n[6] Creando grafico PLOT_PREDICTION_STACK_BAR en fichero:  {folder}\n")
+            plot_prediction_stack_bar(prediction_csv_file, yamnet_csv, taxonomy, predictions_visualization_folder, logger, plotname=point_name)
+        
+
+        # Creando grafico prediction map
+        if PLOT_PREDICTION_MAP and prediction_csv_file is not None:
+            logger.info(f"\n[7] Creando grafico PLOT_PREDICTION_MAP en fichero:  {folder}\n")
+            plot_prediction_map(prediction_csv_file, yamnet_csv,taxonomy,agg_period,predictions_visualization_folder, logger, plotname=point_name)
 
         
-        # Plotting time plot
+        # Creando grafico tree map
+        if PLOT_TREE_MAP and prediction_csv_file is not None:
+            logger.info(f"\n[8] Creando grafico PLOT_TREE_MAP en fichero:  {folder}\n")
+            plot_tree_map(prediction_csv_file,yamnet_csv,taxonomy,predictions_visualization_folder, logger, plotname=point_name)
+
+        
+        # Creando grafico time plot
         if PLOT_MAKE_TIME_PLOT:
-            logger.info(f"[9] Plotting time plot for folder {folder}\n")
-            make_time_plot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=folder, percentiles=PERCENTILES)
+            logger.info(f"[9] Creando grafico time plot en fichero:  {folder}\n")
+            make_time_plot(df, folder_output_dir, logger, columns_dict=slm_dict, agg_period=agg_period, plotname=point_name, percentiles=PERCENTILES)
 
 
-        # Plotting heatmap evolution hour
+        # Creando grafico heatmap evolution hour
         if PLOT_HEATMAP_EVOLUTION_HOUR:
-            logger.info(f"\n[10] Plotting heatmap for folder {folder}\n")
-            plot_heatmap_evolution_hour(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN_COEFF'], agg_func=leq,plotname=folder)
+            logger.info(f"\n[10] Creando grafico heatmap en fichero:  {folder}\n")
+            plot_heatmap_evolution_hour(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN_COEFF'], agg_func=leq,plotname=point_name)
         
         
-        # Plotting heatmap evolution 15 min
+        # Creando grafico heatmap evolution 15 min
         if PLOT_HEATMAP_EVOLUTION_15_MIN:
-            logger.info(f"\n[11] Plotting heatmap 15 min for folder {folder}\n")
-            plot_heatmap_evolution_15_min(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN_COEFF'], agg_func=leq,plotname=folder)
+            logger.info(f"\n[11] Creando grafico heatmap 15 min en fichero:  {folder}\n")
+            plot_heatmap_evolution_15_min(df, folder_output_dir, logger, values_column=slm_dict['LAEQ_COLUMN_COEFF'], agg_func=leq,plotname=point_name)
         
 
-        # Plotting individual heatmap
+        # Creando grafico individual heatmap
         if PLOT_INDICADORES_HEATMAP:
-            logger.info(f"\n[12] Plotting indicadores heatmap for folder {folder}\n")
-            plot_indicadores_heatmap(df, folder_output_dir, logger, plotname=folder, ind_column=slm_dict["LAEQ_COLUMN_COEFF"])
+            logger.info(f"\n[12] Creando grafico indicadores heatmap en fichero:  {folder}\n")
+            plot_indicadores_heatmap(df, folder_output_dir, logger, plotname=point_name, ind_column=slm_dict["LAEQ_COLUMN_COEFF"])
 
 
-        # Plotting day evolution
+        # Creando grafico day evolution
         if PLOT_DAY_EVOLUTION:
-            logger.info(f"\n[13] Plotting day evolution for folder {folder}\n")
-            plot_day_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder)
+            logger.info(f"\n[13] Creando grafico day evolution en fichero:  {folder}\n")
+            plot_day_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=point_name)
         
 
-        # Plotting period evolution
+        # Creando grafico period evolution
         if PLOT_PERIOD_EVOLUTION:
-            logger.info(f"\n[14] Plotting period evolution (1) Ld (2) Le for folder {folder}\n")
-            plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=folder)
+            logger.info(f"\n[14] Creando grafico period evolution (1) Ld (2) Le en fichero:  {folder}\n")
+            plot_period_evolution(df, folder_output_dir, logger, laeq_column=slm_dict["LAEQ_COLUMN_COEFF"], plotname=point_name)
         
 
         # I dont know why I commented this out
         if PLOT_SPECTROGRAM_1_3:
-            logger.info(f"\n[15] Plotting spectrogram for folder {folder}\n")
-            # plt_spectrogram(df_oct, folder_output_dir, logger, plotname=folder)
-            plt_spectrogram(df, folder_output_dir, sufix_string, logger, plotname=folder)
+            logger.info(f"\n[15] Creando grafico spectrogram en fichero:  {folder}\n")
+            # plt_spectrogram(df_oct, folder_output_dir, logger, plotname=point_name)
+            plt_spectrogram(df, folder_output_dir, sufix_string, logger, plotname=point_name)
 
 
 

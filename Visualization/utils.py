@@ -1123,8 +1123,123 @@ def select_night_data( dataframe: pd.DataFrame, complete_night: bool = False, st
     return data
 
 
+def _taxonomy_settings(taxonomy_map,dataframe,logger):
+
+    if 'Siren' in set(taxonomy_map.values()):
+
+        parent_class    = taxonomy_column_for_level(1)
+        detail_class    = taxonomy_column_for_level(2)
+        palette         = COLOR_PALLET_PORT_L1
+
+        logger.info(" Using NoisePort taxonomy: %s -> %s", parent_class,detail_class)
+
+    else:
+
+        parent_class    = taxonomy_column_for_level(2)
+        detail_class    = taxonomy_column_for_level(3)
+        palette         = COLOR_PALLET_URBAN
+
+        logger.info(" Using Brown taxonomy: %s -> %s", parent_class,detail_class)
 
 
+    if parent_class not in dataframe.columns: raise SkipPlot(f"No existe {parent_class!r}")
+    if detail_class not in dataframe.columns: raise SkipPlot(f"No existe {detail_class!r}")
 
+    return (parent_class,detail_class,palette)
+
+
+def taxonomy_column_for_level(level: int):
+
+    columns = {
+        1: 'taxonomy_l1',
+        2: 'taxonomy_l2',
+        3: 'taxonomy_l3'
+    }[level]
+
+    if level not in columns: raise ValueError(f"Nivel taxonómico no válido: {level}")
+
+    return columns[level]
+
+
+def enrich_predictions(predictions: pd.DataFrame , yamnet_csv: pd.DataFrame , taxonomy_map,logger):
+
+    data = predictions.copy()
+
+    if not isinstance(data.index, pd.DatetimeIndex):
+        data.index = pd.to_datetime(data.index,errors='coerce')
+        data = data[~data.index.isna()]
+
+    if data.empty: raise SkipPlot(f"No quedan predicciones con un índice temporal válido")
+    if yamnet_csv is None: raise SkipPlot(f"yamnet_csv is None")
+
+    data['display_name'] = data['class']
+
+    ontology = yamnet_csv.copy()
+    ontology = ontology.loc[:,~ontology.columns.str.contains('^Unnamed',regex=True)]
+
+    if 'display_name' not in ontology.columns: raise SkipPlot('yamnet_csv no contiene display_name')
+
+    ontology = (ontology.drop_duplicates(subset=['display_name'],keep='first').set_index('display_name'))
+
+    enriched = data.join(ontology,on='display_name',how='left',rsuffix='_yamnet')
+    enriched = map_taxonomy(predictions=enriched,taxonomy_map=taxonomy_map,logger=logger,class_column='class',output_column='mapped_class')
+
+    if 'Siren' in set(taxonomy_map.values()):
+        taxonomy_family = 'noiseport'
+    else:
+        taxonomy_family = 'brown'
+
+    enriched = add_taxonomy_columns(predictions=enriched,taxonomy_family=taxonomy_family)
+    enriched['probability'] = pd.to_numeric(enriched['probability'],errors='coerce')
+    enriched = enriched.dropna(subset=['class','probability'])
+
+    if enriched.empty: raise SkipPlot("No quedan predicciones después del enriquecimiento de YAMNet")
+    if not isinstance(enriched.index, pd.DatetimeIndex): raise SkipPlot("El enriquecimiento de YAMNet perdió el DatetimeIndex")
+
+    logger.info("Predicciones enriquecidas: %s filas; índice = %s , probability = %s",len(enriched),type(enriched.index).__name__,enriched['probability'].dtype)
+
+    return enriched.sort_index()
+
+
+def add_taxonomy_columns(predictions,yamnet_csv,taxonomy_family='brown'):
+
+    data = predictions.copy()
+
+    if taxonomy_family.lower() == 'brown':
+
+        required_columns = ['Brown_Level_1' , 'Brown_Level_2' , 'Brown_Level_3']
+        missing = [column for column in required_columns if column not in data.columns]
+
+        if missing: raise SkipPlot(f"Faltan columnas Brown: {missing}")
+
+        data['taxonomy_l1'] = data['Brown_Level_1']
+        data['taxonomy_l2'] = data['Brown_Level_2']
+        data['taxonomy_l3'] = data['Brown_Level_3']
+
+    elif taxonomy_family.lower() == 'noiseport':
+
+        required_columns = ['NoisePort_Level_1' , 'NoisePort_Level_2']
+        missing = [column for column in required_columns if column not in data.columns]
+
+        if missing: raise SkipPlot(f"Faltan columnas NoisePort: {missing}")
+
+        data['taxonomy_l1'] = data['NoisePort_Level_1']
+        data['taxonomy_l2'] = data['NoisePort_Level_2']
+
+    else: 
+        raise ValueError(f"Familia taxonómica desconocida: {taxonomy_family}")
+
+    return data
+
+
+def _prepare_taxonomy_detail(aligned,parent_class,detail_class):
+
+    data = trim_dataframe.copy()
+
+    data[parent_class] = ( data[parent_class].astype("string").str.strip().replace("",pd.NA) )
+    data[detail_class] = ( data[detail_class].astype("string").str.strip().replace("",pd.NA) )
+    data[detail_class] = ( data[detail_class].fillna(data[parent_class].astype("string") + " - Sin detalle"))
+
+    return data
 
 

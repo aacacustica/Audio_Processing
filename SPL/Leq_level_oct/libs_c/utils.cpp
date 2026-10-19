@@ -5,10 +5,7 @@
 #include <stdexcept>
 #include <tuple>
 
-
 float PREF = 2e-6f;
-
-
 
 float get_level_db(const nc::NdArray<float>& x, float C)
 {
@@ -22,7 +19,6 @@ float get_level_db(const nc::NdArray<float>& x, float C)
     return 10.0f * std::log10(ms / (PREF * PREF)) + C;
 }
 
-
 std::tuple<nc::NdArray<float>, nc::NdArray<float>> lfilter_np(const nc::NdArray<float>& b, const nc::NdArray<float>& a, const nc::NdArray<float>& x, const nc::NdArray<float>& zi){
 
 
@@ -35,7 +31,6 @@ std::tuple<nc::NdArray<float>, nc::NdArray<float>> lfilter_np(const nc::NdArray<
     const auto x_shape = x.shape();
     const auto x_rows = x_shape.rows;
     const auto x_cols = x_shape.cols;
-
 
     if (!(x_rows == 1 || x_cols == 1)) {
         throw std::invalid_argument("Input x must be a vector (1xN or Nx1). <---- Correct shape checking");

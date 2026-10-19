@@ -26,7 +26,7 @@ def render_prediction_map(prediction_measurements,class_map_path: Path,taxonomy:
     predictions_by_id = {}
 
     for prediction, _measurement in prediction_measurements:
-        if prediction.class_name: predictions_by_id[prediction.id_prediccion] = prediction
+        if prediction.class_name and prediction.prediction_rank == 1: predictions_by_id[prediction.id_prediccion] = prediction
 
     if not predictions_by_id: return None
 

@@ -20,6 +20,7 @@ from audio_processing.visualization.indicators_heatmap import render_indicator_h
 from audio_processing.visualization.prediction_laeq_class import render_prediction_laeq_class
 from audio_processing.visualization.prediction_stack_bar import render_prediciton_stack_bar
 from audio_processing.visualization.prediciton_map import render_prediction_map
+from audio_processing.visualization.prediction_laeq_period import render_prediction_laeq_period
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -692,6 +693,27 @@ class CampaignPipeline:
                 if prediction_outputs:
                     png_path,csv_path = prediction_outputs
                     self.logger.info(f"Prediction map {source.name}: PNG = {png_path}, CSV = {csv_path}")
+
+
+                prediction_outputs = render_prediction_laeq_period(
+                    prediction_measurements = prediction_measurements,
+                    class_map_path          = class_map_path,
+                    taxonomy                = self.config.visualization.taxonomy,
+                    output_dir              = prediction_output_dir,           
+                    plot_name               = source.name,
+                    correction_db           = float(correction_db),
+                    timezone_name           = timezone_name
+                )
+
+                if prediction_outputs:
+                     for period, (html_path, csv_path) in period_outputs.items():
+                        self.logger.info(
+                            "Treemap LAeq por clase y periodo %s (%s): HTML = %s, CSV = %s",
+                            source.name,
+                            period,
+                            html_path,
+                            csv_path,
+                        )
                 
                 
 

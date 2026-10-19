@@ -116,7 +116,7 @@ visualization:
   remove_start_seconds: 900
   remove_end_seconds:   900
   tenerife_timezone:    true
-  class_map_csv:        "/home/martin/Proyectos/Audio_Processing/src/audio_processing/common/yamnet_class_AAC_v3_0.csv"
+  class_map_csv:        "../src/audio_processing/common/yamnet_class_AAC_v3_0.csv"
 
 outputs:
   create_point_folder:  true

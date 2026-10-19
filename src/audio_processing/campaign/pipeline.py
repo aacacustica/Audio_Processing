@@ -555,11 +555,13 @@ class CampaignPipeline:
                     self.logger.warning(f"No hay mediciones para visualizar en: {source.source_id}")
                     return
 
-                point_config    = getattr(self.config.points, source.name, None)
-                correction_db   = getattr(point_config,"correction_db",0.0) if point_config is not None else 0.0
-                timezone_name   = "Atlantic/Canary" if self.config.visualization.tenerife_timezone else self.config.campaign.timezone
-                output_dir      = Path(source.output_path) / self.config.outputs.subfolders.spl.general_folder_name / self.config.outputs.subfolders.spl.visualization_folder_name
-                class_map_path = Path(self.config.visualization.class_map_csv)
+                point_config            = getattr(self.config.points, source.name, None)
+                correction_db           = getattr(point_config,"correction_db",0.0) if point_config is not None else 0.0
+                timezone_name           = "Atlantic/Canary" if self.config.visualization.tenerife_timezone else self.config.campaign.timezone
+                output_dir              = Path(source.output_path) / self.config.outputs.subfolders.spl.general_folder_name / self.config.outputs.subfolders.spl.visualization_folder_name
+                class_map_path          = Path(self.config.visualization.class_map_csv)
+
+                prediction_output_dir   = Path(source.output_path) / self.config.outputs.subfolders.ai.genneral_folder_name / self.config.outputs.subfolders.ai.visualization_folder_name
                 
                 time_plot = render_time_plot(
                     measurements        = measurements,
@@ -637,7 +639,8 @@ class CampaignPipeline:
                     measurements        = measurements,
                     output_dir          = output_dir,
                     plot_name           = source.name,
-                    timezone_name       = timezone_name
+                    timezone_name       = timezone_name,
+                    correction_db       = float(correction_db)
                 )
 
                 if indicators_outputs:
@@ -647,7 +650,7 @@ class CampaignPipeline:
                 prediction_outputs = render_prediction_laeq_class(
                     prediction_measurements = prediction_measurements,
                     class_map_path          = class_map_path,
-                    output_dir              = output_dir,
+                    output_dir              = prediction_output_dir,
                     taxonomy                = self.config.visualization.taxonomy,
                     plot_name               = source.name,
                     

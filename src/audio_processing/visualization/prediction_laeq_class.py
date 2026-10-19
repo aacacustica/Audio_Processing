@@ -10,7 +10,7 @@ from .configs import *
 def render_prediction_laeq_class(prediction_measurements,class_map_path:Path,taxonomy:str,output_dir:Path,plot_name:str) -> tuple[Path,Path] | None:
 
     if taxonomy == "urban": 
-        category_colun = "Brown_Level_2"
+        category_column = "Brown_Level_2"
         color_map = URBAN_COLORS
     elif taxonomy == "port":
         category_column = "NoisePort_Level_1"

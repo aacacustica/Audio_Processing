@@ -8,9 +8,9 @@ import seaborn as sns
 from .configs import LEGACY_CMAP, WEEKDAYS_ES,LE_SECONDS,INDICATOR_ORDER
 from .time_plot import _leq
 
-def render_indicator_heatmap(measurements,output_dir: Path, plot_name: str, timezone_name: str = "Europe/Madrid") -> tuple[Path,Path,Path] | None:
+def render_indicator_heatmap(measurements,output_dir: Path, plot_name: str, timezone_name: str = "Europe/Madrid", correction_db: float = 0.0) -> tuple[Path,Path,Path] | None:
 
-    records = [{'datetime':row.datetime, 'la_db':row.la_db} for row in measurements if row.datetime is not None and row.la_db is not None]
+    records = [{'datetime':row.datetime, 'la_db':row.la_db + correction_db} for row in measurements if row.datetime is not None and row.la_db is not None]
 
     if not records: return None
 

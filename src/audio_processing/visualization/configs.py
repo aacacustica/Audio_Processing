@@ -5,6 +5,7 @@ NIGHT_LABELS    = ["Lunes-Martes","Martes-Miércoles","Miércoles-Jueves","Jueve
 LE_SECONDS      = 7200
 INDICATOR_ORDER = ["Ln", "Ld", "Le"]
 PERIOD_ORDER    = ("Ld", "Le", "Ln")
+PERIOD_ORDER_4H = ("Ld_1", "Ld_2", "Ld_3", "Le", "Ln_1", "Ln_2")
 
 LEGACY_CMAP = sns.color_palette(
     palette=[

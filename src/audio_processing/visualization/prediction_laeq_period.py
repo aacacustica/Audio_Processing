@@ -4,21 +4,33 @@ import re
 import pandas as pd
 import plotly.express as px
 
-from .configs import PORT_COLORS, URBAN_COLORS,PERIOD_ORDER
+from .configs import PORT_COLORS, URBAN_COLORS,PERIOD_ORDER,PERIOD_ORDER_4H
 from .time_plot import _leq
 
 
 
 
-def _period_for_hour(hour: int) -> str:
+def _period_for_hour(hour: int,period_scheme:str) -> str:
 
-    if 7 <= hour < 19: return "Ld"
-    if 19 <= hour < 23: return "Le"
-    return "Ln"
+    if period_scheme == "day_parts":
+        
+        if 7 <= hour < 19: return "Ld"
+        if 19 <= hour < 23: return "Le"
+        return "Ln"
+
+    if period_scheme == "four_hour":
+
+        if 7 <= hour < 11: return "Ld_1"
+        if 11 <= hour < 15: return "Ld_2"
+        if 15 <= hour < 19: return "Ld_3"
+        if 19 <= hour < 23: return "Le"
+        if hour >= 23 or hour < 3: return "Ln_1"
+        return "Ln_2"
+
+    raise ValueError(f"Esquema de periodos desconocido: {period_scheme}")
 
 
-
-def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, taxonomy: str, output_dir:Path,plot_name: str, correction_db: float = 0.0, timezone_name: str = "Europe/Madrid") -> dict[str , tuple[Path,Path]] | None:
+def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, taxonomy: str, output_dir:Path,plot_name: str, correction_db: float = 0.0, timezone_name: str = "Europe/Madrid",period_scheme:str = "dayparts") -> dict[str , tuple[Path,Path]] | None:
 
     if taxonomy == "urban":
         category_column = "Brown_Level_2"
@@ -46,16 +58,17 @@ def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, 
         levels = pd.Series([level + correction_db for level in entry['levels'].values()],dtype="float32")
         if levels.empty: continue
 
-        timestap = pd.Timestamp(prediction.datetime_inicio)
+        timestamp = pd.Timestamp(prediction.datetime_inicio)
 
-        if timestap.tzinfo is None: timestap = timestap.tz_localize(timezone_name)
-        else: timestap = timestap.tz_convert(timezone_name)
+        if timestamp.tzinfo is None: timestamp = timestamp.tz_localize(timezone_name)
+        else: timestamp = timestamp.tz_convert(timezone_name)
 
         records.append(
             {
                 "class_name": prediction.class_name,
-                "period":_period_for_hour(timestap.hour),
-                "laeq_window":_leq(levels)
+                "period":_period_for_hour(timestamp.hour),
+                "laeq_window":_leq(levels),
+                "period": _period_for_hour(timestamp.hour,period_scheme)
             }
         )
 
@@ -84,7 +97,16 @@ def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, 
 
     outputs = {}
 
-    for period in PERIOD_ORDER:
+    if period_scheme == "dayparts":
+        period_order = PERIOD_ORDER
+        folder_name = "Prediction_LAeq_15_min_Period"
+    else:
+        period_order = PERIOD_ORDER_4H
+        folder_name = "Prediction_LAeq_15_min_4h"
+
+    output_dir = Path(output_dir) / folder_name
+
+    for period in period_order:
         period_df = grouped[grouped['period'] == period].copy()
 
         if period_df.empty: continue

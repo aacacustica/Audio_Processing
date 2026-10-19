@@ -705,8 +705,19 @@ class CampaignPipeline:
                     timezone_name           = timezone_name
                 )
 
+                four_hour_output = render_prediction_laeq_period(
+                    prediction_measurements=prediction_measurements,
+                    class_map_path=class_map_path,
+                    taxonomy=self.config.visualization.taxonomy,
+                    output_dir=prediction_output_dir,
+                    plot_name=source.name,
+                    correction_db=float(correction_db),
+                    timezone_name=timezone_name,
+                    period_scheme='four_hour'
+                )
+
                 if prediction_outputs:
-                     for period, (html_path, csv_path) in period_outputs.items():
+                     for period, (html_path, csv_path) in prediction_outputs.items():
                         self.logger.info(
                             "Treemap LAeq por clase y periodo %s (%s): HTML = %s, CSV = %s",
                             source.name,
@@ -714,8 +725,20 @@ class CampaignPipeline:
                             html_path,
                             csv_path,
                         )
+
+                if four_hour_output:
+                    for period, (html_path, csv_path) in four_hour_output.items():
+                        self.logger.info(
+                            "Treemap LAeq por clase y franja de 4 horas %s (%s): HTML = %s, CSV = %s",
+                            source.name,
+                            period,
+                            html_path,
+                            csv_path,
+                        )
+
                 
                 
+
 
         except Exception as e:
             self.logger.exception("Error generando la visualización básica para: %s",source.source_id)

@@ -103,3 +103,11 @@ class PeakRepository:
 
         return set(self.session.scalars(statement).all())
 
+    def list_by_context(self,context_id:int) -> list[AcousticPeak]:
+
+        statement = (select(AcousticPeak)
+                     .where(AcousticPeak.id_contexto == context_id)
+                     .order_by(AcousticPeak.datetime_pico))
+
+        return list(self.session.scalars(statement).all())
+

@@ -23,6 +23,7 @@ from audio_processing.visualization.prediciton_map import render_prediction_map
 from audio_processing.visualization.prediction_laeq_period import render_prediction_laeq_period
 from audio_processing.visualization.prediction_laeq_day import render_prediction_laeq_day
 from audio_processing.visualization.prediction_laeq_week import render_prediction_laeq_week
+from audio_processing.visualization.peak_distribution import render_peak_distribution
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -78,6 +79,7 @@ class CampaignPipeline:
         if runtime.run_peaks and self.config.peaks.enabled: self.run_peaks(source)
         if runtime.run_alarms and self.config.alarms.enabled: self.run_alarms(source)
         if(runtime.run_basic_visualization and self.config.visualization.enabled and source.needs_visualization): self.run_basic_visualization(source)
+        if(runtime.run_advanced_visualization and self.config.visualization.enabled and source.needs_visualization): self.run_advanced_visualization(source)
         
 
     def run_spl_database(self,source) -> None:
@@ -753,14 +755,55 @@ class CampaignPipeline:
                 if weekly_outputs:
                     for week_start, (html_path,csv_path) in weekly_outputs.items():
                         self.logger.info(f"Treemap LAeq por clase y semana {source.name} , {week_start}: HTML = {html_path}, CSV = {csv_path}")
-                
-
-                
-                
-
-
+ 
         except Exception as e:
             self.logger.exception("Error generando la visualización básica para: %s",source.source_id)
+            if self.config.execution.stop_on_error: raise
+
+    def run_advanced_visualization(self,source) -> None:
+        if self.db is None: raise RuntimeError(f"La base de datos debe de estar habilitada para visualizar picos.")
+
+        try:
+            with self.db.session() as session:
+                
+                context = ContextRepository(session).get_for_source(
+                    campaign_name   = self.config.campaign.name,
+                    point_name      = source.name,
+                    device_type     = source.device_type
+                )
+
+                peaks = PeakRepository(session).list_by_context(context.id_contexto)
+
+                if not peaks: 
+                    self.logger.info(f"No hay picos para visualizar en: {source.source_id}.")
+                    return
+
+                point_config = getattr(self.config.points, source.name, None)
+
+                if point_config is not None:
+                    correction_db = (getattr(point_config,"correction_db",0.0))
+                else:
+                    correction_db = 0.0
+
+                output_dir = Path(source.output_path) / self.config.outputs.subfolders.spl.general_folder_name / self.config.outputs.subfolders.spl.visualization_folder_name
+
+                result_peaks = render_peak_distribution(
+                    peaks           = peaks,
+                    output_dir      = output_dir,
+                    plot_name       = source.name,
+                    correction_db   = float(correction_db),
+                    timezone_name   = self.config.campaign.timezone
+                )
+
+                if result_peaks:
+                    png_path,night_png_path,csv_path = result_peaks
+
+                    self.logger.info(f"Distribución de picos {source.name}: PNG = {png_path} , PNG nocturno = {night_png_path} , CSV = {csv_path}")
+                
+                
+        except Exception:
+            self.logger.exception(f"Error generando la distribución de picos para {source.source_id}")
+
             if self.config.execution.stop_on_error: raise
     
     def print_plan(self,point) -> None:

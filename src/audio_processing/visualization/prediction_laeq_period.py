@@ -30,7 +30,7 @@ def _period_for_hour(hour: int,period_scheme:str) -> str:
     raise ValueError(f"Esquema de periodos desconocido: {period_scheme}")
 
 
-def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, taxonomy: str, output_dir:Path,plot_name: str, correction_db: float = 0.0, timezone_name: str = "Europe/Madrid",period_scheme:str = "dayparts") -> dict[str , tuple[Path,Path]] | None:
+def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, taxonomy: str, output_dir:Path,plot_name: str, correction_db: float = 0.0, timezone_name: str = "Europe/Madrid",period_scheme:str = "day_parts") -> dict[str , tuple[Path,Path]] | None:
 
     if taxonomy == "urban":
         category_column = "Brown_Level_2"
@@ -66,7 +66,6 @@ def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, 
         records.append(
             {
                 "class_name": prediction.class_name,
-                "period":_period_for_hour(timestamp.hour),
                 "laeq_window":_leq(levels),
                 "period": _period_for_hour(timestamp.hour,period_scheme)
             }
@@ -91,9 +90,8 @@ def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, 
 
     grouped = (df.groupby(['period',category_column]).agg(number=('class_name','size'),LAeq=('laeq_window',_leq)).reset_index())
 
-    output_dir = Path(output_dir) / "Prediction_LAeq_15_min_Period"
-    output_dir.mkdir(parents=True, exist_ok=True)
-    safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", plot_name).strip("_")
+    
+    
 
     outputs = {}
 
@@ -105,6 +103,8 @@ def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, 
         folder_name = "Prediction_LAeq_15_min_4h"
 
     output_dir = Path(output_dir) / folder_name
+    output_dir.mkdir(parents=True, exist_ok=True)
+    safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", plot_name).strip("_")
 
     for period in period_order:
         period_df = grouped[grouped['period'] == period].copy()

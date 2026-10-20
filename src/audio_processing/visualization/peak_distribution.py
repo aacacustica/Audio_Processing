@@ -19,7 +19,7 @@ def configure_axis(ax,df,timezone_name):
 
         return ax
 
-def render_peak_distribution(peaks, output_dir:Path, plot_name:str, correction_db:float=0.0, timezone_name:str="Europe/Madrid")-> tuple[Path,Path,Path] | None
+def render_peak_distribution(peaks, output_dir:Path, plot_name:str, correction_db:float=0.0, timezone_name:str="Europe/Madrid")-> tuple[Path,Path,Path] | None:
 
     records = [
         {

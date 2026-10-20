@@ -25,7 +25,7 @@ profiles:
     run_ai: true
     run_peaks: true
     run_alarms: true
-    run_basic_visualization: false
+    run_basic_visualization: true
     run_advanced_visualization: true
 
 discovery:

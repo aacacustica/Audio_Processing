@@ -21,6 +21,7 @@ from audio_processing.visualization.prediction_laeq_class import render_predicti
 from audio_processing.visualization.prediction_stack_bar import render_prediciton_stack_bar
 from audio_processing.visualization.prediciton_map import render_prediction_map
 from audio_processing.visualization.prediction_laeq_period import render_prediction_laeq_period
+from audio_processing.visualization.prediction_laeq_day import render_prediction_laeq_day
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -706,35 +707,38 @@ class CampaignPipeline:
                 )
 
                 four_hour_output = render_prediction_laeq_period(
-                    prediction_measurements=prediction_measurements,
-                    class_map_path=class_map_path,
-                    taxonomy=self.config.visualization.taxonomy,
-                    output_dir=prediction_output_dir,
-                    plot_name=source.name,
-                    correction_db=float(correction_db),
-                    timezone_name=timezone_name,
-                    period_scheme='four_hour'
+                    prediction_measurements = prediction_measurements,
+                    class_map_path          = class_map_path,
+                    taxonomy                = self.config.visualization.taxonomy,
+                    output_dir              = prediction_output_dir,
+                    plot_name               = source.name,
+                    correction_db           = float(correction_db),
+                    timezone_name           = timezone_name,
+                    period_scheme           = 'four_hour'
                 )
 
                 if prediction_outputs:
                      for period, (html_path, csv_path) in prediction_outputs.items():
-                        self.logger.info(
-                            "Treemap LAeq por clase y periodo %s (%s): HTML = %s, CSV = %s",
-                            source.name,
-                            period,
-                            html_path,
-                            csv_path,
-                        )
-
+                        self.logger.info(f"Treemap LAeq por clase y periodo {source.name} , {period}: HTML = {html_path}, CSV = {csv_path}")
+                            
                 if four_hour_output:
                     for period, (html_path, csv_path) in four_hour_output.items():
-                        self.logger.info(
-                            "Treemap LAeq por clase y franja de 4 horas %s (%s): HTML = %s, CSV = %s",
-                            source.name,
-                            period,
-                            html_path,
-                            csv_path,
-                        )
+                        self.logger.info(f"Treemap LAeq por clase y franja de 4 horas {source.name} , {period}: HTML = {html_path}, CSV = {csv_path}")
+                            
+                daily_outpus = render_prediction_laeq_day(
+                    prediction_measurements = prediction_measurements,
+                    class_map_path          = class_map_path,
+                    taxonomy                = self.config.visualization.taxonomy,
+                    output_dir              = prediction_output_dir,
+                    plot_name               = source.name,
+                    correction_db           = float(correction_db),
+                    timezone_name           = timezone_name,
+                )
+
+                if daily_outpus:
+                    for day, (html_path,csv_path) in daily_outpus.items():
+                        self.logger.info(f"Treemap LAeq por clase y día {source.name}, {day}: HTML = {html_path}, CSV = {csv_path}")
+                
 
                 
                 

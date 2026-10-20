@@ -22,6 +22,7 @@ from audio_processing.visualization.prediction_stack_bar import render_predicito
 from audio_processing.visualization.prediciton_map import render_prediction_map
 from audio_processing.visualization.prediction_laeq_period import render_prediction_laeq_period
 from audio_processing.visualization.prediction_laeq_day import render_prediction_laeq_day
+from audio_processing.visualization.prediction_laeq_week import render_prediction_laeq_week
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -738,6 +739,20 @@ class CampaignPipeline:
                 if daily_outpus:
                     for day, (html_path,csv_path) in daily_outpus.items():
                         self.logger.info(f"Treemap LAeq por clase y día {source.name}, {day}: HTML = {html_path}, CSV = {csv_path}")
+
+                weekly_outputs = render_prediction_laeq_week(
+                    prediction_measurements = prediction_measurements,
+                    class_map_path          = class_map_path,
+                    taxonomy                = self.config.visualization.taxonomy,
+                    output_dir              = prediction_output_dir,
+                    plot_name               = source.name,
+                    correction_db           = float(correction_db),
+                    timezone_name           = timezone_name
+                )
+
+                if weekly_outputs:
+                    for week_start, (html_path,csv_path) in weekly_outputs.items():
+                        self.logger.info(f"Treemap LAeq por clase y semana {source.name} , {week_start}: HTML = {html_path}, CSV = {csv_path}")
                 
 
                 

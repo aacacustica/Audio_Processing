@@ -14,6 +14,7 @@ def configure_axis(ax,df,timezone_name):
         ax.set_xlim(df["datetime"].min(), df["datetime"].max())
 
         ax.xaxis.set_major_locator(mdates.HourLocator(interval=4, tz=timezone_name))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d %H:%M", tz=timezone_name))
         ax.tick_params(axis="x", labelrotation=90)
         ax.grid(True)
 
@@ -56,6 +57,7 @@ def render_peak_distribution(peaks, output_dir:Path, plot_name:str, correction_d
         ax = configure_axis(ax,df,timezone_name)
         ax.set_title(f"{plot_name} Valores LAeq a lo largo del tiempo")
         fig.tight_layout()
+        fig.savefig(standard_png,dpi=150)
     finally:
          plt.close(fig)
 

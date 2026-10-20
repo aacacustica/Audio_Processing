@@ -117,29 +117,9 @@ def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, 
         html_path = output_dir / f"{safe_name}_LAeq_class_period_{period}.html"
         csv_path = output_dir / f"{safe_name}_LAeq_class_period_{period}.csv"
 
-        fig = px.treemap(
-            period_df,
-            path=[px.Constant(period), category_column],
-            values="number",
-            color=category_column,
-            color_discrete_map=color_map,
-            hover_data={"LAeq": True, "number": True},
-            custom_data=["LAeq"],
-        )
-        fig.update_layout(
-            title=(
-                f"{plot_name} | Promedio Energético (LAeq) "
-                f"por Periodo {period} por Clases"
-            )
-        )
-        fig.update_traces(
-            hovertemplate=(
-                "<b>%{label}</b><br>"
-                "LAeq: %{customdata[0]:.2f} dB<br>"
-                "Count: %{value}"
-            ),
-            texttemplate="%{label}<br><br>LAeq: %{customdata[0]:.2f} dB",
-        )
+        fig = px.treemap(period_df,path=[px.Constant(period), category_column],values="number",color=category_column,color_discrete_map=color_map,hover_data={"LAeq": True, "number": True},custom_data=["LAeq"],)
+        fig.update_layout(title=(f"{plot_name} | Promedio Energético (LAeq) "f"por Periodo {period} por Clases"))
+        fig.update_traces(hovertemplate=("<b>%{label}</b><br>""LAeq: %{customdata[0]:.2f} dB<br>""Count: %{value}"),texttemplate="%{label}<br><br>LAeq: %{customdata[0]:.2f} dB",)
 
         fig.write_html(html_path)
         period_df.to_csv(csv_path, index=False)

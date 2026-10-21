@@ -76,3 +76,55 @@ def render_peak_frequency_heatmaps(peaks,output_dir: Path, plot_name: str, timez
         
     }
 
+def render_peak_frequency_heatmaps_week(peaks,output_dir: Path, plot_name: str, timezone_name: str = "Europe/Madrid") -> dict[str,tuple[Path,Path]] | None :
+
+    records = [
+        {'datetime' : peak.datetime_pico}
+        for peak in peaks if peak.datetime_pico is not None
+    ]
+
+    if not records: return None
+
+    data = pd.DataFrame(records)
+
+    data['datetime'] = (pd.to_datetime(data['datetime'],utc=True).dt.tz_convert(timezone_name))
+
+    data['fecha_local'] = data['datetime'].dt.date
+    data['hora'] = data['datetime'].dt.hour
+    data['franja_4h'] = (data['hora'] // 4 ) * 4
+
+    data['semana_inicio'] = (data['datetime'].dt.normalize() - pd.to_timedelta(data['datetime'].dt.dayofweek,unit="D")).dt.date
+
+    output_dir = Path(output_dir)
+    safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", plot_name).strip("_")
+    weekly_outputs = {}
+
+    for week_start,week_data in data.groupby('semana_inicio',sort=True):
+        
+        week_start = pd.Timestamp(week_start)
+        week_dates = pd.date_range(week_start,periods=7,freq='D').date
+        week_folder = output_dir / f"week_{week_start:%Y-%m-%d}"
+        week_folder.mkdir(parents=True,exist_ok=True)
+
+        hourly = (week_data.groupby(['fecha_local','hora']).size().reindex(pd.MultiIndex.from_product([week_dates,range(24)],names=['fecha_local','hora']),fill_value=0).unstack('hora'))
+
+        four_hour = (week_data.groupby(['fecha_local','hora']).size().reindex(pd.MultiIndex.from_product([week_dates,range(0,24,4)],names=['fecha_local','franja_4h']),fill_value=0).unstack('franja_4h'))
+
+        weekly_outputs[week_start.date().isoformat()] = {
+            'horario': _save_heatmap(
+                matrix      = hourly,
+                output_dir  = week_folder,
+                filename    = f"{safe_name}_peak_frequency_hourly",
+                title       = f"{plot_name} | Picos por día y hora | Semana {week_start:%Y-%m-%d}",
+                x_labels    = [f"{hour:02d}:00" for hour in range(24)]
+            ),
+            'cada_4h':_save_heatmap(
+                matrix      = four_hour,
+                output_dir  = week_folder,
+                filename    = f"{safe_name}_peak_frequency_4h",
+                title       = f"{plot_name} | Picos por día y franjas de 4 h | Semana {week_start:%Y-%m-%d}",
+                x_labels    = [f"{hour:02d}:00–{hour + 4:02d}:00" for hour in range(0,24,4)]
+            )
+        }
+
+    return weekly_outputs

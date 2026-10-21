@@ -24,7 +24,7 @@ from audio_processing.visualization.prediction_laeq_period import render_predict
 from audio_processing.visualization.prediction_laeq_day import render_prediction_laeq_day
 from audio_processing.visualization.prediction_laeq_week import render_prediction_laeq_week
 from audio_processing.visualization.peak_distribution import render_peak_distribution
-from audio_processing.visualization.peak_frequency_heatmap import render_peak_frequency_heatmaps
+from audio_processing.visualization.peak_frequency_heatmap import render_peak_frequency_heatmaps,render_peak_frequency_heatmaps_week
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -811,6 +811,20 @@ class CampaignPipeline:
                 if result_peaks:
                     for period,(png_path,csv_path) in result_peaks.items():
                         self.logger.info(f"Mapa de frecuencia de picos {source.name}, {period}: PNG = {png_path} , CSV = {csv_path}")
+
+                result_peaks = render_peak_frequency_heatmaps_week(
+                    peaks           = peaks,
+                    output_dir      = output_dir,
+                    plot_name       = source.name,
+                    timezone_name   = self.config.campaign.timezone
+                )
+
+                if result_peaks:
+                    for week, outputs in result_peaks.items():
+                        for period, (png_path, csv_path) in outputs.items():
+
+                            self.logger.info(f"Mapa semanal de frecuencia de picos {source.name}, semana {week}, {period}: PNG = {png_path}, CSV = {csv_path}")
+                
                 
                 
         except Exception:

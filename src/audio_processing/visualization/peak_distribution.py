@@ -1,5 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
+from collections import defaultdict
 import re
 
 import matplotlib.dates as mdates
@@ -87,6 +88,40 @@ def render_peak_distribution(peaks, output_dir:Path, plot_name:str, correction_d
          plt.close(fig)
 
     return standard_png,night_png,csv_path
+
+def render_peak_distribution_week(peaks,output_dir:Path, plot_name: str, correction_db: float = 0.0, timezone_name: str = "Europe/Madrid") -> dict[str,tuple[Path,Path,Path]] | None:
+
+    valid_peaks = [ peak for peak in peaks if peak.datetime_pico is not None and peak.leq_db is not None]
+
+    if not valid_peaks: return None
+
+    peaks_by_week = defaultdict(list)
+
+    for peak in valid_peaks:
+
+        local_datetime  = pd.to_datetime(peak.datetime_pico,utc=True).tz_convert(timezone_name)
+        week_start      = (local_datetime.normalize() - pd.Timedelta(days=local_datetime.dayofweek)).date()
+        
+        peaks_by_week[week_start].append(peak)
+
+    outptu_dir = Path(output_dir)
+    weekly_outputs = {}
+
+    for week_start,week_peaks in sorted(peaks_by_week.items()):
+        
+        week_folder = output_dir / f"week_{week_start:%Y-%m-%d}"
+        week_folder.mkdir(parents= True,exist_ok=True)
+
+        weekly_outputs[week_start.isoformat()] = render_peak_distribution(
+            peaks           = week_peaks,
+            output_dir      = week_folder,
+            plot_name       = f"{plot_name}_{week_start:%Y-%m-%d}",
+            correction_db   = correction_db,
+            timezone_name   = timezone_name
+        )
+
+    return weekly_outputs
+
 
 
     

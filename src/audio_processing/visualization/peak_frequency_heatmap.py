@@ -108,7 +108,7 @@ def render_peak_frequency_heatmaps_week(peaks,output_dir: Path, plot_name: str, 
 
         hourly = (week_data.groupby(['fecha_local','hora']).size().reindex(pd.MultiIndex.from_product([week_dates,range(24)],names=['fecha_local','hora']),fill_value=0).unstack('hora'))
 
-        four_hour = (week_data.groupby(['fecha_local','hora']).size().reindex(pd.MultiIndex.from_product([week_dates,range(0,24,4)],names=['fecha_local','franja_4h']),fill_value=0).unstack('franja_4h'))
+        four_hour = (week_data.groupby(['fecha_local','franja_4h']).size().reindex(pd.MultiIndex.from_product([week_dates,range(0,24,4)],names=['fecha_local','franja_4h']),fill_value=0).unstack('franja_4h'))
 
         weekly_outputs[week_start.date().isoformat()] = {
             'horario': _save_heatmap(

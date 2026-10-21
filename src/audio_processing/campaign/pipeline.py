@@ -824,6 +824,7 @@ class CampaignPipeline:
                         for period, (png_path, csv_path) in outputs.items():
 
                             self.logger.info(f"Mapa semanal de frecuencia de picos {source.name}, semana {week}, {period}: PNG = {png_path}, CSV = {csv_path}")
+
                 
                 
                 

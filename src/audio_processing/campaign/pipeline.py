@@ -24,6 +24,7 @@ from audio_processing.visualization.prediction_laeq_period import render_predict
 from audio_processing.visualization.prediction_laeq_day import render_prediction_laeq_day
 from audio_processing.visualization.prediction_laeq_week import render_prediction_laeq_week
 from audio_processing.visualization.peak_distribution import render_peak_distribution
+from audio_processing.visualization.peak_frequency_heatmap import render_peak_frequency_heatmaps
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -799,6 +800,17 @@ class CampaignPipeline:
                     png_path,night_png_path,csv_path = result_peaks
 
                     self.logger.info(f"Distribución de picos {source.name}: PNG = {png_path} , PNG nocturno = {night_png_path} , CSV = {csv_path}")
+
+                result_peaks = render_peak_frequency_heatmaps(
+                    peaks           = peaks,
+                    output_dir      = output_dir,
+                    plot_name       = source.name,
+                    timezone_name   = self.config.campaign.timezone,
+                )
+
+                if result_peaks:
+                    for period,(png_path,csv_path) in result_peaks.items():
+                        self.logger.info(f"Mapa de frecuencia de picos {source.name}, {period}: PNG = {png_path} , CSV = {csv_path}")
                 
                 
         except Exception:

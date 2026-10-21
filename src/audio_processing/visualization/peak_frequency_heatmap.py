@@ -29,7 +29,7 @@ def _save_heatmap(matrix: pd.DataFrame, * , output_dir: Path, filename: str, tit
 
         fig.colorbar(image,ax=ax,label="Número de picos")
         fig.tight_layout()
-        fig.save(png_path,dpi=150)
+        fig.savefig(png_path,dpi=150)
 
     finally:
         plt.close(fig)
@@ -43,7 +43,7 @@ def render_peak_frequency_heatmaps(peaks,output_dir: Path, plot_name: str, timez
     if not records: return None
 
     data = pd.DataFrame(records)
-    data['datetime'] = (pd.to_datetime(data['datetime'].dt.date))
+    data['datetime'] = (pd.to_datetime(data['datetime'],utc=True).dt.tz_convert(timezone_name))
     data['fecha_local'] = data['datetime'].dt.date
     data['hora'] = data['datetime'].dt.hour
 
@@ -51,7 +51,7 @@ def render_peak_frequency_heatmaps(peaks,output_dir: Path, plot_name: str, timez
     hourly_counts       = data.groupby(['fecha_local','hora']).size()
     hourly              = (hourly_counts.reindex(pd.MultiIndex.from_product([dates,range(24)],names=['fecha_local','hora']),fill_value=0).unstack("hora"))
     four_hour_data      = data.assign(franja_4h=(data['hora'] // 4)*4)
-    four_hour_counts    = four_hour_data.groupby['fecha_local','franja_4h'].size()
+    four_hour_counts    = four_hour_data.groupby(['fecha_local','franja_4h']).size()
     four_hour           = (four_hour_counts.reindex(pd.MultiIndex.from_product([dates,range(0,24,4)],names=['fecha_local','franja_4h']),fill_value=0).unstack("franja_4h"))
 
     output_dir          = Path(output_dir)

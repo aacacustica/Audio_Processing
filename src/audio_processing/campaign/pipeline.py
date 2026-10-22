@@ -887,7 +887,7 @@ class CampaignPipeline:
                     self.logger.info(f"Treemap LAeq de picos por clase {source.name}: HTML = {html_path}, CSV = {csv_path}")
 
                 weekly_peak_class_outputs = render_prediciton_peak_laeq_week(
-                    preak_prediction_measurements   = preak_prediction_measurements,
+                    peak_prediction_measurements    = preak_prediction_measurements,
                     class_map_path                  = class_map_path,
                     taxonomy                        = self.config.visualization.taxonomy,
                     output_dir                      = prediction_output_dir,
@@ -897,7 +897,7 @@ class CampaignPipeline:
                 )
 
                 if weekly_peak_class_outputs:
-                    for week_start, (html_path,csv_path) in weekly_peak_class_outputs:
+                    for week_start, (html_path,csv_path) in weekly_peak_class_outputs.items():
                         self.logger.info(f"Treemap semanal LAeq de picos por clase {source.name}, {week_start}: HTML = {html_path}, CSV = {csv_path}")
 
                             

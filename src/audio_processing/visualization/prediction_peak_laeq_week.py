@@ -32,7 +32,7 @@ def render_prediciton_peak_laeq_week(peak_prediction_measurements,class_map_path
 
         seen_pairs.add(pair_key)
 
-        timestamp = pd.Timestamps(measurement.datetime)
+        timestamp = pd.Timestamp(measurement.datetime)
 
         if timestamp.tzinfo is None: timestamp = timestamp.tz_localize(timezone_name)
         else: timestamp = timestamp.tz_convert(timezone_name)
@@ -43,7 +43,7 @@ def render_prediciton_peak_laeq_week(peak_prediction_measurements,class_map_path
         records.append(
             {
                 "class_name" : prediction.class_name,
-                "week_name" : week_start.isoformat(),
+                "week_start" : week_start.isoformat(),
                 "la_db" : measurement.la_db + correction_db
             }
         )

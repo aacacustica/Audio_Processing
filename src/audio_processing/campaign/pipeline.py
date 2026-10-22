@@ -793,6 +793,8 @@ class CampaignPipeline:
 
                 if point_config is not None:correction_db = (getattr(point_config,"correction_db",0.0))
                 else: correction_db = 0.0
+
+                if not class_map_path.is_absolute(): class_map_path = Path(self.config._config_dir) / class_map_path
                     
                 result_peaks = render_peak_distribution(
                     peaks           = peaks,

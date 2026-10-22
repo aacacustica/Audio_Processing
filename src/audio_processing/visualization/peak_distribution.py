@@ -104,7 +104,7 @@ def render_peak_distribution_week(peaks,output_dir:Path, plot_name: str, correct
         
         peaks_by_week[week_start].append(peak)
 
-    outptu_dir = Path(output_dir)
+    output_dir = Path(output_dir)
     weekly_outputs = {}
 
     for week_start,week_peaks in sorted(peaks_by_week.items()):

@@ -16,18 +16,12 @@ import logging
 from utils import *
 from PyOctaveBand_reduced import *
 
-
-
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s', 
     filename='leq_level.log', 
     filemode='w'
     )
-
-
-
-
 
 class LeqLevelOctave:
     def __init__(self, fs, calibration_constant, window_size):

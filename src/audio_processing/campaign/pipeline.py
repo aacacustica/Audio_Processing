@@ -25,6 +25,7 @@ from audio_processing.visualization.prediction_laeq_day import render_prediction
 from audio_processing.visualization.prediction_laeq_week import render_prediction_laeq_week
 from audio_processing.visualization.peak_distribution import render_peak_distribution,render_peak_distribution_week
 from audio_processing.visualization.peak_frequency_heatmap import render_peak_frequency_heatmaps,render_peak_frequency_heatmaps_week
+from audio_processing.visualization.peak_density import render_peak_density
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -838,9 +839,19 @@ class CampaignPipeline:
                         if paths:
                             standard_png, night_png, csv_path = paths
                             self.logger.info(f"Distribución de picos semanal {source.name}, {week}: PNG = {standard_png}, PNG nocturno = {night_png}, CSV = {csv_path}")
+
+                
+                result_peaks = render_peak_density(
+                    peaks           = peaks,
+                    output_dir      = output_dir,
+                    plot_name       = source.name,
+                    timezone_name   = self.config.campaign.timezone
+                )
+
+                if result_peaks:
+                    for kind, (png_path, csv_path) in result_peaks.items():
+                        self.logger.info(f"Distribución horaria de picos {source.name} ({kind}): PNG = {png_path}, CSV = {csv_path}" )
                             
-                
-                
                 
                 
         except Exception:

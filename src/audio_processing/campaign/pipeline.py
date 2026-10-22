@@ -26,6 +26,7 @@ from audio_processing.visualization.prediction_laeq_week import render_predictio
 from audio_processing.visualization.peak_distribution import render_peak_distribution,render_peak_distribution_week
 from audio_processing.visualization.peak_frequency_heatmap import render_peak_frequency_heatmaps,render_peak_frequency_heatmaps_week
 from audio_processing.visualization.peak_density import render_peak_density,render_peak_density_week
+from audio_processing.visualization.prediciton_peak_laeq_class import render_prediction_peak_laeq_class
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -763,6 +764,7 @@ class CampaignPipeline:
             if self.config.execution.stop_on_error: raise
 
     def run_advanced_visualization(self,source) -> None:
+
         if self.db is None: raise RuntimeError(f"La base de datos debe de estar habilitada para visualizar picos.")
 
         try:
@@ -774,21 +776,24 @@ class CampaignPipeline:
                     device_type     = source.device_type
                 )
 
-                peaks = PeakRepository(session).list_by_context(context.id_contexto)
+                peaks                           = PeakRepository(session).list_by_context(context.id_contexto)
+                point_config                    = getattr(self.config.points, source.name, None)
 
                 if not peaks: 
                     self.logger.info(f"No hay picos para visualizar en: {source.source_id}.")
                     return
 
-                point_config = getattr(self.config.points, source.name, None)
+                output_dir                      = Path(source.output_path) / self.config.outputs.subfolders.spl.general_folder_name / self.config.outputs.subfolders.spl.visualization_folder_name
+                peak_measurement_ids            = {peak.id_medicion_pico for peak in peaks if peak.id_medicion_pico is not None}
+                prediction_measurements         = (PredictionRepository(session).list_with_measurements_for_context(context.id_contexto))
+                preak_prediction_measurements   = [(prediction,measurement) for prediction,measurement in prediction_measurements if measurement.id_medicion in peak_measurement_ids]
+                class_map_path                  = Path(self.config.visualization.class_map_csv)
+                prediction_output_dir           = Path(source.output_path) / self.config.outputs.subfolders.ai.general_folder_name / self.config.outputs.subfolders.ai.visualization_folder_name
 
-                if point_config is not None:
-                    correction_db = (getattr(point_config,"correction_db",0.0))
-                else:
-                    correction_db = 0.0
 
-                output_dir = Path(source.output_path) / self.config.outputs.subfolders.spl.general_folder_name / self.config.outputs.subfolders.spl.visualization_folder_name
-
+                if point_config is not None:correction_db = (getattr(point_config,"correction_db",0.0))
+                else: correction_db = 0.0
+                    
                 result_peaks = render_peak_distribution(
                     peaks           = peaks,
                     output_dir      = output_dir,
@@ -864,6 +869,20 @@ class CampaignPipeline:
                         for kind,(png_path,csv_path) in outputs.items():
 
                             self.logger.info(f"Distribución horaria semanal de picos {source.name}, semana {week} ({kind}): PNG = {png_path}, CSV = {csv_path}")
+
+                peak_class_outputs = render_prediction_peak_laeq_class(
+                    peak_prediction_measurements = preak_prediction_measurements,
+                    class_map_path               = class_map_path,
+                    taxonomy                     = self.config.visualization.taxonomy,
+                    output_dir                   = prediction_output_dir,
+                    plot_name                    = source.name,
+                    correction_db                = float(correction_db)
+                )
+
+                if peak_class_outputs:
+                    html_path,csv_path = peak_class_outputs
+                    self.logger.info(f"Treemap LAeq de picos por clase {source.name}: HTML = {html_path}, CSV = {csv_path}")
+
                             
                 
                 

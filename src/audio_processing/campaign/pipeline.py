@@ -27,6 +27,7 @@ from audio_processing.visualization.peak_distribution import render_peak_distrib
 from audio_processing.visualization.peak_frequency_heatmap import render_peak_frequency_heatmaps,render_peak_frequency_heatmaps_week
 from audio_processing.visualization.peak_density import render_peak_density,render_peak_density_week
 from audio_processing.visualization.prediciton_peak_laeq_class import render_prediction_peak_laeq_class
+from audio_processing.visualization.prediction_peak_laeq_week import render_prediciton_peak_laeq_week
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -884,6 +885,20 @@ class CampaignPipeline:
                 if peak_class_outputs:
                     html_path,csv_path = peak_class_outputs
                     self.logger.info(f"Treemap LAeq de picos por clase {source.name}: HTML = {html_path}, CSV = {csv_path}")
+
+                weekly_peak_class_outputs = render_prediciton_peak_laeq_week(
+                    preak_prediction_measurements   = preak_prediction_measurements,
+                    class_map_path                  = class_map_path,
+                    taxonomy                        = self.config.visualization.taxonomy,
+                    output_dir                      = prediction_output_dir,
+                    plot_name                       = source.name,
+                    correction_db                   = float(correction_db),
+                    timezone_name                   = self.config.campaign.timezone
+                )
+
+                if weekly_peak_class_outputs:
+                    for week_start, (html_path,csv_path) in weekly_peak_class_outputs:
+                        self.logger.info(f"Treemap semanal LAeq de picos por clase {source.name}, {week_start}: HTML = {html_path}, CSV = {csv_path}")
 
                             
                 

@@ -8,7 +8,7 @@ import plotly.express as px
 from audio_processing.visualization.configs import PORT_COLORS, URBAN_COLORS
 
 
-def render_prediction_peak_laeq_boxplot_week(peak_prediction_measurements, class_map_path: Path, taxonomy: str, output_dir: Path, plot_name: str, correction_db: float = 0.0, timezone_name: str = 'Europe/Madrid') -> str[str,tuple[Path,Path]] | None:
+def render_prediction_peak_laeq_boxplot_week(peak_prediction_measurements, class_map_path: Path, taxonomy: str, output_dir: Path, plot_name: str, correction_db: float = 0.0, timezone_name: str = 'Europe/Madrid') -> dict[str,tuple[Path,Path]] | None:
 
     if taxonomy == "urban":
         category_column = "Brown_Level_2"

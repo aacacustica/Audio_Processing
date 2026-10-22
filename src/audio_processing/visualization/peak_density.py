@@ -4,7 +4,9 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
 from scipy.stats import gaussian_kde
+from collections import defaultdict
 
 def render_peak_density(peaks,output_dir:Path,plot_name:str,timezone_name: str = "Europe/Madrid") -> dict[str,tuple[Path,Path]] | None:
 
@@ -67,7 +69,7 @@ def render_peak_density(peaks,output_dir:Path,plot_name:str,timezone_name: str =
                 }
             )
 
-            density_df.to_csv(density_csv)
+            density_df.to_csv(density_csv,index=False)
             fig,ax = plt.subplots(figsize=(12,6))
 
             try:
@@ -88,3 +90,30 @@ def render_peak_density(peaks,output_dir:Path,plot_name:str,timezone_name: str =
             pass
 
     return outputs
+
+def render_peak_density_week(peaks,output_dir: Path, plot_name: str, timezone_name: str = "Europe/Madrid") ->dict[str, dict[str,tuple[Path,Path]]] | None:
+
+    peaks_by_week = defaultdict(list)
+    
+    for peak in peaks:
+        if peak.datetime_pico is None: continue
+
+        local_datetime = pd.to_datetime(peak.datetime_pico,utc=True).tz_convert(timezone_name)
+
+        week_start = (local_datetime.normalize() - pd.Timedelta(days = local_datetime.dayofweek)).date()
+        peaks_by_week[week_start].append(peak)
+
+    if not peaks_by_week: return None
+
+    output_dir = Path(output_dir)
+    weekly_outputs = {}
+
+    for week_start, week_peaks in sorted(peaks_by_week.items()):
+        week_folder = output_dir / f"week_{week_start:%Y-%m-%d}"
+        week_folder.mkdir(parents=True,exist_ok=True)
+
+        outputs = render_peak_density(peaks = week_peaks,output_dir=week_folder,plot_name = f"{plot_name}_{week_start:%Y-%m-%d}",timezone_name=timezone_name)
+
+        if outputs: weekly_outputs[week_start.isoformat()] = outputs
+
+    return weekly_outputs or None

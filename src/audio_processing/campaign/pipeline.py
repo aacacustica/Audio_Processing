@@ -863,7 +863,7 @@ class CampaignPipeline:
                     for week,outputs in result_peaks.items():
                         for kind,(png_path,csv_path) in outputs.items():
 
-                            self.loger.info(f"Distribución horaria semanal de picos {source.name}, semana {week} ({kind}): PNG = {png_path}, CSV = {csv_path}")
+                            self.logger.info(f"Distribución horaria semanal de picos {source.name}, semana {week} ({kind}): PNG = {png_path}, CSV = {csv_path}")
                             
                 
                 

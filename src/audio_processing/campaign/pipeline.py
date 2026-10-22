@@ -29,6 +29,7 @@ from audio_processing.visualization.peak_density import render_peak_density,rend
 from audio_processing.visualization.prediction_peak_laeq_class import render_prediction_peak_laeq_class
 from audio_processing.visualization.prediction_peak_laeq_week import render_prediciton_peak_laeq_week
 from audio_processing.visualization.prediction_peak_laeq_boxplot import render_prediction_peak_laeq_boxplot
+from audio_processing.visualization.prediction_peak_laeq_boxplot_week import render_prediction_peak_laeq_boxplot_week
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -913,6 +914,20 @@ class CampaignPipeline:
                 if boxplot_outputs:
                     html_path,csv_path = boxplot_outputs
                     self.logger.info(f"Boxplot LAeq de picos por clase {source.name}: HTML = {html_path}, CSV = {csv_path}")
+
+                boxplot_week_outputs = render_prediction_peak_laeq_boxplot_week(
+                    peak_prediction_measurements    = preak_prediction_measurements,
+                    class_map_path                  = class_map_path,
+                    taxonomy                        = self.config.visualization.taxonomy,
+                    output_dir                      = prediction_output_dir,
+                    plot_name                       = source.name
+                    correction_db                   = float(correction_db)
+                )
+
+                if boxplot_week_outputs:
+                    for week_start, (html_path,csv_path) in boxplot_week_outputs:
+                        self.logger.info(f"Boxplot semanal LAeq de picos por clase {source.name} ({week_start}): HTML = {html_path}, CSV = {csv_path}")
+                
                 
                 
         except Exception:

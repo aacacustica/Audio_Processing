@@ -22,7 +22,7 @@ def render_peak_density(peaks,output_dir:Path,plot_name:str,timezone_name: str =
 
     outputs = {}
 
-    counts = (hours.dt.floor().astype(int).value_counts().reindex(range(24),fill_value=0).sort_index())
+    counts = (np.floor(hours).astype(int).value_counts().reindex(range(24),fill_value=0).sort_index())
 
     counts_df = pd.DataFrame({
         "hora_local":range(24),
@@ -42,7 +42,7 @@ def render_peak_density(peaks,output_dir:Path,plot_name:str,timezone_name: str =
                ylabel = "Número de picos",
                xticks = range(24),
                xlim = (-0.5,23.5))
-        ax.griod(axis='y',alpha=0.3)
+        ax.grid(axis='y',alpha=0.3)
         fig.tight_layout()
         fig.savefig(counts_png,dpi=150)
 
@@ -58,33 +58,33 @@ def render_peak_density(peaks,output_dir:Path,plot_name:str,timezone_name: str =
         density_png = output_dir / f"{safe_name}_peak_density_by_hour.png"
         density_csv = output_dir / f"{safe_name}_peak_density_by_hour.csv"
 
-    try:
-        density = gaussian_kde(wrapped_hours)(grid) * 3
-        density_df = pd.DataFrame(
-            {
-                "hora_local":grid,
-                "densidad":density
-            }
-        )
-
-        density_df.to_csv(density_csv)
-        fig,ax = plt.subplots(figsize=(12,6))
-
         try:
-            ax.plot(grid,density)
-            ax.set(title    = f"{plot_name} | Densidad horaria de picos",
-                   xlabel   = "Hora local",
-                   ylabel   = "Densidad",
-                   xlim     = (0,24),
-                   xticks   = range(0,25,2))
-            ax.grid(alpha=0.3)
-            fig.tight_layout()
-            fig.savefig(density_png,dpi=150)
-        finally:
-            plt.close(fig)
+            density = gaussian_kde(wrapped_hours)(grid) * 3
+            density_df = pd.DataFrame(
+                {
+                    "hora_local":grid,
+                    "densidad":density
+                }
+            )
 
-        outputs['densidad'] = (density_png,density_csv)
-    except (ValueError,np.linalg.LinAlgError):
-        pass
+            density_df.to_csv(density_csv)
+            fig,ax = plt.subplots(figsize=(12,6))
+
+            try:
+                ax.plot(grid,density)
+                ax.set(title    = f"{plot_name} | Densidad horaria de picos",
+                    xlabel   = "Hora local",
+                    ylabel   = "Densidad",
+                    xlim     = (0,24),
+                    xticks   = range(0,25,2))
+                ax.grid(alpha=0.3)
+                fig.tight_layout()
+                fig.savefig(density_png,dpi=150)
+            finally:
+                plt.close(fig)
+
+            outputs['densidad'] = (density_png,density_csv)
+        except (ValueError,np.linalg.LinAlgError):
+            pass
 
     return outputs

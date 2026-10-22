@@ -920,13 +920,14 @@ class CampaignPipeline:
                     class_map_path                  = class_map_path,
                     taxonomy                        = self.config.visualization.taxonomy,
                     output_dir                      = prediction_output_dir,
-                    plot_name                       = source.name
+                    plot_name                       = source.name,
                     correction_db                   = float(correction_db)
                 )
 
                 if boxplot_week_outputs:
                     for week_start, (html_path,csv_path) in boxplot_week_outputs:
                         self.logger.info(f"Boxplot semanal LAeq de picos por clase {source.name} ({week_start}): HTML = {html_path}, CSV = {csv_path}")
+
                 
                 
                 

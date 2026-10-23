@@ -774,7 +774,7 @@ class CampaignPipeline:
                     taxonomy                        = self.config.visualization.taxonomy,
                     output_dir                      = prediction_output_dir,
                     plot_name                       = source.name,
-                    timezone_name                   = self.config.campaign.timezone
+                    timezone_name                   = timezone_name
                 )
 
                 if treemap_outputs:
@@ -785,7 +785,7 @@ class CampaignPipeline:
                     third_octave_measurements       = third_octave_pairs,
                     output_dir                      = output_dir,
                     plot_name                       = source.name,
-                    timezone_name                   = self.config.campaign.timezone
+                    timezone_name                   = timezone_name
                 )
 
                 if spectrogram_outputs:

@@ -580,7 +580,7 @@ class CampaignPipeline:
 
                 prediction_output_dir   = Path(source.output_path) / self.config.outputs.subfolders.ai.general_folder_name / self.config.outputs.subfolders.ai.visualization_folder_name
                 bands_by_measurement    = {row.id_medicion: row for row in third_octave_measurements}
-                third_octave_pairs      = [(measurement,bands_by_measurement[measurements.id_medicion]) for measurement in measurements if measurement.id_medicion in bands_by_measurement]
+                third_octave_pairs      = [(measurement,bands_by_measurement[measurement.id_medicion]) for measurement in measurements if measurement.id_medicion in bands_by_measurement]
 
                 if not class_map_path.is_absolute():
                     class_map_path = Path(self.config._config_dir) / class_map_path
@@ -782,7 +782,7 @@ class CampaignPipeline:
                         self.logger.info(f"Treemap de predicciones {source.name}, {period}: HTML = {html_path}, CSV = {csv_path}")
 
                 spectrogram_outputs = render_third_octave_spectrogram(
-                    third_octave_measurements       = third_octave_measurements,
+                    third_octave_measurements       = third_octave_pairs,
                     output_dir                      = output_dir,
                     plot_name                       = source.name,
                     timezone_name                   = self.config.campaign.timezone

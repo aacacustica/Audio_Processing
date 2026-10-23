@@ -607,7 +607,7 @@ def plot_prediction_stack_bar(df_Pred: pd.DataFrame, yamnet_csv, taxonomy_map, f
     enriched = _with_time_features(enriched)
     enriched["Día"] = enriched["date_day"]
 
-    parent_class,detail_class = _taxonomy_settings(taxonomy_map, enriched, logger,)
+    parent_class,detail_class,color_palette = _taxonomy_settings(taxonomy_map, enriched, logger,)
 
     grouped = (enriched.dropna(subset=[detail_class, "Día"]).groupby(["Día", detail_class], observed=True,).size().reset_index(name="Distribución de clases"))
 

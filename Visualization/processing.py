@@ -138,7 +138,7 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
             resultados_dir              = os.path.join(*resultados_dir,result_dir_name)    
 
         folder_output_dir                   = os.path.join(data_registers_folder,spl_string, graphics_string)
-        predictions_folder                  = os.path.join(resultados_dir,point_name,"AI_MODEL","Predictions")
+        predictions_folder                  = os.path.join(resultados_dir,point_name,"AUDIOMOTH","AI_MODEL","Predictions")
         predictions_files                   = glob.glob(os.path.join(predictions_folder, "*.csv"))
         predictions_visualization_folder    = predictions_folder.replace("Predictions", "Visualizations")
        

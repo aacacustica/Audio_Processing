@@ -1154,7 +1154,7 @@ def taxonomy_column_for_level(level: int):
         1: 'taxonomy_l1',
         2: 'taxonomy_l2',
         3: 'taxonomy_l3'
-    }[level]
+    }
 
     if level not in columns: raise ValueError(f"Nivel taxonómico no válido: {level}")
 
@@ -1189,7 +1189,7 @@ def enrich_predictions(predictions: pd.DataFrame , yamnet_csv: pd.DataFrame , ta
     else:
         taxonomy_family = 'brown'
 
-    enriched = add_taxonomy_columns(predictions=enriched,taxonomy_family=taxonomy_family)
+    enriched = add_taxonomy_columns(predictions=enriched,taxonomy_family=taxonomy_family,yamnet_csv=yamnet_csv)
     enriched['probability'] = pd.to_numeric(enriched['probability'],errors='coerce')
     enriched = enriched.dropna(subset=['class','probability'])
 
@@ -1234,7 +1234,7 @@ def add_taxonomy_columns(predictions,yamnet_csv,taxonomy_family='brown'):
 
 def _prepare_taxonomy_detail(aligned,parent_class,detail_class):
 
-    data = trim_dataframe.copy()
+    data = aligned.copy()
 
     data[parent_class] = ( data[parent_class].astype("string").str.strip().replace("",pd.NA) )
     data[detail_class] = ( data[detail_class].astype("string").str.strip().replace("",pd.NA) )

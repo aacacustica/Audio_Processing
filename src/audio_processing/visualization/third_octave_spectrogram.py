@@ -7,7 +7,7 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from configs import THIRD_OCTAVE_BANDS
+from audio_processing.visualization.configs import THIRD_OCTAVE_BANDS
 
 def energy_mean(values: pd.Series) -> float:
 
@@ -45,7 +45,7 @@ def render_third_octave_spectrogram(third_octave_measurements,output_dir: Path, 
 
     if not rows: return None
 
-    frame = pd.DataFrame(rows).sort_value('datetime')
+    frame = pd.DataFrame(rows).sort_values('datetime')
 
     level_columns = [str(frequency) for frequency,_ in THIRD_OCTAVE_BANDS]
 

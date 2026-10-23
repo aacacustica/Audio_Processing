@@ -1,5 +1,4 @@
 import datetime
-from datetime import datetime
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
@@ -19,6 +18,7 @@ class PredictionRepository:
             select(AIPrediction)
             .where(AIPrediction.id_archivo == file_id)
         )
+        
 
         existing_rows   = list(self.session.scalars(statement).all())
         existing        = {(row.datetime_inicio,row.window_seconds,row.class_name): row for row in existing_rows}
@@ -81,7 +81,7 @@ class PredictionRepository:
 
         return (prediction_rows,links)
 
-    def list_by_context(self,context_id: int, * , start_datetime: datetime | None = None,end_datetime: datetime | None = None) -> list[AIPrediction]:
+    def list_by_context(self,context_id: int, * , start_datetime: datetime.datetime | None = None,end_datetime: datetime.datetime | None = None) -> list[AIPrediction]:
 
         statement = select(AIPrediction).join(SourceFile,SourceFile.id_archivo == AIPrediction.id_archivo).where(SourceFile.id_contexto == context_id)
 

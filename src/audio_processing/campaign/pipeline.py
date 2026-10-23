@@ -762,6 +762,19 @@ class CampaignPipeline:
                 if weekly_outputs:
                     for week_start, (html_path,csv_path) in weekly_outputs.items():
                         self.logger.info(f"Treemap LAeq por clase y semana {source.name} , {week_start}: HTML = {html_path}, CSV = {csv_path}")
+
+                treemap_outputs = render_prediction_tree_map(
+                    prediction_measurements         = prediction_measurements,
+                    class_map_path                  = class_map_path,
+                    taxonomy                        = self.config.visualization.taxonomy,
+                    output_dir                      = prediction_output_dir,
+                    plot_name                       = source.name,
+                    timezone_name                   = self.config.campaign.timezone
+                )
+
+                if treemap_outputs:
+                    for period,(html_path,csv_path) in treemap_outputs.items():
+                        self.logger.info(f"Treemap de predicciones {source.name}, {period}: HTML = {html_path}, CSV = {csv_path}")
  
         except Exception as e:
             self.logger.exception("Error generando la visualización básica para: %s",source.source_id)
@@ -930,18 +943,7 @@ class CampaignPipeline:
                     for week_start, (html_path,csv_path) in boxplot_week_outputs.items():
                         self.logger.info(f"Boxplot semanal LAeq de picos por clase {source.name} ({week_start}): HTML = {html_path}, CSV = {csv_path}")
 
-                treemap_outputs = render_prediction_tree_map(
-                    prediction_measurements         = prediction_measurements,
-                    class_map_path                  = class_map_path,
-                    taxonomy                        = self.config.visualization.taxonomy,
-                    output_dir                      = prediction_output_dir,
-                    plot_name                       = source.name,
-                    timezone_name                   = self.config.campaign.timezone
-                )
 
-                if treemap_outputs:
-                    for period,(html_path,csv_path) in treemap_outputs:
-                        self.logger.info(f"Treemap de predicciones {source.name}, {period}: HTML = {html_path}, CSV = {csv_path}")
 
                 
                 

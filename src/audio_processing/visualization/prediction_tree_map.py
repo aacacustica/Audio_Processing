@@ -42,7 +42,7 @@ def render_prediction_tree_map(prediction_measurements, class_map_path: Path, ta
 
     records = []
 
-    for predictions in predictions_by_id.values():
+    for prediction in predictions_by_id.values():
         timestamp = pd.Timestamp(prediction.datetime_inicio)
 
         if timestamp.tzinfo is None: timestamp = timestamp.tz_localize(timezone_name)

@@ -31,6 +31,7 @@ from audio_processing.visualization.prediction_peak_laeq_week import render_pred
 from audio_processing.visualization.prediction_peak_laeq_boxplot import render_prediction_peak_laeq_boxplot
 from audio_processing.visualization.prediction_peak_laeq_boxplot_week import render_prediction_peak_laeq_boxplot_week
 from audio_processing.visualization.prediction_tree_map import render_prediction_tree_map
+from audio_processing.visualization.third_octave_spectrogram import render_third_octave_spectrogram
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -565,6 +566,8 @@ class CampaignPipeline:
                     context_id      = context.id_contexto
                 )
 
+                third_octave_measurements = ThirdOctaveRepository(session).list_by_measurements([m.id_medicion for m in measurements])
+
                 if not measurements:
                     self.logger.warning(f"No hay mediciones para visualizar en: {source.source_id}")
                     return
@@ -775,6 +778,17 @@ class CampaignPipeline:
                 if treemap_outputs:
                     for period,(html_path,csv_path) in treemap_outputs.items():
                         self.logger.info(f"Treemap de predicciones {source.name}, {period}: HTML = {html_path}, CSV = {csv_path}")
+
+                spectrogram_outputs = render_third_octave_spectrogram(
+                    third_octave_measurements       = third_octave_measurements,
+                    output_dir                      = output_dir,
+                    plot_name                       = source.name,
+                    timezone_name                   = self.config.campaign.timezone
+                )
+
+                if spectrogram_outputs:
+                    png_path,csv_path = spectrogram_outputs
+                    self.logger.info(f"Espectrograma de niveles en tercios de octava: PNG = {png_path}, CSV = {csv_path}")
  
         except Exception as e:
             self.logger.exception("Error generando la visualización básica para: %s",source.source_id)

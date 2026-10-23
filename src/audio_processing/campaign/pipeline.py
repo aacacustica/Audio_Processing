@@ -30,6 +30,7 @@ from audio_processing.visualization.prediction_peak_laeq_class import render_pre
 from audio_processing.visualization.prediction_peak_laeq_week import render_prediciton_peak_laeq_week
 from audio_processing.visualization.prediction_peak_laeq_boxplot import render_prediction_peak_laeq_boxplot
 from audio_processing.visualization.prediction_peak_laeq_boxplot_week import render_prediction_peak_laeq_boxplot_week
+from audio_processing.visualization.prediction_tree_map import render_prediction_tree_map
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -928,6 +929,19 @@ class CampaignPipeline:
                 if boxplot_week_outputs:
                     for week_start, (html_path,csv_path) in boxplot_week_outputs.items():
                         self.logger.info(f"Boxplot semanal LAeq de picos por clase {source.name} ({week_start}): HTML = {html_path}, CSV = {csv_path}")
+
+                treemap_outputs = render_prediction_tree_map(
+                    prediction_measurements         = prediction_measurements,
+                    class_map_path                  = class_map_path,
+                    taxonomy                        = self.config.visualization.taxonomy,
+                    output_dir                      = prediction_output_dir,
+                    plot_name                       = source.name,
+                    timezone_name                   = self.config.campaign.timezone
+                )
+
+                if treemap_outputs:
+                    for period,(html_path,csv_path) in treemap_outputs:
+                        self.logger.info(f"Treemap de predicciones {source.name}, {period}: HTML = {html_path}, CSV = {csv_path}")
 
                 
                 

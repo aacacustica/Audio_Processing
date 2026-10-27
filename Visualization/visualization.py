@@ -607,16 +607,16 @@ def plot_prediction_stack_bar(df_Pred: pd.DataFrame, yamnet_csv, taxonomy_map, f
     enriched = _with_time_features(enriched)
     enriched["Día"] = enriched["date_day"]
 
-    parent_class,detail_class,color_palette = _taxonomy_settings(taxonomy_map, enriched, logger,)
+    parent_class,_,color_palette = _taxonomy_settings(taxonomy_map, enriched, logger,)
 
-    grouped = (enriched.dropna(subset=[detail_class, "Día"]).groupby(["Día", detail_class], observed=True,).size().reset_index(name="Distribución de clases"))
+    grouped = (enriched.dropna(subset=[parent_class, "Día"]).groupby(["Día", parent_class], observed=True,).size().reset_index(name="Distribución de clases"))
 
     context.require(not grouped.empty, "No hay predicciones para la barra apilada",)
 
     day_order = list(pd.unique(enriched["Día"]))
     grouped["Día"] = pd.Categorical(grouped["Día"], categories=day_order, ordered=True,)
 
-    fig = px.bar(grouped, x="Día", y="Distribución de clases", color=detail_class, title=f"{plotname} | Clases por Día", color_discrete_sequence=px.colors.qualitative.Alphabet, height=900, width=2000,)
+    fig = px.bar(grouped, x="Día", y="Distribución de clases", color=parent_class,color_discrete_map=color_palette, title=f"{plotname} | Clases por Día", color_discrete_sequence=px.colors.qualitative.Alphabet, height=900, width=2000,)
 
     context.save_plotly(fig, suffix="prediction_stack_map",)
     context.save_dataframe(grouped, suffix="prediction_stack_map", index=False,)
@@ -644,22 +644,18 @@ def plot_prediction_map(df_Pred: pd.DataFrame,yamnet_csv, taxonomy_map, agg_peri
         probability_column = "probability",
     )
     predictions = enrich_predictions(predictions=predictions,yamnet_csv=yamnet_csv,taxonomy_map=taxonomy_map,logger=logger)
-    parent_class,detail_class,_ = _taxonomy_settings(taxonomy_map,predictions,logger)
-    predictions = _prepare_taxonomy_detail(predictions,parent_class,detail_class)
-
-    predictions = map_taxonomy(predictions=predictions, taxonomy_map=taxonomy_map, logger=logger, class_column="class", output_column="mapped_class",)
-
-    dominant = dominant_category_per_bin(dataframe=predictions, category_column=detail_class, rule=context.resample_rule,)
-
+    parent_class,_,color_palette = _taxonomy_settings(taxonomy_map,predictions,logger)
+    dominant = dominant_category_per_bin(dataframe=predictions, category_column=parent_class, rule=context.resample_rule,)
     dominant = _with_time_features(dominant)
 
-    category_order = list(pd.unique(dominant[detail_class]))
+
+    category_order = list(pd.unique(dominant[parent_class]))
 
     context.require(bool(category_order), "No quedan categorías para el mapa",)
 
     class_to_num = {category: index + 1 for index, category in enumerate(category_order)}
 
-    dominant["class_num"] = (dominant[detail_class].map(class_to_num))
+    dominant["class_num"] = (dominant[parent_class].map(class_to_num))
 
     day_class = pd.pivot_table(
         data    = dominant,
@@ -671,10 +667,7 @@ def plot_prediction_map(df_Pred: pd.DataFrame,yamnet_csv, taxonomy_map, agg_peri
 
     context.require(not day_class.empty and not day_class.isna().all().all(), "La tabla del mapa de predicciones está vacía",)
 
-    detail_colors = sns.color_palette("husl",n_colors=len(category_order)).as_hex()
-    color_palette = dict(zip(category_order,detail_colors))
-
-    colors = [_palette_color(color_palette, category) for category in category_order]
+    colors = [color_palette.get(category,"#808080") for category in category_order]
 
     cmap = ListedColormap(colors)
 

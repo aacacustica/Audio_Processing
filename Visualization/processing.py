@@ -113,7 +113,9 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
     agg_period = int(PERIODO_AGREGACION)
     
     if agg_period <=0: raise ValueError("PERIODO_AGREGACION debe ser mayor que cero")
-    
+
+    if 'Siren' in set(taxonomy.values()): color_palette = COLOR_PALLET_PORT_L1
+    else: color_palette = COLOR_PALLET_URBAN
 
     for folder in tqdm(folders, desc="Processing folders"): 
 
@@ -129,6 +131,10 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
         data_registers_folder               = os.path.join(input_folder, folder) 
         data_registers_folder               = data_registers_folder.replace("5-Resultados","3-Medidas")
         point_name                          = data_registers_folder.split("\\")[-2]
+
+        if filter_point and point_name != filter_point : 
+            logger.info(f"Filtrado de punto activo y {filter_point} != {point_name}:        Saltandose punto {point_name} hasta llegar a {filter_point}")
+            continue
 
         if "\\" in data_registers_folder: 
             resultados_dir              = data_registers_folder.split("\\")[:-3]
@@ -169,15 +175,21 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
         logger.info(f"Carpeta actual:                                                       {folder}")
         logger.info(f"Fichero de registros acusticos:                                       {data_registers_folder}")
         logger.info(f"Fichero de predicciones:                                              {predictions_folder}") 
-
         logger.info(f"Carpeta de salida:                                                    {folder_output_dir}")
         logger.info(f"Carpeta de salida de predicciones:                                    {predictions_visualization_folder}")
-        logger.info(f"Carpeta de resultados:                                                {resultados_dir}")    
-        logger.info(f"Graficando con periodo de agregación:                                 {agg_period}\n")  
+        logger.info(f"Carpeta de resultados:                                                {resultados_dir}\n")    
+        
+        logger.info(f"Graficando con periodo de agregación:                                 {agg_period}")  
+        logger.info(f"Graficando con percentiles:                                           {PERCENTILES}")
+        logger.info(f"Graficando con coeficientes:                                          {folder_coefficients}")
+        logger.info(f"Graficando con date time:                                             {folder_date_time}")
+        logger.info(f"Graficando con threshold:                                             {folder_threshold}")
+        logger.info(f"Graficando con OCA:                                                   {oca_type}")
+        logger.info(f"Graficando con taxonomía:                                             {taxonomy}")
+        logger.info(f"Graficando con colores:                                               {color_palette}")
+        
 
-        if filter_point and point_name != filter_point : 
-            logger.info(f"Filtrado de punto activo y {filter_point} != {point_name}")
-            continue
+
 
         ####################################################################
         # add datetime columns, sort by datetime and set datetime as index #

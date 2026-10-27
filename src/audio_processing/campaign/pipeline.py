@@ -959,7 +959,7 @@ class CampaignPipeline:
                     class_map_path                  = class_map_path,
                     taxonomy                        = self.config.visualization.taxonomy,
                     output_dir                      = prediction_output_dir,
-                    plot_name                       = 'oca_alarm',
+                    plot_name                       = source.name,
                     correction_db                   = float(correction_db),
                     timezone_name                   = self.config.campaign.timezone
                 )
@@ -971,7 +971,7 @@ class CampaignPipeline:
                 oca_outputs = render_oca_alarm_visualization(
                     aggregations                    = alarm_aggregations,
                     output_dir                      = output_dir/'Alarms',
-                    plot_name                       = 'oca_name',
+                    plot_name                       = 'oca_alarm',
                     oca_type                        = self.config.alarms.oca_limit,
                     timezone_name                   = self.config.campaign.timezone,
                 )

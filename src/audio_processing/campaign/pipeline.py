@@ -578,7 +578,6 @@ class CampaignPipeline:
                 prediction_output_dir   = Path(source.output_path) / self.config.outputs.subfolders.ai.general_folder_name / self.config.outputs.subfolders.ai.visualization_folder_name
                 bands_by_measurement    = {row.id_medicion: row for row in third_octave_measurements}
                 third_octave_pairs      = [(measurement,bands_by_measurement[measurement.id_medicion]) for measurement in measurements if measurement.id_medicion in bands_by_measurement]
-                alarm_measurements      = AlarmRepository(session).list_by_context(context.id_contexto)
 
                 if not class_map_path.is_absolute():
                     class_map_path = Path(self.config._config_dir) / class_map_path
@@ -800,7 +799,9 @@ class CampaignPipeline:
                 if alarms_outputs:
                     daily_png = alarms_outputs['daily_png']
                     daily_csv = alarms_outputs['daily_csv']
-                    daily_detail = alarm_outputs['detail_csvs']
+                    daily_detail = alarms_outputs['detail_csvs']
+
+                    self.logger.info(f"Visualización de alarmas {source.name}: PNG = {daily_png}, CSV diario = {daily_csv}, detalle = {daily_detail}")
 
         except Exception as e:
             self.logger.exception("Error generando la visualización básica para: %s",source.source_id)

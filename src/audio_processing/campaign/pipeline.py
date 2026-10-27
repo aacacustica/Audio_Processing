@@ -33,6 +33,8 @@ from audio_processing.visualization.prediction_peak_laeq_boxplot_week import ren
 from audio_processing.visualization.prediction_tree_map import render_prediction_tree_map
 from audio_processing.visualization.third_octave_spectrogram import render_third_octave_spectrogram
 from audio_processing.visualization.alarm_visualization import render_alarm_visualizations
+from audio_processing.visualization.oca_alarm_visualization import render_oca_alarm_visualization
+
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -789,19 +791,6 @@ class CampaignPipeline:
                     png_path,csv_path = spectrogram_outputs
                     self.logger.info(f"Espectrograma de niveles en tercios de octava: PNG = {png_path}, CSV = {csv_path}")
 
-                alarms_outputs = render_alarm_visualizations(
-                    alarms                          = alarm_measurements,
-                    output_dir                      = output_dir,
-                    plot_name                       = source.name,
-                    timezone_name                   = timezone_name,
-                )
-
-                if alarms_outputs:
-                    daily_png = alarms_outputs['daily_png']
-                    daily_csv = alarms_outputs['daily_csv']
-                    daily_detail = alarms_outputs['detail_csv']
-
-                    self.logger.info(f"Visualización de alarmas {source.name}: PNG = {daily_png}, CSV diario = {daily_csv}, detalle = {daily_detail}")
 
         except Exception as e:
             self.logger.exception("Error generando la visualización básica para: %s",source.source_id)
@@ -819,13 +808,15 @@ class CampaignPipeline:
                     point_name      = source.name,
                     device_type     = source.device_type
                 )
-
+                measurements                    = MeasurementRepository(session).list_by_context(context_id=context.id_contexto)
+                third_octave_measurements       = ThirdOctaveRepository(session).list_by_measurements([m.id_medicion for m in measurements])
                 peaks                           = PeakRepository(session).list_by_context(context.id_contexto)
+
                 point_config                    = getattr(self.config.points, source.name, None)
 
-                if not peaks: 
-                    self.logger.info(f"No hay picos para visualizar en: {source.source_id}.")
-                    return
+                if not peaks: self.logger.info(f"No hay picos para generar visualizaciones visualizar en: {source.source_id}.")
+                if not measurements: self.logger.info(f"No hay mediciones para generar visualizaciones en {source.source_id}")  
+                if not third_octave_measurements: self.logger.info(f"No hay mediciones en tercios de octavas en {source.source_id}")
 
                 output_dir                      = Path(source.output_path) / self.config.outputs.subfolders.spl.general_folder_name / self.config.outputs.subfolders.spl.visualization_folder_name
                 peak_measurement_ids            = {peak.id_medicion_pico for peak in peaks if peak.id_medicion_pico is not None}
@@ -833,7 +824,9 @@ class CampaignPipeline:
                 preak_prediction_measurements   = [(prediction,measurement) for prediction,measurement in prediction_measurements if measurement.id_medicion in peak_measurement_ids]
                 class_map_path                  = Path(self.config.visualization.class_map_csv)
                 prediction_output_dir           = Path(source.output_path) / self.config.outputs.subfolders.ai.general_folder_name / self.config.outputs.subfolders.ai.visualization_folder_name
-
+                measurement_ids                 = [m.id_medicion for m in measurements]
+                peak_apex_ids                   = PeakRepository(session).list_apex_measurement_ids(context_id=context.id_contexto,measurement_ids=measurement_ids)
+                alarm_aggregations              = aggregate_measurements(measurements,third_octave_measurements,peak_apex_ids,int(self.config.alarms.aggregation_seconds),self.config.campaign.timezone)
 
                 if point_config is not None:correction_db = (getattr(point_config,"correction_db",0.0))
                 else: correction_db = 0.0
@@ -969,6 +962,17 @@ class CampaignPipeline:
                 if boxplot_week_outputs:
                     for week_start, (html_path,csv_path) in boxplot_week_outputs.items():
                         self.logger.info(f"Boxplot semanal LAeq de picos por clase {source.name} ({week_start}): HTML = {html_path}, CSV = {csv_path}")
+
+                oca_outputs = render_oca_alarm_visualization(
+                    aggregations                    = alarm_aggregations,
+                    output_dir                      = output_dir/'Alarms',
+                    plot_name                       = 'oca_name',
+                    oca_type                        = self.config.alarms.oca_limit,
+                    timezone_name                   = self.config.campaign.timezone,
+                )
+
+                if oca_outputs:
+                    self.logger.info(f"Gráficas OCA {source.name}: diario = {oca_outputs['daily_png']}, semanal = {oca_outputs['weekly_pngs']}")
 
 
 

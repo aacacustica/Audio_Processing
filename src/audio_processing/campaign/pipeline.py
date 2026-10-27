@@ -799,7 +799,7 @@ class CampaignPipeline:
                 if alarms_outputs:
                     daily_png = alarms_outputs['daily_png']
                     daily_csv = alarms_outputs['daily_csv']
-                    daily_detail = alarms_outputs['detail_csvs']
+                    daily_detail = alarms_outputs['detail_csv']
 
                     self.logger.info(f"Visualización de alarmas {source.name}: PNG = {daily_png}, CSV diario = {daily_csv}, detalle = {daily_detail}")
 

@@ -173,3 +173,11 @@ class AlarmRepository:
         self.session.flush()
 
         return alarm_rows,links
+
+    def list_by_context(self,context_id:int) -> list[AcousticAlarm] : 
+
+        statement = (select(AcousticAlarm)
+                     .where(AcousticAlarm.id_contexto == context_id)
+                     .order_by(AcousticAlarm.start_time,AcousticAlarm.alarm_type,AcousticAlarm.id_alarma))
+
+        return list(self.session.scalars(statement).all())

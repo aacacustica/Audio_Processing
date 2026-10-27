@@ -32,6 +32,7 @@ from audio_processing.visualization.prediction_peak_laeq_boxplot import render_p
 from audio_processing.visualization.prediction_peak_laeq_boxplot_week import render_prediction_peak_laeq_boxplot_week
 from audio_processing.visualization.prediction_tree_map import render_prediction_tree_map
 from audio_processing.visualization.third_octave_spectrogram import render_third_octave_spectrogram
+from audio_processing.visualization.alarm_visualization import render_alarm_visualizations
 
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -559,14 +560,10 @@ class CampaignPipeline:
                     device_type     = source.device_type
                 )
 
-                measurements = MeasurementRepository(session).list_by_context(
-                    context_id      = context.id_contexto)
-
-                prediction_measurements = PredictionRepository(session).list_with_measurements_for_context(
-                    context_id      = context.id_contexto
-                )
-
-                third_octave_measurements = ThirdOctaveRepository(session).list_by_measurements([m.id_medicion for m in measurements])
+                measurements                = MeasurementRepository(session).list_by_context(context_id=context.id_contexto)
+                prediction_measurements     = PredictionRepository(session).list_with_measurements_for_context(context_id=context.id_contexto)
+                third_octave_measurements   = ThirdOctaveRepository(session).list_by_measurements([m.id_medicion for m in measurements])
+                alarm_measurements          = AlarmRepository(session).list_by_context(context.id_contexto)
 
                 if not measurements:
                     self.logger.warning(f"No hay mediciones para visualizar en: {source.source_id}")
@@ -581,6 +578,7 @@ class CampaignPipeline:
                 prediction_output_dir   = Path(source.output_path) / self.config.outputs.subfolders.ai.general_folder_name / self.config.outputs.subfolders.ai.visualization_folder_name
                 bands_by_measurement    = {row.id_medicion: row for row in third_octave_measurements}
                 third_octave_pairs      = [(measurement,bands_by_measurement[measurement.id_medicion]) for measurement in measurements if measurement.id_medicion in bands_by_measurement]
+                alarm_measurements      = AlarmRepository(session).list_by_context(context.id_contexto)
 
                 if not class_map_path.is_absolute():
                     class_map_path = Path(self.config._config_dir) / class_map_path
@@ -791,7 +789,19 @@ class CampaignPipeline:
                 if spectrogram_outputs:
                     png_path,csv_path = spectrogram_outputs
                     self.logger.info(f"Espectrograma de niveles en tercios de octava: PNG = {png_path}, CSV = {csv_path}")
- 
+
+                alarms_outputs = render_alarm_visualizations(
+                    alarms                          = alarm_measurements,
+                    output_dir                      = output_dir,
+                    plot_name                       = source.name,
+                    timezone_name                   = timezone_name,
+                )
+
+                if alarms_outputs:
+                    daily_png = alarms_outputs['daily_png']
+                    daily_csv = alarms_outputs['daily_csv']
+                    daily_detail = alarm_outputs['detail_csvs']
+
         except Exception as e:
             self.logger.exception("Error generando la visualización básica para: %s",source.source_id)
             if self.config.execution.stop_on_error: raise

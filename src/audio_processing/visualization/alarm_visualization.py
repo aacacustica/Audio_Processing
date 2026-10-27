@@ -19,7 +19,7 @@ def _local_timestamp(value,timezone_name: str) -> pd.Timestamp | None:
 
 def render_alarm_visualizations(alarms,output_dir: Path, plot_name: str, timezone_name: str = "Europe/Madrid") -> dict[str,Path] | None:
 
-    records = list[dict[str,object]] = []
+    records: list[dict[str,object]] = []
 
     for alarm in alarms:
 

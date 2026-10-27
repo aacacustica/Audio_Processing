@@ -32,7 +32,6 @@ from audio_processing.visualization.prediction_peak_laeq_boxplot import render_p
 from audio_processing.visualization.prediction_peak_laeq_boxplot_week import render_prediction_peak_laeq_boxplot_week
 from audio_processing.visualization.prediction_tree_map import render_prediction_tree_map
 from audio_processing.visualization.third_octave_spectrogram import render_third_octave_spectrogram
-from audio_processing.visualization.alarm_visualization import render_alarm_visualizations
 from audio_processing.visualization.oca_alarm_visualization import render_oca_alarm_visualization
 
 
@@ -826,7 +825,13 @@ class CampaignPipeline:
                 prediction_output_dir           = Path(source.output_path) / self.config.outputs.subfolders.ai.general_folder_name / self.config.outputs.subfolders.ai.visualization_folder_name
                 measurement_ids                 = [m.id_medicion for m in measurements]
                 peak_apex_ids                   = PeakRepository(session).list_apex_measurement_ids(context_id=context.id_contexto,measurement_ids=measurement_ids)
-                alarm_aggregations              = aggregate_measurements(measurements,third_octave_measurements,peak_apex_ids,int(self.config.alarms.aggregation_seconds),self.config.campaign.timezone)
+                alarm_aggregations              = aggregate_measurements(
+                                                    measurements                = measurements,
+                                                    third_octaves               = third_octave_measurements,
+                                                    peak_apex_measurement_ids   = peak_apex_ids,
+                                                    aggregation_seconds         = int(self.config.alarms.aggregation_seconds),
+                                                    timezone                    = self.config.campaign.timezone
+                                                )
 
                 if point_config is not None:correction_db = (getattr(point_config,"correction_db",0.0))
                 else: correction_db = 0.0
@@ -954,7 +959,7 @@ class CampaignPipeline:
                     class_map_path                  = class_map_path,
                     taxonomy                        = self.config.visualization.taxonomy,
                     output_dir                      = prediction_output_dir,
-                    plot_name                       = source.name,
+                    plot_name                       = 'oca_alarm',
                     correction_db                   = float(correction_db),
                     timezone_name                   = self.config.campaign.timezone
                 )

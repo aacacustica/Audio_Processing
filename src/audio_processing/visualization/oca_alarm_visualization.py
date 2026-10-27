@@ -104,7 +104,7 @@ def _save_oca_plot(frame: pd.DataFrame, * , output_path: Path, plot_name: str, t
 
 def render_oca_alarm_visualization(aggregations: Iterable[AlarmAggregation], output_dir: Path, * ,plot_name: str, oca_type: str, timezone_name: str = "Europe/Madrid") -> dict[str, Path | dict[str,Path]] | None:
 
-    frame = _build_frame(aggregations,oca_type,timezone_name)
+    frame = _build_frame(aggregations,oca_type=oca_type,timezone_name=timezone_name)
 
     if frame.empty: return None
 
@@ -114,7 +114,7 @@ def render_oca_alarm_visualization(aggregations: Iterable[AlarmAggregation], out
 
     week_starts = pd.Series(frame.index,index=frame.index).map(lambda timestamp: timestamp.normalize() - pd.Timedelta(days=timestamp.weekday))
 
-    weekly_paths: dict[str,Path] = []
+    weekly_paths: dict[str,Path] = {}
 
     for week_start in sorted(week_starts.unique()):
 

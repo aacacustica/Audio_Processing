@@ -162,6 +162,8 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
                 
         
         if not os.path.exists(predictions_visualization_folder): os.makedirs(predictions_visualization_folder)
+        
+        
 
         logger.info(f"Nombre del punto:                                                     {point_name}")
         logger.info(f"Carpeta actual:                                                       {folder}")
@@ -172,6 +174,10 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
         logger.info(f"Carpeta de salida de predicciones:                                    {predictions_visualization_folder}")
         logger.info(f"Carpeta de resultados:                                                {resultados_dir}")    
         logger.info(f"Graficando con periodo de agregación:                                 {agg_period}\n")  
+
+        if filter_point and point_name != filter_point : 
+            logger.info(f"Filtrado de punto activo y {filter_point} != {point_name}")
+            continue
 
         ####################################################################
         # add datetime columns, sort by datetime and set datetime as index #

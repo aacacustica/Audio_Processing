@@ -40,26 +40,26 @@ def render_night_evolution_week(measurements,output_dir: Path,plot_name: str, ti
         
         grid = sns.relplot(data=week_data,x='plot_hour',y='la_db',kind='line',hue='Día',estimator=_leq,aspect=1.3,palette=NIGHT_PALETTE)
 
-    try:
-        axis = grid.axes.flat[0]
-        axis.set_xticks(range(-1,7))
-        axis.set_xticklabels(["23:00", "00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00"])
-        axis.set_yticks(range(30,105,5))
-        axis.set_xlim(-1.5,6.5)
-        axis.set_title(f"Evolución Ln - Semana {week_label}")
-        axis.set_ylabel("dB(A)")
-        axis.set_xlabel("Hora")
-        axis.spines["top"].set_visible(True)
-        axis.spines['right'].set_visible(True)
+        try:
+            axis = grid.axes.flat[0]
+            axis.set_xticks(range(-1,7))
+            axis.set_xticklabels(["23:00", "00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00"])
+            axis.set_yticks(range(30,105,5))
+            axis.set_xlim(-1.5,6.5)
+            axis.set_title(f"Evolución Ln - Semana {week_label}")
+            axis.set_ylabel("dB(A)")
+            axis.set_xlabel("Hora")
+            axis.spines["top"].set_visible(True)
+            axis.spines['right'].set_visible(True)
 
-        week_dir = output_dir / f"week_{week_label}"
-        week_dir.mkdir(parents=True, exist_ok=True)
-        output_path = week_dir / f"{safe_name}_Ln_evolution_week_{week_label}.png"
-        grid.figure.savefig(output_path, dpi=150, bbox_inches="tight")
-        outputs[week_label] = output_path
+            week_dir = output_dir / f"week_{week_label}"
+            week_dir.mkdir(parents=True, exist_ok=True)
+            output_path = week_dir / f"{safe_name}_Ln_evolution_week_{week_label}.png"
+            grid.figure.savefig(output_path, dpi=150, bbox_inches="tight")
+            outputs[week_label] = output_path
 
-    finally:
-        plt.close(grid.figure)
+        finally:
+            plt.close(grid.figure)
 
     return outputs or None
 
@@ -70,7 +70,7 @@ def render_night_evolution_15min_week(measurements,output_dir:Path,plot_name:str
     if data.empty: return None
 
     levels = data['la_db'].resample("15min").apply(_leq)
-    weekdays = data['Día'].remsaple("15min").agg(_mode_or_na)
+    weekdays = data['Día'].resample("15min").agg(_mode_or_na)
     night_dates = data['night_date'].resample("15min").first()
     night_data = pd.DataFrame({"la_db":levels,"Día":weekdays,"night_date":night_dates}).dropna(subset=['la_db',"Día","night_date"])
 

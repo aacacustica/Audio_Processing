@@ -34,6 +34,7 @@ from audio_processing.visualization.prediction_tree_map import render_prediction
 from audio_processing.visualization.third_octave_spectrogram import render_third_octave_spectrogram
 from audio_processing.visualization.oca_alarm_visualization import render_oca_alarm_visualization
 from audio_processing.visualization.l90_alarm_visualization import render_l90_alarm_visualization
+from audio_processing.visualization.night_evolution_weekly import render_night_evolution_week,render_night_evolution_15min_week
 
 
 from pathlib import Path
@@ -790,6 +791,28 @@ class CampaignPipeline:
                 if spectrogram_outputs:
                     png_path,csv_path = spectrogram_outputs
                     self.logger.info(f"Espectrograma de niveles en tercios de octava: PNG = {png_path}, CSV = {csv_path}")
+
+                week_night_evolution = render_night_evolution_week(
+                    measurements                    = measurements,
+                    output_dir                      = output_dir,
+                    plot_name                       = source.name,
+                    timezone_name                   = timezone_name
+                )
+
+                if week_night_evolution:
+                    for week, png_path in week_night_evolution.items():
+                        self.logger.info(f"Evolución nocturna semanal {source.name} {week}: PNG = {png_path}")
+
+                week_night_evolution_15min = render_night_evolution_15min_week(
+                    measurements                    = measurements,
+                    output_dir                      = output_dir,
+                    plot_name                       = source.name,
+                    timezone_name                   = timezone_name
+                )
+
+                if week_night_evolution_15min:
+                    for week,png_path in week_night_evolution_15min.items():
+                        self.logger.info(f"Evolución nocturna semanal cada 15 minutos {source.name} {week}: PNG = {png_path}")
 
 
         except Exception as e:

@@ -84,7 +84,7 @@ def render_l90_alarm_visualization(aggregations: Iterable[AlarmAggregation],outp
             
             if len(timestamps) == 1: 
                 point = pd.Timestamp(timestamps[0])
-                ax.set_xlim((point - pd.Timedelta(hours=2)).to_pydatetime(),(point + pd.Timedelta(hours=2).to_pydatetime()))
+                ax.set_xlim((point - pd.Timedelta(hours=2)).to_pydatetime(),(point + pd.Timedelta(hours=2)).to_pydatetime())
             else:
                 ax.set_xlim(timestamps[0],timestamps[-1])
 

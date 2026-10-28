@@ -33,6 +33,7 @@ from audio_processing.visualization.prediction_peak_laeq_boxplot_week import ren
 from audio_processing.visualization.prediction_tree_map import render_prediction_tree_map
 from audio_processing.visualization.third_octave_spectrogram import render_third_octave_spectrogram
 from audio_processing.visualization.oca_alarm_visualization import render_oca_alarm_visualization
+from audio_processing.visualization.l90_alarm_visualization import render_l90_alarm_visualization
 
 
 from pathlib import Path
@@ -978,6 +979,18 @@ class CampaignPipeline:
 
                 if oca_outputs:
                     self.logger.info(f"Gráficas OCA {source.name}: diario = {oca_outputs['daily_png']}, semanal = {oca_outputs['weekly_pngs']}")
+
+                l90_outputs = render_l90_alarm_visualization(
+                    aggregations                    = alarm_aggregations,
+                    output_dir                      = output_dir/'Alarms',
+                    plot_name                       = 'l90_alarm',
+                    threshold_db                    = self.config.alarms.l90.threshold_db,
+                    timezone_name                   = self.config.campaign.timezone
+                )
+
+                if l90_outputs:
+                    for day,png_path in l90_outputs.items():
+                        self.logger.info(f"Gráficas L90 {source.name}, {day}: PNG = {png_path} ")
 
 
 

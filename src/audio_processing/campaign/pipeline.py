@@ -816,6 +816,21 @@ class CampaignPipeline:
                     for week,png_path in week_night_evolution_15min.items():
                         self.logger.info(f"Evolución nocturna semanal cada 15 minutos {source.name} {week}: PNG = {png_path}")
 
+                time_plot_week = render_time_plot_week(
+                    measurements                    = measurements,
+                    output_dir                      = output_dir,
+                    plot_name                       = source.name,
+                    aggregation_seconds             = int(self.config.visualization.aggregation_seconds),
+                    percentiles                     = list(self.config.visualization.percentiles),
+                    oca_type                        = self.config.visualization.oca_type,
+                    correction_db                   = float(correction_db),
+                    timezone_name                   = self.config.campaign.timezone
+                )
+
+                if time_plot_week:
+                    for week_start,png_path in time_plot_week.items():
+                        self.logger.info(f"Visualización temporal semanal {source.name}: semana {week_start}: PNG = {png_path}")
+
 
         except Exception as e:
             self.logger.exception("Error generando la visualización básica para: %s",source.source_id)
@@ -1031,16 +1046,8 @@ class CampaignPipeline:
                     for week_start,png_path in prediction_peaks.items():
                         self.logger.info(f"Heatmap semanal de picos {source.name}, semana {week_start}: PNG = {png_path}")
 
-                time_plot_week = render_time_plot_week(
-                    measurements                    = measurements,
-                    output_dir                      = output_dir,
-                    plot_name                       = source.name,
-                    aggregation_seconds             = int(self.config.visualization.aggregation_seconds),
-                    percentiles                     = list(self.config.visualization.percentiles),
-                    oca_type                        = self.config.visualization.oca_type,
-                    correction_db                   = float(correction_db),
-                    timezone_name                   = self.config.campaign.timezone
-                )
+
+
 
                 
 

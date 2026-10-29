@@ -50,7 +50,7 @@ def render_time_plot_week(measurements,output_dir:Path,plot_name:str,aggregation
     safe_name = _safe_filename(plot_name)
     outputs: dict[str,Path] = {}
 
-    for week_start,week_data in data.groupby("weey_start",sort=True):
+    for week_start,week_data in data.groupby("week_start",sort=True):
         week_label = week_start.date().isoformat()
         weekly = week_data.drop(columns="week_start").resample(frequency).agg(
             {

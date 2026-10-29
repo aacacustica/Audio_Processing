@@ -36,6 +36,7 @@ from audio_processing.visualization.oca_alarm_visualization import render_oca_al
 from audio_processing.visualization.l90_alarm_visualization import render_l90_alarm_visualization
 from audio_processing.visualization.night_evolution_weekly import render_night_evolution_week,render_night_evolution_15min_week
 from audio_processing.visualization.prediction_peak_heatmap import render_prediction_peak_heatmap_week
+from audio_processing.visualization.time_plot_week import render_time_plot_week
 
 
 from pathlib import Path
@@ -1022,13 +1023,24 @@ class CampaignPipeline:
                     taxonomy                        = self.config.visualization.taxonomy,
                     output_dir                      = prediction_output_dir,
                     plot_name                       = source.name,
-                    correction_db                   = correction_db,
+                    correction_db                   = float(correction_db),
                     timezone_name                   = self.config.campaign.timezone
                 )
 
                 if prediction_peaks:
                     for week_start,png_path in prediction_peaks.items():
                         self.logger.info(f"Heatmap semanal de picos {source.name}, semana {week_start}: PNG = {png_path}")
+
+                time_plot_week = render_time_plot_week(
+                    measurements                    = measurements,
+                    output_dir                      = output_dir,
+                    plot_name                       = source.name,
+                    aggregation_seconds             = int(self.config.visualization.aggregation_seconds),
+                    percentiles                     = list(self.config.visualization.percentiles),
+                    oca_type                        = self.config.visualization.oca_type,
+                    correction_db                   = float(correction_db),
+                    timezone_name                   = self.config.campaign.timezone
+                )
 
                 
 

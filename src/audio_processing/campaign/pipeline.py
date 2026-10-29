@@ -35,6 +35,7 @@ from audio_processing.visualization.third_octave_spectrogram import render_third
 from audio_processing.visualization.oca_alarm_visualization import render_oca_alarm_visualization
 from audio_processing.visualization.l90_alarm_visualization import render_l90_alarm_visualization
 from audio_processing.visualization.night_evolution_weekly import render_night_evolution_week,render_night_evolution_15min_week
+from audio_processing.visualization.prediction_peak_heatmap import render_prediction_peak_heatmap_week
 
 
 from pathlib import Path
@@ -1014,6 +1015,22 @@ class CampaignPipeline:
                 if l90_outputs:
                     for day,png_path in l90_outputs.items():
                         self.logger.info(f"Gráficas L90 {source.name}, {day}: PNG = {png_path} ")
+
+                prediction_peaks = render_prediction_peak_heatmap_week(
+                    peak_prediction_measurements    = preak_prediction_measurements,
+                    class_map_path                  = class_map_path,
+                    taxonomy                        = self.config.visualization.taxonomy,
+                    output_dir                      = output_dir,
+                    plot_name                       = source.name,
+                    correction_db                   = correction_db,
+                    timezone_name                   = self.config.campaign.timezone
+                )
+
+                if prediction_peaks:
+                    for week_start,png_path in prediction_peaks.items():
+                        self.logger.info(f"Heatmap semanal de picos {source.name}, semana {week_start}: PNG = {png_path}")
+
+                
 
 
 

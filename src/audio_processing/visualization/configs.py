@@ -7,6 +7,9 @@ INDICATOR_ORDER = ["Ln", "Ld", "Le"]
 PERIOD_ORDER    = ("Ld", "Le", "Ln")
 PERIOD_ORDER_4H = ("Ld_1", "Ld_2", "Ld_3", "Le", "Ln_1", "Ln_2")
 
+LAEQ_BINS       = [0, 60, 70, 80, 90, 100, 110]
+LAEQ_BIN_LABELS = ["0-60 dBs" , "60-70 dBs" , "70-80 dBs" , "80-90 dBs" , "90-100 dBs" , "100-110 dBs"]
+
 LEGACY_CMAP = sns.color_palette(
     palette=[
         "#C8FFC8", "#00C800", "#007800", "#FFFF00",

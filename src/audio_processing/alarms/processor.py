@@ -112,10 +112,10 @@ def _detect_tonal_components(aggregation: AlarmAggregation) -> list[dict]:
 
         if (current_value is None or not np.isfinite(current_value)): continue
 
-        previous_frequency = (TONAL_FREQUENCIES[index - 1] if index > 0 else None)
-        next_frequency = (TONAL_FREQUENCIES[index + 1] if index < len(TONAL_FREQUENCIES) - 1 else None)
-        previous_value = (values.get(previous_frequency) if previous_frequency is not None else None)
-        next_value = (values.get(next_frequency) if next_frequency is not None else None)
+        previous_frequency  = (TONAL_FREQUENCIES[index - 1] if index > 0 else None)
+        next_frequency      = (TONAL_FREQUENCIES[index + 1] if index < len(TONAL_FREQUENCIES) - 1 else None)
+        previous_value      = (values.get(previous_frequency) if previous_frequency is not None else None)
+        next_value          = (values.get(next_frequency) if next_frequency is not None else None)
 
         if previous_value is None: previous_value = next_value
         if next_value is None: next_value = previous_value
@@ -123,10 +123,10 @@ def _detect_tonal_components(aggregation: AlarmAggregation) -> list[dict]:
         if (previous_value is None or next_value is None): continue
         if (not np.isfinite(previous_value) or not np.isfinite(next_value)): continue
 
-        previous_diff = round(current_value - previous_value,2)
-        next_diff = round(current_value - next_value,2)
-        band = _tonal_group(frequency)
-        threshold = TONAL_THRESHOLDS[band]
+        previous_diff       = round(current_value - previous_value,2)
+        next_diff           = round(current_value - next_value,2)
+        band                = _tonal_group(frequency)
+        threshold           = TONAL_THRESHOLDS[band]
 
         if (previous_diff <= threshold or next_diff <= threshold): continue
 

@@ -87,3 +87,4 @@ def render_acoustic_heatmaps_week(measurements,output_dir:Path,plot_name:str,tim
         outputs[week_label] = week_outputs
 
     return outputs or None
+

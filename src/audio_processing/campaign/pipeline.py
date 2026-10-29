@@ -1020,7 +1020,7 @@ class CampaignPipeline:
                     peak_prediction_measurements    = preak_prediction_measurements,
                     class_map_path                  = class_map_path,
                     taxonomy                        = self.config.visualization.taxonomy,
-                    output_dir                      = output_dir,
+                    output_dir                      = prediction_output_dir,
                     plot_name                       = source.name,
                     correction_db                   = correction_db,
                     timezone_name                   = self.config.campaign.timezone

@@ -824,7 +824,7 @@ class CampaignPipeline:
                     percentiles                     = list(self.config.visualization.percentiles),
                     oca_type                        = self.config.visualization.oca_type,
                     correction_db                   = float(correction_db),
-                    timezone_name                   = self.config.campaign.timezone
+                    timezone_name                   = timezone_name
                 )
 
                 if time_plot_week:

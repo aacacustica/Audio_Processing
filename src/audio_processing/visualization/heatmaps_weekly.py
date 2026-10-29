@@ -82,7 +82,7 @@ def render_acoustic_heatmaps_week(measurements,output_dir:Path,plot_name:str,tim
         if not hourly.empty:
             week_outputs['hourly'] = save_weekly_heatmap(hourly,output_path=week_dir/f"{safe_name}_heatmap_evolucion_week_{week_label}.png",title=f"{plot_name} Nivel equivalente  - Semana {week_label}",annotate=True,axis_fontsize=22,title_fontsize=22,dpi=350)
         if not quarter_hourly.empty:
-            week_outputs['15min'] = save_weekly_heatmap(quarter_hourly,output_path=week_dir/f"{safe_name}_heatmap_evolucion_week_{week_label}.png",title=f"{plot_name} Nivel equivalente  - Semana {week_label}",annotate=False,axis_fontsize=22,title_fontsize=22,dpi=350)
+            week_outputs['15min'] = save_weekly_heatmap(quarter_hourly,output_path=week_dir/f"{safe_name}_heatmap_evolucion_week_{week_label}.png",title=f"{plot_name} Nivel equivalente cada 15 minutos  - Semana {week_label}",annotate=False,axis_fontsize=22,title_fontsize=22,dpi=350)
 
         outputs[week_label] = week_outputs
 

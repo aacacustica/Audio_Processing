@@ -20,7 +20,7 @@ def save_weekly_heatmap(matrix:pd.DataFrame,*,output_path: Path,title: str, anno
 
         if annotate: options.update(fmt=".1f",annot_kws={"size":20})
 
-        plot = sns.heatmap(matrix,vmin=30,xmax=85,cmap=LEGACY_CMAP,ax=ax,**options)
+        plot = sns.heatmap(matrix,vmin=30,vmax=85,cmap=LEGACY_CMAP,ax=ax,**options)
 
         ax.set_xlabel("Hora", fontsize=axis_fontsize)
         ax.set_ylabel("Día", fontsize=axis_fontsize)
@@ -47,7 +47,7 @@ def render_acoustic_heatmaps_week(measurements,output_dir:Path,plot_name:str,tim
     data = pd.DataFrame(records)
     data['datetime'] = pd.to_datetime(data['datetime'],utc=True).dt.tz_convert(timezone_name)
 
-    data['la_db'] = pd.to_numeric(data['datetime'],utc=True).dt.tz_convert(timezone_name)
+    data['la_db'] = pd.to_numeric(data['la_db'],errors='coerce')
     data['la_db'] = pd.to_numeric(data['la_db'],errors='coerce')
     data = data.dropna(subset=['datetime','la_db'])
 

@@ -862,8 +862,9 @@ def make_time_plot(df: pd.DataFrame, folder_output_dir: str, logger, columns_dic
 
         axis.plot(series.index, series,**plot_kwargs,)
 
-    locator = mdates.AutoDateLocator(minticks=3, maxticks=12,)
+    locator = mdates.HourLocator(interval=HOUR_INTERVAL)
     formatter = mdates.DateFormatter("%d-%m-%y %H:%M")
+
 
     axis.xaxis.set_major_locator(locator)
     axis.xaxis.set_major_formatter(formatter)

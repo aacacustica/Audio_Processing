@@ -268,6 +268,7 @@ def process_audio_files(classifier, base_path, window_size, threshold, stable_ve
             subfolder_path = os.path.join(args.path,"5-Resultados")
             
         output_summary_path = os.path.join(subfolder_path,subfolder_name,"AI_MODEL","Predictions")
+        
         with open(os.path.join(output_summary_path, summary_filename),'w') as f:
 
             f.write(f"Resumen de precciones del modelo:        {args.model}\n")

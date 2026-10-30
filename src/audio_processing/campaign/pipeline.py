@@ -569,7 +569,7 @@ class CampaignPipeline:
 
                 measurements                = MeasurementRepository(session).list_by_context(context_id=context.id_contexto)
                 prediction_measurements     = PredictionRepository(session).list_with_measurements_for_context(context_id=context.id_contexto)
-                third_octave_measurements   = ThirdOctaveRepository(session).list_by_context(context_id=context.id_contextp)
+                third_octave_measurements   = ThirdOctaveRepository(session).list_by_context(context_id=context.id_contexto)
                 alarm_measurements          = AlarmRepository(session).list_by_context(context.id_contexto)
 
                 if not measurements:

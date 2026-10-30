@@ -77,16 +77,27 @@ class AlarmRepository:
         # Solo estas pueden considerarse stale.
         # -------------------------------------------------
 
-        stale_candidates = []
+        stale_by_id = {}
+        scope_ids = list(scope_measurement_ids)
 
-        if scope_measurement_ids:
+        for start in range(0, len(scope_ids), 1000):
+            chunk = scope_ids[start:start + 1000]
+            statement = (
+                select(AcousticAlarm)
+                .join(
+                    AcousticAlarmMeasurement,
+                    AcousticAlarmMeasurement.id_alarma == AcousticAlarm.id_alarma,
+                )
+                .where(
+                    AcousticAlarm.id_contexto == context_id,
+                    AcousticAlarmMeasurement.id_medicion.in_(chunk),
+                )
+                .distinct()
+            )
+            for alarm in self.session.scalars(statement).all():
+                stale_by_id[alarm.id_alarma] = alarm
 
-            statement = (select(AcousticAlarm)
-                         .join(AcousticAlarmMeasurement,
-                               AcousticAlarmMeasurement.id_alarma == AcousticAlarm.id_alarma)
-                        .where(AcousticAlarm.id_contexto == context_id, AcousticAlarmMeasurement.id_medicion.in_(scope_measurement_ids)).distinct())
-
-            stale_candidates = list(self.session.scalars(statement).all())
+        stale_candidates = list(stale_by_id.values())
 
   
         # -------------------------------------------------

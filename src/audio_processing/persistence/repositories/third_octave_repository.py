@@ -94,3 +94,18 @@ class ThirdOctaveRepository:
         )
 
         return list(self.session.scalars(statement).all())
+
+    def list_by_context(
+        self, context_id: int
+    ) -> list[AcousticThirdOctaveMeasurements]:
+        statement = (
+            select(AcousticThirdOctaveMeasurements)
+            .join(
+                AcousticMeasurement,
+                AcousticMeasurement.id_medicion
+                == AcousticThirdOctaveMeasurements.id_medicion,
+            )
+            .where(AcousticMeasurement.id_contexto == context_id)
+            .order_by(AcousticThirdOctaveMeasurements.id_medicion)
+        )
+        return list(self.session.scalars(statement).all())

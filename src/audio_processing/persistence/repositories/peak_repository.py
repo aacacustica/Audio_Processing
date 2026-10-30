@@ -95,26 +95,15 @@ class PeakRepository:
 
         return (peak_rows,links)
 
-    def list_apex_measurement_ids(self,*,context_id:int,measurement_ids:list[int]) -> set[int]:
+    def list_apex_measurement_ids(self, *, context_id: int, measurement_ids: list[int]) -> set[int]:
+        if not measurement_ids:
+            return set()
 
-        if not measurement_ids: return set()
-        measurement_id_set = set(measurement_ids)
-
-        existing_rows = (select(AcousticPeak.id_medicion_pico)
-                     .where(
-                         AcousticPeak.id_contexto == context_id
-                         )
-                    )
-
-        existing = {
-            row.id_medicion_pico: row
-            for row in existing_rows
-            if row.id_medicion_pico in measurement_id_set
-        }
-
-        
-
-        return list(existing)
+        statement = select(AcousticPeak.id_medicion_pico).where(
+            AcousticPeak.id_contexto == context_id
+        )
+        apex_ids = set(self.session.scalars(statement).all())
+        return apex_ids.intersection(measurement_ids)
 
     def list_by_context(self,context_id:int) -> list[AcousticPeak]:
 

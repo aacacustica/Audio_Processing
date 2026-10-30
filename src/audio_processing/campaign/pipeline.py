@@ -446,7 +446,7 @@ class CampaignPipeline:
                     return
 
                 measurement_ids = [measurement.id_medicion for measurement in measurements]
-                third_octaves   = (third_octave_repository.list_by_measurements(measurement_ids))
+                third_octaves   = third_octave_repository.list_by_context(context_id=context_id)
                 peak_apex_ids   = (peak_repository.list_apex_measurement_ids(context_id=context_id,measurement_ids=measurement_ids))
                 
                 aggregations = (aggregate_measurements(
@@ -569,7 +569,7 @@ class CampaignPipeline:
 
                 measurements                = MeasurementRepository(session).list_by_context(context_id=context.id_contexto)
                 prediction_measurements     = PredictionRepository(session).list_with_measurements_for_context(context_id=context.id_contexto)
-                third_octave_measurements   = ThirdOctaveRepository(session).list_by_measurements([m.id_medicion for m in measurements])
+                third_octave_measurements   = ThirdOctaveRepository(session).list_by_context(context_id=context.id_contextp)
                 alarm_measurements          = AlarmRepository(session).list_by_context(context.id_contexto)
 
                 if not measurements:

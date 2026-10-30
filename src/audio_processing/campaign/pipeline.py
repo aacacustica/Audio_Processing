@@ -38,6 +38,7 @@ from audio_processing.visualization.night_evolution_weekly import render_night_e
 from audio_processing.visualization.prediction_peak_heatmap import render_prediction_peak_heatmap_week
 from audio_processing.visualization.time_plot_week import render_time_plot_week
 from audio_processing.visualization.heatmaps_weekly import render_acoustic_heatmaps_week
+from audio_processing.visualization.indicators_heatmap_weekly import render_indicator_heatmap_week
 
 
 from pathlib import Path
@@ -844,6 +845,18 @@ class CampaignPipeline:
                     for week_start,outputs in heatmaps_week.items():
                         for resolution,png_path in outputs.items():
                             self.logger.info(f"Heatmap acústico semanal {source.name}, semana {week_start},{resolution}: PNG = {png_path}")
+
+                indicators_heatmap_week = render_indicator_heatmap_week(
+                    measurements                    = measurements,
+                    output_dir                      = output_dir,
+                    plot_name                       = source.name,
+                    timezone_name                   = timezone_name,
+                    correction_db                   = float(correction_db)
+                )
+
+                if indicators_heatmap_week:
+                    for week,(png_path,csv_path,general_csv_path) in indicators_heatmap_week.items():
+                        self.logger.info(f"Heatmap indicadores semanal {source.name},{week}: PNG = {png_path}, CSV = {csv_path}, CSV General = {general_csv_path}")
 
         except Exception as e:
             self.logger.exception("Error generando la visualización básica para: %s",source.source_id)

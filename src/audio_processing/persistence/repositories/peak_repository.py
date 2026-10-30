@@ -28,12 +28,17 @@ class PeakRepository:
                 
         measurement_ids = [measurement.id_medicion for measurement in measurements]
         
-        statement = (select(AcousticPeak)
-                        .where(AcousticPeak.id_contexto == context_id,
-                               AcousticPeak.id_medicion_pico.in_(measurement_ids),))
+        measurement_id_set = set(measurement_ids)
 
-        existing_rows = list(self.session.scalars(statement).all())
-        existing = {row.id_medicion_pico: row for row in existing_rows}
+        existing_rows = self.session.scalars(
+            select(AcousticPeak).where(AcousticPeak.id_contexto == context_id)
+        ).all()
+
+        existing = {
+            row.id_medicion_pico: row
+            for row in existing_rows
+            if row.id_medicion_pico in measurement_id_set
+        }
 
         seen_measurement_ids = set()
         peak_rows = []
@@ -93,21 +98,31 @@ class PeakRepository:
     def list_apex_measurement_ids(self,*,context_id:int,measurement_ids:list[int]) -> set[int]:
 
         if not measurement_ids: return set()
+        measurement_id_set = set(measurement_ids)
 
-        statement = (select(AcousticPeak.id_medicion_pico)
+        existing_rows = (select(AcousticPeak.id_medicion_pico)
                      .where(
-                         AcousticPeak.id_contexto == context_id,
-                         AcousticPeak.id_medicion_pico.in_(measurement_ids)
+                         AcousticPeak.id_contexto == context_id
                          )
                     )
 
-        return set(self.session.scalars(statement).all())
+        existing = {
+            row.id_medicion_pico: row
+            for row in existing_rows
+            if row.id_medicion_pico in measurement_id_set
+        }
+
+        
+
+        return list(existing)
 
     def list_by_context(self,context_id:int) -> list[AcousticPeak]:
 
         statement = (select(AcousticPeak)
                      .where(AcousticPeak.id_contexto == context_id)
                      .order_by(AcousticPeak.datetime_pico))
+
+    
 
         return list(self.session.scalars(statement).all())
 

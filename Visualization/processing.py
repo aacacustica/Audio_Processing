@@ -144,13 +144,16 @@ def process_all_folders(input_folder,filter_point, folders, PERIODO_AGREGACION, 
             resultados_dir              = os.path.join(*resultados_dir,result_dir_name)    
 
         folder_output_dir                   = os.path.join(data_registers_folder,spl_string, graphics_string)
-        predictions_folder                  = os.path.join(resultados_dir,point_name,"AUDIOMOTH","AI_MODEL","Predictions")
+        predictions_folder                  = os.path.join(resultados_dir,point_name,"AI_MODEL","Predictions")
         predictions_files                   = glob.glob(os.path.join(predictions_folder, "*.csv"))
         predictions_visualization_folder    = predictions_folder.replace("Predictions", "Visualizations")
-       
+       #\\192.168.205.115\aac_server\OCIO\26013_ETS_Salburua_BURGER\Medidas_cortas\C1\5-Resultados\P1\AUDIOMOTH\AI_MODEL\Predictions
         if not os.path.exists(resultados_dir):
             os.makedirs(resultados_dir)
             logger.info(f"Created output folder: {resultados_dir}")
+
+        if os.path.exists(os.path.join(resultados_dir,point_name,"AI_MODEL","Predictions")): predictions_folder = os.path.join(resultados_dir,point_name,"AI_MODEL","Predictions")
+        else: predictions_folder = os.path.join(resultados_dir,point_name,'AUDIOMOTH',"AI_MODEL","Predictions")
 
         if '3-Medidas' in folder_output_dir: folder_output_dir = folder_output_dir.replace('3-Medidas', '5-Resultados')
 

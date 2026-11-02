@@ -112,7 +112,7 @@ def render_oca_alarm_visualization(aggregations: Iterable[AlarmAggregation], out
     safe_name = _safe_plot_name(plot_name)
     daily_path = _save_oca_plot(frame,output_path=output_dir / f"{safe_name}_OCA_Alarm.png",plot_name=plot_name,timezone_name=timezone_name)
 
-    week_starts = pd.Series(frame.index,index=frame.index).map(lambda timestamp: timestamp.normalize() - pd.Timedelta(days=timestamp.weekday))
+    week_starts = pd.Series(frame.index,index=frame.index).map(lambda timestamp: timestamp.normalize() - pd.Timedelta(days=timestamp.weekday()))
 
     weekly_paths: dict[str,Path] = {}
 

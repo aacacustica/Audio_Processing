@@ -875,7 +875,7 @@ class CampaignPipeline:
                     device_type     = source.device_type
                 )
                 measurements                    = MeasurementRepository(session).list_by_context(context_id=context.id_contexto)
-                third_octave_measurements       = ThirdOctaveRepository(session).list_by_measurements([m.id_medicion for m in measurements])
+                third_octave_measurements       = ThirdOctaveRepository(session).list_by_context(context_id=context.id_contexto)
                 peaks                           = PeakRepository(session).list_by_context(context.id_contexto)
 
                 point_config                    = getattr(self.config.points, source.name, None)

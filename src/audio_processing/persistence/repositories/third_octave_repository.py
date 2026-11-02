@@ -52,11 +52,20 @@ class ThirdOctaveRepository:
 
         if len(measurements) != len(results): raise ValueError("Número de mediciones y resultados de tercios diferente:" f"{len(measurements)} != {len(results)}")
 
-        measurements_ids    = [measurement.id_medicion for measurement in measurements]
-        statement           = (select(AcousticThirdOctaveMeasurements)
-                            .where(AcousticThirdOctaveMeasurements.id_medicion.in_(measurements_ids)))
+        measurements_ids = [measurement.id_medicion for measurement in measurements]
+        existing = {}
 
-        existing            = {row.id_medicion:row for row in self.session.scalars(statement).all()}
+        for start in range(0, len(measurements_ids), 1000):
+            chunk = measurements_ids[start:start + 1000]
+            statement = (
+                select(AcousticThirdOctaveMeasurements)
+                .where(AcousticThirdOctaveMeasurements.id_medicion.in_(chunk))
+            )
+            existing.update({
+                row.id_medicion: row
+                for row in self.session.scalars(statement).all()
+            })
+
         rows = []
 
         for measurement, result in zip(measurements,results):

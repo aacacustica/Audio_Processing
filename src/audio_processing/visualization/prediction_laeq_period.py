@@ -108,17 +108,16 @@ def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, 
     output_dir.mkdir(parents=True, exist_ok=True)
     safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", plot_name).strip("_")
 
-    treemap_path = [px.Constant(period), category_column]
 
-    if show_subclasses: treemap_path.append("display_name")
+    
 
     for period in period_order:
         period_df = grouped[grouped['period'] == period].copy()
 
-        if period_df.empty: continue
+        treemap_path = [px.Constant(period), category_column]
+        if show_subclasses: treemap_path.append("display_name")
 
-        html_path = output_dir / f"{safe_name}_LAeq_class_period_{period}.html"
-        csv_path = output_dir / f"{safe_name}_LAeq_class_period_{period}.csv"
+        if period_df.empty: continue
 
         html_path = output_dir / f"{safe_name}_LAeq_class_period_{period}.html"
         csv_path = output_dir / f"{safe_name}_LAeq_class_period_{period}.csv"

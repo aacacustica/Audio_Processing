@@ -80,12 +80,12 @@ def render_prediction_laeq_day(prediction_measurements,class_map_path: Path,taxo
 
     outputs = {}
 
-    treemap_path = [px.Constant(day), category_column]
-    if show_subclasses: treemap_path.append("display_name")
-
     for day in sorted(grouped['date'].unique()):
 
         day_df = grouped[grouped['date'] == day].copy()
+
+        treemap_path = [px.Constant(day), category_column]
+        if show_subclasses: treemap_path.append("display_name")
 
         html_path = output_dir / f"{safe_name}_LAeq_class_day_{day}.html"
         csv_path = output_dir / f"{safe_name}_LAeq_class_day_{day}.csv"

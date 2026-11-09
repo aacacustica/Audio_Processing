@@ -61,7 +61,7 @@ def render_prediction_peak_laeq_class(peak_prediction_measurements,class_map_pat
     html_path = output_dir / f"{safe_name}_LAeq_peak_class_mean.html"
     csv_path = output_dir / f"{safe_name}_LAeq_peak_class_mean.csv"
 
-    fig = px.treemap(grouped,path=subclass_column,values='number',color=category_column,color_discrete_map=color_map,custom_data=['LAeq'])
+    fig = px.treemap(grouped,path=treemap_path,values='number',color=category_column,color_discrete_map=color_map,custom_data=['LAeq'])
 
     fig.update_layout(title=f"{plot_name} | LAeq promedio de picos por clase")
 

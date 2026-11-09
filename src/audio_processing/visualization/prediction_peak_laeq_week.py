@@ -66,7 +66,7 @@ def render_prediciton_peak_laeq_week(peak_prediction_measurements,class_map_path
     if data.empty: return None
 
     subclass_column = "display_name"
-    group_columns = [category_column]
+    group_columns = ["week_start", category_column]
 
     if show_subclasses: group_columns.append(subclass_column)
 
@@ -77,7 +77,7 @@ def render_prediciton_peak_laeq_week(peak_prediction_measurements,class_map_path
     outputs = {}
     
     treemap_path = [category_column]
-    if show_subclasses: treemap_path.append("class_name")
+    if show_subclasses: treemap_path.append(subclass_column)
 
     for week_start in sorted(grouped['week_start'].unique()):
 

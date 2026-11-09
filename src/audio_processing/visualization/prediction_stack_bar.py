@@ -53,7 +53,7 @@ def render_prediciton_stack_bar(prediction_measurements, class_map_path: Path, t
 
     if df.empty: return None
 
-    grouped = (df.groupby(grouped).size().reset_index(name="detections").sort_values(['day',category_column]))
+    grouped = (df.groupby(group_columns).size().reset_index(name="detections").sort_values(['day',category_column]))
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True,exist_ok=True)

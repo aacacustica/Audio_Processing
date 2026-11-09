@@ -11,7 +11,7 @@ def write_treemap(outputs,category_column,output_dir,safe_name,color_map,plot_na
     group_columns = [category_column]
     if show_subclasses: group_columns.append("class_name")
 
-    grouped = (frame.groupby(group_columns,as_index=False).agg(number=('number','sum')).sort_values([category_column,'class_name']))
+    grouped = (frame.groupby(group_columns,as_index=False).agg(number=('number','sum')).sort_values(group_columns))
 
     treemap_path = [category_column]
     if show_subclasses: treemap_path.append("class_name")

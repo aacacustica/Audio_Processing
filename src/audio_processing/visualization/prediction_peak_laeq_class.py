@@ -50,6 +50,10 @@ def render_prediction_peak_laeq_class(peak_prediction_measurements,class_map_pat
 
     grouped = (data.groupby(group_columns).agg(number=('class_name','size'),LAeq=("la_db",_leq)).reset_index())
 
+    treemap_path = [category_column]
+
+    if show_subclasses : treemap_path.append(subclass_column)
+
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", plot_name).strip("_")
@@ -57,7 +61,7 @@ def render_prediction_peak_laeq_class(peak_prediction_measurements,class_map_pat
     html_path = output_dir / f"{safe_name}_LAeq_peak_class_mean.html"
     csv_path = output_dir / f"{safe_name}_LAeq_peak_class_mean.csv"
 
-    fig = px.treemap(grouped,path=[category_column],values='number',color=category_column,color_discrete_map=color_map,custom_data=['LAeq'])
+    fig = px.treemap(grouped,path=subclass_column,values='number',color=category_column,color_discrete_map=color_map,custom_data=['LAeq'])
 
     fig.update_layout(title=f"{plot_name} | LAeq promedio de picos por clase")
 

@@ -738,7 +738,8 @@ class CampaignPipeline:
                     output_dir              = prediction_output_dir,
                     taxonomy                = self.config.visualization.taxonomy,
                     plot_name               = source.name,
-                    correction_db           = float(correction_db) 
+                    correction_db           = float(correction_db),
+                    show_subclasses         = show_subclasses 
                 ),visualization_errors)
 
                 if prediction_outputs:
@@ -1083,7 +1084,8 @@ class CampaignPipeline:
                     taxonomy                        = self.config.visualization.taxonomy,
                     output_dir                      = prediction_output_dir,
                     plot_name                       = source.name,
-                    correction_db                   = float(correction_db)
+                    correction_db                   = float(correction_db),
+                    show_subclasses                 = show_subclasses
                 ),visualization_errors)
 
                 if boxplot_outputs:
@@ -1097,7 +1099,8 @@ class CampaignPipeline:
                     output_dir                      = prediction_output_dir,
                     plot_name                       = source.name,
                     correction_db                   = float(correction_db),
-                    timezone_name                   = self.config.campaign.timezone
+                    timezone_name                   = self.config.campaign.timezone,
+                    show_subclasses                 = show_subclasses
                 ),visualization_errors)
 
                 if boxplot_week_outputs:

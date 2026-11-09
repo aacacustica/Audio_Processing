@@ -89,11 +89,11 @@ def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, 
     if df.empty: return None
 
     subclass_column = "display_name"
-    group_columns = [category_column]
+    group_columns = ["period", category_column]
 
-    if show_subclasses: group_columns.append(subclass_column)
+    if show_subclasses: group_columns.append('display_name')
 
-    grouped = (df.groupby(group_columns).agg(number=('class_name','size'),LAeq=("la_db",_leq)).reset_index())
+    grouped = (df.groupby(group_columns).agg(number=('class_name','size'),LAeq=("laeq_window",_leq)).reset_index())
 
     outputs = {}
 
@@ -108,9 +108,10 @@ def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, 
     output_dir.mkdir(parents=True, exist_ok=True)
     safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", plot_name).strip("_")
 
-    treemap_path = [category_column]
-    if show_subclasses: treemap_path.append("class_name")
-    
+    treemap_path = [px.Constant(period), category_column]
+
+    if show_subclasses: treemap_path.append("display_name")
+
     for period in period_order:
         period_df = grouped[grouped['period'] == period].copy()
 
@@ -122,7 +123,7 @@ def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, 
         html_path = output_dir / f"{safe_name}_LAeq_class_period_{period}.html"
         csv_path = output_dir / f"{safe_name}_LAeq_class_period_{period}.csv"
 
-        fig = px.treemap(period_df,path=[px.Constant(period), category_column],values="number",color=category_column,color_discrete_map=color_map,hover_data={"LAeq": True, "number": True},custom_data=["LAeq"],)
+        fig = px.treemap(period_df,path=treemap_path,values="number",color=category_column,color_discrete_map=color_map,hover_data={"LAeq": True, "number": True},custom_data=["LAeq"],)
         fig.update_layout(title=(f"{plot_name} | Promedio Energético (LAeq) "f"por Periodo {period} por Clases"))
         fig.update_traces(hovertemplate=("<b>%{label}</b><br>""LAeq: %{customdata[0]:.2f} dB<br>""Count: %{value}"),texttemplate="%{label}<br><br>LAeq: %{customdata[0]:.2f} dB",)
 

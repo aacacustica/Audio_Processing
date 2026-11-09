@@ -51,6 +51,10 @@ def render_prediction_laeq_class(prediction_measurements,class_map_path:Path,tax
 
     grouped = (df.groupby(group_columns).agg(number=('class_name','size'),LAeq=("la_db",_leq)).reset_index())
 
+    treemap_path = [category_column]
+
+    if show_subclasses: treemap_path.append(subclass_column)
+
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True,exist_ok=True)
     safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", plot_name).strip("_")
@@ -58,7 +62,7 @@ def render_prediction_laeq_class(prediction_measurements,class_map_path:Path,tax
     html_path = output_dir / f"{safe_name}_LAeq_class_mean.html"
     csv_path = output_dir / f"{safe_name}_LAeq_class_mean.csv"
 
-    fig = px.treemap(grouped,path=[category_column],values='number',color=category_column,color_discrete_map=color_map,hover_data={'LAeq':True,'number':True},custom_data=['LAeq'])
+    fig = px.treemap(grouped,path=treemap_path,values='number',color=category_column,color_discrete_map=color_map,hover_data={'LAeq':True,'number':True},custom_data=['LAeq'])
 
     fig.update_layout(title=f"{plot_name} | Promedio Energético (LAeq) por Clases")
     fig.update_traces(hovertemplate=("<b>%{label}</b><br>""LAeq: %{customdata[0]:.2f} dB<br>""Count: %{value}"),texttemplate="%{label}<br><br>LAeq: %{customdata[0]:.2f} dB")

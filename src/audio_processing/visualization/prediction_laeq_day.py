@@ -68,11 +68,11 @@ def render_prediction_laeq_day(prediction_measurements,class_map_path: Path,taxo
     if df.empty: return None
 
     subclass_column = "display_name"
-    group_columns = [category_column]
+    group_columns = ["date", category_column]
 
     if show_subclasses: group_columns.append(subclass_column)
 
-    grouped = (df.groupby(group_columns).agg(number=('class_name','size'),LAeq=("la_db",_leq)).reset_index())
+    grouped = (df.groupby(group_columns).agg(number=('class_name','size'),LAeq=("laeq_window",_leq)).reset_index())
 
     output_dir = Path(output_dir) / "TreeMaps_days"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -80,9 +80,9 @@ def render_prediction_laeq_day(prediction_measurements,class_map_path: Path,taxo
 
     outputs = {}
 
-    treemap_path = [category_column]
-    if show_subclasses: treemap_path.append("class_name")
-    
+    treemap_path = [px.Constant(day), category_column]
+    if show_subclasses: treemap_path.append("display_name")
+
     for day in sorted(grouped['date'].unique()):
 
         day_df = grouped[grouped['date'] == day].copy()
@@ -90,7 +90,7 @@ def render_prediction_laeq_day(prediction_measurements,class_map_path: Path,taxo
         html_path = output_dir / f"{safe_name}_LAeq_class_day_{day}.html"
         csv_path = output_dir / f"{safe_name}_LAeq_class_day_{day}.csv"
 
-        fig = px.treemap(day_df,path=[px.Constant(day),category_column],values='number',color=category_column,color_discrete_map=color_map,hover_data={"LAeq":True,"number":True},custom_data=["LAeq"])
+        fig = px.treemap(day_df,path=treemap_path,values='number',color=category_column,color_discrete_map=color_map,hover_data={"LAeq":True,"number":True},custom_data=["LAeq"])
 
         fig.update_layout(title=f"{plot_name} | LAeq Promedio por Clase - Día {day}")
         fig.update_traces(hovertemplate=("<b>%{label}</b><br>""LAeq: %{customdata[0]:.2f} dB<br>""Count: %{value}"),texttemplate="%{label}<br><br>LAeq: %{customdata[0]:.2f} dB")

@@ -73,18 +73,18 @@ def render_prediction_laeq_week(prediction_measurements,class_map_path: Path, ta
     if df.empty: return None
 
     subclass_column = "display_name"
-    group_columns = [category_column]
+    group_columns = ["week_start", category_column]
 
     if show_subclasses: group_columns.append(subclass_column)
 
-    grouped = (df.groupby(group_columns).agg(number=('class_name','size'),LAeq=("la_db",_leq)).reset_index())
+    grouped = (df.groupby(group_columns).agg(number=('class_name','size'),LAeq=("laeq_window",_leq)).reset_index())
 
     output_dir = Path(output_dir)
     safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", plot_name).strip("_")
     outputs = {}
 
     treemap_path = [category_column]
-    if show_subclasses: treemap_path.append("class_name")
+    if show_subclasses: treemap_path.append(subclass_column)
         
     for week_start in sorted(grouped['week_start'].unique()):
 

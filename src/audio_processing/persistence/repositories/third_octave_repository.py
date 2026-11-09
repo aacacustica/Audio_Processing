@@ -88,21 +88,23 @@ class ThirdOctaveRepository:
         self.session.flush()
         return rows
 
-    def list_by_measurements(self,measurement_ids: list[int]) -> list[AcousticThirdOctaveMeasurements]:
+    def list_by_measurements(self, measurement_ids: list[int]):
+        if not measurement_ids:
+            return []
 
-        if not measurement_ids: return []
+        rows = []
+        batch_size = 10_000
 
-        statement = (
-            select(AcousticThirdOctaveMeasurements)
-            .where(
-                AcousticThirdOctaveMeasurements.id_medicion.in_(measurement_ids)
+        for start in range(0, len(measurement_ids), batch_size):
+            batch = measurement_ids[start : start + batch_size]
+            statement = (
+                select(AcousticThirdOctaveMeasurements)
+                .where(AcousticThirdOctaveMeasurements.id_medicion.in_(batch))
+                .order_by(AcousticThirdOctaveMeasurements.id_medicion)
             )
-            .order_by(
-                AcousticThirdOctaveMeasurements.id_medicion
-            )
-        )
+            rows.extend(self.session.scalars(statement).all())
 
-        return list(self.session.scalars(statement).all())
+        return rows
 
     def list_by_context(
         self, context_id: int

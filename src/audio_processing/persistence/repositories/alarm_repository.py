@@ -193,12 +193,20 @@ class AlarmRepository:
 
         return list(self.session.scalars(statement).all())
 
-    def list_by_measurements(self, measurement_ids: list[int]) -> list[AcousticAlarm]: 
+    def list_by_measurements(self, measurement_ids: list[int]):
+        if not measurement_ids:
+            return []
 
-        statement = (select(AcousticAlarm)
-                     .where(AcousticAlarmMeasurement,AcousticAlarmMeasurement.id_alarma == AcousticAlarm.id_alarma)
-                     .where(AcousticAlarmMeasurement.id_medicion.in_(measurement_ids))
-                     .distinct()
-                     .order_by(AcousticAlarm.start_time,AcousticAlarm.alarm_type,AcousticAlarm.id_alarma))
+        rows = []
+        batch_size = 10_000
 
-        return list(self.session.scalars(statement).all())
+        for start in range(0, len(measurement_ids), batch_size):
+            batch = measurement_ids[start : start + batch_size]
+            statement = (
+                select(AcousticAlarmMeasurement)
+                .where(AcousticAlarmMeasurement.id_medicion.in_(batch))
+                .order_by(AcousticAlarmMeasurement.id_medicion)
+            )
+            rows.extend(self.session.scalars(statement).all())
+
+        return rows

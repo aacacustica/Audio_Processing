@@ -12,7 +12,8 @@ from .configs import *
 
 def _leq(levels: pd.Series) -> float:
 
-    values = pd.to_numeric(levels,errors='coerce').dropna().to_numpy(dtype=float)
+    values = np.asarray(pd.to_numeric(levels, errors="coerce"), dtype=float)
+    values = values[np.isfinite(values)]
 
     if values.size == 0: return float("nan")
 

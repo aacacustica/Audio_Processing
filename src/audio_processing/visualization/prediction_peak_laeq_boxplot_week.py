@@ -81,12 +81,12 @@ def render_prediction_peak_laeq_boxplot_week(peak_prediction_measurements, class
         color_column = "display_name" if show_subclasses else category_column
 
         figure = px.box(week_data,x=category_column,y='la_db',color=color_column,color_discrete_map=None if show_subclasses else color_map,points='outliers',labels={category_column:"Agrupación","display_name":"Subclase",'la_db': "LAeq del ápice (dB)"},hover_data={'display_name': show_subclasses,"class_name": True,"id_medicion": True})
-        figure.update_layout(title=f"{plot_name} | Distribución de LAeq de picos por clase | Semana {week_start}",xaxis_title='Clase',yaxis_title='LAeq del ápice (dB)',showlegend=False)
+        figure.update_layout(title=f"{plot_name} | Distribución de LAeq de picos por clase | Semana {week_start}",xaxis_title='Agrupación taxonómica',yaxis_title='LAeq del ápice (dB)',showlegend=show_subclasses)
 
         figure.update_xaxes(tickangle=-35)
         figure.write_html(html_path)
         
-        week_data[['id_medicion','class_name',category_column,'week_start','la_db']].to_csv(csv_path,index=False)
+        week_data[['id_medicion','class_name',,'display_name',category_column,'week_start','la_db']].to_csv(csv_path,index=False)
         outputs[week_start] = (html_path,csv_path)
 
     return outputs or None

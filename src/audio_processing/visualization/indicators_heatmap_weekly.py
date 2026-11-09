@@ -17,7 +17,7 @@ def render_indicator_heatmap_week(measurements,output_dir:Path,plot_name:str,tim
     if not records: return None
 
     data = pd.DataFrame(records)
-    data['datetime'] = pd.to_datetime(data['datetime'],utc=True).tz.tz_convert(timezone_name)
+    data['datetime'] = pd.to_datetime(data['datetime'],utc=True).dt.tz_convert(timezone_name)
     data['la_db'] = pd.to_numeric(data['la_db'],errors='coerce')
     if data.empty: return None
 
@@ -46,7 +46,7 @@ def render_indicator_heatmap_week(measurements,output_dir:Path,plot_name:str,tim
         durations = week_data.groupby(['date','period'])['datetime'].agg(first='min',last='max')
 
         durations['seconds'] = (durations['last'] - durations['first']).dt.total_seconds()
-        boundary_dates = {week_data['date'].min(),week_data['date'].ax()}
+        boundary_dates = {week_data["date"].min(), week_data["date"].max()}
 
         for (day,period), row in durations.iterrows():
             if day in boundary_dates and row['seconds'] <= LE_SECONDS: week_data = week_data[~((week_data["date"] == day) & (week_data["period"] == period))]

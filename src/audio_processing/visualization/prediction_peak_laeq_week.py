@@ -65,11 +65,19 @@ def render_prediciton_peak_laeq_week(peak_prediction_measurements,class_map_path
 
     if data.empty: return None
 
-    grouped = data.groupby(['week_start',category_column]).agg(number=('class_name','size'),LAeq=('la_db',_leq)).reset_index()
+    subclass_column = "display_name"
+    group_columns = [category_column]
+
+    if show_subclasses: group_columns.append(subclass_column)
+
+    grouped = (data.groupby(group_columns).agg(number=('class_name','size'),LAeq=("la_db",_leq)).reset_index())
 
     output_dir = Path(output_dir)
     safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", plot_name).strip("_")
     outputs = {}
+    
+    treemap_path = [category_column]
+    if show_subclasses: treemap_path.append("class_name")
 
     for week_start in sorted(grouped['week_start'].unique()):
 
@@ -80,7 +88,7 @@ def render_prediciton_peak_laeq_week(peak_prediction_measurements,class_map_path
         html_path = week_folder / f"{safe_name}_LAeq_peak_class_mean_{week_start}.html"
         csv_path = week_folder / f"{safe_name}_LAeq_peak_class_mean_{week_start}.csv"
 
-        figure = px.treemap(week_data,path=[category_column],values='number',color=category_column,color_discrete_map=color_map,custom_data=['LAeq'])
+        figure = px.treemap(week_data,path=treemap_path,values='number',color=category_column,color_discrete_map=color_map,custom_data=['LAeq'])
 
         figure.update_layout(title=f"{plot_name} | LAeq de picos por clase | Semana {week_start}")
         figure.update_traces(hovertemplate=("<b>%{label}</b><br>""LAeq: %{customdata[0]:.2f} dB<br>""Picos: %{value}"),texttemplate="%{label}<br>LAeq: %{customdata[0]:.2f} dB")

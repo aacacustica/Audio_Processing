@@ -72,12 +72,20 @@ def render_prediction_laeq_week(prediction_measurements,class_map_path: Path, ta
 
     if df.empty: return None
 
-    grouped = (df.groupby(["week_start",category_column]).agg(number=('class_name','size'),LAeq=('laeq_window',_leq)).reset_index())
+    subclass_column = "display_name"
+    group_columns = [category_column]
+
+    if show_subclasses: group_columns.append(subclass_column)
+
+    grouped = (df.groupby(group_columns).agg(number=('class_name','size'),LAeq=("la_db",_leq)).reset_index())
 
     output_dir = Path(output_dir)
     safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", plot_name).strip("_")
     outputs = {}
 
+    treemap_path = [category_column]
+    if show_subclasses: treemap_path.append("class_name")
+        
     for week_start in sorted(grouped['week_start'].unique()):
 
         week_df = grouped[grouped["week_start"] == week_start].copy()
@@ -87,7 +95,7 @@ def render_prediction_laeq_week(prediction_measurements,class_map_path: Path, ta
         html_path = week_folder / f"{safe_name}_LAeq_class_mean_{week_start}.html"
         csv_path = week_folder / f"{safe_name}_LAeq_class_mean_{week_start}.csv"    
 
-        fig = px.treemap(week_df,path=[category_column],values='number',color=category_column,color_discrete_map=color_map,hover_data={"LAeq":True,'number':True},custom_data=['LAeq'])
+        fig = px.treemap(week_df,path=treemap_path,values='number',color=category_column,color_discrete_map=color_map,hover_data={"LAeq":True,'number':True},custom_data=['LAeq'])
 
         fig.update_layout(title=f"{plot_name} | Promedio Energético (LAeq) por Clases | Semana {week_start}")  
         fig.update_traces(hovertemplate=("<b>%{label}</b><br>""LAeq: %{customdata[0]:.2f} dB<br>""Count: %{value}"),texttemplate="%{label}<br><br>LAeq: %{customdata[0]:.2f} dB") 

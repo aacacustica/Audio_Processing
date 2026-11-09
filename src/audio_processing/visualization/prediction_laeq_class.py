@@ -44,7 +44,12 @@ def render_prediction_laeq_class(prediction_measurements,class_map_path:Path,tax
 
     if df.empty: return None
 
-    grouped = (df.groupby(category_column).agg(number=('class_name','size'),LAeq=("la_db",_leq)).reset_index())
+    subclass_column = "display_name"
+    group_columns = [category_column]
+
+    if show_subclasses: group_columns.append(subclass_column)
+
+    grouped = (df.groupby(group_columns).agg(number=('class_name','size'),LAeq=("la_db",_leq)).reset_index())
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True,exist_ok=True)

@@ -50,7 +50,7 @@ def render_prediction_laeq_day(prediction_measurements,class_map_path: Path,taxo
             }
         )
 
-    if not records: None
+    if not records: return None
 
     class_map = pd.read_csv(class_map_path,sep=";")
     required_columns = {"display_name",category_column}
@@ -67,7 +67,12 @@ def render_prediction_laeq_day(prediction_measurements,class_map_path: Path,taxo
 
     if df.empty: return None
 
-    grouped = (df.groupby(['date',category_column]).agg(number=("class_name","size"),LAeq=("laeq_window",_leq)).reset_index())
+    subclass_column = "display_name"
+    group_columns = [category_column]
+
+    if show_subclasses: group_columns.append(subclass_column)
+
+    grouped = (df.groupby(group_columns).agg(number=('class_name','size'),LAeq=("la_db",_leq)).reset_index())
 
     output_dir = Path(output_dir) / "TreeMaps_days"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -75,6 +80,9 @@ def render_prediction_laeq_day(prediction_measurements,class_map_path: Path,taxo
 
     outputs = {}
 
+    treemap_path = [category_column]
+    if show_subclasses: treemap_path.append("class_name")
+    
     for day in sorted(grouped['date'].unique()):
 
         day_df = grouped[grouped['date'] == day].copy()

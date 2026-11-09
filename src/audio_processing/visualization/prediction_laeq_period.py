@@ -88,14 +88,16 @@ def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, 
 
     if df.empty: return None
 
-    grouped = (df.groupby(['period',category_column]).agg(number=('class_name','size'),LAeq=('laeq_window',_leq)).reset_index())
+    subclass_column = "display_name"
+    group_columns = [category_column]
 
-    
-    
+    if show_subclasses: group_columns.append(subclass_column)
+
+    grouped = (df.groupby(group_columns).agg(number=('class_name','size'),LAeq=("la_db",_leq)).reset_index())
 
     outputs = {}
 
-    if period_scheme == "dayparts":
+    if period_scheme == "day_parts":
         period_order = PERIOD_ORDER
         folder_name = "Prediction_LAeq_15_min_Period"
     else:
@@ -106,6 +108,9 @@ def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, 
     output_dir.mkdir(parents=True, exist_ok=True)
     safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", plot_name).strip("_")
 
+    treemap_path = [category_column]
+    if show_subclasses: treemap_path.append("class_name")
+    
     for period in period_order:
         period_df = grouped[grouped['period'] == period].copy()
 

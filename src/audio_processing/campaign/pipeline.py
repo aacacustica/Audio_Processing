@@ -679,7 +679,7 @@ class CampaignPipeline:
                     timezone_name       = timezone_name
                 ),visualization_errors)
 
-                for kind, (png_path,csv_path) in heatmapts_outputs.items():
+                for kind, (png_path,csv_path) in (heatmapts_outputs or {}).items():
                     self.logger.info(f"Heatmap {kind} {source.name}: PNG: {png_path}, CSV = {csv_path}")
 
                 night_result = self._render_visualization("night_evolution",lambda: render_night_evolution(

@@ -6,14 +6,20 @@ import plotly.express as px
 
 from audio_processing.visualization.configs import PORT_COLORS, URBAN_COLORS
 
-def write_treemap(outputs,category_column,output_dir,safe_name,color_map,plot_name,frame: pd.DataFrame, output_key: str, title_suffix: str) -> None:
+def write_treemap(outputs,category_column,output_dir,safe_name,color_map,plot_name,frame: pd.DataFrame, output_key: str, title_suffix: str,show_subclasses: bool = True) -> None:
 
-    grouped = (frame.groupby([category_column,'class_name'],as_index=False).agg(number=('number','sum')).sort_values([category_column,'class_name']))
+    group_columns = [category_column]
+    if show_subclasses: group_columns.append("class_name")
+
+    grouped = (frame.groupby(group_columns,as_index=False).agg(number=('number','sum')).sort_values([category_column,'class_name']))
+
+    treemap_path = [category_column]
+    if show_subclasses: treemap_path.append("class_name")
 
     html_path = output_dir / f"{safe_name}_prediction_tree_map_{output_key}.html"
     csv_path = output_dir / f"{safe_name}_prediction_tree_map_{output_key}.csv"
 
-    figure = px.treemap(grouped,path=[category_column,'class_name'],values="number",color=category_column,color_discrete_map=color_map,custom_data=['number'])
+    figure = px.treemap(grouped,path=treemap_path,values="number",color=category_column,color_discrete_map=color_map,custom_data=['number'])
     figure.update_layout(title=f"{plot_name} |  Frecuencia de predicciones | {title_suffix}")
     figure.update_traces(hovertemplate=("<b>%{label}</b><br>""Predicciones: %{customdata[0]}""<extra></extra>"),texttemplate="%{label}<br>%{value}")
 
@@ -21,7 +27,7 @@ def write_treemap(outputs,category_column,output_dir,safe_name,color_map,plot_na
     grouped.to_csv(csv_path,index=False)
     outputs[output_key] = (html_path,csv_path)
 
-def render_prediction_tree_map(prediction_measurements, class_map_path: Path, taxonomy: str, output_dir: Path, plot_name: str, timezone_name: str = "Europe/Madrid") -> dict[str, tuple[Path,Path]] | None:
+def render_prediction_tree_map(prediction_measurements, class_map_path: Path, taxonomy: str, output_dir: Path, plot_name: str, timezone_name: str = "Europe/Madrid",show_subclasses: bool = True,) -> dict[str, tuple[Path,Path]] | None:
 
     if taxonomy == "urban":
         category_column = "Brown_Level_2"

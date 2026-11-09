@@ -86,7 +86,7 @@ def render_prediction_peak_laeq_boxplot_week(peak_prediction_measurements, class
         figure.update_xaxes(tickangle=-35)
         figure.write_html(html_path)
         
-        week_data[['id_medicion','class_name',,'display_name',category_column,'week_start','la_db']].to_csv(csv_path,index=False)
+        week_data[['id_medicion','class_name','display_name',category_column,'week_start','la_db']].to_csv(csv_path,index=False)
         outputs[week_start] = (html_path,csv_path)
 
     return outputs or None

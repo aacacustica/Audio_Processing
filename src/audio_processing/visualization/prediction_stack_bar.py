@@ -7,7 +7,7 @@ import plotly.express as px
 from .configs import PORT_COLORS, URBAN_COLORS
 
 
-def render_prediciton_stack_bar(prediction_measurements, class_map_path: Path, taxonomy: str, output_dir: Path, plot_name: str, timezone_name: str = "Europe/Madrid",correction_db: float = 0.0) -> tuple[Path,Path] | None:
+def render_prediciton_stack_bar(prediction_measurements, class_map_path: Path, taxonomy: str, output_dir: Path, plot_name: str, timezone_name: str = "Europe/Madrid",correction_db: float = 0.0,show_subclasses: bool = True) -> tuple[Path,Path] | None:
 
     if taxonomy == "urban":
         category_column = "Brown_Level_2"
@@ -18,7 +18,10 @@ def render_prediciton_stack_bar(prediction_measurements, class_map_path: Path, t
     else:
         raise ValueError(f"Taxonomía no compatible con este gráfico: {taxonomy}")
 
-    
+    group_columns = ["day", category_column]
+
+    if show_subclasses: group_columns.append("display_name")
+
     predictions_by_id = {}
 
     for prediction, _measurement in prediction_measurements:
@@ -50,7 +53,7 @@ def render_prediciton_stack_bar(prediction_measurements, class_map_path: Path, t
 
     if df.empty: return None
 
-    grouped = (df.groupby(['day',category_column]).size().reset_index(name="detections").sort_values(['day',category_column]))
+    grouped = (df.groupby(grouped).size().reset_index(name="detections").sort_values(['day',category_column]))
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True,exist_ok=True)
@@ -59,7 +62,9 @@ def render_prediciton_stack_bar(prediction_measurements, class_map_path: Path, t
     html_path = output_dir / f"{safe_name}_prediction_stack_bar.html"
     csv_path = output_dir / f"{safe_name}_prediction_stack_bar.csv" 
 
-    fig = px.bar(grouped,x="day",y="detections",color=category_column,color_discrete_map=color_map,barmode="stack",title=f"{plot_name} | Clases por Día",labels={"day":"Día","detections":"Número de detecciones",category_column:"Clase"},height=900,width=2000)
+    fig = px.bar(grouped,x="day",y="detections",color=category_column,custom_data=['display_name'] if show_subclasses else None,color_discrete_map=color_map,barmode="stack",title=f"{plot_name} | Clases por Día",labels={"day":"Día","detections":"Número de detecciones",category_column:"Clase",'display_name': 'Subclase'},height=900,width=2000)
+
+    if show_subclasses: fig.update_traces(hovertemplate="Día: %{x}<br>""Agrupación: %{fullData.name}<br>""Subclase: %{customdata[0]}<br>""Detecciones: %{y}<extra></extra>")
 
     fig.update_layout(xaxis_title="Día",yaxis_title="Número de detecciones")
 

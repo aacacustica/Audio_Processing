@@ -5,7 +5,9 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
 from .configs import *
+from .time_axis import configure_time_axis
 
 
 
@@ -119,10 +121,7 @@ def render_time_plot(measurements,output_dir: Path,plot_name: str, aggregation_s
         ax.set_title(f"{plot_name} - Nivel equivalente cada {aggregation_seconds}")
         ax.set_xlim(aggregated.index.min(),aggregated.index.max() + pd.Timedelta(seconds=aggregation_seconds))
 
-        locator = mdates.AutoDateLocator(minticks=3, maxticks=8, tz=timezone_name)
-
-        ax.xaxis.set_major_locator(locator)
-        ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(locator, tz=timezone_name))
+        configure_time_axis(ax, timezone_name, max_ticks=8)
 
         ax.tick_params(axis="x", labelrotation=90)
         ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1))

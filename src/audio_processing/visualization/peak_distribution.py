@@ -1,6 +1,8 @@
 from datetime import timedelta
 from pathlib import Path
 from collections import defaultdict
+from .time_axis import configure_time_axis
+
 import re
 
 import matplotlib.dates as mdates
@@ -14,9 +16,7 @@ def configure_axis(ax,df,timezone_name):
         ax.set_ylabel("LAeq (dB)")
         ax.set_xlim(df["datetime"].min(), df["datetime"].max())
 
-        ax.xaxis.set_major_locator(mdates.HourLocator(interval=4, tz=timezone_name))
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d %H:%M", tz=timezone_name))
-        ax.tick_params(axis="x", labelrotation=90)
+        configure_time_axis(ax, timezone_name, max_ticks=10)
         ax.grid(True)
 
         return ax

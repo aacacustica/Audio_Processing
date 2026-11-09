@@ -115,3 +115,13 @@ class PeakRepository:
 
         return list(self.session.scalars(statement).all())
 
+    def list_by_files(self,file_ids:list[int]) -> list[AcousticPeak]:
+
+        if not file_ids: return []
+
+        statement = (select(AcousticPeak)
+                     .where(AcousticPeak.id_archivo_pico.in_(file_ids))
+                     .order_by(AcousticPeak.datetime_pico))
+
+        return list(self.session.scalars(statement).all())
+

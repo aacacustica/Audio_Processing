@@ -5,6 +5,7 @@ from pathlib import Path
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
+from .time_axis import configure_time_axis
 
 from audio_processing.visualization.configs import OCA_LIMITS
 from audio_processing.visualization.time_plot import _leq, _oca_limit, _safe_filename
@@ -86,9 +87,7 @@ def render_time_plot_week(measurements,output_dir:Path,plot_name:str,aggregation
             for percentile in percentiles:
                 ax.plot(weekly.index,weekly[f"L{percentile}"],linewidth=0.8,label=f"L{percentile}")
 
-            locator = mdates.AutoDateLocator(minticks=4, maxticks=10, tz=timezone_name)
-            ax.xaxis.set_major_locator(locator)
-            ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(locator,tz=timezone_name))
+            configure_time_axis(ax, timezone_name, max_ticks=10)
             ax.set_ylim(30, 105)
             ax.set_ylabel("dB(A)")
             ax.set_xlabel("Hora")

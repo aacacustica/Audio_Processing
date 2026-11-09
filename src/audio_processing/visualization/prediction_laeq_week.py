@@ -9,7 +9,7 @@ from .configs import PORT_COLORS, URBAN_COLORS
 from .time_plot import _leq
 
 
-def render_prediction_laeq_week(prediction_measurements,class_map_path: Path, taxonomy: str, output_dir: Path, plot_name: str, correction_db: float = 0.0, timezone_name: str = "Europe/Madrid") -> dict[str,tuple[Path,Path]] | None:
+def render_prediction_laeq_week(prediction_measurements,class_map_path: Path, taxonomy: str, output_dir: Path, plot_name: str, correction_db: float = 0.0, timezone_name: str = "Europe/Madrid",show_subclasses: bool = True,) -> dict[str,tuple[Path,Path]] | None:
     
     if taxonomy == "urban":
         category_column = "Brown_Level_2"

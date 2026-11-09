@@ -7,7 +7,7 @@ import plotly.express as px
 from .time_plot import _leq
 from .configs import * 
 
-def render_prediction_laeq_class(prediction_measurements,class_map_path:Path,taxonomy:str,output_dir:Path,plot_name:str,correction_db: float = 0.0) -> tuple[Path,Path] | None:
+def render_prediction_laeq_class(prediction_measurements,class_map_path:Path,taxonomy:str,output_dir:Path,plot_name:str,correction_db: float = 0.0,show_subclasses: bool = True,) -> tuple[Path,Path] | None:
 
     if taxonomy == "urban": 
         category_column = "Brown_Level_2"

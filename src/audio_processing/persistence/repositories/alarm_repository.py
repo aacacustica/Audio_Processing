@@ -192,3 +192,13 @@ class AlarmRepository:
                      .order_by(AcousticAlarm.start_time,AcousticAlarm.alarm_type,AcousticAlarm.id_alarma))
 
         return list(self.session.scalars(statement).all())
+
+    def list_by_measurements(self, measurement_ids: list[int]) -> list[AcousticAlarm]: 
+
+        statement = (select(AcousticAlarm)
+                     .where(AcousticAlarmMeasurement,AcousticAlarmMeasurement.id_alarma == AcousticAlarm.id_alarma)
+                     .where(AcousticAlarmMeasurement.id_medicion.in_(measurement_ids))
+                     .distinct()
+                     .order_by(AcousticAlarm.start_time,AcousticAlarm.alarm_type,AcousticAlarm.id_alarma))
+
+        return list(self.session.scalars(statement).all())

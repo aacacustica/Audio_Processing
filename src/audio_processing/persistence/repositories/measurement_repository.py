@@ -54,6 +54,7 @@ class MeasurementRepository:
 
         return list(self.session.scalars(statement).all())
 
+
     def list_by_context(self,context_id:int,*,start_datetime: datetime | None = None,end_datetime: datetime | None = None) -> list[AcousticMeasurement]:
 
         statement = select(AcousticMeasurement).where(AcousticMeasurement.id_contexto == context_id)

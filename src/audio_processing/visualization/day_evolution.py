@@ -12,7 +12,7 @@ from .configs import *
 
 def _leq(levels: pd.Series) -> float:
 
-    values = pd.to_numeric(levels,errors='coerce').dropna.to_numpy(dtype=float)
+    values = pd.to_numeric(levels,errors='coerce').dropna().to_numpy(dtype=float)
 
     if values.size == 0: return float("nan")
 

@@ -30,7 +30,7 @@ def _period_for_hour(hour: int,period_scheme:str) -> str:
     raise ValueError(f"Esquema de periodos desconocido: {period_scheme}")
 
 
-def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, taxonomy: str, output_dir:Path,plot_name: str, correction_db: float = 0.0, timezone_name: str = "Europe/Madrid",period_scheme:str = "day_parts") -> dict[str , tuple[Path,Path]] | None:
+def render_prediction_laeq_period(prediction_measurements,class_map_path: Path, taxonomy: str, output_dir:Path,plot_name: str, correction_db: float = 0.0, timezone_name: str = "Europe/Madrid",period_scheme:str = "day_parts",show_subclasses: bool = True,) -> dict[str , tuple[Path,Path]] | None:
 
     if taxonomy == "urban":
         category_column = "Brown_Level_2"

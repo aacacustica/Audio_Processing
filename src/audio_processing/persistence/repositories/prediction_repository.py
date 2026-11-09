@@ -103,6 +103,18 @@ class PredictionRepository:
                      .order_by(AIPrediction.datetime_inicio,AIPrediction.prediction_rank))
 
         return list(self.session.execute(statement).all())
+
+    def list_with_measurements_for_files(self, file_ids: list[int]):
+
+        if not file_ids: return []
+
+        statement = (select(AIPrediction,AcousticMeasurement)
+                     .join(AIPredictionMeasurement,AIPredictionMeasurement.id_prediccion == AIPrediction.id_prediccion)
+                     .join(AcousticMeasurement,AcousticMeasurement.id_medicion == AIPredictionMeasurement.id_medicion)
+                     .where(AIPrediction.id_archivo.in_(file_ids))
+                     .order_by(AIPrediction.datetime_inicio,AIPrediction.prediction_rank))
+
+        return list(self.session.execute(statement).all())
                                
 
 

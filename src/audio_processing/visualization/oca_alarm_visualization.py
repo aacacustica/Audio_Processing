@@ -4,6 +4,7 @@ import re
 from collections.abc import Iterable
 from pathlib import Path
 from zoneinfo import ZoneInfo
+from .time_axis import configure_time_axis
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -89,7 +90,7 @@ def _save_oca_plot(frame: pd.DataFrame, * , output_path: Path, plot_name: str, t
             ax.set_xlim(x_values[0],x_values[-1])
         ax.set_ylim(DB_LOWER_LIMIT,DB_UPPER_LIMIT)
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d %H:%M", tz=ZoneInfo(timezone_name)))
-        ax.xaxis.set_major_locator(mdates.HourLocator(interval=4,tz=ZoneInfo(timezone_name)))
+        configure_time_axis(ax, timezone_name, max_ticks=8)
         ax.tick_params(axis="x", labelrotation=90)
         ax.grid(True)
         ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1))

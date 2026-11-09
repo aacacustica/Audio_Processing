@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from audio_processing.campaign.discovery import discover_measurement_points
 from audio_processing.common.logging import setup_logging
 from audio_processing.common.filesystem import sha256_file
@@ -85,7 +87,33 @@ class CampaignPipeline:
         if self.config.database.enabled: self.db = Database.from_config(self.config)
         if self.config.runtime.run_ai: self.ai_classifier = AudioClassifier()
                        
-    
+    def _enumerate_source_files(self,session,context_id:int,source) -> list[int]:
+
+        file_repository = FileRepository(session)
+        file_ids = []
+
+        for audio_file in get_audiofiles(Path(source.raw_data_path)):
+
+            source_file = file_repository.get_by_context_and_filename(context_id=context_id,filename=audio_file.name)
+
+            if source_file is None:
+                self.logger.warning(f"El archivo {audio_file.name} no está registrado en el contexto {context_id}")
+                continue
+
+            file_ids.append(source_file.id_archivo)
+
+        return file_ids
+
+    def _render_visualization(self,name:str,render,errors: list[str]):
+
+        try:
+            return render()
+        except Exception:
+            self.logger.exception(f"Error generando la visualización {name}")
+            errors.append(name)
+            return None
+
+
     def run_source(self,source) -> None:
 
         runtime = self.config.runtime
@@ -446,7 +474,7 @@ class CampaignPipeline:
                     return
 
                 measurement_ids = [measurement.id_medicion for measurement in measurements]
-                third_octaves   = third_octave_repository.list_by_context(context_id=context_id)
+                third_octaves   = third_octave_repository.list_by_measurements(measurement_ids)
                 peak_apex_ids   = (peak_repository.list_apex_measurement_ids(context_id=context_id,measurement_ids=measurement_ids))
                 
                 aggregations = (aggregate_measurements(
@@ -558,19 +586,30 @@ class CampaignPipeline:
 
         if self.db is None: raise RuntimeError("La base de datos debe estar habilitada para visualizar resultados.")
 
+
+
         try:
             with self.db.session() as session:
 
+                run_id                  = datetime.now().astimezone().strftime("%Y%m%d_%H%M%S")
+                
                 context = ContextRepository(session).get_for_source(
                     campaign_name   = self.config.campaign.name,
                     point_name      = source.name,
                     device_type     = source.device_type
                 )
 
-                measurements                = MeasurementRepository(session).list_by_context(context_id=context.id_contexto)
-                prediction_measurements     = PredictionRepository(session).list_with_measurements_for_context(context_id=context.id_contexto)
-                third_octave_measurements   = ThirdOctaveRepository(session).list_by_context(context_id=context.id_contexto)
-                alarm_measurements          = AlarmRepository(session).list_by_context(context.id_contexto)
+                file_ids                    = self._enumerate_source_files(session,context.id_contexto,source)
+
+                if not file_ids:
+                    self.logger.warning(f"No hay archivos activos para {source.source_id}")
+                    return
+
+                measurements                = MeasurementRepository(session).list_by_files(file_ids)
+                measurement_ids             = [m.id_medicion for m in measurements]
+                prediction_measurements     = PredictionRepository(session).list_with_measurements_for_files(file_ids)
+                third_octave_measurements   = ThirdOctaveRepository(session).list_by_measurements(measurement_ids)
+                alarm_measurements          = AlarmRepository(session).list_by_measurements(measurement_ids)
 
                 if not measurements:
                     self.logger.warning(f"No hay mediciones para visualizar en: {source.source_id}")
@@ -579,17 +618,22 @@ class CampaignPipeline:
                 point_config            = getattr(self.config.points, source.name, None)
                 correction_db           = getattr(point_config,"correction_db",0.0) if point_config is not None else 0.0
                 timezone_name           = "Atlantic/Canary" if self.config.visualization.tenerife_timezone else self.config.campaign.timezone
-                output_dir              = Path(source.output_path) / self.config.outputs.subfolders.spl.general_folder_name / self.config.outputs.subfolders.spl.visualization_folder_name
+                output_dir              = Path(source.output_path) / self.config.outputs.subfolders.spl.general_folder_name / self.config.outputs.subfolders.spl.visualization_folder_name / f"run_{run_id}"
                 class_map_path          = Path(self.config.visualization.class_map_csv)
 
-                prediction_output_dir   = Path(source.output_path) / self.config.outputs.subfolders.ai.general_folder_name / self.config.outputs.subfolders.ai.visualization_folder_name
+                prediction_output_dir   = Path(source.output_path) / self.config.outputs.subfolders.ai.general_folder_name / self.config.outputs.subfolders.ai.visualization_folder_name / f"run_{run_id}"
                 bands_by_measurement    = {row.id_medicion: row for row in third_octave_measurements}
                 third_octave_pairs      = [(measurement,bands_by_measurement[measurement.id_medicion]) for measurement in measurements if measurement.id_medicion in bands_by_measurement]
+
+                visualization_errors    = []
+
+                show_subclasses         = getattr(self.config.visualization, "show_subclasses", True)
+
 
                 if not class_map_path.is_absolute():
                     class_map_path = Path(self.config._config_dir) / class_map_path
                 
-                time_plot = render_time_plot(
+                time_plot = self._render_visualization("time_plot",lambda: render_time_plot(
                     measurements        = measurements,
                     output_dir          = output_dir,
                     plot_name           = source.name,
@@ -597,30 +641,30 @@ class CampaignPipeline:
                     percentiles         = list(self.config.visualization.percentiles),
                     oca_type            = self.config.visualization.oca_type,
                     correction_db       = float(correction_db),
-                    timezone_name       = timezone_name
-                )
+                    timezone_name       = timezone_name,
+                ), visualization_errors)
 
                 if time_plot:
                     time_png,time_csv = time_plot
                     self.logger.info(f"Visualización básica {source.source_id}: PNG = {time_png}, CSV = {time_csv}")
 
-                day_result = render_day_evolution(
+                day_result = self._render_visualization("day_evolution",lambda: render_day_evolution(
                     measurements        = measurements,
                     output_dir          = output_dir,
                     plot_name           = source.name,
                     timezone_name       = timezone_name
-                )
+                ),visualization_errors)
 
                 if day_result:
                     day_png,day_csv = day_result
                     self.logger.info(f"Evolución diaria: {source.source_id}: PNG = {day_png}, CSV = {day_csv}")
 
-                period_outputs = render_period_evolution(
+                period_outputs = self._render_visualization("period_evolution",lambda: render_period_evolution(
                     measurements        = measurements,
                     output_dir          = output_dir,
                     plot_name           = source.name,
                     timezone_name       = timezone_name
-                )
+                ),visualization_errors)
 
                 if period_outputs:
                     for period, (png_path,csv_path) in period_outputs.items():
@@ -628,79 +672,80 @@ class CampaignPipeline:
                         self.logger.info(f"Evolución {period} {source.name}: PNG = {png_path}, CSV = {csv_path}")
 
 
-                heatmapts_outputs = render_acoustic_heatmaps(
+                heatmapts_outputs = self._render_visualization("acoustic_heatmaps",lambda: render_acoustic_heatmaps(
                     measurements        = measurements,
                     output_dir          = output_dir,
                     plot_name           = source.name,
                     timezone_name       = timezone_name
-                )
+                ),visualization_errors)
 
                 for kind, (png_path,csv_path) in heatmapts_outputs.items():
                     self.logger.info(f"Heatmap {kind} {source.name}: PNG: {png_path}, CSV = {csv_path}")
 
-                night_result = render_night_evolution(
+                night_result = self._render_visualization("night_evolution",lambda: render_night_evolution(
                     measurements        = measurements,
                     output_dir          = output_dir,
                     plot_name           = source.name,
                     timezone_name       = timezone_name
-                )
+                ),visualization_errors)
 
                 if night_result:
                     png_path = night_result[0]
                     csv_path = night_result[1]
                     self.logger.info(f"Night evolution {source.name}: PNG: {png_path}, CSV = {csv_path}")
 
-                night_result = render_night_evolution_15min(
+                night_result = self._render_visualization("night_evolution_15min",lambda: render_night_evolution_15min(
                     measurements        = measurements,
                     output_dir          = output_dir,
                     plot_name           = source.name,
                     timezone_name       = timezone_name
-                )
+                ),visualization_errors)
                 if night_result:
                     png_path = night_result[0]
                     csv_path = night_result[1]
                     self.logger.info(f"Night evolution 15min period {source.name}: PNG: {png_path}, CSV = {csv_path}")
 
-                indicators_outputs = render_indicator_heatmap(
+                indicators_outputs = self._render_visualization("indicator_heatmap",lambda: render_indicator_heatmap(
                     measurements        = measurements,
                     output_dir          = output_dir,
                     plot_name           = source.name,
                     timezone_name       = timezone_name,
                     correction_db       = float(correction_db)
-                )
+                ),visualization_errors)
 
                 if indicators_outputs:
                     indicator_png,indicator_csv,general_csv = indicators_outputs
                     self.logger.info(f"Mapa de indicadores {source.name}: PNG: {indicator_png}, CSV = {indicator_csv},resumen = {general_csv}")
 
-                prediction_outputs = render_prediction_laeq_class(
+                prediction_outputs = self._render_visualization("prediction_laeq_class",lambda: render_prediction_laeq_class(
                     prediction_measurements = prediction_measurements,
                     class_map_path          = class_map_path,
                     output_dir              = prediction_output_dir,
                     taxonomy                = self.config.visualization.taxonomy,
                     plot_name               = source.name,
-                    correction_db           = float(correction_db)
+                    correction_db           = float(correction_db),
+                    show_subclasses         = show_subclasses,
                     
-                )
+                ),visualization_errors)
 
                 if prediction_outputs:
                     html_path,csv_path = prediction_outputs
                     self.logger.info(f"Treemap LAeq por clases {source.name}: HTML = {html_path}, CSV = {csv_path}")
                 
-                prediction_outputs = render_prediciton_stack_bar(
+                prediction_outputs = self._render_visualization("prediciton_stack_bar",lambda: render_prediciton_stack_bar(
                     prediction_measurements = prediction_measurements,
                     class_map_path          = class_map_path,
                     output_dir              = prediction_output_dir,
                     taxonomy                = self.config.visualization.taxonomy,
                     plot_name               = source.name,
                     correction_db           = float(correction_db) 
-                )
+                ),visualization_errors)
 
                 if prediction_outputs:
                     html_path,csv_path = prediction_outputs
                     self.logger.info(f"Stack bar LAeq por clases {source.name}: HTML = {html_path}, CSV = {csv_path}")
 
-                prediction_outputs = render_prediction_map(
+                prediction_outputs = self._render_visualization("prediction_map",lambda: render_prediction_map(
                     prediction_measurements = prediction_measurements,
                     class_map_path          = class_map_path,
                     output_dir              = prediction_output_dir,
@@ -708,24 +753,25 @@ class CampaignPipeline:
                     plot_name               = source.name,
                     aggregation_seconds     = int(self.config.visualization.aggregation_seconds),
                     timezone_name           = timezone_name 
-                )
+                ),visualization_errors)
 
                 if prediction_outputs:
                     png_path,csv_path = prediction_outputs
                     self.logger.info(f"Prediction map {source.name}: PNG = {png_path}, CSV = {csv_path}")
 
 
-                prediction_outputs = render_prediction_laeq_period(
+                prediction_outputs = self._render_visualization("prediction_laeq_period",lambda: render_prediction_laeq_period(
                     prediction_measurements = prediction_measurements,
                     class_map_path          = class_map_path,
                     taxonomy                = self.config.visualization.taxonomy,
                     output_dir              = prediction_output_dir,           
                     plot_name               = source.name,
                     correction_db           = float(correction_db),
-                    timezone_name           = timezone_name
-                )
+                    timezone_name           = timezone_name,
+                    show_subclasses         = show_subclasses
+                ),visualization_errors)
 
-                four_hour_output = render_prediction_laeq_period(
+                four_hour_output = self._render_visualization("prediction_laeq_period",lambda: render_prediction_laeq_period(
                     prediction_measurements = prediction_measurements,
                     class_map_path          = class_map_path,
                     taxonomy                = self.config.visualization.taxonomy,
@@ -733,8 +779,9 @@ class CampaignPipeline:
                     plot_name               = source.name,
                     correction_db           = float(correction_db),
                     timezone_name           = timezone_name,
-                    period_scheme           = 'four_hour'
-                )
+                    period_scheme           = 'four_hour',
+                    show_subclasses         = show_subclasses
+                ),visualization_errors)
 
                 if prediction_outputs:
                      for period, (html_path, csv_path) in prediction_outputs.items():
@@ -744,7 +791,7 @@ class CampaignPipeline:
                     for period, (html_path, csv_path) in four_hour_output.items():
                         self.logger.info(f"Treemap LAeq por clase y franja de 4 horas {source.name} , {period}: HTML = {html_path}, CSV = {csv_path}")
                             
-                daily_outpus = render_prediction_laeq_day(
+                daily_outpus = self._render_visualization("prediction_laeq_day",lambda: render_prediction_laeq_day(
                     prediction_measurements = prediction_measurements,
                     class_map_path          = class_map_path,
                     taxonomy                = self.config.visualization.taxonomy,
@@ -752,73 +799,76 @@ class CampaignPipeline:
                     plot_name               = source.name,
                     correction_db           = float(correction_db),
                     timezone_name           = timezone_name,
-                )
+                    show_subclasses         = show_subclasses
+                ),visualization_errors)
 
                 if daily_outpus:
                     for day, (html_path,csv_path) in daily_outpus.items():
                         self.logger.info(f"Treemap LAeq por clase y día {source.name}, {day}: HTML = {html_path}, CSV = {csv_path}")
 
-                weekly_outputs = render_prediction_laeq_week(
+                weekly_outputs = self._render_visualization("prediction_laeq_week",lambda: render_prediction_laeq_week(
                     prediction_measurements = prediction_measurements,
                     class_map_path          = class_map_path,
                     taxonomy                = self.config.visualization.taxonomy,
                     output_dir              = prediction_output_dir,
                     plot_name               = source.name,
                     correction_db           = float(correction_db),
-                    timezone_name           = timezone_name
-                )
+                    timezone_name           = timezone_name,
+                    show_subclasses         = show_subclasses,
+                ),visualization_errors)
 
                 if weekly_outputs:
                     for week_start, (html_path,csv_path) in weekly_outputs.items():
                         self.logger.info(f"Treemap LAeq por clase y semana {source.name} , {week_start}: HTML = {html_path}, CSV = {csv_path}")
 
-                treemap_outputs = render_prediction_tree_map(
+                treemap_outputs = self._render_visualization("prediction_tree_map",lambda: render_prediction_tree_map(
                     prediction_measurements         = prediction_measurements,
                     class_map_path                  = class_map_path,
                     taxonomy                        = self.config.visualization.taxonomy,
                     output_dir                      = prediction_output_dir,
                     plot_name                       = source.name,
-                    timezone_name                   = timezone_name
-                )
+                    timezone_name                   = timezone_name,
+                    show_subclasses                 = show_subclasses
+                ),visualization_errors)
 
                 if treemap_outputs:
                     for period,(html_path,csv_path) in treemap_outputs.items():
                         self.logger.info(f"Treemap de predicciones {source.name}, {period}: HTML = {html_path}, CSV = {csv_path}")
 
-                spectrogram_outputs = render_third_octave_spectrogram(
+                spectrogram_outputs = self._render_visualization("third_octave_spectrogram",lambda: render_third_octave_spectrogram(
                     third_octave_measurements       = third_octave_pairs,
                     output_dir                      = output_dir,
                     plot_name                       = source.name,
                     timezone_name                   = timezone_name
-                )
+                ),visualization_errors)
 
                 if spectrogram_outputs:
                     png_path,csv_path = spectrogram_outputs
                     self.logger.info(f"Espectrograma de niveles en tercios de octava: PNG = {png_path}, CSV = {csv_path}")
 
-                week_night_evolution = render_night_evolution_week(
+                week_night_evolution = self._render_visualization("night_evolution_week",lambda: render_night_evolution_week(
                     measurements                    = measurements,
                     output_dir                      = output_dir,
                     plot_name                       = source.name,
                     timezone_name                   = timezone_name
-                )
+                ),visualization_errors)
 
                 if week_night_evolution:
                     for week, png_path in week_night_evolution.items():
                         self.logger.info(f"Evolución nocturna semanal {source.name} {week}: PNG = {png_path}")
 
-                week_night_evolution_15min = render_night_evolution_15min_week(
+                week_night_evolution_15min = self._render_visualization("night_evolution_15min_week",lambda: render_night_evolution_15min_week(
                     measurements                    = measurements,
                     output_dir                      = output_dir,
                     plot_name                       = source.name,
                     timezone_name                   = timezone_name
-                )
+                ),visualization_errors)
 
                 if week_night_evolution_15min:
                     for week,png_path in week_night_evolution_15min.items():
                         self.logger.info(f"Evolución nocturna semanal cada 15 minutos {source.name} {week}: PNG = {png_path}")
 
-                time_plot_week = render_time_plot_week(
+                time_plot_week = self._render_visualization("time_plot_week",lambda: render_time_plot_week(
                     measurements                    = measurements,
                     output_dir                      = output_dir,
                     plot_name                       = source.name,
@@ -827,36 +877,39 @@ class CampaignPipeline:
                     oca_type                        = self.config.visualization.oca_type,
                     correction_db                   = float(correction_db),
                     timezone_name                   = timezone_name
-                )
+                ),visualization_errors)
 
                 if time_plot_week:
                     for week_start,png_path in time_plot_week.items():
                         self.logger.info(f"Visualización temporal semanal {source.name}: semana {week_start}: PNG = {png_path}")
 
 
-                heatmaps_week = render_acoustic_heatmaps_week(
+                heatmaps_week = self._render_visualization("acoustic_heatmaps_week",lambda: render_acoustic_heatmaps_week(
                     measurements                    = measurements,
                     output_dir                      = output_dir,
                     plot_name                       = source.name,
                     timezone_name                   = timezone_name
-                )
+                ),visualization_errors)
 
                 if heatmaps_week:
                     for week_start,outputs in heatmaps_week.items():
                         for resolution,png_path in outputs.items():
                             self.logger.info(f"Heatmap acústico semanal {source.name}, semana {week_start},{resolution}: PNG = {png_path}")
 
-                indicators_heatmap_week = render_indicator_heatmap_week(
+                indicators_heatmap_week = self._render_visualization("indicator_heatmap_week",lambda: render_indicator_heatmap_week(
                     measurements                    = measurements,
                     output_dir                      = output_dir,
                     plot_name                       = source.name,
                     timezone_name                   = timezone_name,
                     correction_db                   = float(correction_db)
-                )
+                ),visualization_errors)
 
                 if indicators_heatmap_week:
                     for week,(png_path,csv_path,general_csv_path) in indicators_heatmap_week.items():
                         self.logger.info(f"Heatmap indicadores semanal {source.name},{week}: PNG = {png_path}, CSV = {csv_path}, CSV General = {general_csv_path}")
+
+
+                if visualization_errors and self.config.execution.stop_on_error: raise RuntimeError(f"Fallos en las siguientes visualizaciones: " + ", ".join(visualization_errors))
 
         except Exception as e:
             self.logger.exception("Error generando la visualización básica para: %s",source.source_id)
@@ -866,6 +919,7 @@ class CampaignPipeline:
 
         if self.db is None: raise RuntimeError(f"La base de datos debe de estar habilitada para visualizar picos.")
 
+        
         try:
             with self.db.session() as session:
                 
@@ -874,22 +928,31 @@ class CampaignPipeline:
                     point_name      = source.name,
                     device_type     = source.device_type
                 )
-                measurements                    = MeasurementRepository(session).list_by_context(context_id=context.id_contexto)
-                third_octave_measurements       = ThirdOctaveRepository(session).list_by_context(context_id=context.id_contexto)
-                peaks                           = PeakRepository(session).list_by_context(context.id_contexto)
 
+                file_ids                        = self._enumerate_source_files(session,context_id=context.id_contexto,source=source)
+
+                if not file_ids:
+                    self.logger.warning(f"No hay archivos activos para {source.source_id}")
+                    return
+
+                run_id                          = datetime.now().astimezone().strftime("%Y%m%d_%H%M%S")
+                
+                measurements                    = MeasurementRepository(session).list_by_files(file_ids)
+                measurement_ids                 = [m.id_medicion for m in measurements]
+                third_octave_measurements       = ThirdOctaveRepository(session).list_by_measurements(measurement_ids)
+                peaks                           = PeakRepository(session).list_by_files(file_ids)
+                prediction_measurements         = PredictionRepository(session).list_with_measurements_for_files(file_ids)
                 point_config                    = getattr(self.config.points, source.name, None)
 
                 if not peaks: self.logger.info(f"No hay picos para generar visualizaciones visualizar en: {source.source_id}.")
                 if not measurements: self.logger.info(f"No hay mediciones para generar visualizaciones en {source.source_id}")  
                 if not third_octave_measurements: self.logger.info(f"No hay mediciones en tercios de octavas en {source.source_id}")
 
-                output_dir                      = Path(source.output_path) / self.config.outputs.subfolders.spl.general_folder_name / self.config.outputs.subfolders.spl.visualization_folder_name
+                output_dir                      = Path(source.output_path) / self.config.outputs.subfolders.spl.general_folder_name / self.config.outputs.subfolders.spl.visualization_folder_name / f"run_{run_id}"
                 peak_measurement_ids            = {peak.id_medicion_pico for peak in peaks if peak.id_medicion_pico is not None}
-                prediction_measurements         = (PredictionRepository(session).list_with_measurements_for_context(context.id_contexto))
                 preak_prediction_measurements   = [(prediction,measurement) for prediction,measurement in prediction_measurements if measurement.id_medicion in peak_measurement_ids]
                 class_map_path                  = Path(self.config.visualization.class_map_csv)
-                prediction_output_dir           = Path(source.output_path) / self.config.outputs.subfolders.ai.general_folder_name / self.config.outputs.subfolders.ai.visualization_folder_name
+                prediction_output_dir           = Path(source.output_path) / self.config.outputs.subfolders.ai.general_folder_name / self.config.outputs.subfolders.ai.visualization_folder_name / f"run_{run_id}"
                 measurement_ids                 = [m.id_medicion for m in measurements]
                 peak_apex_ids                   = PeakRepository(session).list_apex_measurement_ids(context_id=context.id_contexto,measurement_ids=measurement_ids)
                 alarm_aggregations              = aggregate_measurements(
@@ -900,41 +963,45 @@ class CampaignPipeline:
                                                     timezone                    = self.config.campaign.timezone
                                                 )
 
+                show_subclasses                 = getattr(self.config.visualization, "show_subclasses", True)
+                visualization_errors            = []
+
                 if point_config is not None:correction_db = (getattr(point_config,"correction_db",0.0))
+                
                 else: correction_db = 0.0
 
                 if not class_map_path.is_absolute(): class_map_path = Path(self.config._config_dir) / class_map_path
                     
-                result_peaks = render_peak_distribution(
+                result_peaks = self._render_visualization("peak_distribution",lambda: render_peak_distribution(
                     peaks           = peaks,
                     output_dir      = output_dir,
                     plot_name       = source.name,
                     correction_db   = float(correction_db),
                     timezone_name   = self.config.campaign.timezone
-                )
+                ),visualization_errors)
 
                 if result_peaks:
                     png_path,night_png_path,csv_path = result_peaks
 
                     self.logger.info(f"Distribución de picos {source.name}: PNG = {png_path} , PNG nocturno = {night_png_path} , CSV = {csv_path}")
 
-                result_peaks = render_peak_frequency_heatmaps(
+                result_peaks = self._render_visualization("peak_frequency_heatmaps",lambda: render_peak_frequency_heatmaps(
                     peaks           = peaks,
                     output_dir      = output_dir,
                     plot_name       = source.name,
                     timezone_name   = self.config.campaign.timezone,
-                )
+                ),visualization_errors)
 
                 if result_peaks:
                     for period,(png_path,csv_path) in result_peaks.items():
                         self.logger.info(f"Mapa de frecuencia de picos {source.name}, {period}: PNG = {png_path} , CSV = {csv_path}")
 
-                result_peaks = render_peak_frequency_heatmaps_week(
+                result_peaks = self._render_visualization("peak_frequency_heatmaps_week",lambda: render_peak_frequency_heatmaps_week(
                     peaks           = peaks,
                     output_dir      = output_dir,
                     plot_name       = source.name,
                     timezone_name   = self.config.campaign.timezone
-                )
+                ),visualization_errors)
 
                 if result_peaks:
                     for week, outputs in result_peaks.items():
@@ -942,13 +1009,13 @@ class CampaignPipeline:
 
                             self.logger.info(f"Mapa semanal de frecuencia de picos {source.name}, semana {week}, {period}: PNG = {png_path}, CSV = {csv_path}")
 
-                result_peaks = render_peak_distribution_week(
+                result_peaks = self._render_visualization("peak_distribution_week",lambda: render_peak_distribution_week(
                     peaks           = peaks,
                     output_dir      = output_dir,
                     plot_name       = source.name,
                     correction_db   = float(correction_db),
                     timezone_name   = self.config.campaign.timezone
-                )
+                ),visualization_errors)
 
                 if result_peaks:
                     for week, paths in result_peaks.items():
@@ -957,23 +1024,23 @@ class CampaignPipeline:
                             self.logger.info(f"Distribución de picos semanal {source.name}, {week}: PNG = {standard_png}, PNG nocturno = {night_png}, CSV = {csv_path}")
 
                 
-                result_peaks = render_peak_density(
+                result_peaks = self._render_visualization("peak_density",lambda: render_peak_density(
                     peaks           = peaks,
                     output_dir      = output_dir,
                     plot_name       = source.name,
                     timezone_name   = self.config.campaign.timezone
-                )
+                ),visualization_errors)
 
                 if result_peaks:
                     for kind, (png_path, csv_path) in result_peaks.items():
                         self.logger.info(f"Distribución horaria de picos {source.name} ({kind}): PNG = {png_path}, CSV = {csv_path}" )
 
-                result_peaks = render_peak_density_week(
+                result_peaks = self._render_visualization("peak_density_week",lambda: render_peak_density_week(
                     peaks           = peaks,
                     output_dir      = output_dir,
                     plot_name       = source.name,
                     timezone_name   = self.config.campaign.timezone
-                )
+                ),visualization_errors)
 
                 if result_peaks:
                     for week,outputs in result_peaks.items():
@@ -981,47 +1048,49 @@ class CampaignPipeline:
 
                             self.logger.info(f"Distribución horaria semanal de picos {source.name}, semana {week} ({kind}): PNG = {png_path}, CSV = {csv_path}")
 
-                peak_class_outputs = render_prediction_peak_laeq_class(
+                peak_class_outputs = self._render_visualization("prediction_peak_laeq_class",lambda: render_prediction_peak_laeq_class(
                     peak_prediction_measurements = preak_prediction_measurements,
                     class_map_path               = class_map_path,
                     taxonomy                     = self.config.visualization.taxonomy,
                     output_dir                   = prediction_output_dir,
                     plot_name                    = source.name,
-                    correction_db                = float(correction_db)
-                )
+                    correction_db                = float(correction_db),
+                    show_subclasses              = show_subclasses,
+                ),visualization_errors)
 
                 if peak_class_outputs:
                     html_path,csv_path = peak_class_outputs
                     self.logger.info(f"Treemap LAeq de picos por clase {source.name}: HTML = {html_path}, CSV = {csv_path}")
 
-                weekly_peak_class_outputs = render_prediciton_peak_laeq_week(
+                weekly_peak_class_outputs = self._render_visualization("prediciton_peak_laeq_week",lambda: render_prediciton_peak_laeq_week(
                     peak_prediction_measurements    = preak_prediction_measurements,
                     class_map_path                  = class_map_path,
                     taxonomy                        = self.config.visualization.taxonomy,
                     output_dir                      = prediction_output_dir,
                     plot_name                       = source.name,
                     correction_db                   = float(correction_db),
-                    timezone_name                   = self.config.campaign.timezone
-                )
+                    timezone_name                   = self.config.campaign.timezone,
+                    show_subclasses                 = show_subclasses,
+                ),visualization_errors)
 
                 if weekly_peak_class_outputs:
                     for week_start, (html_path,csv_path) in weekly_peak_class_outputs.items():
                         self.logger.info(f"Treemap semanal LAeq de picos por clase {source.name}, {week_start}: HTML = {html_path}, CSV = {csv_path}")
 
-                boxplot_outputs = render_prediction_peak_laeq_boxplot(
+                boxplot_outputs = self._render_visualization("prediction_peak_laeq_boxplot",lambda: render_prediction_peak_laeq_boxplot(
                     peak_prediction_measurements    = preak_prediction_measurements,
                     class_map_path                  = class_map_path,
                     taxonomy                        = self.config.visualization.taxonomy,
                     output_dir                      = prediction_output_dir,
                     plot_name                       = source.name,
                     correction_db                   = float(correction_db)
-                )
+                ),visualization_errors)
 
                 if boxplot_outputs:
                     html_path,csv_path = boxplot_outputs
                     self.logger.info(f"Boxplot LAeq de picos por clase {source.name}: HTML = {html_path}, CSV = {csv_path}")
 
-                boxplot_week_outputs = render_prediction_peak_laeq_boxplot_week(
+                boxplot_week_outputs = self._render_visualization("prediction_peak_laeq_boxplot_week",lambda: render_prediction_peak_laeq_boxplot_week(
                     peak_prediction_measurements    = preak_prediction_measurements,
                     class_map_path                  = class_map_path,
                     taxonomy                        = self.config.visualization.taxonomy,
@@ -1029,36 +1098,36 @@ class CampaignPipeline:
                     plot_name                       = source.name,
                     correction_db                   = float(correction_db),
                     timezone_name                   = self.config.campaign.timezone
-                )
+                ),visualization_errors)
 
                 if boxplot_week_outputs:
                     for week_start, (html_path,csv_path) in boxplot_week_outputs.items():
                         self.logger.info(f"Boxplot semanal LAeq de picos por clase {source.name} ({week_start}): HTML = {html_path}, CSV = {csv_path}")
 
-                oca_outputs = render_oca_alarm_visualization(
+                oca_outputs = self._render_visualization("oca_alarm",lambda: render_oca_alarm_visualization(
                     aggregations                    = alarm_aggregations,
                     output_dir                      = output_dir/'Alarms',
                     plot_name                       = 'oca_alarm',
                     oca_type                        = self.config.alarms.oca_limit,
                     timezone_name                   = self.config.campaign.timezone,
-                )
+                ),visualization_errors)
 
                 if oca_outputs:
                     self.logger.info(f"Gráficas OCA {source.name}: diario = {oca_outputs['daily_png']}, semanal = {oca_outputs['weekly_pngs']}")
 
-                l90_outputs = render_l90_alarm_visualization(
+                l90_outputs = self._render_visualization("l90_alarm",lambda: render_l90_alarm_visualization(
                     aggregations                    = alarm_aggregations,
                     output_dir                      = output_dir/'Alarms',
                     plot_name                       = 'l90_alarm',
                     threshold_db                    = self.config.alarms.l90.threshold_db,
                     timezone_name                   = self.config.campaign.timezone
-                )
+                ),visualization_errors)
 
                 if l90_outputs:
                     for day,png_path in l90_outputs.items():
                         self.logger.info(f"Gráficas L90 {source.name}, {day}: PNG = {png_path} ")
 
-                prediction_peaks = render_prediction_peak_heatmap_week(
+                prediction_peaks = self._render_visualization("prediction_peak_heatmap_week",lambda: render_prediction_peak_heatmap_week(
                     peak_prediction_measurements    = preak_prediction_measurements,
                     class_map_path                  = class_map_path,
                     taxonomy                        = self.config.visualization.taxonomy,
@@ -1066,22 +1135,14 @@ class CampaignPipeline:
                     plot_name                       = source.name,
                     correction_db                   = float(correction_db),
                     timezone_name                   = self.config.campaign.timezone
-                )
+                ),visualization_errors)
 
                 if prediction_peaks:
                     for week_start,png_path in prediction_peaks.items():
                         self.logger.info(f"Heatmap semanal de picos {source.name}, semana {week_start}: PNG = {png_path}")
 
-
-
-
-                
-
-
-
-                
-                
-                
+                if visualization_errors and self.config.execution.stop_on_error: raise RuntimeError(f"Fallos en las siguientes visualizaciones: " + ", ".join(visualization_errors))
+              
         except Exception:
             self.logger.exception(f"Error generando la distribución de picos para {source.source_id}")
 

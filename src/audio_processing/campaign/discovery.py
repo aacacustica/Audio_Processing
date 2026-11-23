@@ -134,7 +134,7 @@ def discover_flat_measurement_points(config) -> list[MeasurementSource]:
                     MeasurementSource(
                         name                    = point_root.name,
                         source_id               = _build_source_id(point_root.name,"audiomoth"),
-                        campaign_name           = config.campaign_name,                   
+                        campaign_name           = config.campaign.name,                   
                         root_path               = point_root,
                         device_type             = "audiomoth",
                         raw_data_path           = audiomoth_path,
@@ -152,7 +152,7 @@ def discover_flat_measurement_points(config) -> list[MeasurementSource]:
                     MeasurementSource(
                         name                    = point_root.name,
                         source_id               = _build_source_id(point_root.name,"sonometer"),
-                        campaign_name           = config.campaign_name,
+                        campaign_name           = config.campaign.name,
                         root_path               = point_root,
                         device_type             = "sonometer",
                         raw_data_path           = sonometer_path,

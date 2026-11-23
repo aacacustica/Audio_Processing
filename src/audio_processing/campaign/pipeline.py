@@ -134,7 +134,7 @@ class CampaignPipeline:
 
         runtime = self.config.runtime
 
-        if self.run_spl and source.needs_spl: runtime.run_spl()
+        if self.run_spl and source.needs_spl: self.run_spl_database(source)
         if runtime.run_ai and source.needs_ai: self.run_ai(source)
         if runtime.run_peaks and self.config.peaks.enabled: self.run_peaks(source)
         if runtime.run_alarms and self.config.alarms.enabled: self.run_alarms(source)

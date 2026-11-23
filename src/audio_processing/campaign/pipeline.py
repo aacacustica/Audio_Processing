@@ -137,6 +137,7 @@ class CampaignPipeline:
         if self.run_spl and source.needs_spl: self.run_spl_database(source)
         if runtime.run_ai and source.needs_ai: self.run_ai(source)
         if runtime.run_peaks and self.config.peaks.enabled: self.run_peaks(source)
+        if runtime.run_alarms and self.config.alarms.enabled: self.run_alarms(source)
 
         if runtime.run_basic_visualization and self.config.visualization.enabled and source.needs_visualization: self.run_basic_visualization(source)
         if runtime.run_advanced_visualization and self.config.visualization.enabled and source.needs_visualization: self.run_advanced_visualization(source)

@@ -20,6 +20,7 @@ DeviceType = Literal[
 class MeasurementSource:
     name: str
     source_id: str
+    campaign_name: str
     root_path: Path
     device_type: DeviceType
     raw_data_path: Path

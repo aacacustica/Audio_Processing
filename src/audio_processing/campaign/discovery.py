@@ -37,7 +37,73 @@ def _find_existing_folder(point_root: Path, folder_name: str) -> Path | None:
 def _device_allowed(filter_device: str | None, device_type: str) -> bool:
     return filter_device is None or filter_device == device_type
 
-def discover_measurement_points(config) -> list[MeasurementSource]:
+
+def _iter_manual_campaign_roots(config):
+
+    input_root = Path(config.campaign.input_root)
+    measures_name = config.outputs.subfolders.general.medidas_folder_name
+    results_name = config.outputs.subfolders.general.resultados_folder_name
+
+    if input_root.name == measures_name:
+        yield(config.campaign.name,input_root,Path(config.campaign.output_root))
+        return
+
+    for campaign_dir in sorted(input_root.iterdir()):
+
+        if not campaign_dir.is_dir(): continue
+        measures_dir = campaign_dir / measures_name
+
+        if not measures_dir.is_dir(): continue
+
+        filter_campaign = getattr(config.discovery,"filter_campaign",None)
+
+        if filter_campaign and campaign_dir.name != filter_campaign: continue
+
+        yield(campaign_dir.name,measures_dir,campaign_dir / results_name)
+
+def discover_manual_sources(config) -> list[MeasurementSource]:
+
+    sources = []
+    filter_point = getattr(config.discovery, "filter_point", None)
+    filter_device = getattr(config.discovery, "filter_device", None)
+
+    supported_devices = ("audiomoth","sonometer")
+
+    for campaign_name, measures_dir, results_dir in _iter_manual_campaign_roots(config)
+        for point_dir in sorted(measures_dir.iterdir()):
+
+            if not point_dir.is_dir(): continue
+            if filter_point and point_dir.name != filter_point: continue
+
+            for device_type in supported_devices:
+                device_config = getattr(config.devices, device_type, None)
+
+                if device_config is None: continue
+                if filter_device and filter_device != device_type: continue
+
+                device_dir = point_dir / device_config / device_config.folder_name
+
+                if not device_dir.is_dir(): continue
+
+                sources.append(
+                    MeasurementSource(
+                        name = point_dir.name,
+                        source_id=_build_source_id(point_dir.name,device_type),
+                        campaign_name=campaign_name,
+                        root_path=point_dir,
+                        device_type=device_type,
+                        raw_data_path=device_dir,
+                        output_path=results_dir/point_dir.name,
+                        needs_spl=device_config.default_needs_spl,
+                        needs_ai=device_config.default_needs_ai,
+                        needs_visualization=device_config.default_visualize 
+                    )
+                    )
+    return sources
+
+def discover_flat_measurement_points(config) -> list[MeasurementSource]:
+
+    if config.execution.profile == 'manual': return 
 
     points: list[MeasurementSource] = []
 
@@ -97,3 +163,9 @@ def discover_measurement_points(config) -> list[MeasurementSource]:
             
 
     return points
+
+
+def discover_measurement_points(config) -> list[MeasurementSource]:
+
+    if config.execution.profile == "manual": return discover_manual_sources(config)
+    return discover_flat_measurement_points(config)

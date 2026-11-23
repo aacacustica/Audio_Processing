@@ -84,7 +84,9 @@ class CampaignPipeline:
 
         self.logger = setup_logging( log_dir = Path(self.config.campaign.output_root)/self.config.outputs.subfolders.logs )
         
-        if self.config.database.enabled: self.db = Database.from_config(self.config)
+        is_hourly = self.config.execution.profile == "hourly"
+
+        if is_hourly and self.config.database.enabled: self.db = Database.from_config(self.config)
         if self.config.runtime.run_ai: self.ai_classifier = AudioClassifier()
                        
     def _enumerate_source_files(self,session,context_id:int,source) -> list[int]:
@@ -116,14 +118,31 @@ class CampaignPipeline:
 
     def run_source(self,source) -> None:
 
+        profile = self.config.execution.profile
+
+        if profile == 'manual':
+            self.run_manual_source(source)
+            return
+
+        if profile == 'hourly':
+            self.run_hourly_source(source)
+            return
+
+        raise ValueError(f"Perfil de ejecución desconocido: {profile}")
+
+    def run_hourly_source(self,source) -> None:
+
         runtime = self.config.runtime
 
-        if runtime.run_spl and source.needs_spl: self.run_spl_database(source)
+        if self.run_spl and source.needs_spl: self.run_spl_database(source)
         if runtime.run_ai and source.needs_ai: self.run_ai(source)
         if runtime.run_peaks and self.config.peaks.enabled: self.run_peaks(source)
-        if runtime.run_alarms and self.config.alarms.enabled: self.run_alarms(source)
-        if(runtime.run_basic_visualization and self.config.visualization.enabled and source.needs_visualization): self.run_basic_visualization(source)
-        if(runtime.run_advanced_visualization and self.config.visualization.enabled and source.needs_visualization): self.run_advanced_visualization(source)
+
+        if runtime.run_basic_visualization and self.config.visualization.enabled and source.needs_visualization: self.run_basic_visualization(source)
+        if runtime.run_advanced_visualization and self.config.visualization.enabled and source.needs_visualization: self.run_advanced_visualization(source)
+
+    def run_manual_source(self,source) -> None:
+        raise NotImplementedError(f"El procesador manual todavía no está implementado. Esta ruta no debe de utilizar las etapas que persisten en la BD.")
         
 
     def run_spl_database(self,source) -> None:

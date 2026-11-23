@@ -81,7 +81,7 @@ def discover_manual_sources(config) -> list[MeasurementSource]:
                 if device_config is None: continue
                 if filter_device and filter_device != device_type: continue
 
-                device_dir = point_dir / device_config / device_config.folder_name
+                device_dir = point_dir / device_config.folder_name
 
                 if not device_dir.is_dir(): continue
 
@@ -133,7 +133,8 @@ def discover_flat_measurement_points(config) -> list[MeasurementSource]:
                 
                     MeasurementSource(
                         name                    = point_root.name,
-                        source_id               = _build_source_id(point_root.name,"audiomoth"),                   
+                        source_id               = _build_source_id(point_root.name,"audiomoth"),
+                        campaign_name           = config.campaign_name,                   
                         root_path               = point_root,
                         device_type             = "audiomoth",
                         raw_data_path           = audiomoth_path,
@@ -151,6 +152,7 @@ def discover_flat_measurement_points(config) -> list[MeasurementSource]:
                     MeasurementSource(
                         name                    = point_root.name,
                         source_id               = _build_source_id(point_root.name,"sonometer"),
+                        campaign_name           = config.campaign_name,
                         root_path               = point_root,
                         device_type             = "sonometer",
                         raw_data_path           = sonometer_path,

@@ -131,7 +131,7 @@ class CampaignPipeline:
         audio_files             = get_audiofiles(Path(source.raw_data_path))
         results_globales        = []
         results_tercios         = []
-        campaign_name           = self.config.campaign.name
+        campaign_name           = source.campaign_name
         point_name              = source.name
         device_type             = source.device_type
         calibration_file        = Path(self.config.spl.calibration_file)
@@ -252,7 +252,7 @@ class CampaignPipeline:
 
             context_repository = ContextRepository(session)
             context = context_repository.get_for_source(
-                campaign_name   = self.config.campaign.name,
+                campaign_name   = source.campaign.name,
                 point_name      = source.name,
                 device_type     = source.device_type
             )
@@ -353,7 +353,7 @@ class CampaignPipeline:
                 peak_repository = PeakRepository(session)
                 file_repository = FileRepository(session)
                 context = context_repository.get_for_source(
-                    campaign_name       = self.config.campaign.name,
+                    campaign_name       = source.campaign.name,
                     point_name          = source.name,
                     device_type         = source.device_type)
 
@@ -448,9 +448,9 @@ class CampaignPipeline:
 
 
                 context = (context_repository.get_for_source(
-                    campaign_name=self.config.campaign.name,
-                    point_name = source.name,
-                    device_type = source.device_type
+                    campaign_name   = source.campaign.name,
+                    point_name      = source.name,
+                    device_type     = source.device_type
                 ))
 
                 context_id = context.id_contexto
@@ -594,7 +594,7 @@ class CampaignPipeline:
                 run_id                  = datetime.now().astimezone().strftime("%Y%m%d_%H%M%S")
                 
                 context = ContextRepository(session).get_for_source(
-                    campaign_name   = self.config.campaign.name,
+                    campaign_name   = source.campaign.name,
                     point_name      = source.name,
                     device_type     = source.device_type
                 )
@@ -925,7 +925,7 @@ class CampaignPipeline:
             with self.db.session() as session:
                 
                 context = ContextRepository(session).get_for_source(
-                    campaign_name   = self.config.campaign.name,
+                    campaign_name   = source.campaign.name,
                     point_name      = source.name,
                     device_type     = source.device_type
                 )

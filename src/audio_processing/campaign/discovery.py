@@ -69,7 +69,7 @@ def discover_manual_sources(config) -> list[MeasurementSource]:
 
     supported_devices = ("audiomoth","sonometer")
 
-    for campaign_name, measures_dir, results_dir in _iter_manual_campaign_roots(config)
+    for campaign_name, measures_dir, results_dir in _iter_manual_campaign_roots(config):
         for point_dir in sorted(measures_dir.iterdir()):
 
             if not point_dir.is_dir(): continue
